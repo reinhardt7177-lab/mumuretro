@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>학교 숨바꼭질 — School Hide &amp; Seek (Toon 3D)</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#bfe3ea;font-family:'Segoe UI','Malgun Gothic',sans-serif;}
+  #c{display:block;width:100vw;height:100vh;}
+  #load{position:fixed;inset:0;background:#bfe3ea;display:flex;align-items:center;justify-content:center;color:#3a5560;font-size:18px;letter-spacing:2px;z-index:60;transition:opacity .6s;}
+  #load.hide{opacity:0;pointer-events:none;}
+  #hud{position:fixed;top:0;left:0;right:0;z-index:20;pointer-events:none;display:none;justify-content:center;gap:10px;padding:10px;flex-wrap:wrap;}
+  .pill{background:rgba(20,40,48,.62);color:#fff;border-radius:20px;padding:7px 16px;font-size:14px;letter-spacing:1px;display:flex;align-items:center;gap:8px;}
+  #timer{color:#ffe08a;font-variant-numeric:tabular-nums;}
+  #found b{color:#9be37a;}
+  #floor{color:#9fd0ff;}
+  #count{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(8,16,22,.55),rgba(8,16,22,.92));color:#fff;}
+  #count .big{font-size:128px;font-weight:bold;text-shadow:0 4px 24px rgba(0,0,0,.6);line-height:1;}
+  #count .cap{margin-top:12px;font-size:19px;letter-spacing:3px;color:#ffe08a;}
+  #count .cap2{margin-top:6px;font-size:13px;letter-spacing:2px;opacity:.8;}
+  #tag{position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:20;pointer-events:none;display:none;background:#e8945b;color:#fff;font-weight:bold;font-size:16px;padding:10px 22px;border-radius:24px;box-shadow:0 4px 0 #b86a38;animation:bob 1s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-5px)}}
+  #vig{position:fixed;inset:0;z-index:14;pointer-events:none;box-shadow:inset 0 0 0 rgba(180,0,40,0);transition:box-shadow .25s;}
+  #toasts{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:25;pointer-events:none;text-align:center;}
+  .toast{display:inline-block;background:rgba(20,40,48,.82);color:#fff;font-weight:bold;font-size:16px;padding:6px 18px;border-radius:20px;margin:3px;}
+  #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:15;pointer-events:none;color:#2f4a52;font-size:12px;letter-spacing:1px;background:rgba(255,255,255,.5);padding:6px 16px;border-radius:20px;}
+  #hint.hide{display:none;}
+  #ov{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(ellipse at center,rgba(191,227,234,.25),rgba(120,170,180,.6));}
+  #ov h1{font-size:42px;color:#fff;letter-spacing:5px;text-shadow:0 3px 0 #5b8a93,0 0 30px rgba(255,255,255,.5);}
+  #ov .sub{margin-top:8px;color:#fff;font-size:13px;letter-spacing:4px;opacity:.92;}
+  #ov .keys{margin-top:24px;color:#fff;font-size:13px;line-height:2.1;background:rgba(40,70,80,.35);padding:14px 24px;border-radius:14px;}
+  #ov .keys b{color:#ffe9b0;}
+  #ov .btn{margin-top:24px;color:#fff;font-size:16px;letter-spacing:3px;cursor:pointer;background:#e8945b;padding:12px 30px;border-radius:30px;box-shadow:0 5px 0 #b86a38;}
+  #ov .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #b86a38;}
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="vig"></div>
+  <div id="load">학교 짓는 중…</div>
+
+  <div id="hud">
+    <div class="pill" id="phase">숨는 시간</div>
+    <div class="pill">⏱ <span id="timer">60</span></div>
+    <div class="pill" id="found">찾은 친구 <b><span id="fcur">0</span>/<span id="ftot">5</span></b></div>
+    <div class="pill" id="floor">🏫 <span id="fl">운동장</span></div>
+  </div>
+
+  <div id="count">
+    <div class="big" id="cnum">60</div>
+    <div class="cap">술래가 눈 감고 세는 중!</div>
+    <div class="cap2">친구들이 학교 곳곳에 숨고 있어요… (훔쳐보기 금지!)</div>
+  </div>
+
+  <div id="tag">E &nbsp;—&nbsp; 잡기!</div>
+  <div id="toasts"></div>
+  <div id="hint" class="hide">WASD 이동 · 마우스 드래그 시점 · Shift 달리기 · E 잡기 · G 못찾겠다(항복) · 중앙 계단으로 2층</div>
+
+  <div id="ov">
+    <h1>학교 숨바꼭질</h1>
+    <div class="sub">S C H O O L &nbsp; H I D E &amp; S E E K &nbsp;·&nbsp; TOON 3D</div>
+    <div class="keys">
+      너는 <b>술래</b>! &nbsp;<b>1분</b> 동안 친구들이 학교에 숨어요.<br>
+      <b>중앙현관</b>으로 들어가 <b>1·2층</b> 교실을 방마다 뒤져 모두 찾아내!<br><br>
+      <b>WASD</b> 이동 · <b>마우스 드래그</b> 시점 · <b>Shift</b> 달리기 · <b>E</b> 잡기 · <b>G</b> 항복
+    </div>
+    <div class="btn" id="startBtn">▶ 술래 시작</div>
+  </div>
+
+<script>
+// 에러를 로딩 화면에 표시(디버그용)
+window.addEventListener('error',function(e){var el=document.getElementById('load');if(el){el.style.color='#b00020';el.style.fontSize='13px';el.style.padding='24px';el.style.whiteSpace='pre-wrap';el.style.textAlign='left';el.style.lineHeight='1.5';el.textContent='⚠ 오류:\n'+(e.message||'')+'\n'+((e.error&&e.error.stack)||'')+'\n@'+(e.filename||'')+':'+(e.lineno||'');}console.error('CAUGHT',e.message,e.error&&e.error.stack);});
+window.addEventListener('unhandledrejection',function(e){var el=document.getElementById('load');if(el){el.style.color='#b00020';el.style.whiteSpace='pre-wrap';el.textContent='⚠ Promise 오류:\n'+(e.reason&&(e.reason.stack||e.reason.message)||e.reason);}});
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const SKY=0xbfe3ea;
+
+// ── 렌더러 ──
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.NoToneMapping;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const outline=new OutlineEffect(renderer,{defaultThickness:0.0035,defaultColor:[0.05,0.06,0.09],defaultAlpha:0.9});
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(SKY);
+scene.fog=new THREE.Fog(SKY,90,260);
+const camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,0.08,400);
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+
+function toonGradient(steps){const d=new Uint8Array(steps);for(let i=0;i<steps;i++)d[i]=Math.round(255*(i/(steps-1)));const t=new THREE.DataTexture(d,steps,1,THREE.RedFormat);t.minFilter=t.magFilter=THREE.NearestFilter;t.needsUpdate=true;return t;}
+const GRAD=toonGradient(3);
+const toon=(color,o={})=>new THREE.MeshToonMaterial({color,gradientMap:GRAD,...o});
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const noOut=m=>{m.material.userData.outlineParameters={visible:false};return m;};
+
+// ── 라이팅(실내 밝게: 천장이 해를 가리므로 환경광 강하게) ──
+scene.add(new THREE.HemisphereLight(0xeaf6f8,0x9a9476,2.0));
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const sun=new THREE.DirectionalLight(0xfff2d6,1.9);
+sun.position.set(60,90,40);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.near=1;sun.shadow.camera.far=320;
+sun.shadow.camera.left=-90;sun.shadow.camera.right=90;sun.shadow.camera.top=90;sun.shadow.camera.bottom=-90;sun.shadow.bias=-0.0005;
+scene.add(sun);scene.add(sun.target);
+
+// ════════════════ 치수 (1 unit = 1 m) ════════════════
+const KID_H=1.4;            // 아이 키
+const CEIL=3.0, FF=3.3;     // 천장고, 층고
+const WT=0.15;              // 벽 두께
+const DOOR_W=1.1, DOOR_H=2.1;
+const CORR_W=2.7;           // 복도 폭
+const RW=7.5, RD=8.0;       // 교실 폭/깊이
+const HALF=4;               // 중앙홀 반폭(X[-4,4])
+const BX0=-26.5, BX1=26.5;  // 건물 X
+const BZ0=0, BZ1=RD+CORR_W; // 건물 Z (0 ~ 10.7)
+const CORR_Z0=RD, CORR_Z1=RD+CORR_W;   // 복도 Z(8 ~ 10.7)
+const ROOF_Y=FF*2;          // 6.6
+
+// 계단(중앙홀, ㄷ자 2단) — footprint X[-1.6,1.6], Z[1,7]
+const ST={x:1.6, z0:1.0, z1:7.0, mid:2.5, half:FF/2}; // half=1.65
+
+// ── 충돌(층 인식) ──
+const colliders=[];   // {x,z,hw,hd,floor}  floor: 0,1,2(both)
+const camWalls=[];
+const roofGroup=new THREE.Group();scene.add(roofGroup);
+const floorGrp=[new THREE.Group(),new THREE.Group()];scene.add(floorGrp[0],floorGrp[1]);  // 층별(컬링용)
+const ceilGrp=[new THREE.Group(),new THREE.Group()];scene.add(ceilGrp[0],ceilGrp[1]);
+
+function box(cx,cy,cz,w,h,d,c,o={}){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),toon(c,o.mat||{}));
+  m.position.set(cx,cy,cz);m.castShadow=o.shadow!==false;m.receiveShadow=true;
+  (o.parent||(o.floor===0?floorGrp[0]:o.floor===1?floorGrp[1]:scene)).add(m);
+  if(o.collide!==false)colliders.push({x:cx,z:cz,hw:w/2,hd:d/2,floor:o.floor??2});
+  if(o.cam)camWalls.push(m);
+  if(o.noOut)noOut(m);
+  return m;
+}
+function slab(cx,z,w,d,c,y,parent=scene){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),toon(c));m.rotation.x=-Math.PI/2;m.position.set(cx,y,z);m.receiveShadow=true;noOut(m);parent.add(m);return m;}
+function makeLabel(text,col='rgba(30,50,58,0.92)',sx=2.6){const cv=document.createElement('canvas');cv.width=256;cv.height=64;const x=cv.getContext('2d');x.fillStyle=col;rr(x,3,3,250,58,14);x.fill();x.fillStyle='#fff';x.font='bold 34px Malgun Gothic, sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(text,128,33);const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false}));s.scale.set(sx,sx*0.25,1);s.material.userData.outlineParameters={visible:false};s.renderOrder=999;return s;}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+
+const COL={floor:0xe7d8bb,floor2:0xe2d4c5,corr:0xd9cdb2,wallO:0xeae1cd,wallI:0xf3eee2,ceil:0xf0ebe0,
+  roof:0x9c5a48,glass:0xbfe6ef,door:0x9c7a4e,frame:0x7a5d3a,board:0x2f4a3a,desk:0xcaa46e,deskleg:0x9a7748,
+  locker:0x6f9bb0,step:0xd8c7a0,rail:0x8a6a45,grass:[0x86b56a,0x77a85c],dirt:0xb59a6a,fence:0xd7cdb6,post:0x8a8270,
+  tree:0x6e4f35,leaf:[0x6fa64f,0x5e9243,0x7cb05c],goal:0xf0f0f0,base:0x4f8fd9};
+const hideSpots=[]; // {x,z,y,name}
+
+// ════════════════ 운동장 + 담장 ════════════════
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),toon(COL.grass[1]));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;noOut(ground);scene.add(ground);
+slab(0,-26,54,44,COL.dirt,0.015);                                  // 흙 운동장(건물 남쪽 Z<0)
+// 안전지대(베이스): 운동장 중앙
+const baseR=3.2;
+const baseMesh=new THREE.Mesh(new THREE.CircleGeometry(baseR,28),toon(0x6fb0e0,{emissive:0x2e5e86,emissiveIntensity:0.4}));
+baseMesh.rotation.x=-Math.PI/2;baseMesh.position.set(0,0.05,-22);noOut(baseMesh);scene.add(baseMesh);
+const baseSign=makeLabel('안전지대 (BASE)','rgba(30,70,110,0.92)',2.6);baseSign.material.depthTest=true;baseSign.renderOrder=0;baseSign.position.set(0,2.2,-22);scene.add(baseSign);
+const BASE={x:0,z:-22,r:baseR};
+
+// 담장(정문 X[-3,3] 비움)
+const FX0=-40,FX1=40,FZ0=-46,FZ1=BZ1+5;
+function fenceSeg(cx,cz,w,d){box(cx,1.1,cz,w,2.2,d,COL.fence,{cam:true});box(cx,2.3,cz,w+0.15,0.18,d+0.15,COL.post,{collide:false});}
+fenceSeg((FX0+FX1)/2,FZ1,FX1-FX0,0.4);
+fenceSeg(FX0,(FZ0+FZ1)/2,0.4,FZ1-FZ0);
+fenceSeg(FX1,(FZ0+FZ1)/2,0.4,FZ1-FZ0);
+box((FX0-3)/2,1.1,FZ0,(-3-FX0),2.2,0.4,COL.fence,{cam:true});
+box((3+FX1)/2,1.1,FZ0,(FX1-3),2.2,0.4,COL.fence,{cam:true});
+for(const gx of[-3,3]){box(gx,1.7,FZ0,0.7,3.4,0.7,COL.post);}
+const gate=makeLabel('正  門','rgba(60,45,30,0.95)',3);gate.position.set(0,3.6,FZ0);scene.add(gate);
+
+// 운동장 시설 + 숨을 곳(운동장)
+function tree(x,z){const g=new THREE.Group();g.position.set(x,0,z);const t=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.32,2.6,7),toon(COL.tree));t.position.y=1.3;t.castShadow=true;g.add(t);const lc=pick(COL.leaf);for(let i=0;i<3;i++){const r=1.6-i*0.3;const b=new THREE.Mesh(new THREE.IcosahedronGeometry(r,0),toon(lc));b.position.set((Math.random()-.5)*0.7,2.9+i,(Math.random()-.5)*0.7);b.castShadow=true;g.add(b);}scene.add(g);colliders.push({x,z,hw:0.5,hd:0.5,floor:2});hideSpots.push({x:x+1.5,z:z+0.4,y:0,name:'운동장(나무 뒤)'});}
+function goal(x,z){const g=new THREE.Group();g.position.set(x,0,z);const mat=toon(COL.goal);[-2,2].forEach(o=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,2.4,8),mat);p.position.set(o,1.2,0);p.castShadow=true;g.add(p);});const top=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.15,0.15),mat);top.position.y=2.4;g.add(top);scene.add(g);}
+goal(0,-40);[[-20,-34],[20,-30],[-24,-12],[24,-16]].forEach(([x,z])=>tree(x,z));
+hideSpots.push({x:0,z:-40,y:0,name:'운동장(골대 뒤)'});
+
+// ════════════════ 건물 외피(2층) ════════════════
+// 바닥(1층) + 복도 바닥
+slab((BX0+BX1)/2,(BZ0+BZ1)/2,BX1-BX0,BZ1-BZ0,COL.floor,0.02,floorGrp[0]);
+slab((BX0+BX1)/2,(CORR_Z0+CORR_Z1)/2,BX1-BX0,CORR_W,COL.corr,0.03,floorGrp[0]);
+// 2층 바닥 슬래브(=1층 천장) — 계단 구멍 제외하고 좌/우/남/북 4조각
+function deck(cx,z,w,d){if(w<=0||d<=0)return;const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.2,d),toon(COL.floor2));m.position.set(cx,FF-0.1,z);m.receiveShadow=true;m.castShadow=true;floorGrp[1].add(m);}
+deck((BX0-ST.x+ -HALF)/2 -0, 0,0,0); // (placeholder no-op safe)
+// 좌측 슬래브 (X: BX0..-ST.x 전체 깊이)
+deck((BX0+(-ST.x))/2,(BZ0+BZ1)/2,((-ST.x)-BX0),BZ1-BZ0);
+// 우측 슬래브 (X: ST.x..BX1)
+deck((ST.x+BX1)/2,(BZ0+BZ1)/2,(BX1-ST.x),BZ1-BZ0);
+// 가운데(계단 구멍 X[-ST.x,ST.x], Z[ST.z0,ST.z1] 제외): 남쪽 조각 + 북쪽 조각
+deck(0,(BZ0+ST.z0)/2,ST.x*2,(ST.z0-BZ0));
+deck(0,(ST.z1+BZ1)/2,ST.x*2,(BZ1-ST.z1));
+// 천장(2층 천장=지붕 아래) 슬래브
+const ceil2=new THREE.Mesh(new THREE.BoxGeometry(BX1-BX0,0.2,BZ1-BZ0),toon(COL.ceil));ceil2.position.set((BX0+BX1)/2,ROOF_Y-0.1,(BZ0+BZ1)/2);ceil2.receiveShadow=true;ceilGrp[1].add(ceil2);noOut(ceil2);
+// 지붕(밖에서 보임, 안에선 숨김)
+const roof=new THREE.Mesh(new THREE.BoxGeometry(BX1-BX0+1.2,0.5,BZ1-BZ0+1.2),toon(COL.roof));roof.position.set((BX0+BX1)/2,ROOF_Y+0.25,(BZ0+BZ1)/2);roof.castShadow=true;roofGroup.add(roof);
+const para=makeLabel('○○ 초등학교','rgba(40,60,70,0.95)',9);para.position.set(0,ROOF_Y+1.4,BZ0-0.3);scene.add(para);
+
+// 외벽(2층 높이) — 남(앞, 중앙현관 비움)·북·동·서 / 창문
+function exWall(cx,cy,cz,w,h,d){box(cx,cy,cz,w,h,d,COL.wallO,{cam:true,floor:2});}
+function winRow(x0,x1,z,n,y){for(let i=0;i<n;i++){const wx=x0+(i+0.5)*(x1-x0)/n;box(wx,y,z,1.4,1.3,0.08,COL.glass,{collide:false,mat:{emissive:0x4a6a72,emissiveIntensity:0.22}});}}
+// 남(앞) 외벽: 중앙현관 X[-1.6,1.6] 비움, 창문 많음
+exWall((BX0+(-1.6))/2,ROOF_Y/2,BZ0,((-1.6)-BX0),ROOF_Y,WT);
+exWall((1.6+BX1)/2,ROOF_Y/2,BZ0,(BX1-1.6),ROOF_Y,WT);
+box(0,ROOF_Y-0.9,BZ0,3.2,1.8,WT,COL.wallO,{collide:false});  // 현관 상부 인방(통과 가능)
+winRow(BX0+1,-3,BZ0+0.1,5,1.5);winRow(3,BX1-1,BZ0+0.1,5,1.5);
+winRow(BX0+1,-3,BZ0+0.1,5,1.5+FF);winRow(3,BX1-1,BZ0+0.1,5,1.5+FF);
+// 북(복도쪽) 외벽 + 복도 창
+exWall(0,ROOF_Y/2,BZ1,BX1-BX0,ROOF_Y,WT);
+winRow(BX0+2,BX1-2,BZ1-0.1,8,1.6);winRow(BX0+2,BX1-2,BZ1-0.1,8,1.6+FF);
+// 동/서 외벽
+exWall(BX0,ROOF_Y/2,(BZ0+BZ1)/2,WT,ROOF_Y,BZ1-BZ0);
+exWall(BX1,ROOF_Y/2,(BZ0+BZ1)/2,WT,ROOF_Y,BZ1-BZ0);
+// 현관 양문(열린 채)
+function door(x,z,sgn,floor){const g=new THREE.Group();const d=new THREE.Mesh(new THREE.BoxGeometry(1.0,DOOR_H,0.08),toon(COL.door));d.position.set(sgn*0.5,DOOR_H/2,0);d.rotation.y=sgn*0.85;g.position.set(x,0,z);g.add(d);g.traverse(o=>o.isMesh&&(o.castShadow=true));scene.add(g);}
+door(-1.5,BZ0,-1);door(1.5,BZ0,1);
+box(0,0.1,BZ0-1.4,4,0.2,2.6,COL.corr,{collide:false}); // 현관 계단(밖)
+
+// ════════════════ 교실 ════════════════
+function classroom(x0,x1,floor,name){
+  const base=floor*FF, yc=base+FF/2;
+  const cx=(x0+x1)/2, z0=BZ0+WT, z1=CORR_Z0;  // 남쪽 외벽 ~ 복도벽
+  const f=floor; // 0 or 1
+  const O={floor:f};
+  // 바닥(2층만 — 1층은 공통 바닥)
+  if(floor===1)slab(cx,(z0+z1)/2,(x1-x0)-WT,(z1-z0),COL.floor2,base+0.04,floorGrp[1]);
+  // 동/서 벽
+  box(x0,yc,(z0+z1)/2,WT,FF,(z1-z0),COL.wallI,O);
+  // 복도쪽(북, Z=CORR_Z0) 벽 + 문틈(가운데)
+  const dgap=DOOR_W, m=cx;
+  box((x0+m-dgap/2)/2,yc,CORR_Z0,(m-dgap/2-x0),FF,WT,COL.wallI,O);
+  box((m+dgap/2+x1)/2,yc,CORR_Z0,(x1-(m+dgap/2)),FF,WT,COL.wallI,O);
+  box(cx,base+DOOR_H+(FF-DOOR_H)/2,CORR_Z0,dgap,(FF-DOOR_H),WT,COL.wallI,{...O,collide:false}); // 문 상부(통과 가능)
+  // 라벨(복도쪽)
+  const lab=makeLabel(name);lab.position.set(cx,base+FF-0.35,CORR_Z0+0.12);floorGrp[floor].add(lab);
+  // 칠판(남쪽 벽 안쪽)
+  box(cx,base+1.4,z0+0.1,(x1-x0)*0.6,1.2,0.06,COL.board,O);
+  // 창문(남쪽 외벽엔 이미 winRow). 교탁
+  box(cx,base+0.5,z0+1.2,1.4,0.1,0.7,COL.deskTop||0xcaa46e,O);box(cx,base+0.25,z0+1.2,1.2,0.5,0.6,COL.deskleg,{...O,collide:false});
+  // 책상 격자(3x3)
+  for(let r=0;r<3;r++)for(let cc=0;cc<3;cc++){
+    const dx=cx-2.2+cc*2.2, dz=z0+3.0+r*1.5;
+    box(dx,base+0.74,dz,1.0,0.08,0.6,COL.desk,{...O,collide:false});
+    box(dx,base+0.37,dz,0.9,0.72,0.5,COL.deskleg,{...O,collide:false});
+  }
+  // 사물함(복도쪽 벽 안, 동쪽 코너) — 숨을 곳
+  const lk=box(x1-0.7,base+1.0,z1-1.0,1.0,2.0,0.55,COL.locker,O);
+  hideSpots.push({x:x1-1.4,z:z1-1.0,y:base,name});       // 사물함 옆
+  hideSpots.push({x:x0+1.0,z:z0+1.4,y:base,name});       // 칠판 옆 코너
+}
+
+const NAMES=[
+  // floor 0 (1층)
+  [['교무실',BX0+WT,BX0+WT+RW],['보건실',BX0+WT+RW,BX0+WT+2*RW],['1학년 1반',BX0+WT+2*RW,-HALF],
+   ['1학년 2반',HALF,HALF+RW],['2학년 1반',HALF+RW,HALF+2*RW],['급식실',HALF+2*RW,BX1-WT]],
+  // floor 1 (2층)
+  [['2학년 2반',BX0+WT,BX0+WT+RW],['미술실',BX0+WT+RW,BX0+WT+2*RW],['음악실',BX0+WT+2*RW,-HALF],
+   ['과학실',HALF,HALF+RW],['도서관',HALF+RW,HALF+2*RW],['컴퓨터실',HALF+2*RW,BX1-WT]],
+];
+for(let f=0;f<2;f++)for(const [nm,a,b] of NAMES[f])classroom(a,b,f,nm);
+
+// 복도 사물함 줄(양 층) + 숨을 곳
+for(let f=0;f<2;f++){const base=f*FF;for(const lx of[-18,-12,12,18,22]){box(lx,base+1.0,CORR_Z1-0.4,1.6,2.0,0.5,COL.locker,{floor:f});hideSpots.push({x:lx,z:CORR_Z1-1.1,y:base,name:(f?'2층':'1층')+' 복도 사물함'});}}
+
+// ════════════════ 중앙홀 + ㄷ자 계단 ════════════════
+// 중앙홀 좌우 벽(2층 높이, 복도까지) — 교실과 분리
+box(-HALF,ROOF_Y/2,(BZ0+ST.z1)/2,WT,ROOF_Y,ST.z1-BZ0,COL.wallI,{floor:2});
+box(HALF,ROOF_Y/2,(BZ0+ST.z1)/2,WT,ROOF_Y,ST.z1-BZ0,COL.wallI,{floor:2});
+// 계단(실제 단) — Flight1(동측 X[0.1,1.6], Z7→2.5 올라감), 계단참(Z1~2.5,y1.65), Flight2(서측 X[-1.6,-0.1], Z2.5→7)
+const RISE=0.165, TREAD=0.28, NstepH=Math.round(ST.half/RISE); // 한 단 묶음 약 10단
+function flight(xc,xw,zTop,zBot,yBot,dir){ // dir: +1 = z감소하며 상승(Bot=zBot에서 yBot, Top=zTop에서 yBot+half)
+  const n=NstepH, len=Math.abs(zTop-zBot);
+  for(let i=0;i<n;i++){
+    const t=(i+0.5)/n;
+    const z=zBot+(zTop-zBot)*t;
+    const y=yBot+ST.half*t;
+    box(xc,y-RISE/2,z,xw,RISE+0.02,len/n+0.02,COL.step,{collide:false});
+  }
+}
+flight(0.85,1.4, ST.mid, ST.z1, 0, +1);     // 동측 올라감 (Z7,y0 → Z2.5,y1.65)
+box(0,ST.half-0.09,(ST.z0+ST.mid)/2,ST.x*2,0.18,ST.mid-ST.z0,COL.step,{collide:false}); // 계단참 y1.65
+flight(-0.85,1.4, ST.z1, ST.mid, ST.half, -1); // 서측 올라감 (Z2.5,y1.65 → Z7,y3.3)
+// 계단 난간(구멍 둘레, 2층) — 떨어짐 방지
+function rail2(cx,cz,w,d){box(cx,FF+0.5,cz,w,1.0,d,COL.rail,{floor:1});}
+rail2(0,ST.z0,ST.x*2,0.1);                 // 남
+rail2(-ST.x,(ST.z0+ST.z1)/2,0.1,ST.z1-ST.z0); // 서
+rail2(ST.x,(ST.z0+ST.z1)/2,0.1,ST.z1-ST.z0);  // 동
+// 북쪽(Z=ST.z1)은 계단 출구라 비움(서측만 막고 동측 열기). 동측 출구 위해 북쪽 동측만 살짝:
+box(ST.x/2+0.4,FF+0.5,ST.z1, ST.x-0.8,1.0,0.1,COL.rail,{floor:1});
+
+// 계단 층 판정
+function stairY(x,z){
+  if(z>=ST.mid && z<=ST.z1){
+    if(x>=0.05 && x<=ST.x)  return ((ST.z1-z)/(ST.z1-ST.mid))*ST.half;          // 동 flight1
+    if(x>=-ST.x && x<=-0.05) return ST.half + ((z-ST.mid)/(ST.z1-ST.mid))*ST.half; // 서 flight2
+  }
+  if(z>=ST.z0 && z<ST.mid && x>=-ST.x && x<=ST.x) return ST.half; // 계단참
+  return null;
+}
+const inBuilding=(x,z)=>x>BX0&&x<BX1&&z>BZ0&&z<BZ1;
+const onFloor2Area=(x,z)=>inBuilding(x,z)&&stairY(x,z)===null;
+
+// ════════════════ 캐릭터 ════════════════
+const SEEKER_COLORS={cap:0xd4332f,shirt:0xf2ede0,shorts:0x3f6fa0,skin:0xeab78f,hair:0x3a2f28,shoe:0xf2f2f2,pack:null};
+const HIDER_COLORS ={cap:null,shirt:0xe8c83a,shorts:0x3a4a2a,skin:0xd99a6c,hair:0x2a221c,shoe:0xc0392b,pack:0x444444};
+function buildKid(C){const k=new THREE.Group();const skin=toon(C.skin),shirt=toon(C.shirt),shorts=toon(C.shorts),hair=toon(C.hair),shoe=toon(C.shoe);
+  const torso=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.55,0.3),shirt);torso.position.y=0.95;k.add(torso);
+  if(C.pack){const bp=new THREE.Mesh(new THREE.BoxGeometry(0.44,0.52,0.24),toon(C.pack));bp.position.set(0,0.98,-0.24);k.add(bp);}
+  const head=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.36,0.36),skin);head.position.y=1.45;k.add(head);
+  const hr=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.2,0.4),hair);hr.position.y=1.58;k.add(hr);
+  if(C.cap){const cap=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.16,0.42),toon(C.cap));cap.position.y=1.62;k.add(cap);const brim=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.07,0.24),toon(C.cap));brim.position.set(0,1.58,0.32);k.add(brim);}
+  function limb(s,hy,gU,cU,gL,cL,foot){const p=new THREE.Group();p.position.set(s,hy,0);const u=new THREE.Mesh(gU,cU);u.position.y=-gU.parameters.height/2;p.add(u);const lo=new THREE.Mesh(gL,cL);lo.position.y=-gU.parameters.height-gL.parameters.height/2+0.02;p.add(lo);if(foot){const ff=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.1,0.27),foot);ff.position.set(0,-gU.parameters.height-gL.parameters.height-0.02,0.06);p.add(ff);}k.add(p);return p;}
+  const armL=limb(0.33,1.18,new THREE.BoxGeometry(0.13,0.46,0.13),shirt,new THREE.BoxGeometry(0.12,0.16,0.12),skin,null);
+  const armR=limb(-0.33,1.18,new THREE.BoxGeometry(0.13,0.46,0.13),shirt,new THREE.BoxGeometry(0.12,0.16,0.12),skin,null);
+  const legL=limb(0.14,0.68,new THREE.BoxGeometry(0.18,0.40,0.18),shorts,new THREE.BoxGeometry(0.15,0.34,0.15),skin,shoe);
+  const legR=limb(-0.14,0.68,new THREE.BoxGeometry(0.18,0.40,0.18),shorts,new THREE.BoxGeometry(0.15,0.34,0.15),skin,shoe);
+  k.traverse(o=>{if(o.isMesh)o.castShadow=true;});k.scale.setScalar(KID_H/1.64);
+  k.userData={armL,armR,legL,legR,head,walkPhase:Math.random()*6,anim:0};return k;}
+function makeChar(c){const root=new THREE.Group();const prim=buildKid(c);root.add(prim);scene.add(root);return{root,prim,usingGLB:false,mixer:null,walk:null};}
+function animateChar(ch,dt,moving,running){
+  if(ch.usingGLB&&ch.mixer){if(ch.walk){ch.walk.paused=!moving;ch.walk.timeScale=running?1.5:1;}ch.mixer.update(dt);}
+  else{const u=ch.prim.userData;u.anim=THREE.MathUtils.lerp(u.anim,moving?1:0,Math.min(1,dt*8));u.walkPhase+=dt*(running?16:11)*(moving?1:0);const A=u.anim,sw=Math.sin(u.walkPhase);u.legL.rotation.x=sw*0.7*A;u.legR.rotation.x=-sw*0.7*A;u.armL.rotation.x=-sw*0.55*A;u.armR.rotation.x=sw*0.55*A;ch.prim.position.y=Math.abs(sw)*0.06*A;}
+}
+const player=makeChar(SEEKER_COLORS);
+const ppos=new THREE.Vector3(0,0,FZ0+8); let pYaw=0, pY=0, floorUp=false;
+
+const HIDER_N=5;const hiders=[];
+window.__dbg={get playerGLB(){return player.usingGLB;},get hiderGLB(){return hiders.map(h=>h.usingGLB);},get skinned(){let n=0;scene.traverse(o=>{if(o.isSkinnedMesh)n++;});return n;},get pos(){return [ppos.x|0,pY.toFixed(1),ppos.z|0,'floor'+(floorUp?2:1)];}};
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function spawnHiders(){const spots=shuffle(hideSpots.slice()).slice(0,HIDER_N);for(const sp of spots){const ch=makeChar(HIDER_COLORS);ch.root.position.set(sp.x,sp.y,sp.z);ch.root.rotation.y=Math.random()*6.28;ch.found=false;ch.spot=sp;ch.personality=pick(['겁쟁이','겁쟁이','도박꾼']);hiders.push(ch);}document.getElementById('ftot').textContent=HIDER_N;}
+
+// ── GLB 로더 ──
+const GLB_FACING=0;
+function toonifyMat(src){const m=new THREE.MeshToonMaterial({gradientMap:GRAD});if(src){if(src.map){src.map.colorSpace=THREE.SRGBColorSpace;m.map=src.map;}if(src.color)m.color.copy(src.color);if(src.transparent){m.transparent=true;m.opacity=src.opacity;}}return m;}
+function normalizeModel(model){let b=new THREE.Box3().setFromObject(model);const s=new THREE.Vector3();b.getSize(s);model.scale.setScalar(KID_H/(s.y||1));b=new THREE.Box3().setFromObject(model);model.position.y-=b.min.y;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.material=Array.isArray(o.material)?o.material.map(toonifyMat):toonifyMat(o.material);}});}
+function findWalk(c){return c.find(x=>/walk|걷/i.test(x.name))||c[0];}
+async function loadGLB(path){try{const h=await fetch(path,{method:'HEAD'});if(!h.ok)return null;}catch{return null;}const{GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');const loader=new GLTFLoader();try{const{DRACOLoader}=await import('three/addons/loaders/DRACOLoader.js');const d=new DRACOLoader();d.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');loader.setDRACOLoader(d);const{MeshoptDecoder}=await import('three/addons/libs/meshopt_decoder.module.js');loader.setMeshoptDecoder(MeshoptDecoder);}catch{}return new Promise(r=>loader.load(path,g=>r(g),undefined,()=>r(null)));}
+function applyGLB(ch,gltf){const model=skeletonClone(gltf.scene);normalizeModel(model);model.rotation.y=GLB_FACING;ch.prim.visible=false;ch.root.add(model);ch.usingGLB=true;const c=gltf.animations||[];if(c.length){ch.mixer=new THREE.AnimationMixer(model);ch.walk=ch.mixer.clipAction(findWalk(c));ch.walk.play();ch.walk.paused=true;}}
+async function loadAssets(){const[s,h]=await Promise.all([loadGLB('assets/seeker.glb'),loadGLB('assets/hider.glb')]);if(s){applyGLB(player,s);console.log('[asset] seeker.glb 적용');}else console.log('[asset] seeker.glb 없음→박스');if(h){hiders.forEach(x=>applyGLB(x,h));console.log('[asset] hider.glb 적용');}else console.log('[asset] hider.glb 없음→박스');}
+
+// ── 입력 ──
+const keys={};
+addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();if(e.code==='KeyE')tryTag();if(e.code==='KeyG')surrender();});
+addEventListener('keyup',e=>keys[e.code]=false);
+let camYaw=Math.PI,camPitch=0.62,camDist=6.5,dragging=false,lx=0,ly=0;
+canvas.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;});
+addEventListener('mouseup',()=>dragging=false);
+addEventListener('mousemove',e=>{if(!dragging)return;camYaw-=(e.clientX-lx)*0.005;camPitch=clamp(camPitch+(e.clientY-ly)*0.004,0.05,1.0);lx=e.clientX;ly=e.clientY;});
+canvas.addEventListener('wheel',e=>{camDist=clamp(camDist+e.deltaY*0.01,2.2,9);e.preventDefault();},{passive:false});
+
+// ── 게임 ──
+let GS='title',timer=0,found=0;
+const HIDE_T=60,SEEK_T=180;
+function collFloor(){return pY>ST.half?1:0;}
+function resolveCollision(p){const r=0.34,cf=collFloor();for(const c of colliders){if(c.floor!==2&&c.floor!==cf)continue;const dx=p.x-c.x,dz=p.z-c.z,ox=(c.hw+r)-Math.abs(dx),oz=(c.hd+r)-Math.abs(dz);if(ox>0&&oz>0){if(ox<oz)p.x+=dx<0?-ox:ox;else p.z+=dz<0?-oz:oz;}}}
+function lerpAngle(a,b,t){let d=b-a;while(d>Math.PI)d-=6.283;while(d<-Math.PI)d+=6.283;return a+d*t;}
+function computeFloor(){const sy=stairY(ppos.x,ppos.z);if(sy!==null){pY=sy;floorUp=sy>ST.half-0.01;}else if(floorUp&&onFloor2Area(ppos.x,ppos.z))pY=FF;else{pY=0;floorUp=false;}}
+
+const _ray=new THREE.Raycaster();
+function updatePlayer(dt){
+  const fwd=new THREE.Vector3(-Math.sin(camYaw),0,-Math.cos(camYaw)),right=new THREE.Vector3(Math.cos(camYaw),0,-Math.sin(camYaw)),mv=new THREE.Vector3();
+  if(keys['KeyW']||keys['ArrowUp'])mv.add(fwd);if(keys['KeyS']||keys['ArrowDown'])mv.sub(fwd);if(keys['KeyD']||keys['ArrowRight'])mv.add(right);if(keys['KeyA']||keys['ArrowLeft'])mv.sub(right);
+  const running=keys['ShiftLeft']||keys['ShiftRight'];const moving=mv.lengthSq()>1e-4&&GS==='seek';
+  if(moving){mv.normalize();const sp=(running?5.4:3.2)*dt;ppos.x+=mv.x*sp;ppos.z+=mv.z*sp;computeFloor();resolveCollision(ppos);computeFloor();pYaw=lerpAngle(pYaw,Math.atan2(mv.x,mv.z),Math.min(1,dt*12));}
+  player.root.position.set(ppos.x,pY,ppos.z);player.root.rotation.y=pYaw;
+  animateChar(player,dt,moving,running);
+  // 가시성: 안에 있으면 지붕 숨김
+  const inside=inBuilding(ppos.x,ppos.z);roofGroup.visible=!inside;
+  if(inside){const cf=floorUp?1:0;floorGrp[0].visible=cf===0;floorGrp[1].visible=cf===1;ceilGrp[1].visible=false;}
+  else{floorGrp[0].visible=true;floorGrp[1].visible=true;ceilGrp[1].visible=true;}
+  document.getElementById('fl').textContent=floorUp?'2층':(inside?'1층':'운동장');
+  // 어깨너머 카메라 + 스프링암
+  const cp=Math.cos(camPitch),spp=Math.sin(camPitch);
+  const tgt=new THREE.Vector3(ppos.x,pY+1.15,ppos.z);
+  const dir=new THREE.Vector3(Math.sin(camYaw)*cp,spp,Math.cos(camYaw)*cp);
+  let dist=camDist;_ray.set(tgt,dir);_ray.far=camDist;const hit=_ray.intersectObjects(camWalls,false);if(hit.length)dist=Math.max(1.2,hit[0].distance-camera.near-0.1);
+  camera.position.lerp(new THREE.Vector3().copy(tgt).addScaledVector(dir,dist),1-Math.pow(0.0001,dt));
+  camera.lookAt(ppos.x,pY+1.0,ppos.z);
+  sun.position.set(ppos.x+60,90,ppos.z+40);sun.target.position.set(ppos.x,pY,ppos.z);
+}
+
+let nearHider=null,lastGiggle=0;
+function updateSeek(dt){
+  nearHider=null;let best=1e9;
+  for(const h of hiders){if(h.found){if(h.safe){animateChar(h,dt,false,false);}continue;}
+    // 발견 시 도주(도박꾼/겁쟁이): 발견되면 베이스로
+    if(h.fleeing){fleeStep(h,dt);continue;}
+    animateChar(h,dt,false,false);
+    const sameFloor=Math.abs(h.spot.y-pY)<2.0;
+    const d=Math.hypot(h.root.position.x-ppos.x,h.root.position.z-ppos.z);
+    // 시야: 정면 콘 + 거리 6m + 같은 층 → 발견(도주 시작)
+    if(sameFloor){
+      const toH=Math.atan2(h.root.position.x-ppos.x,h.root.position.z-ppos.z);
+      let da=Math.abs(((toH-pYaw)+Math.PI*3)%(Math.PI*2)-Math.PI);
+      if(d<6&&da<0.9){startFlee(h);}
+    }
+    if(sameFloor&&d<best){best=d;nearHider=h;}
+    h.root.rotation.y+=Math.sin(performance.now()*0.002+h.spot.x)*0.003;
+  }
+  const canTag=nearHider&&best<1.8;
+  document.getElementById('tag').style.display=canTag?'block':'none';if(!canTag)nearHider=null;
+  // 긴장: 가까울수록 심박 + 비네팅
+  const vig=document.getElementById('vig');
+  if(best<7){const k=1-best/7;if(performance.now()-lastGiggle>Math.max(280,900-k*700)){lastGiggle=performance.now();SFX.beat(k);}vig.style.boxShadow='inset 0 0 '+(40+k*90)+'px rgba(180,0,40,'+(0.12+k*0.4)+')';}
+  else vig.style.boxShadow='inset 0 0 0 rgba(180,0,40,0)';
+}
+function startFlee(h){if(h.fleeing||h.found)return;if(h.personality==='겁쟁이'&&Math.random()<0.6)return; h.fleeing=true;SFX.spot();toast('앗! 들켰다!');}
+function fleeStep(h,dt){const dx=BASE.x-h.root.position.x,dz=BASE.z-h.root.position.z;const dd=Math.hypot(dx,dz);h.root.position.x+=dx/dd*6*dt;h.root.position.z+=dz/dd*6*dt;h.root.rotation.y=lerpAngle(h.root.rotation.y,Math.atan2(dx,dz),Math.min(1,dt*10));animateChar(h,dt,true,true);
+  if(dd<BASE.r){h.found=true;h.safe=true;h.fleeing=false;toast('친구가 안전지대 도착! (놓침)');document.getElementById('fl2')&&0;checkEnd();}}
+function tryTag(){if(GS!=='seek'||!nearHider)return;nearHider.found=true;found++;SFX.tag();toast('잡았다! '+nearHider.spot.name);document.getElementById('fcur').textContent=found;nearHider.caughtPop=0.5;document.getElementById('tag').style.display='none';nearHider=null;checkEnd();}
+function checkEnd(){const remaining=hiders.filter(h=>!h.found).length;const caught=hiders.filter(h=>h.found&&!h.safe).length;if(remaining===0)endGame(caught>=Math.ceil(HIDER_N/2));}
+function surrender(){if(GS!=='seek')return;toast('못 찾겠다 꾀꼬리!');endGame(false);}
+
+let _ac;function ac(){if(!_ac)_ac=new(AudioContext||webkitAudioContext)();return _ac;}
+function beep(f,t,d,v,a=0.004){try{const c=ac(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=t;o.frequency.value=f;const ct=c.currentTime;g.gain.setValueAtTime(0,ct);g.gain.linearRampToValueAtTime(v,ct+a);g.gain.exponentialRampToValueAtTime(0.001,ct+d);o.start();o.stop(ct+d+0.05);}catch(e){}}
+const SFX={tick:()=>beep(880,'sine',0.08,0.12),go:()=>[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,'square',0.18,0.16),i*90)),tag:()=>{beep(880,'square',0.1,0.2);setTimeout(()=>beep(1320,'sine',0.14,0.18),70);},beat:k=>beep(80,'sine',0.12,0.05+k*0.25),spot:()=>{beep(300,'sawtooth',0.18,0.3);setTimeout(()=>beep(200,'square',0.2,0.25),60);},win:()=>[523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>beep(f,'square',0.22,0.16),i*110)),lose:()=>[440,330,247].forEach((f,i)=>setTimeout(()=>beep(f,'sawtooth',0.3,0.18),i*160))};
+function toast(t){const e=document.createElement('div');e.className='toast';e.textContent=t;document.getElementById('toasts').appendChild(e);setTimeout(()=>e.remove(),2200);}
+
+const countEl=document.getElementById('count'),cnumEl=document.getElementById('cnum'),phaseEl=document.getElementById('phase'),timerEl=document.getElementById('timer');
+function startGame(){document.getElementById('ov').style.display='none';document.getElementById('hud').style.display='flex';document.getElementById('hint').classList.remove('hide');found=0;document.getElementById('fcur').textContent='0';hiders.length=0;spawnHiders();loadAssets();ppos.set(0,0,FZ0+8);pY=0;floorUp=false;pYaw=0;GS='hide';timer=HIDE_T;countEl.style.display='flex';phaseEl.textContent='숨는 시간';try{ac().resume();}catch(e){}}
+function endGame(win){if(GS==='win'||GS==='lose')return;GS=win?'win':'lose';const caught=hiders.filter(h=>h.found&&!h.safe).length;const ov=document.getElementById('ov');ov.innerHTML=win?'<h1>술래 승리! 🎉</h1><div class="sub">'+caught+'/'+HIDER_N+'명 잡음 · 남은 시간 '+Math.max(0,Math.ceil(timer))+'초</div><div class="keys">친구들을 잘 찾아냈어요!</div><div class="btn" id="rb">▶ 다시 하기</div>':'<h1 style="text-shadow:0 3px 0 #7a3b3b">술래 패배…</h1><div class="sub">'+caught+'/'+HIDER_N+'명만 잡음</div><div class="keys">친구들이 더 잘 숨었네요(또는 안전지대로 도망). 다시 도전!</div><div class="btn" id="rb">▶ 다시 하기</div>';ov.style.display='flex';document.getElementById('hud').style.display='none';document.getElementById('tag').style.display='none';document.getElementById('hint').classList.add('hide');document.getElementById('vig').style.boxShadow='none';(win?SFX.win:SFX.lose)();document.getElementById('rb').addEventListener('click',()=>location.reload());}
+document.getElementById('startBtn').addEventListener('click',startGame);
+addEventListener('keydown',e=>{if(e.code==='Enter'&&GS==='title')startGame();});
+
+let last=performance.now(),tickAcc=0;
+function loop(now){requestAnimationFrame(loop);const dt=Math.min((now-last)/1000,0.05);last=now;
+  if(GS==='hide'){timer-=dt;cnumEl.textContent=Math.ceil(timer);tickAcc+=dt;if(tickAcc>=1){tickAcc=0;SFX.tick();}for(const h of hiders)animateChar(h,dt,false,false);
+    camera.position.lerp(new THREE.Vector3(0,18,FZ0-6),1-Math.pow(0.02,dt));camera.lookAt(0,4,BZ0+4);
+    if(timer<=0){GS='seek';timer=SEEK_T;countEl.style.display='none';phaseEl.textContent='찾는 시간';SFX.go();toast('준비됐든 안 됐든 간다!');}}
+  else if(GS==='seek'){timer-=dt;timerEl.textContent=Math.ceil(timer);if(timer<=30)timerEl.style.color='#ff8a8a';updatePlayer(dt);updateSeek(dt);for(const h of hiders){if(h.caughtPop>0){h.caughtPop-=dt;h.root.position.y=h.spot.y+Math.max(0,Math.sin((0.5-h.caughtPop)*6)*0.4);}}if(timer<=0)endGame(hiders.filter(h=>h.found&&!h.safe).length>=Math.ceil(HIDER_N/2));}
+  outline.render(scene,camera);
+}
+requestAnimationFrame(loop);
+camera.position.set(0,18,FZ0-6);camera.lookAt(0,4,BZ0+4);
+requestAnimationFrame(()=>requestAnimationFrame(()=>{const l=document.getElementById('load');if(l){l.classList.add('hide');setTimeout(()=>l.remove(),700);}}));
+</script>
+</body>
+</html>

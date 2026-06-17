@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>무무 행성 집배원</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{width:100%;height:100%;overflow:hidden;background:#aee0e6;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-user-select:none;user-select:none;}
+  #c{display:block;width:100vw;height:100vh;touch-action:none;}
+  #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#aee0e6;color:#2a4a52;font-size:15px;letter-spacing:3px;z-index:50;}
+  #hud{position:fixed;top:14px;left:14px;display:flex;gap:8px;z-index:20;pointer-events:none;}
+  #hud .pill{background:rgba(40,70,80,.42);color:#fff;font-size:13px;padding:7px 13px;border-radius:20px;letter-spacing:1px;}
+  #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(40,70,80,.42);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;letter-spacing:1px;z-index:20;white-space:nowrap;}
+  @media (max-width:640px){#hint{font-size:11px;white-space:normal;text-align:center;width:90%;}}
+  /* 배달 HUD */
+  #parcel{position:fixed;top:52px;left:14px;background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:20;max-width:70vw;box-shadow:0 3px 0 rgba(150,74,28,.6);}
+  #parcel b{color:#ffe9b0;}
+  #codexBtn{position:fixed;top:14px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
+  #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:#e8945b;color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 #b86a38;z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
+  #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;}
+  @keyframes bob{0%,100%{margin-bottom:0;}50%{margin-bottom:7px;}}
+  #toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:23;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;}
+  .toast{background:rgba(40,70,80,.9);color:#fff;font-size:14px;padding:10px 20px;border-radius:16px;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  /* 도감 오버레이 */
+  #codex{position:fixed;inset:0;background:rgba(28,42,52,.86);z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  #codex.show{display:flex;}
+  #codex h2{color:#ffe9b0;font-size:20px;letter-spacing:4px;margin-bottom:6px;}
+  #codex .sub{color:#cfe2e6;font-size:13px;margin-bottom:18px;}
+  #codexGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;max-width:680px;width:100%;max-height:62vh;overflow:auto;}
+  .stamp{background:rgba(255,255,255,.07);border:2px dashed rgba(255,255,255,.18);border-radius:12px;padding:12px 6px;text-align:center;color:#8aa;}
+  .stamp.got{background:#f3ead6;border:2px solid #d87631;color:#5a3a22;box-shadow:0 3px 0 rgba(0,0,0,.2);}
+  .stamp .ic{font-size:26px;line-height:1.1;}
+  .stamp .nm{font-size:11px;margin-top:4px;}
+  #codexClose{margin-top:18px;color:#fff;background:#e8945b;padding:10px 28px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  /* 커스터마이즈 */
+  #customizeBtn{position:fixed;top:52px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
+  #muteBtn{position:fixed;top:90px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:15px;width:38px;height:38px;border-radius:50%;z-index:21;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  #customize{position:fixed;top:0;right:0;width:320px;max-width:86vw;height:100%;background:rgba(28,42,52,.92);z-index:41;display:none;flex-direction:column;padding:22px 20px;overflow:auto;box-shadow:-6px 0 24px rgba(0,0,0,.3);}
+  #customize.show{display:flex;}
+  #customize h2{color:#ffe9b0;font-size:18px;letter-spacing:3px;margin-bottom:4px;}
+  #customize .sub{color:#cfe2e6;font-size:12px;margin-bottom:16px;}
+  .cz-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .cz-label{color:#cfe2e6;font-size:13px;width:52px;flex:none;}
+  .cz-arrow{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:13px;}
+  .cz-name{color:#ffe9b0;font-size:14px;min-width:64px;text-align:center;}
+  .cz-sw{display:flex;gap:6px;flex-wrap:wrap;}
+  .cz-chip{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0;}
+  .cz-chip.sel{border-color:#ffe9b0;box-shadow:0 0 0 2px #e8945b;}
+  .cz-toggle{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:10px;padding:6px 16px;cursor:pointer;font-size:13px;}
+  .cz-toggle.on{background:#e8945b;}
+  #czClose{margin-top:auto;color:#fff;background:#e8945b;padding:10px 0;border-radius:20px;cursor:pointer;text-align:center;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  /* 도감 진행 바 */
+  #codexBar{width:280px;max-width:80%;height:10px;background:rgba(255,255,255,.12);border-radius:6px;margin-bottom:14px;overflow:hidden;}
+  #codexBarFill{height:100%;width:0;background:#e8945b;transition:width .3s;}
+  /* 이모지 보내기 바 */
+  #emotes{position:fixed;bottom:52px;right:14px;display:flex;gap:6px;z-index:21;}
+  #emotes button{width:42px;height:42px;border:none;border-radius:50%;background:rgba(40,70,80,.55);font-size:21px;cursor:pointer;line-height:1;padding:0;transition:transform .1s;}
+  #emotes button:active{transform:scale(.86);}
+  @media (max-width:640px){#emotes{bottom:88px;}#emotes button{width:38px;height:38px;font-size:19px;}}
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="load">행성을 빚는 중…</div>
+
+  <div id="hud">
+    <div class="pill">무무 행성 집배원</div>
+    <div class="pill" id="phase">🕓 한낮</div>
+  </div>
+  <div id="parcel">📮 배달 준비 중…</div>
+  <div id="codexBtn">📒 우표 도감 <span id="codexCount">0/0</span></div>
+  <div id="customizeBtn">👕 꾸미기</div>
+  <div id="muteBtn">🔊</div>
+  <div id="deliver">E — 배달하기</div>
+  <div id="toasts"></div>
+  <div id="emotes">
+    <button data-e="👋">👋</button>
+    <button data-e="😊">😊</button>
+    <button data-e="✨">✨</button>
+    <button data-e="❤️">❤️</button>
+    <button data-e="🎵">🎵</button>
+  </div>
+  <div id="hint">WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · E 배달 · (모바일: 왼쪽 이동 / 오른쪽 시점)</div>
+
+  <div id="codex">
+    <h2>우 표 도 감</h2>
+    <div class="sub">배달을 마치면 그 집의 우표가 수집됩니다</div>
+    <div id="codexBar"><div id="codexBarFill"></div></div>
+    <div id="codexGrid"></div>
+    <div id="codexClose">닫기</div>
+  </div>
+
+  <div id="customize">
+    <h2>꾸 미 기</h2>
+    <div class="sub">집배원을 마음대로 꾸며보세요 (자동 저장)</div>
+    <div id="czControls"></div>
+    <div id="czClose">닫기</div>
+  </div>
+
+<!-- 에러 오버레이: 모듈/런타임 오류를 로딩 화면에 스택과 함께 표시 (town.html:70-71 패턴) -->
+<script>
+window.addEventListener('error',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.fontSize='12px';el.style.padding='24px';el.style.whiteSpace='pre-wrap';el.style.textAlign='left';el.style.lineHeight='1.5';el.style.alignItems='flex-start';el.textContent='⚠ 오류:\n'+(e.message||'')+'\n'+((e.error&&e.error.stack)||'')+'\n@'+(e.filename||'')+':'+(e.lineno||'');}console.error('CAUGHT',e.message,e.error&&e.error.stack);});
+window.addEventListener('unhandledrejection',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.whiteSpace='pre-wrap';el.style.padding='24px';el.style.alignItems='flex-start';el.textContent='⚠ Promise 오류:\n'+(e.reason&&(e.reason.stack||e.reason.message)||e.reason);}});
+</script>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module" src="src/boot.js"></script>
+</body>
+</html>

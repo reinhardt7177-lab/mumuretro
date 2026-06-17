@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# logs / temp
+*.log
+tmp/
+*.tmp
+
+# secrets (만일을 위해 — Meshy 키는 환경변수로만 사용)
+.env
+*.key
+secrets.*

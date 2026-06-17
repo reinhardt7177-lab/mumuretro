@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "WebSearch",
+      "WebFetch(domain:messenger.abeto.co)",
+      "WebFetch(domain:aftermath.site)",
+      "WebFetch(domain:gigazine.net)",
+      "WebFetch(domain:abeto.co)",
+      "WebFetch(domain:www.awwwards.com)"
+    ]
+  }
+}

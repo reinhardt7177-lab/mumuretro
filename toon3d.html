@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>메아리 마을 — Echo Town (Toon 3D)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#aee0e6; font-family:'Segoe UI','Malgun Gothic',sans-serif; }
+  #c { display:block; width:100vw; height:100vh; }
+
+  /* 로딩 */
+  #load { position:fixed; inset:0; background:#aee0e6; display:flex; align-items:center; justify-content:center;
+          color:#3a5560; font-size:18px; letter-spacing:2px; z-index:50; transition:opacity .6s; }
+  #load.hide { opacity:0; pointer-events:none; }
+
+  /* 타이틀 오버레이 */
+  #title { position:fixed; inset:0; z-index:40; display:flex; flex-direction:column; align-items:center; justify-content:center;
+           background:radial-gradient(ellipse at center, rgba(174,224,230,.2), rgba(120,170,180,.55)); text-align:center; }
+  #title h1 { font-size:46px; color:#fff; letter-spacing:6px; text-shadow:0 3px 0 #5b8a93, 0 0 30px rgba(255,255,255,.5); }
+  #title .sub { margin-top:10px; color:#fefefe; font-size:13px; letter-spacing:5px; opacity:.9; }
+  #title .keys { margin-top:34px; color:#fff; font-size:13px; line-height:2.2; background:rgba(40,70,80,.35);
+                 padding:16px 26px; border-radius:14px; backdrop-filter:blur(2px); }
+  #title .keys b { color:#ffe9b0; }
+  #title .btn { margin-top:30px; color:#fff; font-size:15px; letter-spacing:3px; cursor:pointer;
+                background:#e8945b; padding:12px 30px; border-radius:30px; box-shadow:0 5px 0 #b86a38; transition:transform .1s; }
+  #title .btn:active { transform:translateY(4px); box-shadow:0 1px 0 #b86a38; }
+
+  /* HUD */
+  #hint { position:fixed; bottom:14px; left:50%; transform:translateX(-50%); z-index:20; pointer-events:none;
+          color:#2f4a52; font-size:12px; letter-spacing:1px; background:rgba(255,255,255,.4); padding:6px 16px; border-radius:20px; }
+  #hint.hide { display:none; }
+</style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="load">메아리 마을 불러오는 중…</div>
+
+  <div id="title">
+    <h1>메아리 마을</h1>
+    <div class="sub">E C H O &nbsp; T O W N &nbsp;·&nbsp; TOON 3D</div>
+    <div class="keys">
+      <b>W A S D / 방향키</b> — 이동 &nbsp;·&nbsp; <b>Shift</b> — 달리기<br>
+      <b>마우스 드래그</b> — 카메라 회전 &nbsp;·&nbsp; <b>휠</b> — 줌
+    </div>
+    <div class="btn" id="startBtn">▶ 산책 시작</div>
+  </div>
+
+  <div id="hint" class="hide">WASD 이동 · 마우스 드래그 시점 · Shift 달리기</div>
+
+<!-- Three.js: CDN(importmap) — 빌드 불필요, 파일 바로 열기 가능 -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+
+// ════════════════════════════════════════════════════════════
+//  팔레트 (이미지 분위기: 파스텔 하늘 · 따뜻한 벽 · 톤다운 초록)
+// ════════════════════════════════════════════════════════════
+const SKY   = 0xaee0e6;
+const COL = {
+  grass:[0x86b56a, 0x77a85c, 0x6a9a52],
+  road:0x9a9d96, roadLine:0xf2d27a, walk:0xc9c7ba,
+  wall:[0xe9e1cf, 0xf0ead9, 0xd8b89a, 0xe7d9c2, 0xcdd6cf],
+  roof:[0x596066, 0x6d7d84, 0x8a5b4a, 0x4f6d6a, 0x707a80],
+  wood:0x6b4f3a, pole:0x55504a, metal:0x9aa0a2,
+  leaf:[0x6fa64f, 0x5e9243, 0x7cb05c], trunk:0x6e4f35,
+  // 캐릭터
+  skin:0xeab78f, shirt:0xf3eee0, shorts:0x4f7aa0, hair:0x352f2b, pack:0xd06a32, shoe:0x33302d,
+};
+
+// ════════════════════════════════════════════════════════════
+//  렌더러 / 씬 / 카메라
+// ════════════════════════════════════════════════════════════
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NoToneMapping;       // 툰: 평평한 색 유지
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+// 만화풍 외곽선
+const outline = new OutlineEffect(renderer, {
+  defaultThickness: 0.0058,
+  defaultColor: [0.05, 0.06, 0.09],
+  defaultAlpha: 0.95,
+});
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(SKY);
+scene.fog = new THREE.Fog(SKY, 55, 165);          // 먼 곳은 하늘색으로 흐려짐
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 600);
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ════════════════════════════════════════════════════════════
+//  툰 머티리얼 유틸 (gradientMap = 빛을 단계로 끊어 셀셰이딩)
+// ════════════════════════════════════════════════════════════
+function toonGradient(steps){
+  const data = new Uint8Array(steps);
+  for(let i=0;i<steps;i++) data[i] = Math.round(255 * (i/(steps-1)));
+  const tex = new THREE.DataTexture(data, steps, 1, THREE.RedFormat);
+  tex.minFilter = tex.magFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  tex.needsUpdate = true;
+  return tex;
+}
+const GRAD = toonGradient(3);   // 3단계 = 또렷한 셀셰이딩
+function toon(color, opts={}){ return new THREE.MeshToonMaterial({ color, gradientMap:GRAD, ...opts }); }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+// 외곽선 끄기(하늘/바닥처럼 테두리가 거슬리는 큰 면)
+function noOutline(mesh){ mesh.material.userData.outlineParameters = { visible:false }; return mesh; }
+
+// ════════════════════════════════════════════════════════════
+//  라이팅 (태양 + 하늘광 + 그림자)
+// ════════════════════════════════════════════════════════════
+const hemi = new THREE.HemisphereLight(0xcfeef2, 0x6b7355, 0.95);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xfff2d6, 2.7);
+sun.position.set(28, 44, 18);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 140;
+sun.shadow.camera.left = -45; sun.shadow.camera.right = 45;
+sun.shadow.camera.top = 45;   sun.shadow.camera.bottom = -45;
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+scene.add(sun.target);
+
+const fill = new THREE.DirectionalLight(0xbfd6ff, 0.4);   // 그림자측 채움광
+fill.position.set(-20, 18, -16);
+scene.add(fill);
+
+// ════════════════════════════════════════════════════════════
+//  지형: 잔디 + 도로 + 보도
+// ════════════════════════════════════════════════════════════
+const world = new THREE.Group(); scene.add(world);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400,400), toon(COL.grass[1]));
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; noOutline(ground);
+world.add(ground);
+
+// 잔디 색 변주 패치
+for(let i=0;i<26;i++){
+  const s = 6 + Math.random()*14;
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(s,s), toon(pick(COL.grass)));
+  p.rotation.x = -Math.PI/2; p.position.set((Math.random()-.5)*120, 0.02, (Math.random()-.5)*180);
+  p.receiveShadow = true; noOutline(p); world.add(p);
+}
+
+const ROAD_W = 7, ROAD_LEN = 240;
+const road = new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W, ROAD_LEN), toon(COL.road));
+road.rotation.x = -Math.PI/2; road.position.y = 0.03; road.receiveShadow = true; world.add(road);
+
+// 보도(양쪽)
+for(const sx of [-1,1]){
+  const w = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.18, ROAD_LEN), toon(COL.walk));
+  w.position.set(sx*(ROAD_W/2+1.1), 0.09, 0); w.receiveShadow = true; w.castShadow = true; world.add(w);
+}
+// 중앙 점선
+for(let z=-ROAD_LEN/2+4; z<ROAD_LEN/2; z+=7){
+  const d = new THREE.Mesh(new THREE.BoxGeometry(0.35,0.02,2.2), toon(COL.roadLine));
+  d.position.set(0,0.05,z); world.add(d);
+}
+
+// ════════════════════════════════════════════════════════════
+//  건물 (벽 + 4면 피라미드 지붕 + 문/창문)
+// ════════════════════════════════════════════════════════════
+const colliders = [];   // {x,z,hw,hd} 충돌용 발자국
+function addCollider(x,z,hw,hd){ colliders.push({x,z,hw,hd}); }
+
+function makeBuilding(x, z, w, d, h, wallCol, roofCol, faceSign){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), toon(wallCol));
+  wall.position.y = h/2; wall.castShadow = true; wall.receiveShadow = true; g.add(wall);
+
+  // 지붕 (4각뿔)
+  const roofH = 1.4 + Math.random()*1.3;
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w,d)*0.78, roofH, 4), toon(roofCol));
+  roof.rotation.y = Math.PI/4; roof.position.y = h + roofH/2 - 0.05;
+  roof.castShadow = true; g.add(roof);
+
+  // 도로 쪽(faceSign: -1 왼쪽건물은 +x면이 도로) 문 + 창문
+  const fz = d/2 + 0.02;
+  const doorMat = toon(COL.wood);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.8, 0.1), doorMat);
+  door.position.set(-w*0.25, 0.9, fz); g.add(door);
+  const winMat = toon(0xbfe6ef, { emissive:0x35525a, emissiveIntensity:0.25 });
+  for(const wx of [w*0.18, w*0.18 + 1.4]){
+    if(wx > w/2-0.4) continue;
+    const win = new THREE.Mesh(new THREE.BoxGeometry(0.85,0.85,0.1), winMat);
+    win.position.set(wx-0.2, 1.5, fz); g.add(win);
+  }
+  // 2층 창문
+  if(h > 4){
+    for(const wx of [-w*0.2, w*0.2]){
+      const win = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.8,0.1), winMat);
+      win.position.set(wx, h-1.1, fz); g.add(win);
+    }
+  }
+  world.add(g);
+  addCollider(x, z, w/2+0.3, d/2+0.3);
+  return g;
+}
+
+// 도로 양쪽에 건물 줄지어 배치
+let zCur = -ROAD_LEN/2 + 14;
+while(zCur < ROAD_LEN/2 - 14){
+  for(const side of [-1,1]){
+    if(Math.random() < 0.18){ continue; }      // 가끔 빈터(골목감)
+    const w = 4.5 + Math.random()*3.5;
+    const d = 4.5 + Math.random()*3;
+    const h = 3.2 + Math.random()*4.5;
+    const gap = 1.5 + Math.random()*2;
+    const x = side * (ROAD_W/2 + 2.4 + d/2);
+    makeBuilding(x, zCur + (Math.random()-.5)*1.5, w, d, h, pick(COL.wall), pick(COL.roof), -side);
+  }
+  zCur += 7 + Math.random()*4;
+}
+
+// ════════════════════════════════════════════════════════════
+//  소품: 전봇대 · 가로등 · 볼록거울 · 가드레일 · 나무 · 수풀 · 자판기
+// ════════════════════════════════════════════════════════════
+function utilityPole(x,z){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.2,8.5,8), toon(COL.wood));
+  pole.position.y = 4.25; pole.castShadow = true; g.add(pole);
+  for(const y of [7.2, 6.5]){
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(2.4,0.14,0.14), toon(COL.pole));
+    bar.position.y = y; g.add(bar);
+  }
+  world.add(g); addCollider(x,z,0.4,0.4);
+}
+function streetLamp(x,z){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.13,5,8), toon(COL.metal));
+  pole.position.y = 2.5; pole.castShadow = true; g.add(pole);
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(1.1,0.12,0.12), toon(COL.metal));
+  arm.position.set(0.45,5,0); g.add(arm);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.3,0.5),
+                 toon(0xfff4cf, { emissive:0xffce63, emissiveIntensity:0.9 }));
+  head.position.set(0.95,4.92,0); g.add(head);
+  world.add(g); addCollider(x,z,0.3,0.3);
+}
+// 볼록 교통거울 (이미지 속 주황 테두리 거울)
+function convexMirror(x,z, faceX){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,3.4,8), toon(COL.metal));
+  pole.position.y = 1.7; pole.castShadow = true; g.add(pole);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.65,0.1,8,20), toon(0xe8943a));
+  ring.position.y = 3.4; ring.rotation.y = faceX>0?Math.PI/2:-Math.PI/2; g.add(ring);
+  const glass = new THREE.Mesh(new THREE.CircleGeometry(0.62,20),
+                 toon(0xcfe7ec, { emissive:0x6f9aa3, emissiveIntensity:0.3 }));
+  glass.position.set(faceX*0.05,3.4,0); glass.rotation.y = faceX>0?Math.PI/2:-Math.PI/2; g.add(glass);
+  world.add(g); addCollider(x,z,0.3,0.3);
+}
+function guardrail(xSide){
+  const x = xSide*(ROAD_W/2+0.5);
+  const g = new THREE.Group();
+  for(let z=-ROAD_LEN/2+6; z<ROAD_LEN/2-6; z+=3){
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1.0,6), toon(COL.metal));
+    post.position.set(x,0.5,z); g.add(post);
+  }
+  const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1,0.12,ROAD_LEN-12), toon(0xd8dadb));
+  rail.position.set(x,0.95,0); g.add(rail);
+  world.add(g);
+}
+function tree(x,z){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.32,2.6,7), toon(COL.trunk));
+  trunk.position.y = 1.3; trunk.castShadow = true; g.add(trunk);
+  const lc = pick(COL.leaf);
+  for(let i=0;i<3;i++){
+    const r = 1.5 - i*0.25;
+    const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(r,0), toon(lc));
+    blob.position.set((Math.random()-.5)*0.8, 2.8+i*0.9, (Math.random()-.5)*0.8);
+    blob.castShadow = true; g.add(blob);
+  }
+  world.add(g); addCollider(x,z,0.5,0.5);
+}
+function bush(x,z){
+  const b = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6+Math.random()*0.5,0), toon(pick(COL.leaf)));
+  b.position.set(x, 0.5, z); b.castShadow = true; b.receiveShadow = true; world.add(b);
+}
+function vending(x,z){
+  const g = new THREE.Group(); g.position.set(x,0,z);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.1,1.9,0.7), toon(pick([0xd9534f,0x4f8fd9,0xe8a33a])));
+  body.position.y = 0.95; body.castShadow = true; g.add(body);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(0.8,1.3,0.05),
+                 toon(0xdfeef2,{emissive:0x4a6a72,emissiveIntensity:0.4}));
+  panel.position.set(0.15,1.1,0.37); g.add(panel);
+  world.add(g); addCollider(x,z,0.7,0.5);
+}
+
+// 소품 배치
+for(let z=-ROAD_LEN/2+10; z<ROAD_LEN/2-10; z+=18){
+  utilityPole(-(ROAD_W/2+1.6), z);
+  if(Math.random()<0.6) streetLamp(ROAD_W/2+1.6, z+6);
+}
+convexMirror(ROAD_W/2+1.4, -10, -1);
+convexMirror(-(ROAD_W/2+1.4), 26, 1);
+guardrail(1);
+vending(ROAD_W/2+1.7, -2);
+vending(-(ROAD_W/2+1.7), 40);
+for(let i=0;i<10;i++) tree((Math.random()<.5?-1:1)*(ROAD_W/2+5+Math.random()*16), (Math.random()-.5)*ROAD_LEN*0.9);
+for(let i=0;i<40;i++) bush((Math.random()<.5?-1:1)*(ROAD_W/2+2.5+Math.random()*22), (Math.random()-.5)*ROAD_LEN*0.95);
+
+// 구름 (만화풍 — 외곽선 살림)
+for(let i=0;i<9;i++){
+  const cloud = new THREE.Group();
+  const n = 3+Math.floor(Math.random()*3);
+  for(let j=0;j<n;j++){
+    const s = 2.5+Math.random()*2.5;
+    const puff = new THREE.Mesh(new THREE.IcosahedronGeometry(s,0), toon(0xffffff));
+    puff.position.set(j*2.4-(n*1.2), Math.random()*1.2, Math.random()*1.5);
+    cloud.add(puff);
+  }
+  cloud.position.set((Math.random()-.5)*180, 30+Math.random()*16, (Math.random()-.5)*220);
+  world.add(cloud);
+}
+
+// ════════════════════════════════════════════════════════════
+//  주인공 (백팩 멘 아이) — 관절 피벗으로 걷기 애니메이션
+// ════════════════════════════════════════════════════════════
+function buildHero(){
+  const hero = new THREE.Group();
+  const skin=toon(COL.skin), shirt=toon(COL.shirt), shorts=toon(COL.shorts),
+        hair=toon(COL.hair), pack=toon(COL.pack), shoe=toon(COL.shoe);
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.55,0.3), shirt);
+  torso.position.y = 0.95; hero.add(torso);
+
+  const bp = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.52,0.24), pack);
+  bp.position.set(0,0.98,-0.24); hero.add(bp);
+  const flap = new THREE.Mesh(new THREE.BoxGeometry(0.46,0.2,0.05), toon(0xb85a26));
+  flap.position.set(0,1.12,-0.36); hero.add(flap);
+
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.36,0.36,0.36), skin);
+  head.position.y = 1.45; hero.add(head);
+  const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.2,0.4), hair);
+  hairTop.position.y = 1.58; hero.add(hairTop);
+  const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.28,0.12), hair);
+  hairBack.position.set(0,1.46,-0.16); hero.add(hairBack);
+
+  function limb(side, hipY, geoUpper, colUpper, geoLower, colLower, footCol){
+    const pivot = new THREE.Group(); pivot.position.set(side, hipY, 0);
+    const up = new THREE.Mesh(geoUpper, colUpper); up.position.y = -geoUpper.parameters.height/2; pivot.add(up);
+    const lo = new THREE.Mesh(geoLower, colLower); lo.position.y = -geoUpper.parameters.height - geoLower.parameters.height/2 + 0.02; pivot.add(lo);
+    if(footCol){
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.1,0.27), footCol);
+      foot.position.set(0, -geoUpper.parameters.height-geoLower.parameters.height-0.02, 0.06); pivot.add(foot);
+    }
+    hero.add(pivot); return pivot;
+  }
+  const armL = limb( 0.33, 1.18, new THREE.BoxGeometry(0.13,0.46,0.13), shirt, new THREE.BoxGeometry(0.12,0.16,0.12), skin, null);
+  const armR = limb(-0.33, 1.18, new THREE.BoxGeometry(0.13,0.46,0.13), shirt, new THREE.BoxGeometry(0.12,0.16,0.12), skin, null);
+  const legL = limb( 0.14, 0.68, new THREE.BoxGeometry(0.18,0.40,0.18), shorts, new THREE.BoxGeometry(0.15,0.34,0.15), skin, shoe);
+  const legR = limb(-0.14, 0.68, new THREE.BoxGeometry(0.18,0.40,0.18), shorts, new THREE.BoxGeometry(0.15,0.34,0.15), skin, shoe);
+
+  hero.traverse(o=>{ if(o.isMesh) o.castShadow = true; });
+  hero.userData = { armL, armR, legL, legR, head, torso, walkPhase:0, anim:0 };
+  return hero;
+}
+const hero = new THREE.Group();          // 아바타 루트(이동/회전 대상)
+const prim = buildHero();                // 기본 박스 캐릭터(폴백)
+hero.add(prim);
+scene.add(hero);
+const pos = new THREE.Vector3(0,0,ROAD_LEN/2-12);   // 길 끝에서 시작
+hero.position.copy(pos);
+let heroYaw = Math.PI;
+
+// ════════════════════════════════════════════════════════════
+//  Meshy(메쉬 AI) 등 리깅된 GLB 캐릭터 로드 — assets/hero.glb 가 있으면
+//  박스 캐릭터를 자동 교체. PBR→툰 변환 + idle/walk/run 애니메이션 연결.
+// ════════════════════════════════════════════════════════════
+const HERO_GLB    = 'assets/hero.glb';   // Meshy에서 내보낸 리깅+애니메이션 GLB 경로
+const TOONIFY_GLB = true;                // true: 씬과 동일한 셀셰이딩으로 변환
+const GLB_HEIGHT  = 1.7;                 // 목표 키(유닛) — 자동 스케일 기준
+const GLB_FACING  = 0;                   // 모델이 등을 보이면 Math.PI 로 변경
+
+let glbMixer = null, glbActions = {}, glbCurrent = null, usingGLB = false;
+
+function toonifyMaterial(src){
+  const m = new THREE.MeshToonMaterial({ gradientMap: GRAD });
+  if(src){
+    if(src.map){ src.map.colorSpace = THREE.SRGBColorSpace; m.map = src.map; }
+    if(src.color) m.color.copy(src.color);
+    if(src.transparent){ m.transparent = true; m.opacity = src.opacity; }
+    if(src.side !== undefined) m.side = src.side;
+  }
+  return m;
+}
+
+function setGlbState(state){
+  if(!glbActions[state] || glbCurrent === state) return;
+  const next = glbActions[state];
+  const prev = glbCurrent && glbActions[glbCurrent];
+  next.reset().fadeIn(0.2).play();
+  if(prev && prev !== next) prev.fadeOut(0.2);
+  glbCurrent = state;
+}
+
+async function loadHeroGLB(){
+  // 파일 존재 여부 먼저 확인(없으면 조용히 박스 캐릭터 유지)
+  try{ const h = await fetch(HERO_GLB, { method:'HEAD' }); if(!h.ok) throw 0; }
+  catch{ console.log('[hero] '+HERO_GLB+' 없음 → 기본 박스 캐릭터 사용 (Meshy GLB를 넣으면 자동 교체)'); return; }
+
+  const { GLTFLoader }    = await import('three/addons/loaders/GLTFLoader.js');
+  const loader = new GLTFLoader();
+  // Meshy GLB가 압축(Draco/Meshopt)되어 있어도 로드되도록 디코더 연결
+  try{
+    const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js');
+    const draco = new DRACOLoader();
+    draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');
+    loader.setDRACOLoader(draco);
+    const { MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js');
+    loader.setMeshoptDecoder(MeshoptDecoder);
+  }catch(e){ /* 디코더 없이도 비압축 GLB는 로드됨 */ }
+
+  loader.load(HERO_GLB, (gltf)=>{
+    const model = gltf.scene;
+    // 키 정규화 + 발을 y=0 에 맞춤
+    let box = new THREE.Box3().setFromObject(model);
+    const size = new THREE.Vector3(); box.getSize(size);
+    model.scale.setScalar(GLB_HEIGHT / (size.y || 1));
+    box = new THREE.Box3().setFromObject(model);
+    model.position.y -= box.min.y;
+    model.rotation.y = GLB_FACING;
+    model.traverse(o=>{
+      if(o.isMesh){
+        o.castShadow = true; o.receiveShadow = true;
+        if(TOONIFY_GLB)
+          o.material = Array.isArray(o.material) ? o.material.map(toonifyMaterial) : toonifyMaterial(o.material);
+      }
+    });
+    prim.visible = false;
+    hero.add(model);
+    usingGLB = true;
+
+    const clips = gltf.animations || [];
+    console.log('[hero] GLB 로드 완료. 애니메이션 클립:', clips.map(c=>c.name));
+    if(clips.length){
+      glbMixer = new THREE.AnimationMixer(model);
+      const find = kw => clips.find(c => c.name.toLowerCase().includes(kw));
+      const idle = find('idle') || clips[0];
+      const walk = find('walk') || idle;
+      const run  = find('run')  || walk;
+      glbActions.idle = glbMixer.clipAction(idle);
+      glbActions.walk = glbMixer.clipAction(walk);
+      glbActions.run  = glbMixer.clipAction(run);
+      setGlbState('idle');
+    }
+  }, undefined, err => console.log('[hero] GLB 로드 실패 → 기본 캐릭터 유지', err));
+}
+loadHeroGLB();
+
+// ════════════════════════════════════════════════════════════
+//  입력
+// ════════════════════════════════════════════════════════════
+const keys = {};
+addEventListener('keydown', e=>{ keys[e.code]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+addEventListener('keyup',   e=>{ keys[e.code]=false; });
+
+let camYaw = Math.PI, camPitch = 0.42, camDist = 7.5;
+let dragging=false, lastX=0, lastY=0;
+canvas.addEventListener('mousedown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+addEventListener('mouseup', ()=> dragging=false);
+addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  camYaw   -= (e.clientX-lastX)*0.005;
+  camPitch  = Math.max(0.06, Math.min(1.15, camPitch + (e.clientY-lastY)*0.004));
+  lastX=e.clientX; lastY=e.clientY;
+});
+canvas.addEventListener('wheel', e=>{ camDist = Math.max(3.5, Math.min(14, camDist + e.deltaY*0.01)); e.preventDefault(); }, {passive:false});
+// 터치(드래그 시점)
+canvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; dragging=true; lastX=t.clientX; lastY=t.clientY; }, {passive:true});
+canvas.addEventListener('touchmove', e=>{ const t=e.touches[0]; if(!dragging)return;
+  camYaw-=(t.clientX-lastX)*0.005; camPitch=Math.max(0.06,Math.min(1.15,camPitch+(t.clientY-lastY)*0.004)); lastX=t.clientX; lastY=t.clientY; }, {passive:true});
+canvas.addEventListener('touchend', ()=> dragging=false);
+
+// ════════════════════════════════════════════════════════════
+//  업데이트
+// ════════════════════════════════════════════════════════════
+const HALF_ROAD = 999;     // 이동 경계(넉넉히)
+let started = false;
+
+function resolveCollision(p){
+  const r = 0.45;
+  for(const c of colliders){
+    const dx = p.x - c.x, dz = p.z - c.z;
+    const ox = (c.hw + r) - Math.abs(dx);
+    const oz = (c.hd + r) - Math.abs(dz);
+    if(ox > 0 && oz > 0){
+      if(ox < oz) p.x += (dx<0?-ox:ox);
+      else        p.z += (dz<0?-oz:oz);
+    }
+  }
+  p.x = Math.max(-HALF_ROAD, Math.min(HALF_ROAD, p.x));
+  p.z = Math.max(-ROAD_LEN/2+4, Math.min(ROAD_LEN/2-4, p.z));
+}
+
+function lerpAngle(a,b,t){
+  let d = b-a; while(d> Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+  return a + d*t;
+}
+
+function update(dt){
+  // 카메라 기준 이동 방향
+  const fwd = new THREE.Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+  const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw));
+  const move = new THREE.Vector3();
+  if(keys['KeyW']||keys['ArrowUp'])    move.add(fwd);
+  if(keys['KeyS']||keys['ArrowDown'])  move.sub(fwd);
+  if(keys['KeyD']||keys['ArrowRight']) move.add(right);
+  if(keys['KeyA']||keys['ArrowLeft'])  move.sub(right);
+
+  const running = keys['ShiftLeft']||keys['ShiftRight'];
+  const speed = running ? 9.5 : 4.6;
+  const moving = move.lengthSq() > 0.0001;
+
+  if(moving){
+    move.normalize();
+    pos.x += move.x*speed*dt;
+    pos.z += move.z*speed*dt;
+    resolveCollision(pos);
+    heroYaw = lerpAngle(heroYaw, Math.atan2(move.x, move.z), Math.min(1, dt*12));
+  }
+  hero.position.x = pos.x; hero.position.z = pos.z;
+  hero.rotation.y = heroYaw;
+
+  // 캐릭터 애니메이션
+  if(usingGLB){
+    // 리깅된 GLB: 상태(idle/walk/run) 크로스페이드 + 믹서 갱신
+    setGlbState(running && moving ? 'run' : moving ? 'walk' : 'idle');
+    if(glbMixer) glbMixer.update(dt);
+    hero.position.y = 0;
+  } else {
+    // 기본 박스 캐릭터: 절차적 걷기
+    const ud = prim.userData;
+    ud.anim = THREE.MathUtils.lerp(ud.anim, moving?1:0, Math.min(1, dt*8));
+    ud.walkPhase += dt * (running?16:11) * (moving?1:0);
+    const A = ud.anim, sw = Math.sin(ud.walkPhase);
+    ud.legL.rotation.x =  sw * 0.7 * A;
+    ud.legR.rotation.x = -sw * 0.7 * A;
+    ud.armL.rotation.x = -sw * 0.55 * A;
+    ud.armR.rotation.x =  sw * 0.55 * A;
+    hero.position.y = Math.abs(sw) * 0.07 * A;
+    ud.head.position.y = 1.45 + (1-A)*Math.sin(performance.now()*0.002)*0.012;
+  }
+
+  // 카메라 추적 (부드럽게)
+  const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
+  const desired = new THREE.Vector3(
+    pos.x + Math.sin(camYaw)*cp*camDist,
+    1.4 + sp*camDist,
+    pos.z + Math.cos(camYaw)*cp*camDist
+  );
+  const k = 1 - Math.pow(0.0001, dt);
+  camera.position.lerp(desired, k);
+  camera.lookAt(pos.x, 1.25, pos.z);
+
+  // 태양/그림자 카메라가 주인공 따라오게 (그림자 선명 유지)
+  sun.position.set(pos.x+28, 44, pos.z+18);
+  sun.target.position.set(pos.x, 0, pos.z);
+}
+
+// ════════════════════════════════════════════════════════════
+//  루프
+// ════════════════════════════════════════════════════════════
+let last = performance.now();
+function loop(now){
+  requestAnimationFrame(loop);
+  const dt = Math.min((now-last)/1000, 0.05); last = now;
+  if(started) update(dt);
+  outline.render(scene, camera);   // ← 외곽선 포함 렌더
+}
+requestAnimationFrame(loop);
+
+// ════════════════════════════════════════════════════════════
+//  시작 플로우
+// ════════════════════════════════════════════════════════════
+function start(){
+  started = true;
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('hint').classList.remove('hide');
+}
+document.getElementById('startBtn').addEventListener('click', start);
+addEventListener('keydown', e=>{ if(!started && (e.code==='Enter'||e.code==='Space')) start(); });
+
+// 로딩 숨김 (첫 프레임 후)
+requestAnimationFrame(()=> requestAnimationFrame(()=>{
+  document.getElementById('load').classList.add('hide');
+  setTimeout(()=> document.getElementById('load').remove(), 700);
+}));
+</script>
+</body>
+</html>
