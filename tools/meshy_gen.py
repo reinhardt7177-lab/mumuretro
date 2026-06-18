@@ -27,6 +27,29 @@ PROPS = [
     ("flower_bush",  "a small leafy bush dotted with little colorful flowers"),
     ("wooden_dock",  "a short small wooden pier dock with plank deck and support posts"),
     ("picnic_table", "a simple wooden picnic table with attached bench seats"),
+    # ── M6 구역 앵커 ──
+    ("cabin",        "a cozy small wooden log cabin with a sloped shingle roof, a stone chimney, and a small door"),
+    ("lighthouse",   "a tall red and white striped lighthouse tower with a glass light room at the top"),
+    ("windmill",     "a charming old windmill with four wooden sail blades and a small door at the base"),
+    ("gazebo",       "an open hexagonal garden gazebo pavilion with a pointed roof on wooden posts"),
+    ("pagoda",       "a multi-tiered east asian stone pagoda tower with curved tiered roofs"),
+    ("torii_gate",   "a simple red torii gate with two upright posts and two horizontal top beams"),
+    ("telescope",    "a small brass observatory telescope on a wooden tripod stand pointing upward"),
+    ("barn",         "a classic red farm barn with a gambrel roof, white trim, and big front doors"),
+    ("post_office",  "a small cozy post office building with a sign board and a red mailbox in front"),
+    # ── M6 필러 ──
+    ("wooden_bridge","a small arched wooden footbridge with side railings"),
+    ("lotus",        "a pink lotus flower blossom with a couple of round green lily pads"),
+    ("duck",         "a cute chubby cartoon duck"),
+    ("koi",          "a cute plump orange and white koi fish figurine"),
+    ("deer",         "a cute small cartoon deer standing on four legs"),
+    ("sheep",        "a cute fluffy round white cartoon sheep"),
+    ("haystack",     "a round golden straw hay bale"),
+    ("hammock",      "a hammock slung between two short wooden posts"),
+    ("tent",         "a small triangular camping tent"),
+    ("flower_arch",  "a garden arch trellis covered in climbing pink and white flowers"),
+    ("willow_tree",  "a weeping willow tree with long drooping leafy branches"),
+    ("stone_well",   "a small round stone water well with a little wooden roof and a bucket"),
 ]
 
 

@@ -12,3 +12,5 @@ tmp/
 .env
 *.key
 secrets.*
+
+.vercel

@@ -19,6 +19,33 @@ export class Planet {
   // 표면 법선(= 중력 반대 방향).
   normalAt(pos) { return pos.clone().normalize(); }
 
+  // 바이옴 채색 — 각 정점을 가장 가까운 구역 색으로(경계는 2위 구역과 블렌딩). vertexColors 사용.
+  applyBiomeColors(anchors) {
+    const geo = this.mesh.geometry;
+    const pos = geo.attributes.position;
+    const n = pos.count;
+    const colors = new Float32Array(n * 3);
+    const v = new THREE.Vector3(), c = new THREE.Color();
+    const BAND = 0.16;   // 경계 블렌딩 폭(rad)
+    for (let i = 0; i < n; i++) {
+      v.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
+      let a1 = anchors[0], a2 = anchors[0], d1 = Infinity, d2 = Infinity;
+      for (const a of anchors) {
+        const d = v.angleTo(a.dir);
+        if (d < d1) { a2 = a1; d2 = d1; a1 = a; d1 = d; }
+        else if (d < d2) { a2 = a; d2 = d; }
+      }
+      c.copy(a1.color);
+      const diff = d2 - d1;
+      if (diff < BAND) c.lerp(a2.color, 0.5 * (1 - diff / BAND));   // 경계 부드럽게
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    this.mesh.material.vertexColors = true;
+    this.mesh.material.color.set(0xffffff);   // 흰색 베이스 → 정점색이 그대로
+    this.mesh.material.needsUpdate = true;
+  }
+
   // 위도/경도(도) → 반지름 r 표면점.
   latLonToPos(latDeg, lonDeg, r = this.R) {
     const lat = latDeg * Math.PI / 180, lon = lonDeg * Math.PI / 180;

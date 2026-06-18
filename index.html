@@ -20,6 +20,9 @@
   #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:#e8945b;color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 #b86a38;z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
   #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;pointer-events:auto;cursor:pointer;}
   @keyframes bob{0%,100%{margin-bottom:0;}50%{margin-bottom:7px;}}
+  #regionBanner{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(28,42,52,.5);color:#fff;font-size:26px;letter-spacing:6px;padding:14px 34px;border-radius:30px;z-index:24;opacity:0;pointer-events:none;transition:opacity .5s, transform .5s;text-shadow:0 2px 8px rgba(0,0,0,.4);}
+  #regionBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  @media (max-width:640px){#regionBanner{font-size:19px;letter-spacing:3px;padding:11px 22px;}}
   #toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:23;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;}
   .toast{background:rgba(40,70,80,.9);color:#fff;font-size:14px;padding:10px 20px;border-radius:16px;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;}
   .toast.show{opacity:1;transform:translateY(0);}
@@ -75,6 +78,7 @@
   <div id="muteBtn">🔊</div>
   <div id="deliver">E — 배달하기</div>
   <div id="toasts"></div>
+  <div id="regionBanner"></div>
   <div id="emotes">
     <button data-e="👋">👋</button>
     <button data-e="😊">😊</button>

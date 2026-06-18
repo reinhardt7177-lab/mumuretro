@@ -21,6 +21,7 @@ import { makeRNG } from './util/math.js';
 import { loadGLB, prepModel } from './core/Assets.js';
 import { HERO_ASSETS } from './data/healingAssets.js';
 import { PROP_BUILDERS } from './world/Props.js';
+import { regionAt } from './data/regions.js';
 
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
@@ -223,6 +224,32 @@ function animateWater(dt) {
   }
 }
 
+// ── 구역 배너 + 힐링 포인트 발견(M6) ──
+const regionBannerEl = document.getElementById('regionBanner');
+const discovered = new Set((() => { try { return JSON.parse(localStorage.getItem('mumu_regions_v1') || '[]'); } catch (e) { return []; } })());
+let _curRegion = null, _bannerT = 0;
+function showRegionBanner(region) {
+  if (!regionBannerEl) return;
+  regionBannerEl.textContent = `${region.emoji} ${region.name}`;
+  regionBannerEl.classList.add('show');
+  _bannerT = 2.6;
+}
+function updateRegion(dt) {
+  const region = regionAt(player.position, world.anchors);
+  if (region.id !== _curRegion) { _curRegion = region.id; showRegionBanner(region); }
+  if (_bannerT > 0) { _bannerT -= dt; if (_bannerT <= 0 && regionBannerEl) regionBannerEl.classList.remove('show'); }
+  // 힐링 포인트 첫 발견
+  for (const hp of world.healingPoints) {
+    if (discovered.has(hp.region)) continue;
+    if (player.position.angleTo(hp.pos) < 0.12) {
+      discovered.add(hp.region);
+      try { localStorage.setItem('mumu_regions_v1', JSON.stringify([...discovered])); } catch (e) { /* 무시 */ }
+      toast(`✨ ${hp.name} · ${hp.label} 발견! (${discovered.size}/${world.healingPoints.length})`, 2600);
+      chime();
+    }
+  }
+}
+
 const phaseEl = document.getElementById('phase');
 let _hudT = 1, _inRangePrev = false, _stepT = 0;
 function step(dt) {
@@ -245,6 +272,7 @@ function step(dt) {
   }
   emoji.update(dt);
   animateWater(dt);
+  updateRegion(dt);
 
   cullProps();
   nav.update(player, delivery.current, dt);
@@ -277,6 +305,12 @@ window.__dbg = {
   get heroSpots() { return (world.heroSpots || []).length; },
   get waterCaps() { return (world.water || []).length; },
   get heroGlb() { return world._heroGlb ?? -1; },
+  // 구역(M6) 검증용
+  get region() { return regionAt(player.position, world.anchors).id; },
+  get healingPoints() { return (world.healingPoints || []).map(h => h.region); },
+  get discovered() { return discovered.size; },
+  warpToLatLon(lat, lon) { player.setLatLon(lat, lon); engine.camFwd.copy(player.heading); engine.camUp.copy(player.up); return regionAt(player.position, world.anchors).id; },
+  regionFill() { const m = {}; for (const p of world.placed) m[p.theme] = (m[p.theme] || 0) + 1; return m; },
   get timePhase() { return +atmosphere.phase.toFixed(3); },
   get timeName() { return atmosphere.timeName; },
   setTime(p) { atmosphere.setPhase(p); return atmosphere.timeName; },   // 0~1 시간대 스크럽(검증용)
@@ -379,4 +413,4 @@ loadHealingEnv();
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';
 loop.start();
-console.log('[boot] 무무 행성 집배원 — 힐링 존(해변·숲·꽃밭). __selftest()/__dbg로 검증.');
+console.log('[boot] 무무 행성 집배원 — 7개 구역(M6). __selftest()/__dbg로 검증.');
