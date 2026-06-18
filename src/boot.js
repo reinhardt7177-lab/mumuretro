@@ -202,7 +202,10 @@ function doDeliver() {
     _inRangePrev = false;
   }
 }
-if (deliverEl) deliverEl.addEventListener('click', doDeliver);   // 모바일: 프롬프트 탭으로 배달
+if (deliverEl) {
+  deliverEl.addEventListener('click', doDeliver);                                  // 데스크톱 클릭
+  deliverEl.addEventListener('touchend', (e) => { e.preventDefault(); doDeliver(); }, { passive: false });  // 모바일 탭(클릭 지연/누락 대비, preventDefault로 중복 방지)
+}
 
 // 물결 애니메이션 — 힐링 존 물 캡 정점을 반경 방향으로 잔잔히 변위.
 let _wT = 0;

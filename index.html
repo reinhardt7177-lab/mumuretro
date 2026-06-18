@@ -18,7 +18,7 @@
   #parcel b{color:#ffe9b0;}
   #codexBtn{position:fixed;top:14px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
   #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:#e8945b;color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 #b86a38;z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
-  #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;}
+  #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;pointer-events:auto;cursor:pointer;}
   @keyframes bob{0%,100%{margin-bottom:0;}50%{margin-bottom:7px;}}
   #toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:23;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;}
   .toast{background:rgba(40,70,80,.9);color:#fff;font-size:14px;padding:10px 20px;border-radius:16px;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;}

@@ -56,7 +56,7 @@ export class Input {
     canvas.addEventListener('touchmove', e => {
       for (const t of e.changedTouches) {
         if (t.identifier === moveId) {
-          move.x = clamp((t.clientX - ox) / R, -1, 1);
+          move.x = clamp(-(t.clientX - ox) / R, -1, 1);   // 좌우 반전(키보드와 일치)
           move.y = clamp(-(t.clientY - oy) / R, -1, 1);
         } else if (t.identifier === lookId) {
           this._yawDelta -= (t.clientX - llx) * 0.006;   // 좌우 반전
