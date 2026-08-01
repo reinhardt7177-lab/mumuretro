@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { toon, noOut } from '../rendering/Toon.js';
 import { orientationFromFrame, orthonormalizeHeading } from './SurfaceTransform.js';
 import { fbm, ridged, smoothstep, seedNoise } from '../util/noise.js';
-import { REGIONS, latLonDir, waterZones } from '../data/regions.js';
+import { REGIONS, MIST_ZONE, latLonDir, waterZones } from '../data/regions.js';
 
 // ── 행성 배율 ──────────────────────────────────────────────────────────────
 // SCALE=1이 원래 크기(R=34). 반지름·표면 테셀레이션·콘텐츠 밀도가 전부 여기서 유도된다.
@@ -58,7 +58,12 @@ const SHORE_FREQ = 9;   // 해안선 흔들림 주파수(단위 구 기준). 클
 const REGION_RELIEF = {
   village: 0.28, temple: 0.55, beach: 0.35, lake: 0.40,
   meadow: 0.70, forest: 1.00, hill: 1.55,
+  mist: 0.22,        // 분지 바닥은 평탄해야 도깨비를 쫓을 수 있다
 };
+
+// 안개 골짜기 중심 방향(모듈 로드 시 1회)
+const MIST_DIR = latLonDir(MIST_ZONE.lat, MIST_ZONE.lon);
+const MIST_COS_OUTER = Math.cos(Math.min(Math.PI, MIST_ZONE.outer * 1.25));
 const RELIEF_BLEND = 0.30;   // 구역 경계에서 배율이 섞이는 폭(rad)
 
 seedNoise(TERRAIN.seed);
@@ -131,8 +136,37 @@ export class Planet {
       const back = smoothstep(1.35, 2.20, u);                    // 자연 지형으로 복귀
       h = shoreH * (1 - back) + h * back;
     }
+
+    // 안개 골짜기 — 절벽 능선으로 둘러싸인 분지.
+    // 물 성형과 같은 방식이지만 방향이 반대다: 가장자리를 높이 세우고 안쪽을 판다.
+    // 능선 경사가 플레이어 한계(32°)를 넘어야 "벽 오르기 없이는 못 들어감"이 성립한다.
+    {
+      const k = dir.x * MIST_DIR.x + dir.y * MIST_DIR.y + dir.z * MIST_DIR.z;
+      if (k >= MIST_COS_OUTER) {
+        const a = Math.acos(Math.max(-1, Math.min(1, k)));
+        const Z = MIST_ZONE;
+        let mh;
+        if (a <= Z.inner) {
+          mh = -Z.depth;                                          // 바닥(평탄)
+        } else if (a <= Z.rim) {
+          mh = -Z.depth + (Z.wallH + Z.depth) * smoothstep(Z.inner, Z.rim, a);   // 안쪽 절벽
+        } else {
+          mh = Z.wallH * (1 - smoothstep(Z.rim, Z.outer, a));     // 바깥 사면
+        }
+        // 바깥 경계에서 자연 지형으로 섞는다
+        const blend = smoothstep(Z.outer * 0.88, Z.outer * 1.22, a);
+        h = mh * (1 - blend) + h * blend;
+      }
+    }
     return h;
   }
+
+  // 이 방향이 안개 골짜기 안(분지 바닥)인가.
+  inMistValley(dir) {
+    const k = dir.x * MIST_DIR.x + dir.y * MIST_DIR.y + dir.z * MIST_DIR.z;
+    return k >= Math.cos(MIST_ZONE.rim * 0.92);
+  }
+  get mistDir() { return MIST_DIR; }
 
   // 방향 dir에서의 지형 표면점(길이 = R + heightAt).
   surfaceAt(dir, out = new THREE.Vector3()) {

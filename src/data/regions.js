@@ -10,7 +10,21 @@ export const REGIONS = [
   { id: 'meadow',  name: '바람언덕 목장', emoji: '🌾', lat: 32,  lon: 298, ground: 0x9ec46a,             healing: '풍차 전망' },
   { id: 'forest',  name: '속삭이는 숲',  emoji: '🌲', lat: -42, lon: 55,  ground: 0x4f6b3e,             healing: '모닥불 쉼터' },
   { id: 'hill',    name: '별빛 언덕',    emoji: '⛰️', lat: 64,  lon: 28,  ground: 0xa9a2cc,             healing: '별 보는 벤치' },
+  // 8번째 구역 — 절벽으로 둘러싸인 분지. 능력이 없으면 들어갈 수 없다.
+  // 멀리서 보이지만 못 가는 곳이 하나 있어야 "저기는 아직"이 생긴다.
+  { id: 'mist',    name: '안개 골짜기',  emoji: '🌫️', lat: -58, lon: 150, ground: 0x6b6a7e, mystic: true, healing: '잊혀진 우체국' },
 ];
+
+// 안개 골짜기 — 지형에 새길 분지 사양. Planet.heightAt이 참조한다.
+export const MIST_ZONE = {
+  id: 'mist',
+  lat: -58, lon: 150,
+  inner: 0.10,      // 분지 바닥 반경(rad)
+  rim: 0.155,       // 절벽 능선 반경(rad)
+  outer: 0.215,     // 바깥 지형으로 복귀하는 반경(rad)
+  depth: 3.2,       // 바닥 깊이(기준 R 대비)
+  wallH: 13.0,      // 절벽 능선 높이 — 벽 오르기 없이는 못 넘는다
+};
 
 // ── 순수 기하 헬퍼(Planet 인스턴스 없이도 쓸 수 있어야 함) ──────────────────
 // Planet.heightAt이 물 영역을 파내려면 Planet 생성 이전에 물 위치를 알아야 하므로

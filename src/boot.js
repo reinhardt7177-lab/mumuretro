@@ -16,6 +16,8 @@ import { chime, pickup, resumeAudio, startBGM, toggleBGM, isBGMOn, footstep } fr
 import { EmojiLayer } from './entities/EmojiBubble.js';
 import { Townsfolk, TOWN_COLORS } from './entities/Townsfolk.js';
 import { GhostMessenger } from './entities/GhostMessenger.js';
+import { Dokkaebi } from './entities/Dokkaebi.js';
+import { MIST_ZONE } from './data/regions.js';
 import { LocalGhostSource } from './systems/PresenceSource.js';
 import { Customizer } from './systems/Customizer.js';
 import { makeRNG } from './util/math.js';
@@ -234,6 +236,45 @@ function updateTrialHUD(a) {
   trialHudEl.textContent = `🗼 시련 ${trials.streakDots}`;
   trialHudEl.classList.add('show');
 }
+
+// ── 도깨비(M8) ───────────────────────────────────────────────────────────
+// 안개 골짜기에 들어오면 나타나 편지를 훔쳐 달아난다. 잡아야 배달을 이어갈 수 있다.
+// 전투가 아니라 술래잡기 — 달리기(Shift)로 따라붙고 점프로 지형을 질러가면 잡힌다.
+const dokkaebi = new Dokkaebi(planet, {
+  homeDir: planet.mistDir,
+  homeAng: MIST_ZONE.rim * 0.78,
+  speed: 5.6,
+});
+engine.scene.add(dokkaebi.mesh);
+let _mistWasIn = false, _dokkaebiCaught = 0;
+
+function updateDokkaebi(dt) {
+  const inValley = planet.inMistValley(_dirOfPlayer());
+  if (inValley && !_mistWasIn) {
+    // 처음 들어옴 — 도깨비 등장
+    const spawn = planet.mistDir.clone();
+    const t = new THREE.Vector3(0, 1, 0); t.addScaledVector(spawn, -t.dot(spawn));
+    if (t.lengthSq() < 1e-6) t.set(1, 0, 0);
+    t.normalize();
+    const a = MIST_ZONE.rim * 0.5;
+    spawn.multiplyScalar(Math.cos(a)).addScaledVector(t, Math.sin(a)).normalize().multiplyScalar(planet.R);
+    dokkaebi.spawnAt(spawn);
+    toast('🌫️ 도깨비가 편지를 들고 달아나요! 쫓아가서 잡으세요 (Shift로 달리기)', 4200);
+    emoji.spawn(dokkaebi.position, dokkaebi.up, '😈', { size: 1.8, life: 2.4 });
+  }
+  _mistWasIn = inValley;
+
+  const r = dokkaebi.update(dt, player.position);
+  if (r === 'caught') {
+    _dokkaebiCaught++;
+    chime();
+    emoji.spawn(player.position, player.up, '📨', { size: 1.8, life: 2.6 });
+    toast(`📨 편지를 되찾았어요! (${_dokkaebiCaught}번째)`, 3000);
+    badges.setStat('dokkaebiCaught', _dokkaebiCaught);
+  }
+}
+const _dp = new THREE.Vector3();
+const _dirOfPlayer = () => _dp.copy(player.position).normalize();
 
 learning.nextQuestion(player.position);
 updateCodexCount();
@@ -552,6 +593,7 @@ function step(dt) {
   nav.update(player, learning.hintTarget, dt);
   learning.update(engine.camera);   // 팻말 빌보드
   trials.update(dt, player.position);
+  updateDokkaebi(dt);
 
   // 근접 시 프롬프트 + E/탭. 시련소 앞이면 "시련 시작"으로 바뀐다.
   const tower = trials.towerInRange(player.position);
@@ -591,6 +633,44 @@ window.__dbg = {
   warpToLatLon(lat, lon) { player.setLatLon(lat, lon); engine.camFwd.copy(player.heading); engine.camUp.copy(player.up); return regionAt(player.position, world.anchors).id; },
   regionFill() { const m = {}; for (const p of world.placed) m[p.theme] = (m[p.theme] || 0) + 1; return m; },
   // 하늘(검증용)
+  // 안개 골짜기 · 도깨비(M8) 검증용
+  get mist() {
+    const inV = planet.inMistValley(_dirOfPlayer());
+    return {
+      inValley: inV,
+      distToDokkaebiU: dokkaebi.mesh.visible
+        ? +(player.position.angleTo(dokkaebi.position) * planet.R).toFixed(1) : null,
+      dokkaebiVisible: dokkaebi.mesh.visible,
+      caughtTotal: _dokkaebiCaught,
+      rimMaxSlope: +planet.slopeDegAt(
+        planet.mistDir.clone().applyAxisAngle(
+          new THREE.Vector3(1, 0, 0).cross(planet.mistDir).normalize(), MIST_ZONE.rim * 0.85)).toFixed(0),
+    };
+  },
+  warpToMist() {
+    player.position.copy(planet.mistDir).multiplyScalar(planet.R);
+    planet.projectToSurface(player.position);
+    player._initFrame(); player.syncMesh();
+    return 'mist valley';
+  },
+  // 도깨비를 향해 실제로 조준하며 추격(검증용). 카메라 접선 프레임을 매 프레임 도깨비 쪽으로 돌린다.
+  chaseDokkaebi(run = true, maxFrames = 1800) {
+    if (!dokkaebi.mesh.visible) return 'no dokkaebi';
+    const before = _dokkaebiCaught;
+    const dir = new THREE.Vector3();
+    input.setTestIntent({ x: 0, y: 1, run });
+    let f = 0;
+    for (; f < maxFrames; f++) {
+      dir.copy(dokkaebi.position).sub(player.position);
+      dir.addScaledVector(player.up, -dir.dot(player.up));
+      if (dir.lengthSq() > 1e-9) { dir.normalize(); engine.camFwd.copy(dir); }
+      step(1 / 60);
+      if (_dokkaebiCaught > before) break;
+    }
+    input.setTestIntent(null);
+    return { caught: _dokkaebiCaught > before, sec: +(f / 60).toFixed(1),
+             dist: +(player.position.angleTo(dokkaebi.position) * planet.R).toFixed(1) };
+  },
   // 시련소(M8) 검증용
   get trials() {
     return {
