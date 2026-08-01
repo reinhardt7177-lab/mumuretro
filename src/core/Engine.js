@@ -36,7 +36,14 @@ export class Engine {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer = renderer;
-    this.outline = new OutlineEffect(renderer, { defaultThickness: 0.005, defaultColor: [0.05, 0.06, 0.09], defaultAlpha: 0.9 });
+    // 외곽선 — 굵으면 화면이 색칠공부처럼 된다. 레퍼런스(로우폴리 툰)는 외곽선이 아예 없고
+    // 평면 셰이딩과 조명만으로 형태를 읽힌다. 완전히 빼면 실루엣이 뭉개지므로
+    // 얇고 옅게, 색도 검정 대신 어두운 갈청색으로 둬서 "선"이 아니라 "그늘"처럼 보이게 한다.
+    this.outline = new OutlineEffect(renderer, {
+      defaultThickness: 0.0021,
+      defaultColor: [0.13, 0.14, 0.17],
+      defaultAlpha: 0.55,
+    });
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(SKY);

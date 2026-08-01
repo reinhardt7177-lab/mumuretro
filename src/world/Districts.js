@@ -26,10 +26,19 @@ export function localToSurface(center, u, v, planet) {
 
 const _bb = new THREE.Box3();
 
+// 프롭 크기 보정 — 집이 플레이어(1.5u)의 4.3배라 세계가 압도적으로 크게 느껴졌다.
+// 레퍼런스(로우폴리 툰)는 집이 캐릭터의 2.5~3배 정도다. Props.js를 건드리지 않고 여기서 줄인다.
+const PROP_SCALE = {
+  house: 0.72, schoolFacade: 0.8, utilityPole: 0.78, streetlamp: 0.85,
+  cornerShop: 0.85, stationery: 0.85, bathhouse: 0.8, palmTree: 0.85, tree: 0.9,
+};
+
 export function placeProp(scene, planet, key, pos, rotDeg = 0, opts = {}, rng = Math.random) {
   const build = PROP_BUILDERS[key];
   if (!build) { console.warn('[district] unknown prop:', key); return null; }
   const group = build(opts, rng);          // 모든 빌더 (opts, rng) 통일됨
+  const sc = PROP_SCALE[key];
+  if (sc) group.scale.multiplyScalar(sc);  // 바운딩 측정 전에 적용해야 접지·컬링이 맞는다
   // 표면 배치 전 로컬 바운딩으로 높이와 발자국 반경 측정(+Y가 up).
   // 높이는 수평선 컬링이, 발자국은 비탈 접지가 쓴다.
   group.updateMatrixWorld(true);

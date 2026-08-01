@@ -7,6 +7,7 @@ import { localToSurface, placeProp } from './Districts.js';
 import { buildRegionAnchors, regionAt } from '../data/regions.js';
 import { SCALE } from './Planet.js';
 import { buildRoads } from './Roads.js';
+import { buildGroundCover } from './GroundCover.js';
 
 const DEG = Math.PI / 180;
 const Y = new THREE.Vector3(0, 1, 0);
@@ -85,6 +86,12 @@ function fillRegionCell(id, scene, planet, center, rng, placed, inWater) {
       if (rng() < 0.5) put('vending', -3, 2, baseRot);
       if (rng() < 0.5) put('signboard', 1.5, -2, rng() * 360);
       if (rng() < 0.4) put('bench', -1.5, -2.5, rng() * 360);
+    } else if (r < 0.86) {
+      // 목욕탕 — 굴뚝이 있어 멀리서 실루엣으로 읽히는 한국 동네의 시그니처.
+      // 빌더는 있었지만 여기서 호출되지 않아 실제 게임엔 한 채도 없었다.
+      put('bathhouse', jit(1), 2, baseRot);
+      if (rng() < 0.5) put('alleyWall', -4, jit(2), baseRot + 90, { length: 5 + rng() * 3 });
+      if (rng() < 0.4) put('bench', 2.5, -2, rng() * 360);
     } else {
       if (rng() < 0.3) put('schoolFacade', 0, 2.5, baseRot); else put('playground', jit(2), jit(2), rng() * 360);
     }
@@ -282,6 +289,9 @@ export function buildTown(scene, planet, seed = 7) {
     }
   }
 
+  // 3.5) 지면 디테일(풀·꽃) — 인스턴싱 2 드로우콜. 빈 땅이 레퍼런스와의 큰 차이였다.
+  const cover = buildGroundCover(scene, planet, anchors, { count: 9000, seed: 31 });
+
   // 4) 구역 특징(앵커/필러/힐링 포컬)
   const ctx = { placed, water, heroSpots, healingPoints, waterAreas, roads };
   for (const region of anchors) buildRegionFeatures(region, scene, planet, rng, ctx);
@@ -292,5 +302,5 @@ export function buildTown(scene, planet, seed = 7) {
   if (hub) placed.push({ group: hub, key: 'mailbox', theme: 'hub', pos: hubPos, dir: hubPos.clone().normalize() });
 
   console.log(`[town] 7구역 — 프롭 ${placed.length} · 물 ${water.length} · 히어로 ${heroSpots.length} · 힐링포인트 ${healingPoints.length} · 길 간선 ${roads.edges.length}`);
-  return { placed, water, heroSpots, healingPoints, anchors, hubPos, roads };
+  return { placed, water, heroSpots, healingPoints, anchors, hubPos, roads, cover };
 }
