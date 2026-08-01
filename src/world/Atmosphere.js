@@ -11,9 +11,11 @@ export class Atmosphere {
     this.dayLength = opts.dayLength ?? 300;  // 한 바퀴(초). 0이면 정지(수동).
     this.phase = opts.phase ?? 0.28;          // 시작=한낮
     this.kf = TIME_KEYFRAMES.slice().sort((a, b) => a.phase - b.phase);
+    this.sky = null;                          // boot에서 주입(setSky)
     this.apply();
   }
 
+  setSky(sky) { this.sky = sky; this.apply(); }
   setPhase(p) { this.phase = ((p % 1) + 1) % 1; this.apply(); }
   get timeName() { return this._name; }
 
@@ -48,5 +50,8 @@ export class Atmosphere {
     // 글로벌 틴트(전 세계 툰 머티리얼). 공유 유니폼 값만 갱신 → 한 프레임에 재채색.
     _cA.set(a.tint); _cB.set(b.tint); tintUniforms.uTint.value.copy(_cA.lerp(_cB, t));
     tintUniforms.uTintAmt.value = a.tintAmt + (b.tintAmt - a.tintAmt) * t;
+
+    // 하늘(돔·별·구름)도 같은 키프레임으로 구동. Sky는 선택적 — 없으면 단색 배경만 남는다.
+    if (this.sky) this.sky.applyPalette(a, b, t);
   }
 }

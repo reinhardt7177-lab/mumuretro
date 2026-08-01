@@ -19,7 +19,7 @@ export class GhostMessenger extends SurfaceActor {
   // 원격 스냅샷으로 보간. (낮은 틱의 네트워크 소스로 교체해도 같은 lerp로 동작)
   applyState(state, dt) {
     const k = Math.min(1, dt * 6);
-    this.position.lerp(state.position, k).setLength(this.planet.R);
+    this.planet.projectToSurface(this.position.lerp(state.position, k));
     this.heading.lerp(state.heading, k);
     this.up.copy(this.position).normalize();
     orthonormalizeHeading(this.heading, this.up);

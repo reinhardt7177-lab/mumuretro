@@ -9,9 +9,10 @@ const NAMES = ['바람', '구름', '초롱', '노을', '별이', '달이', '소�
 const EMOJIS = ['👋', '😊', '✨', '🎈', '📮', '🎵', '🙂', '🐱', '☀️', '💤', '🌙', '🍙'];
 const _out = { lastAxis: new THREE.Vector3(), lastArc: 0 };
 
-function randomSpherePoint(R, rng) {
+// 구면 균일 샘플 후 지형 표면으로 투영.
+function randomSurfacePoint(planet, rng) {
   const z = rng() * 2 - 1, th = rng() * Math.PI * 2, r = Math.sqrt(1 - z * z);
-  return new THREE.Vector3(r * Math.cos(th), z, r * Math.sin(th)).setLength(R);
+  return planet.projectToSurface(new THREE.Vector3(r * Math.cos(th), z, r * Math.sin(th)));
 }
 
 export class LocalGhostSource {
@@ -20,7 +21,7 @@ export class LocalGhostSource {
     this.rng = makeRNG(seed);
     this.ghosts = [];
     for (let i = 0; i < count; i++) {
-      const position = randomSpherePoint(planet.R, this.rng);
+      const position = randomSurfacePoint(planet, this.rng);
       const up = position.clone().normalize();
       this.ghosts.push({
         id: 'g' + i, name: NAMES[i % NAMES.length],
@@ -40,7 +41,7 @@ export class LocalGhostSource {
         else { g.moving = true; g.heading = randomTangent(g.up, this.rng); g.timer = 2 + this.rng() * 4; }
       }
       if (g.moving) {
-        moveOnSphere(g.position, g.heading, g.heading, speed * dt, this.planet.R, _out);
+        moveOnSphere(g.position, g.heading, g.heading, speed * dt, this.planet, _out);
         g.up.copy(g.position).normalize();
         orthonormalizeHeading(g.heading, g.up);
       }

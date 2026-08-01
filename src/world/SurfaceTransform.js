@@ -19,15 +19,21 @@ export function orthonormalizeHeading(heading, up) {
 
 const _axis = new THREE.Vector3();
 const _up = new THREE.Vector3();
-// position(|·|=R)을 접선 방향 moveDir로 distance 만큼 대원 이동. heading도 같은 회전으로 평행수송.
+// position을 접선 방향 moveDir로 distance 만큼 대원 이동. heading도 같은 회전으로 평행수송.
 // 적용한 회전을 out.lastAxis/out.lastArc에 기록(카메라 프레임 수송용). 이동 없으면 out.lastArc=0.
-export function moveOnSphere(position, heading, moveDir, distance, R, out) {
+//
+// planet에 지형(heightAt)이 있으면 회전 후 지형 표면으로 재투영한다. 호 길이는 기준 반지름 R로
+// 계산하므로 언덕을 올라도 수평 이동 속도는 일정하다(비탈에서 갑자기 느려지지 않음).
+export function moveOnSphere(position, heading, moveDir, distance, planet, out) {
+  const R = typeof planet === 'number' ? planet : planet.R;
   _up.copy(position).normalize();
   _axis.crossVectors(_up, moveDir);
   if (_axis.lengthSq() < 1e-12 || distance === 0) { if (out) out.lastArc = 0; return; }
   _axis.normalize();
   const arc = distance / R;
-  position.applyAxisAngle(_axis, arc).setLength(R); // 회전은 길이 보존, setLength는 부동소수 드리프트 가드
+  position.applyAxisAngle(_axis, arc);
+  if (typeof planet === 'number') position.setLength(R);   // 지형 없음 — 드리프트 가드
+  else planet.projectToSurface(position);                  // 지형 위로 붙임
   heading.applyAxisAngle(_axis, arc);
   if (out) { out.lastAxis.copy(_axis); out.lastArc = arc; }
 }

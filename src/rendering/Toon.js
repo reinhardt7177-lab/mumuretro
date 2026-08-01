@@ -40,8 +40,29 @@ function injectTint(material) {
   return material;
 }
 
+// 매 호출마다 새 머티리얼. 나중에 개별 변형(색·투명도·vertexColors)이 필요한 곳에서 쓴다.
+// 예: Character(커스터마이즈로 색 변경), GhostMessenger(투명도 변경), Planet(정점색 전환).
 export const toon = (color, o = {}) =>
   injectTint(new THREE.MeshToonMaterial({ color, gradientMap: GRAD, ...o }));
+
+// ── 공유(캐시) 머티리얼 ────────────────────────────────────────────────────
+// 같은 색/옵션이면 동일 인스턴스를 재사용. 프롭처럼 생성 후 절대 변형하지 않는 것 전용.
+//
+// 왜 필요한가: 프롭 빌더는 메시마다 toon()을 새로 불러서 행성을 4배로 키우면
+// 고유 머티리얼이 4만 개를 넘어간다. OutlineEffect는 머티리얼마다 아웃라인 사본을
+// 만들어 매 프레임 순회하므로 이것만으로 프레임당 130ms가 날아간다(실측).
+// 실제 서로 다른 조합은 60여 개뿐이라 캐시 한 번으로 거의 전부 회수된다.
+//
+// 주의: 반환된 머티리얼을 변형하면 같은 색을 쓰는 모든 메시가 함께 바뀐다. 변형이 필요하면 toon()을 쓸 것.
+const _sharedToon = new Map();
+export function toonShared(color, o = {}) {
+  const key = new THREE.Color(color).getHex() + '|' +
+    (o && Object.keys(o).length ? JSON.stringify(o, Object.keys(o).sort()) : '');
+  let m = _sharedToon.get(key);
+  if (!m) { m = toon(color, o); _sharedToon.set(key, m); }
+  return m;
+}
+export const sharedToonCount = () => _sharedToon.size;
 
 // 아웃라인 제외(지면·마커 등). town.html:106
 export const noOut = (m) => {

@@ -7,16 +7,21 @@ export class Input {
     this.keys = {};
     this.camPitch = 0.5;     // 절대 피치(라디안)
     this.camDist = 9;        // 절대 거리
-    this.intent = { x: 0, y: 0, run: false, action: false };
+    this.intent = { x: 0, y: 0, run: false, action: false, jump: false };
     this._yawDelta = 0;      // 프레임당 누적 → consumeYaw로 소비
     this._action = false;
+    this._jump = false;
+    this._holdJump = false;      // 모바일 점프 버튼을 누르고 있는 동안 true(활공)
     this._test = null;
     this._touchMove = { active: false, x: 0, y: 0 };
 
     addEventListener('keydown', e => {
+      if (e.repeat) return;                 // 누르고 있어도 점프는 한 번만
       this.keys[e.code] = true;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
-      if (e.code === 'KeyE' || e.code === 'Space') this._action = true;
+      // Space는 점프 전용. 예전엔 배달도 겸했는데 그대로 두면 뛸 때마다 배달이 나간다.
+      if (e.code === 'Space') this._jump = true;
+      if (e.code === 'KeyE') this._action = true;
     });
     addEventListener('keyup', e => { this.keys[e.code] = false; });
 
@@ -81,8 +86,12 @@ export class Input {
 
   consumeYaw() { const d = this._yawDelta; this._yawDelta = 0; return d; }
 
+  // 모바일 점프 버튼 등 외부 트리거용.
+  requestJump() { this._jump = true; }
+  setHoldJump(on) { this._holdJump = !!on; }
+
   poll() {
-    if (this._test) { this.intent = { x: 0, y: 0, run: false, action: false, ...this._test }; return this.intent; }
+    if (this._test) { this.intent = { x: 0, y: 0, run: false, action: false, jump: false, jumpHeld: false, ...this._test }; return this.intent; }
     let x = 0, y = 0;
     if (this.keys['KeyW'] || this.keys['ArrowUp']) y += 1;
     if (this.keys['KeyS'] || this.keys['ArrowDown']) y -= 1;
@@ -92,7 +101,10 @@ export class Input {
     x = clamp(x, -1, 1); y = clamp(y, -1, 1);
     const run = !!(this.keys['ShiftLeft'] || this.keys['ShiftRight']);
     const action = this._action; this._action = false;
-    this.intent = { x, y, run, action };
+    const jump = this._jump; this._jump = false;
+    // 누르고 있는 상태 — 활공 판정에 쓴다(모바일 버튼은 _holdJump로 대체).
+    const jumpHeld = !!this.keys['Space'] || this._holdJump;
+    this.intent = { x, y, run, action, jump, jumpHeld };
     return this.intent;
   }
 }

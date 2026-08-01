@@ -9,6 +9,17 @@ const SKY = 0xaee0e6;
 const _ray = new THREE.Raycaster();
 const _camOff = new THREE.Vector3();
 
+// 그림자/안개는 행성 반지름에 그대로 비례시키면 안 된다.
+// 그림자: 맵 해상도는 고정인데 커버 범위만 커지면 텍셀 밀도가 R에 반비례해 뭉갠다 → 절대 범위로 상한.
+// 안개: 구면 지평선까지의 거리는 R이 아니라 √R에 비례한다(√(2·R·h)) → 그 스케일에 맞춘다.
+const SHADOW_EXTENT_MAX = 40;   // 그림자 카메라 반폭 상한(월드 단위)
+const SUN_HEIGHT = 60;          // 태양이 플레이어 위로 떠 있는 높이(updateCamera와 일치)
+const CAM_HEIGHT = 6.3;         // 지평선 거리 추정용 대표 카메라 고도
+const FOG_NEAR_K = 0.75, FOG_FAR_K = 1.45;   // 지평선 거리 대비 안개 시작/끝
+
+// 카메라 고도 h에서 반지름 R 구면의 지평선까지 표면 거리 근사.
+const horizonDist = (R, h = CAM_HEIGHT) => Math.sqrt(2 * R * h);
+
 export class Engine {
   constructor(canvas, planetR) {
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -23,10 +34,14 @@ export class Engine {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(SKY);
-    scene.fog = new THREE.Fog(SKY, planetR * 2.2, planetR * 4.0);
+    // 지평선에 살짝 걸치는 대기 원근 — 행성이 커질수록 수평선 컬링 팝인이 눈에 띄므로 이를 덮어준다.
+    const hz = horizonDist(planetR);
+    scene.fog = new THREE.Fog(SKY, hz * FOG_NEAR_K, hz * FOG_FAR_K);
     this.scene = scene;
 
-    this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 800);
+    // far: 가시 지오메트리는 전부 구 표면 위 → 지평선 림까지 √(L²−R²) 정도면 충분. R*3이면 넉넉.
+    // near를 0.1→0.3으로 올려 깊이 정밀도 확보(카메라 최소 거리는 2.5로 클램프됨).
+    this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.3, planetR * 3);
 
     // 조명: 반구광 + 그림자 던지는 태양(플레이어 up을 따라감) + 약한 필. (색/강도는 Atmosphere가 구동)
     this.hemi = new THREE.HemisphereLight(0xcfeef2, 0x6b7355, 1.1);
@@ -34,8 +49,12 @@ export class Engine {
     const sun = new THREE.DirectionalLight(0xfff2d6, 2.4);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.near = 1; sun.shadow.camera.far = planetR * 3;
-    const s = planetR * 0.8;
+    // 범위를 절대값으로 상한 → 2048맵 기준 텍셀 밀도가 R과 무관하게 최소 25 texel/u 유지.
+    // (planetR*0.8을 그대로 쓰면 R=136에서 9 texel/u로 떨어져 근거리 그림자가 뭉갠다.)
+    const s = Math.min(planetR * 0.8, SHADOW_EXTENT_MAX);
+    // 태양은 플레이어 위 SUN_HEIGHT. 범위 끝에서 구면이 아래로 꺼지는 양까지 덮는다.
+    const drop = planetR - Math.sqrt(Math.max(0, planetR * planetR - s * s));
+    sun.shadow.camera.near = 1; sun.shadow.camera.far = SUN_HEIGHT + drop + 20;
     sun.shadow.camera.left = -s; sun.shadow.camera.right = s;
     sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s;
     sun.shadow.bias = -0.0006;
@@ -96,7 +115,7 @@ export class Engine {
     this.camera.lookAt(target);
 
     // 태양이 플레이어 위를 따라가 그림자가 항상 발밑에 잡힘
-    this.sun.position.copy(player.position).addScaledVector(up, 60).addScaledVector(this.camRight, 12);
+    this.sun.position.copy(player.position).addScaledVector(up, SUN_HEIGHT).addScaledVector(this.camRight, 12);
     this.sun.target.position.copy(player.position);
   }
 

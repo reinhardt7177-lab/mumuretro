@@ -57,11 +57,53 @@
   /* 도감 진행 바 */
   #codexBar{width:280px;max-width:80%;height:10px;background:rgba(255,255,255,.12);border-radius:6px;margin-bottom:14px;overflow:hidden;}
   #codexBarFill{height:100%;width:0;background:#e8945b;transition:width .3s;}
+  /* 배지 그리드(도감 오버레이 안 탭) */
+  .badge{background:rgba(255,255,255,.07);border:2px dashed rgba(255,255,255,.18);border-radius:12px;padding:10px 6px;text-align:center;color:#8aa;}
+  .badge.got{background:#efe6d0;border:2px solid #c9a227;color:#4a3a18;box-shadow:0 3px 0 rgba(0,0,0,.2);}
+  .badge .bic{font-size:26px;line-height:1.1;}
+  .badge .bnm{font-size:11px;margin-top:4px;font-weight:700;}
+  .badge .bds{font-size:9px;margin-top:2px;opacity:.75;line-height:1.25;}
+  #codexTabs{display:flex;gap:8px;margin-bottom:12px;}
+  #codexTabs .tab{color:#cfe2e6;background:rgba(255,255,255,.08);padding:6px 16px;border-radius:14px;font-size:12px;cursor:pointer;}
+  #codexTabs .tab.on{background:#e8945b;color:#fff;}
+  /* 세션 요약 — 한 판을 마무리하는 순간. 배지가 실제로 읽히는 유일한 화면. */
+  #summary{position:fixed;inset:0;background:rgba(24,38,48,.92);z-index:45;display:none;
+    flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
+  #summary.show{display:flex;}
+  #summary h2{color:#ffe9b0;font-size:24px;letter-spacing:4px;margin-bottom:4px;}
+  #summary .sub{color:#cfe2e6;font-size:13px;margin-bottom:20px;}
+  #sumStats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:18px;}
+  #sumStats .st{background:rgba(255,255,255,.08);border-radius:14px;padding:14px 20px;min-width:88px;}
+  #sumStats .st .v{color:#ffd98a;font-size:26px;font-weight:700;line-height:1;}
+  #sumStats .st .k{color:#bcd; font-size:11px;margin-top:6px;}
+  #sumNew{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:560px;margin-bottom:16px;}
+  #sumNew .nb{background:#efe6d0;color:#4a3a18;border-radius:12px;padding:10px 14px;box-shadow:0 3px 0 rgba(0,0,0,.2);
+    animation:pop .4s ease-out backwards;}
+  #sumNew .nb .e{font-size:24px;}
+  #sumNew .nb .n{font-size:11px;font-weight:700;margin-top:2px;}
+  @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
+  #sumSubjects{color:#cfe2e6;font-size:12px;margin-bottom:18px;line-height:1.8;}
+  #sumClose{color:#fff;background:#e8945b;padding:12px 32px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
   /* 이모지 보내기 바 */
   #emotes{position:fixed;bottom:52px;right:14px;display:flex;gap:6px;z-index:21;}
   #emotes button{width:42px;height:42px;border:none;border-radius:50%;background:rgba(40,70,80,.55);font-size:21px;cursor:pointer;line-height:1;padding:0;transition:transform .1s;}
   #emotes button:active{transform:scale(.86);}
   @media (max-width:640px){#emotes{bottom:88px;}#emotes button{width:38px;height:38px;font-size:19px;}}
+  /* 점프 버튼 — 모바일에서 오른손 엄지 위치. 데스크톱은 Space가 있으니 숨긴다. */
+  #jumpBtn{position:fixed;bottom:52px;right:14px;width:64px;height:64px;border:none;border-radius:50%;
+    background:rgba(232,148,91,.82);color:#fff;font-size:13px;font-weight:700;letter-spacing:1px;
+    z-index:23;cursor:pointer;display:none;align-items:center;justify-content:center;
+    box-shadow:0 4px 0 rgba(184,106,56,.9);transition:transform .08s;}
+  #jumpBtn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(184,106,56,.9);}
+  /* 시련 진행 표시 */
+  #trialHud{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-8px);
+    background:rgba(60,45,20,.72);color:#ffd76a;font-size:15px;letter-spacing:3px;
+    padding:8px 20px;border-radius:16px;z-index:22;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;}
+  #trialHud.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (max-width:640px), (pointer:coarse){
+    #jumpBtn{display:flex;}
+    #emotes{bottom:126px;}
+  }
 </style>
 </head>
 <body>
@@ -77,6 +119,8 @@
   <div id="customizeBtn">👕 꾸미기</div>
   <div id="muteBtn">🔊</div>
   <div id="deliver">E — 배달하기</div>
+  <button id="jumpBtn" aria-label="점프">점프</button>
+  <div id="trialHud"></div>
   <div id="toasts"></div>
   <div id="regionBanner"></div>
   <div id="emotes">
@@ -92,8 +136,23 @@
     <h2>우 표 도 감</h2>
     <div class="sub">배달을 마치면 그 집의 우표가 수집됩니다</div>
     <div id="codexBar"><div id="codexBarFill"></div></div>
+    <div id="codexTabs">
+      <div class="tab on" data-tab="stamps">우표</div>
+      <div class="tab" data-tab="badges">배지 <span id="badgeCount"></span></div>
+    </div>
     <div id="codexGrid"></div>
+    <div id="badgeGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px;max-width:680px;width:100%;max-height:62vh;overflow:auto;"></div>
     <div id="codexClose">닫기</div>
+  </div>
+
+  <!-- 세션 요약 — 하루 목표를 달성하면 뜬다 -->
+  <div id="summary">
+    <h2>오 늘 의 배 달</h2>
+    <div class="sub" id="sumSub"></div>
+    <div id="sumStats"></div>
+    <div id="sumNew"></div>
+    <div id="sumSubjects"></div>
+    <div id="sumClose">계속 놀기</div>
   </div>
 
   <div id="customize">

@@ -12,6 +12,49 @@ export const REGIONS = [
   { id: 'hill',    name: '별빛 언덕',    emoji: '⛰️', lat: 64,  lon: 28,  ground: 0xa9a2cc,             healing: '별 보는 벤치' },
 ];
 
+// ── 순수 기하 헬퍼(Planet 인스턴스 없이도 쓸 수 있어야 함) ──────────────────
+// Planet.heightAt이 물 영역을 파내려면 Planet 생성 이전에 물 위치를 알아야 하므로
+// 여기서 R만 받아 계산한다. Districts.js를 import하면 Props.js까지 끌려와 순환이 된다.
+
+const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);
+
+// 위경도(도) → 단위 방향벡터. Planet.latLonToPos와 같은 규약.
+export function latLonDir(latDeg, lonDeg) {
+  const lat = latDeg * Math.PI / 180, lon = lonDeg * Math.PI / 180;
+  return new THREE.Vector3(
+    Math.cos(lat) * Math.cos(lon),
+    Math.sin(lat),
+    Math.cos(lat) * Math.sin(lon)
+  );
+}
+
+// centerDir에서 로컬 접선(u=동, v=북) 방향으로 월드 거리만큼 이동한 단위 방향.
+export function offsetDir(centerDir, u, v, R) {
+  const up = centerDir.clone().normalize();
+  const ref = Math.abs(up.dot(_Y)) > 0.99 ? _X : _Y;
+  const east = new THREE.Vector3().crossVectors(ref, up).normalize();
+  const north = new THREE.Vector3().crossVectors(up, east).normalize();
+  return up.clone().addScaledVector(east, u / R).addScaledVector(north, v / R).normalize();
+}
+
+// 바다/호수 영역 — {id, center(단위방향), ang(반경 라디안)}.
+// 지형(함몰)과 물 메시가 같은 값을 써야 호수가 언덕 위에 뜨지 않는다.
+export function waterZones(R) {
+  const out = [];
+  for (const r of REGIONS) {
+    if (!r.water) continue;
+    const c = latLonDir(r.lat, r.lon);
+    const z = r.water === 'sea'
+      ? { id: r.id, center: offsetDir(c, 0, -10, R), ang: 0.2 }
+      : { id: r.id, center: c.clone(), ang: 0.085 };
+    // heightAt이 acos 없이 영향권을 빠르게 걸러내기 위한 내적 임계값.
+    // 물가 성형이 u=2.2까지 이어지므로 그보다 넉넉해야 경계에서 지형이 끊기지 않는다.
+    z.cosOuter = Math.cos(Math.min(Math.PI, z.ang * 2.3));
+    out.push(z);
+  }
+  return out;
+}
+
 // 행성 기준 각 구역 앵커 방향벡터 + 색 미리 계산.
 export function buildRegionAnchors(planet) {
   return REGIONS.map(r => ({

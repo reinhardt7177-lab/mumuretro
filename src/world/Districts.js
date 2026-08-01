@@ -15,16 +15,33 @@ function localFrame(center) {
   return { up, east, north };
 }
 
-// 중심에서 로컬 (u=동, v=북) 만큼 떨어진 표면점(반지름 R로 투영).
-export function localToSurface(center, u, v, R) {
+// 중심에서 로컬 (u=동, v=북) 만큼 떨어진 표면점.
+// planet을 주면 지형 높이까지 반영해 투영하고, 숫자(R)를 주면 기준 구면에 투영한다(물 메시용).
+export function localToSurface(center, u, v, planet) {
   const { east, north } = localFrame(center);
-  return center.clone().addScaledVector(east, u).addScaledVector(north, v).setLength(R);
+  const p = center.clone().addScaledVector(east, u).addScaledVector(north, v);
+  if (typeof planet === 'number') return p.setLength(planet);
+  return planet.projectToSurface(p);
 }
+
+const _bb = new THREE.Box3();
 
 export function placeProp(scene, planet, key, pos, rotDeg = 0, opts = {}, rng = Math.random) {
   const build = PROP_BUILDERS[key];
   if (!build) { console.warn('[district] unknown prop:', key); return null; }
   const group = build(opts, rng);          // 모든 빌더 (opts, rng) 통일됨
+  // 표면 배치 전 로컬 바운딩으로 높이와 발자국 반경 측정(+Y가 up).
+  // 높이는 수평선 컬링이, 발자국은 비탈 접지가 쓴다.
+  group.updateMatrixWorld(true);
+  _bb.setFromObject(group);
+  group.userData.propHeight = Number.isFinite(_bb.max.y) ? Math.max(0, _bb.max.y) : 0;
+  const foot = Number.isFinite(_bb.max.x)
+    ? Math.max(Math.abs(_bb.max.x), Math.abs(_bb.min.x), Math.abs(_bb.max.z), Math.abs(_bb.min.z))
+    : 0;
+  group.userData.footprint = foot;
+  // 모든 프롭을 발자국 안 최저 높이에 앉힌다. 작은 프롭도 비탈에서는 0.2~0.4u 떠 보이는데,
+  // 살짝 묻히는 쪽이 훨씬 자연스럽다(나무 밑동이 흙에 파묻힌 것처럼 보임).
+  planet.seatOnSurface(pos, Math.max(foot, 0.45));
   const fr = planet.frameAt(pos, rotDeg);
   group.position.copy(fr.position);
   group.quaternion.copy(fr.quaternion);
@@ -38,10 +55,10 @@ export function buildDistricts(scene, planet, seed = 1) {
   const districtMeta = [];
 
   for (const d of DISTRICTS) {
-    const center = planet.latLonToPos(d.lat, d.lon).setLength(planet.R);
+    const center = planet.projectToSurface(planet.latLonToPos(d.lat, d.lon));
     districtMeta.push({ id: d.id, name: d.name, center });
     for (const p of d.props) {
-      const pos = localToSurface(center, p.u, p.v, planet.R);
+      const pos = localToSurface(center, p.u, p.v, planet);
       const g = placeProp(scene, planet, p.b, pos, p.rot || 0, p.opts || {}, rng);
       if (g) placed.push({ group: g, key: p.b, district: d.id, pos });
     }
@@ -55,7 +72,7 @@ export function buildDistricts(scene, planet, seed = 1) {
     // 구면 균일 샘플
     const z = rng() * 2 - 1, th = rng() * Math.PI * 2;
     const r = Math.sqrt(1 - z * z);
-    const pos = new THREE.Vector3(r * Math.cos(th), z, r * Math.sin(th)).setLength(planet.R);
+    const pos = planet.projectToSurface(new THREE.Vector3(r * Math.cos(th), z, r * Math.sin(th)));
     let tooClose = false;
     for (const m of districtMeta) {
       if (pos.angleTo(m.center) < minAngle) { tooClose = true; break; }

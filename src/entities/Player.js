@@ -29,6 +29,9 @@ export class Player extends SurfaceActor {
     this.up.copy(this.position).normalize();
     projectTangent(_moveDir, this.up);
     this.running = !!intent.run;
+    if (intent.jump) this.jump();
+    this.setGlide(intent.jumpHeld);   // 떨어지는 중 점프 유지 = 활공
+    this.updateVertical(dt);
     const len = _moveDir.length();
     this.moving = len > 1e-3;
     if (this.moving) {
@@ -38,6 +41,7 @@ export class Player extends SurfaceActor {
       this.lastArc = 0;
     }
     this.syncMesh();
-    animateLimbs(this.body, dt, this.moving, this.running);
+    // 공중에서는 팔다리를 젓지 않는다(달리기 모션이 이어지면 어색하다).
+    animateLimbs(this.body, dt, this.moving && this.grounded, this.running);
   }
 }

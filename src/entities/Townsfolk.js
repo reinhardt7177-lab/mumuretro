@@ -20,7 +20,8 @@ export class Townsfolk extends SurfaceActor {
     super(planet, buildKid(colors));
     this.rng = rng;
     this.speed = 1.5; this.turnRate = 5;
-    this.position.copy(posVec).setLength(planet.R);
+    this.position.copy(posVec);
+    planet.projectToSurface(this.position);
     this._initFrame();
     this.home = this.position.clone();
     this.state = 'idle';

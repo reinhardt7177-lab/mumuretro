@@ -3,7 +3,8 @@
 // 플레이어 키 기준: 1.5 유닛.
 
 import * as THREE from 'three';
-import { toon } from '../rendering/Toon.js';
+// 프롭 머티리얼은 생성 후 변형하지 않으므로 전부 공유 인스턴스를 쓴다(드로우콜·아웃라인 비용 급감).
+import { toonShared as toon } from '../rendering/Toon.js';
 import { SWATCH } from '../data/palette.js';
 
 // ─── 내부 헬퍼 ───────────────────────────────────────────────────────────────

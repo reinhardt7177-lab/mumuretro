@@ -5,9 +5,15 @@ import { makeRNG } from '../util/math.js';
 import { toon } from '../rendering/Toon.js';
 import { localToSurface, placeProp } from './Districts.js';
 import { buildRegionAnchors, regionAt } from '../data/regions.js';
+import { SCALE } from './Planet.js';
+import { buildRoads } from './Roads.js';
 
 const DEG = Math.PI / 180;
 const Y = new THREE.Vector3(0, 1, 0);
+// 프롭을 놓을 수 있는 최대 경사(도). 이보다 가파르면 뜨거나 파묻혀 고장처럼 보인다.
+const MAX_PROP_SLOPE = 26;
+const _dirTmp = new THREE.Vector3();
+const _dirOf = (pos) => _dirTmp.copy(pos).normalize();
 const noOutMat = (m) => { m.userData.outlineParameters = { visible: false }; return m; };
 
 // 구면 밀착 캡(땅/물/모래). centerDir 극 중심 구면 일부.
@@ -24,11 +30,12 @@ function sphericalCap(radius, capAngle, centerDir, mat, seg = 40) {
 // toon이 아닌 MeshBasic(평평한 물 느낌, 조명 밴딩 없음). 물결은 boot animateWater가 정점 변위.
 function makeWater(R, capAngle, centerDir, scene, water) {
   const cdir = centerDir.clone().normalize();
-  // 1) 모래/진흙 rim (물보다 크고 살짝 낮게)
-  scene.add(sphericalCap(R + 0.02, capAngle * 1.16, cdir, noOutMat(toon(0xddc99a)), 36));
-
-  // 2) 물 표면 — 깊이 그라데이션 정점색
-  const seg = 48, hSeg = Math.max(10, Math.round(seg * capAngle / Math.PI));
+  // 모래 rim 캡은 없앴다 — 완벽한 원이라 "수영장 테두리"로 보였고,
+  // 지금은 지형 정점색(물가 모래)이 그 역할을 훨씬 자연스럽게 한다.
+  //
+  // 물 메시는 지형이 정하는 해안선보다 넉넉히 크게 깐다. 물 밖에서는 지형이 수면 위로
+  // 올라와 물을 가리므로, 눈에 보이는 해안선 = 지형이 수면과 만나는 선(= 울퉁불퉁)이 된다.
+  const seg = 48 * SCALE, hSeg = Math.max(10, Math.round(seg * capAngle / Math.PI));
   const geo = new THREE.SphereGeometry(R + 0.05, seg, hSeg, 0, Math.PI * 2, 0, capAngle);
   const pos = geo.attributes.position, n = pos.count;
   const cols = new Float32Array(n * 3);
@@ -55,11 +62,10 @@ function makeWater(R, capAngle, centerDir, scene, water) {
 
 // ── 구역별 셀 채움(절차 빌더, GLB 없이도 작동) ──
 function fillRegionCell(id, scene, planet, center, rng, placed, inWater) {
-  const R = planet.R;
   const jit = (s) => (rng() - 0.5) * s;
   const baseRot = rng() * 360;
   const put = (key, u, v, rot, opts) => {
-    const pos = localToSurface(center, u, v, R);
+    const pos = localToSurface(center, u, v, planet);
     if (inWater(pos)) return null;                 // 물 위엔 안 놓음
     const g = placeProp(scene, planet, key, pos, rot, opts || {}, rng);
     if (g) placed.push({ group: g, key, theme: id, pos, dir: pos.clone().normalize() });
@@ -124,29 +130,73 @@ function fillRegionCell(id, scene, planet, center, rng, placed, inWater) {
   }
 }
 
+// ── 원경 랜드마크 ─────────────────────────────────────────────────────────
+// 키 큰 시그니처 건물은 주변 국소 최고점으로 스냅한다. 능선 위에 서야 지평선 너머로
+// 실루엣이 먼저 보이고, 플레이어가 "저기까지 가보자"는 목표를 잡을 수 있다.
+// (수평선 컬링이 프롭 꼭대기 반지름을 쓰므로 높은 곳에 서면 자동으로 더 멀리서 보인다.)
+const PEAK_SNAP = { lighthouse: 15, windmill: 16, pagoda: 14, telescope: 16, torii_gate: 10 };
+
+// 급경사에 걸린 랜드마크를 주변에서 가장 평평한 자리로 옮긴다(뺄 수는 없으므로).
+function findFlatSpot(planet, pos, radius) {
+  let best = null, bestSlope = Infinity;
+  const N = 20;
+  for (let i = 0; i < N; i++) {
+    const a = i * 2.399963;
+    const r = radius * Math.sqrt((i + 1) / N);
+    const p = localToSurface(pos, Math.cos(a) * r, Math.sin(a) * r, planet);
+    const s = planet.slopeDegAt(_dirOf(p));
+    if (s < bestSlope) { bestSlope = s; best = p; }
+  }
+  return bestSlope <= MAX_PROP_SLOPE ? best : null;
+}
+
+function findLocalPeak(planet, pos, radius) {
+  const best = pos.clone();
+  let bestH = pos.length() - planet.R;
+  const N = 28;
+  for (let i = 0; i < N; i++) {
+    const a = i * 2.399963;                       // 황금각 나선 — 원판을 고르게 덮음
+    const r = radius * Math.sqrt((i + 1) / N);
+    const p = localToSurface(pos, Math.cos(a) * r, Math.sin(a) * r, planet);
+    const h = p.length() - planet.R;
+    if (h > bestH) { bestH = h; best.copy(p); }
+  }
+  return best;
+}
+
 // ── 구역 특징: 물 + GLB 앵커/필러 + 힐링 포커스 등록 ──
 function buildRegionFeatures(region, scene, planet, rng, ctx) {
-  const { placed, water, heroSpots, healingPoints, waterAreas } = ctx;
+  const { placed, water, heroSpots, healingPoints, waterAreas, roads } = ctx;
   const R = planet.R;
-  const center = planet.latLonToPos(region.lat, region.lon).setLength(R);
+  const center = planet.projectToSurface(planet.latLonToPos(region.lat, region.lon));
   const wa = waterAreas[region.id];
   const inWater = (pos) => wa && pos.angleTo(wa.center) < wa.ang * 0.96;
 
+  // 물 위 히어로(배·연잎·오리)는 지형이 아니라 해수면 기준으로 놓아야 물에 뜬다.
   const hero = (asset, u, v, rot, onWater) => {
-    const pos = localToSurface(center, u, v, R);
+    let pos = localToSurface(center, u, v, onWater ? R : planet);
     if (!onWater && inWater(pos)) return;
+    const snap = PEAK_SNAP[asset];
+    if (snap && !onWater) pos = findLocalPeak(planet, pos, snap);   // 능선 위로 올림
+    // 급경사면 평평한 자리를 찾아 옮긴다. 랜드마크는 빼버릴 수 없으니 이동시킨다.
+    if (!onWater && planet.slopeDegAt(_dirOf(pos)) > MAX_PROP_SLOPE) {
+      const flat = findFlatSpot(planet, pos, 14);
+      if (flat) pos = flat;
+    }
     heroSpots.push({ asset, pos, dir: pos.clone().normalize(), rot: rot || 0, zone: region.id });
   };
+  // 잡동사니(벤치·등롱·모닥불)는 길과 급경사를 피한다.
   const putG = (key, u, v, rot, opts) => {
-    const pos = localToSurface(center, u, v, R);
-    if (inWater(pos)) return;
+    const pos = localToSurface(center, u, v, planet);
+    if (inWater(pos) || (roads && roads.onRoad(pos))) return;
+    if (planet.slopeDegAt(_dirOf(pos)) > MAX_PROP_SLOPE) return;
     const g = placeProp(scene, planet, key, pos, rot, opts || {}, rng);
     if (g) placed.push({ group: g, key, theme: region.id, pos, dir: pos.clone().normalize() });
   };
 
   // 힐링 포컬 위치(구역 중심 근처, 물 밖)
   let focal = center.clone();
-  if (wa && center.angleTo(wa.center) < wa.ang) focal = localToSurface(center, 0, wa.ang * R + 5, R);
+  if (wa && center.angleTo(wa.center) < wa.ang) focal = localToSurface(center, 0, wa.ang * R + 5, planet);
   healingPoints.push({ region: region.id, name: region.name, label: region.healing, pos: focal.clone(), dir: focal.clone().normalize() });
 
   if (region.id === 'village') {
@@ -191,51 +241,56 @@ export function buildTown(scene, planet, seed = 7) {
   const rng = makeRNG(seed);
   const placed = [], water = [], heroSpots = [], healingPoints = [];
   const R = planet.R;
-  const latStep = 17;
-  const baseLon = 16;
+  // 셀 간격은 각도 기반이라 행성이 커지면 월드 단위 간격도 같이 벌어진다.
+  // 밀도(=단위 면적당 프롭)를 유지하려면 격자를 SCALE 배로 촘촘하게 해야 한다.
+  const latStep = 17 / SCALE;
+  const baseLon = 16 * SCALE;
 
   const anchors = buildRegionAnchors(planet);
   planet.applyBiomeColors(anchors);
 
-  // 1) 구역별 물(해변=바다 / 호수정원=호수) 먼저 만들고 영역 기록
+  // 1) 구역별 물(해변=바다 / 호수정원=호수). 위치는 planet.waterZones에서 가져온다 —
+  //    지형이 같은 값으로 바닥을 파므로, 여기서 따로 계산하면 물과 지형이 어긋난다.
+  //    물 메시는 지형이 아닌 기준 반지름 R(해수면)에 놓인다.
   const waterAreas = {};
-  for (const region of anchors) {
-    if (!region.water) continue;
-    const c = planet.latLonToPos(region.lat, region.lon).setLength(R);
-    if (region.water === 'sea') {
-      const wc = localToSurface(c, 0, -10, R), ang = 0.2;
-      makeWater(R, ang, wc, scene, water); waterAreas[region.id] = { center: wc, ang };
-    } else { // lake
-      const wc = localToSurface(c, 0, 0, R), ang = 0.085;
-      makeWater(R, ang, wc, scene, water); waterAreas[region.id] = { center: wc, ang };
-    }
+  for (const z of planet.waterZones) {
+    const wc = z.center.clone().multiplyScalar(R);
+    // 지형의 해안선이 흔들리므로(heightAt의 shoreWobble) 물 메시는 그보다 넉넉하게.
+    makeWater(R, z.ang * 1.42, wc, scene, water);
+    waterAreas[z.id] = { center: wc, ang: z.ang };
   }
   const inAnyWater = (pos) => {
     for (const id in waterAreas) { const w = waterAreas[id]; if (pos.angleTo(w.center) < w.ang * 0.96) return true; }
     return false;
   };
 
-  // 2) 그리드 셀 채움(거의 균일 간격)
+  // 2) 길 네트워크 — 프롭보다 먼저 깔아야 길 위를 비워둘 수 있다.
+  const roads = buildRoads(scene, planet, anchors);
+
+  // 3) 그리드 셀 채움(거의 균일 간격). 물 위·길 위·급경사는 제외.
+  // 급경사 제외가 핵심: 프롭은 수평으로 놓이는데 땅이 기울면 뜨거나 파묻힌다.
+  // 절벽에 텐트가 떠 있는 것보다 아무것도 없는 편이 훨씬 낫다.
+  const blocked = (pos) => inAnyWater(pos) || roads.onRoad(pos) || planet.slopeDegAt(_dirOf(pos)) > MAX_PROP_SLOPE;
   for (let lat = -78; lat <= 78; lat += latStep) {
     const ring = Math.max(4, Math.round(baseLon * Math.cos(lat * DEG)));
     for (let i = 0; i < ring; i++) {
       const lon = (i / ring) * 360 + (rng() - 0.5) * (360 / ring) * 0.5;
       const la = lat + (rng() - 0.5) * latStep * 0.5;
-      const center = planet.latLonToPos(la, lon).setLength(R);
+      const center = planet.projectToSurface(planet.latLonToPos(la, lon));
       const region = regionAt(center, anchors);
-      fillRegionCell(region.id, scene, planet, center, rng, placed, inAnyWater);
+      fillRegionCell(region.id, scene, planet, center, rng, placed, blocked);
     }
   }
 
-  // 3) 구역 특징(앵커/필러/힐링 포컬)
-  const ctx = { placed, water, heroSpots, healingPoints, waterAreas };
+  // 4) 구역 특징(앵커/필러/힐링 포컬)
+  const ctx = { placed, water, heroSpots, healingPoints, waterAreas, roads };
   for (const region of anchors) buildRegionFeatures(region, scene, planet, rng, ctx);
 
   // 우체통 허브(마을 시작점) — 배달 시작
-  const hubPos = planet.latLonToPos(15, -4).setLength(R);
+  const hubPos = planet.projectToSurface(planet.latLonToPos(15, -4));
   const hub = placeProp(scene, planet, 'mailbox', hubPos, 180, {}, rng);
   if (hub) placed.push({ group: hub, key: 'mailbox', theme: 'hub', pos: hubPos, dir: hubPos.clone().normalize() });
 
-  console.log(`[town] 7구역 — 프롭 ${placed.length} · 물 ${water.length} · 히어로 ${heroSpots.length} · 힐링포인트 ${healingPoints.length}`);
-  return { placed, water, heroSpots, healingPoints, anchors, hubPos };
+  console.log(`[town] 7구역 — 프롭 ${placed.length} · 물 ${water.length} · 히어로 ${heroSpots.length} · 힐링포인트 ${healingPoints.length} · 길 간선 ${roads.edges.length}`);
+  return { placed, water, heroSpots, healingPoints, anchors, hubPos, roads };
 }
