@@ -204,7 +204,7 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
 const trialSpots = world.healingPoints.map(hp => {
   const a = world.anchors.find(x => x.id === hp.region);
   const pos = hp.pos.clone();
-  planet.seatOnSurface(pos, 2.2);
+  planet.seatOnSurface(pos, 3.2);   // 넓어진 기단에 맞춰 접지 반경도 키운다
   return { regionId: hp.region, name: a ? a.name : hp.region, emoji: a ? a.emoji : '🗼', pos, dir: pos.clone().normalize() };
 });
 
@@ -748,7 +748,7 @@ window.__dbg = {
     return {
       domeAtCamera: sky.dome.position.distanceTo(engine.camera.position) < 0.01,
       starsVisible: sky.stars.visible,
-      starOpacity: +sky.starMat.opacity.toFixed(2),
+      starOpacity: +sky._starI.toFixed(2),
       sunVisible: sky.sunDisc.visible,
       moonVisible: sky.moonDisc.visible,
       sunElevDeg: +(Math.asin(Math.max(-1, Math.min(1,

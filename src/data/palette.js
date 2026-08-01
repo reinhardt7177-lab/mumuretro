@@ -29,14 +29,16 @@ export const SWATCH = {
 //   "노을인데 해가 지평선 한참 아래"처럼 어긋난다. 시간대 이름과 직접 짝지어 둔다.
 //   (그림자용 DirectionalLight는 별개로 계속 머리 위에 있어 그림자 품질을 지킨다.)
 export const TIME_KEYFRAMES = [
+  // tintAmt — 전 세계 툰 머티리얼에 곱해지는 글로벌 무드. 세게 잡으면 화면이 단색으로 물들어
+  // 구역별 땅 색과 프롭 색이 전부 뭉갠다. 분위기는 하늘·조명이 만들고 틴트는 거들기만 한다.
   { phase: 0.00, name: '새벽', sky: 0xb9c7d6, skyTop: 0x7f96bd, skyHorizon: 0xe8c9b8, starI: 0.35, cloudTint: 0xd9c9d6, sunElev: 3,
-    fog: 0xc4cdd6, sun: 0xffd9b0, sunI: 1.4, hemiSky: 0xc7d2e0, hemiGround: 0x6b7355, tint: 0x8aa0c8, tintAmt: 0.22 },
+    fog: 0xc4cdd6, sun: 0xffd9b0, sunI: 1.4, hemiSky: 0xc7d2e0, hemiGround: 0x6b7355, tint: 0x8aa0c8, tintAmt: 0.15 },
   { phase: 0.28, name: '한낮', sky: 0xaee0e6, skyTop: 0x5fa8dd, skyHorizon: 0xd8f0f2, starI: 0.00, cloudTint: 0xffffff, sunElev: 64,
     fog: 0xbfe2e6, sun: 0xfff2d6, sunI: 2.4, hemiSky: 0xcfeef2, hemiGround: 0x6b7355, tint: 0xffffff, tintAmt: 0.00 },
   { phase: 0.60, name: '노을', sky: 0xf0b27a, skyTop: 0x9c7fb0, skyHorizon: 0xffc07a, starI: 0.10, cloudTint: 0xffbf95, sunElev: 5,
-    fog: 0xe8a878, sun: 0xff9a52, sunI: 2.1, hemiSky: 0xf3c79a, hemiGround: 0x7a5a44, tint: 0xff8a4a, tintAmt: 0.30 },
+    fog: 0xe8a878, sun: 0xff9a52, sunI: 2.1, hemiSky: 0xf3c79a, hemiGround: 0x7a5a44, tint: 0xff8a4a, tintAmt: 0.20 },
   { phase: 0.78, name: '땅거미', sky: 0x6a5f86, skyTop: 0x3b3a63, skyHorizon: 0xb07e94, starI: 0.55, cloudTint: 0x9a86a8, sunElev: -9,
-    fog: 0x6d6488, sun: 0xff7e6a, sunI: 1.2, hemiSky: 0x7a6f94, hemiGround: 0x40384f, tint: 0x8a6aa0, tintAmt: 0.34 },
+    fog: 0x6d6488, sun: 0xff7e6a, sunI: 1.2, hemiSky: 0x7a6f94, hemiGround: 0x40384f, tint: 0x8a6aa0, tintAmt: 0.23 },
   { phase: 0.90, name: '밤', sky: 0x2c3552, skyTop: 0x151c33, skyHorizon: 0x44507a, starI: 1.00, cloudTint: 0x4a5578, sunElev: -42,
-    fog: 0x303a59, sun: 0x9fb0d8, sunI: 0.6, hemiSky: 0x3a4566, hemiGround: 0x20263a, tint: 0x3a5a8a, tintAmt: 0.42 },
+    fog: 0x303a59, sun: 0x9fb0d8, sunI: 0.6, hemiSky: 0x3a4566, hemiGround: 0x20263a, tint: 0x3a5a8a, tintAmt: 0.28 },
 ];

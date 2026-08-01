@@ -50,12 +50,45 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   const k = new THREE.Group();
   const skin = toon(L.skin), jacket = toon(L.jacket), pants = toon(L.pants), shoe = toon(L.shoe);
 
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.3), jacket);
-  torso.position.y = 0.95; k.add(torso);
-  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.52, 0.24), toon(0xd06a32));
-  pack.position.set(0, 0.98, -0.24); k.add(pack);                // 우편가방
+  // 파츠를 늘리되 머티리얼 인스턴스는 재사용한다 — 캐릭터가 177명이라 머티리얼이 늘면 그대로 비용이 된다.
+  const belt = toon(0x4a3a2a), cape = toon(L.cap);
+
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.3), jacket);
+  torso.position.y = 1.0; k.add(torso);
+  // 튜닉 자락 — 허리 아래로 퍼지는 한 단. 실루엣이 확 살아난다.
+  const tunic = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.26, 0.36), jacket);
+  tunic.position.y = 0.68; k.add(tunic);
+  const beltM = new THREE.Mesh(new THREE.BoxGeometry(0.53, 0.09, 0.33), belt);
+  beltM.position.y = 0.79; k.add(beltM);
+  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.06), toon(0xe0c060));
+  buckle.position.set(0, 0.79, 0.18); k.add(buckle);
+  // 어깨 — 팔 뿌리를 덮어 각진 느낌을 줄인다
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.3), jacket);
+    sh.position.set(s * 0.31, 1.19, 0); k.add(sh);
+  }
+  // 망토 — 뒤로 살짝 벌어지게 기울인다
+  const cp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.66, 0.07), cape);
+  cp.position.set(0, 0.95, -0.2); cp.rotation.x = -0.12; k.add(cp);
+
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.22), toon(0xd06a32));
+  pack.position.set(0, 0.98, -0.3); k.add(pack);                 // 우편가방
+  const strap = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.5, 0.42), belt);
+  strap.position.set(0.14, 1.02, -0.06); strap.rotation.z = 0.22; k.add(strap);
+
+  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.09, 0.16), skin);
+  neck.position.y = 1.28; k.add(neck);
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.36), skin);
   head.position.y = 1.45; k.add(head);
+  // 뾰족 귀 — 레퍼런스의 실루엣 포인트
+  for (const s of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 4), skin);
+    ear.position.set(s * 0.2, 1.47, -0.02);
+    ear.rotation.z = s * -0.9; ear.rotation.y = s * 0.3;
+    k.add(ear);
+  }
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.05), skin);
+  nose.position.set(0, 1.42, 0.19); k.add(nose);
 
   buildHair(L.hairId, L.hairColor, k);
 
@@ -72,8 +105,15 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
     const lo = new THREE.Mesh(gL, cL);
     lo.position.y = -gU.parameters.height - gL.parameters.height / 2 + 0.02; p.add(lo);
     if (foot) {
-      const ff = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.27), foot);
+      // 부츠 — 발등 + 목 한 단. 각진 발보다 실루엣이 낫다.
+      const ff = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.11, 0.28), foot);
       ff.position.set(0, -gU.parameters.height - gL.parameters.height - 0.02, 0.06); p.add(ff);
+      const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.13, 0.19), foot);
+      cuff.position.set(0, -gU.parameters.height - gL.parameters.height + 0.09, 0); p.add(cuff);
+    } else {
+      // 손
+      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.13, 0.14), cL);
+      hand.position.y = -gU.parameters.height - gL.parameters.height - 0.03; p.add(hand);
     }
     k.add(p); return p;
   }

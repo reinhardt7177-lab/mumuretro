@@ -107,10 +107,14 @@ export class Sky {
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
     starGeo.setAttribute('size', new THREE.Float32BufferAttribute(ss, 1));
+    // ★ transparent:true로 두면 별이 "투명 패스"로 밀려 불투명 지오메트리 뒤에 그려지고,
+    // 그 결과 절벽 같은 지형을 뚫고 흰 점이 보인다. 불투명 큐에 두고 renderOrder로 맨 앞에 배치한다.
+    // 밝기 조절은 opacity 대신 색을 스케일해서 한다.
     this.starMat = new THREE.PointsMaterial({
-      color: 0xffffff, size: 2.6, sizeAttenuation: false,
-      transparent: true, opacity: 0, depthWrite: false, fog: false,
+      color: 0x000000, size: 2.6, sizeAttenuation: false,
+      transparent: false, depthWrite: false, fog: false,
     });
+    this._starI = 0;
     this.starMat.userData.outlineParameters = { visible: false };
     this.stars = new THREE.Points(starGeo, this.starMat);
     this.stars.renderOrder = -999;
@@ -182,8 +186,9 @@ export class Sky {
     // 노을엔 주황 실루엣, 밤엔 검푸른 실루엣이 된다.
     u.uMtnFar.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.45).multiplyScalar(0.80);
     u.uMtnNear.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.30).multiplyScalar(0.58);
-    this.starMat.opacity = a.starI + (b.starI - a.starI) * t;
-    this.stars.visible = this.starMat.opacity > 0.015;      // 낮에는 아예 그리지 않음
+    this._starI = a.starI + (b.starI - a.starI) * t;
+    this.starMat.color.setScalar(this._starI);              // 불투명 유지 + 색으로 페이드
+    this.stars.visible = this._starI > 0.015;               // 낮에는 아예 그리지 않음
     _cA.set(a.cloudTint); _cB.set(b.cloudTint); this.cloudMat.color.copy(_cA.lerp(_cB, t));
     // 해의 고도도 키프레임에서 직접 보간 — 시간대 이름과 하늘 색이 항상 일치한다.
     this.sunElev = (a.sunElev + (b.sunElev - a.sunElev) * t) * Math.PI / 180;

@@ -10,36 +10,61 @@ import * as THREE from 'three';
 import { toon } from '../rendering/Toon.js';
 
 export const TRIAL_STREAK = 5;      // 클리어에 필요한 연속 정답
-const TOWER_H = 7;
-const ENTER_R = 6;                  // 시련 시작 가능 반경(월드)
-const LEAVE_R = 42;                 // 이보다 멀어지면 시련 중단
+const TOWER_H = 15;                 // 플레이어 키 1.5u의 10배 — 멀리서 랜드마크로 읽히는 크기
+const BASE_R = 2.8;                 // 기단 반경(접지 계산에 쓰임)
+const ENTER_R = 7;                  // 시련 시작 가능 반경(월드)
+const LEAVE_R = 46;                 // 이보다 멀어지면 시련 중단
 
 const noOut = (m) => { m.userData.outlineParameters = { visible: false }; return m; };
 
 // 돌탑 + 빛기둥. 빛기둥은 수평선 너머에서도 보여 "저기 뭔가 있다"를 만든다.
+// 7u 원뿔 하나로는 "탑"으로 안 읽혀서, 기단 → 몸통 → 발코니 → 첨탑으로 실루엣을 나눴다.
 function buildTower(cleared) {
   const g = new THREE.Group();
-  const stone = toon(cleared ? 0xb8a98c : 0x8d8a86);
-  for (let i = 0; i < 4; i++) {
-    const r = 1.5 - i * 0.28, h = 1.5;
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.86, r, h, 8), stone);
-    m.position.y = h * 0.5 + i * h;
-    m.castShadow = true; m.receiveShadow = true;
-    g.add(m);
-  }
+  const stone = toon(cleared ? 0xb9ab90 : 0x918d87);
+  const trim = toon(cleared ? 0x8f8168 : 0x6f6b66);
   const col = cleared ? 0x9ce8a8 : 0xffd76a;
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.62, 16, 12),
+
+  const put = (mesh, y) => { mesh.position.y = y; mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh); return mesh; };
+
+  // 기단 — 넓고 낮은 8각 받침 2단
+  put(new THREE.Mesh(new THREE.CylinderGeometry(BASE_R, BASE_R * 1.08, 0.7, 8), trim), 0.35);
+  put(new THREE.Mesh(new THREE.CylinderGeometry(BASE_R * 0.82, BASE_R * 0.95, 0.6, 8), stone), 1.0);
+
+  // 몸통 — 위로 갈수록 좁아지는 5단. 단마다 살짝 턱을 줘 그림자가 걸리게.
+  let y = 1.3, r = BASE_R * 0.78;
+  for (let i = 0; i < 5; i++) {
+    const h = 1.9, rTop = r * 0.86;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(rTop, r, h, 8), stone), y + h / 2);
+    y += h;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(rTop * 1.1, rTop * 1.1, 0.18, 8), trim), y + 0.09);
+    y += 0.18;
+    r = rTop;
+  }
+
+  // 발코니 — 실루엣에 턱 하나. 이게 있어야 '탑'으로 읽힌다.
+  put(new THREE.Mesh(new THREE.CylinderGeometry(r * 1.5, r * 1.35, 0.34, 8), trim), y + 0.17);
+  y += 0.34;
+
+  // 첨탑
+  put(new THREE.Mesh(new THREE.ConeGeometry(r * 1.15, 1.7, 8), stone), y + 0.85);
+  y += 1.7;
+
+  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12),
     noOut(new THREE.MeshBasicMaterial({ color: col })));
-  orb.position.y = TOWER_H - 0.6;
+  orb.position.y = y + 0.55;
   g.add(orb);
-  // 빛기둥 — 반투명, 깊이 기록 안 함(멀리서도 보이게)
+
+  // 빛기둥 — 반투명, 깊이 기록 안 함(지형 너머에서도 보이게)
   const beam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.75, 1.0, 26, 10, 1, true),
+    new THREE.CylinderGeometry(0.9, 1.5, 40, 10, 1, true),
     noOut(new THREE.MeshBasicMaterial({
-      color: col, transparent: true, opacity: 0.26, depthWrite: false, side: THREE.DoubleSide,
+      color: col, transparent: true, opacity: 0.24, depthWrite: false, side: THREE.DoubleSide,
     })));
-  beam.position.y = 13 + TOWER_H * 0.5;
+  beam.position.y = y + 20;
   g.add(beam);
+
+  g.userData.orbY = y + 0.55;
   return { group: g, orb, beam };
 }
 
@@ -126,8 +151,8 @@ export class Trials {
     this._t += dt;
     // 오브 부유 + 빛기둥 맥동
     for (const t of this.towers) {
-      t.orb.position.y = TOWER_H - 0.6 + Math.sin(this._t * 1.6) * 0.22;
-      t.beam.material.opacity = 0.2 + Math.sin(this._t * 1.1) * 0.07;
+      t.orb.position.y = t.group.userData.orbY + Math.sin(this._t * 1.6) * 0.28;
+      t.beam.material.opacity = 0.19 + Math.sin(this._t * 1.1) * 0.06;
     }
     // 너무 멀어지면 시련 중단
     if (this.active && playerPos.angleTo(this.active.tower.pos) > LEAVE_R / this.planet.R) {
