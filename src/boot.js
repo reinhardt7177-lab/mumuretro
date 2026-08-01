@@ -7,6 +7,7 @@ import { Engine } from './core/Engine.js';
 import { Loop } from './core/Loop.js';
 import { Atmosphere } from './world/Atmosphere.js';
 import { Sky } from './world/Sky.js';
+import { Post } from './rendering/Post.js';
 import { buildTown } from './world/TownGenerator.js';
 import { Navigation } from './systems/Navigation.js';
 import { Codex } from './systems/Codex.js';
@@ -32,6 +33,7 @@ const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
 const planet = new Planet(engine.scene);
 const atmosphere = new Atmosphere(engine, { dayLength: 300, phase: 0.28 });
+engine.attachPost(new Post(engine.renderer, engine.scene, engine.camera, engine.outline));
 const sky = new Sky(engine, planet);
 atmosphere.setSky(sky);                     // 하늘도 같은 시간대 키프레임으로 구동
 const world = buildTown(engine.scene, planet, 7);

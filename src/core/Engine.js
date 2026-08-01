@@ -125,5 +125,11 @@ export class Engine {
     this.sun.target.position.copy(player.position);
   }
 
-  render() { this.outline.render(this.scene, this.camera); }
+  // 후처리를 붙이면 컴포저가 외곽선 패스까지 감싸서 그린다. 없으면 기존 경로 그대로.
+  attachPost(post) { this.post = post; }
+
+  render() {
+    if (this.post && this.post.enabled) this.post.render();
+    else this.outline.render(this.scene, this.camera);
+  }
 }
