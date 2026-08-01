@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { makeRNG } from '../util/math.js';
 import { toon } from '../rendering/Toon.js';
-import { localToSurface, placeProp } from './Districts.js';
+import { localToSurface, placeProp, resetOccupancy, spotFree, reserveSpot } from './Districts.js';
 import { buildRegionAnchors, regionAt } from '../data/regions.js';
 import { SCALE } from './Planet.js';
 import { buildRoads } from './Roads.js';
@@ -266,6 +266,7 @@ export function buildTown(scene, planet, seed = 7) {
 
   const anchors = buildRegionAnchors(planet);
   planet.applyBiomeColors(anchors);
+  resetOccupancy();   // 프롭 겹침 방지용 점유 목록 초기화
 
   // 1) 구역별 물(해변=바다 / 호수정원=호수). 위치는 planet.waterZones에서 가져온다 —
   //    지형이 같은 값으로 바닥을 파므로, 여기서 따로 계산하면 물과 지형이 어긋난다.

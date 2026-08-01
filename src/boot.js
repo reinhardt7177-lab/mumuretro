@@ -24,6 +24,7 @@ import { makeRNG } from './util/math.js';
 import { loadGLB, prepModel } from './core/Assets.js';
 import { HERO_ASSETS } from './data/healingAssets.js';
 import { PROP_BUILDERS } from './world/Props.js';
+import { reserveSpot } from './world/Districts.js';
 import { regionAt } from './data/regions.js';
 import { LearningSystem } from './systems/Learning.js';
 import { CURRICULA, byRegion, DEFAULT_CURRICULUM } from './data/curriculum/index.js';
@@ -967,10 +968,13 @@ async function loadHealingEnv() {
         ? Math.max(Math.abs(_heroBB.max.x), Math.abs(_heroBB.min.x), Math.abs(_heroBB.max.z), Math.abs(_heroBB.min.z))
         : 0;
       planet.seatOnSurface(seat, Math.max(foot, 0.45));
+      // 랜드마크도 점유를 등록한다. 안 하면 나중에 배치되는 프롭이 등대 안에 생긴다.
+      reserveSpot(seat, Math.max(foot, 1.2));
     }
     const fr = planet.frameAt(seat, spot.rot);
     group.position.copy(fr.position); group.quaternion.copy(fr.quaternion);
-    if (def.onWater) group.position.addScaledVector(spot.dir, 0.25);   // 물 위로 살짝
+    // 물 위 오브젝트는 흘수(draft)만큼 잠기거나 뜬다. 수면은 기준 R + 0.05.
+    if (def.onWater) group.position.addScaledVector(spot.dir, 0.05 + (def.draft ?? 0.2));
     engine.scene.add(group);
     const entry = { group, key: spot.asset, theme: 'hero', pos: seat, dir: spot.dir };
     initCull(entry, def.height);   // 등대·탑처럼 키 큰 히어로는 지평선 여유가 커야 한다

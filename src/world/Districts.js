@@ -26,6 +26,29 @@ export function localToSurface(center, u, v, planet) {
 
 const _bb = new THREE.Box3();
 
+// ── 점유 공간 ──────────────────────────────────────────────────────────────
+// 프롭을 확률로만 뿌리면 서로 겹친다(실측: 824개 중 101쌍). 발자국이 서로 침범하면
+// 아예 놓지 않는다. 밀도는 줄지만 "여유 있게 펼쳐진" 그림이 나온다.
+const SPACING = 1.15;        // 발자국 합에 이만큼 여유를 더 둔다
+const _occupied = [];        // { pos, r }
+
+export function resetOccupancy() { _occupied.length = 0; }
+
+export function spotFree(pos, r) {
+  for (const o of _occupied) {
+    const need = (o.r + r) * SPACING;
+    if (pos.distanceToSquared(o.pos) < need * need) return false;
+  }
+  return true;
+}
+
+export function reserveSpot(pos, r) { _occupied.push({ pos: pos.clone(), r }); }
+
+// 거절된 그룹의 지오메트리 정리. 머티리얼은 공유(toonShared)라 건드리지 않는다.
+function disposeGroup(g) {
+  g.traverse(o => { if (o.isMesh && o.geometry) o.geometry.dispose(); });
+}
+
 // 프롭 크기 보정 — 집이 플레이어(1.5u)의 4.3배라 세계가 압도적으로 크게 느껴졌다.
 // 레퍼런스(로우폴리 툰)는 집이 캐릭터의 2.5~3배 정도다. Props.js를 건드리지 않고 여기서 줄인다.
 const PROP_SCALE = {
@@ -48,6 +71,10 @@ export function placeProp(scene, planet, key, pos, rotDeg = 0, opts = {}, rng = 
     ? Math.max(Math.abs(_bb.max.x), Math.abs(_bb.min.x), Math.abs(_bb.max.z), Math.abs(_bb.min.z))
     : 0;
   group.userData.footprint = foot;
+  // 이미 다른 프롭이 차지한 자리면 놓지 않는다.
+  const claim = Math.max(foot, 0.5);
+  if (!spotFree(pos, claim)) { disposeGroup(group); return null; }
+  reserveSpot(pos, claim);
   // 모든 프롭을 발자국 안 최저 높이에 앉힌다. 작은 프롭도 비탈에서는 0.2~0.4u 떠 보이는데,
   // 살짝 묻히는 쪽이 훨씬 자연스럽다(나무 밑동이 흙에 파묻힌 것처럼 보임).
   planet.seatOnSurface(pos, Math.max(foot, 0.45));
