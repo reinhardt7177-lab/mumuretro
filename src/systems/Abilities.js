@@ -12,7 +12,10 @@ export const ABILITIES = [
   { id: 'doubleJump', at: 1, emoji: '🕊️', name: '이단 점프', desc: '공중에서 한 번 더 뛸 수 있어요' },
   { id: 'wallClimb',  at: 3, emoji: '🧗', name: '벽 오르기', desc: '가파른 절벽도 오를 수 있어요' },
   { id: 'glide',      at: 5, emoji: '🪂', name: '활공',      desc: '높은 곳에서 멀리 날 수 있어요' },
-  { id: 'mistPass',   at: 7, emoji: '🌫️', name: '안개 통행', desc: '안개 골짜기에 들어갈 수 있어요' },
+  // 문구 주의: 실제 물리 관문은 벽 오르기(시련 3개)다. mistPass는 강제되지 않는다.
+  // "안개 골짜기에 들어갈 수 있어요"라고 쓰면 아이가 시련 3개째에 그 말을 반증할 수 있다.
+  // 서사는 게임이 반증할 수 있는 말을 하면 안 된다 → 반증 불가 문구로 둔다.
+  { id: 'mistPass',   at: 7, emoji: '🌫️', name: '안개 통행', desc: '안개가 너를 알아봐요' },
 ];
 
 export class Abilities {

@@ -24,6 +24,7 @@
   #regionBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
   @media (max-width:640px){#regionBanner{font-size:19px;letter-spacing:3px;padding:11px 22px;}}
   #toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:23;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;}
+  .toast.story{background:rgba(90,105,150,.9);font-style:italic;}
   .toast{background:rgba(40,70,80,.9);color:#fff;font-size:14px;padding:10px 20px;border-radius:16px;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;}
   .toast.show{opacity:1;transform:translateY(0);}
   /* 도감 오버레이 */
@@ -67,11 +68,11 @@
   #codexTabs .tab{color:#cfe2e6;background:rgba(255,255,255,.08);padding:6px 16px;border-radius:14px;font-size:12px;cursor:pointer;}
   #codexTabs .tab.on{background:#e8945b;color:#fff;}
   /* 세션 요약 — 한 판을 마무리하는 순간. 배지가 실제로 읽히는 유일한 화면. */
-  #summary{position:fixed;inset:0;background:rgba(24,38,48,.92);z-index:45;display:none;
+  #summary,#intro,#ending{position:fixed;inset:0;background:rgba(24,38,48,.92);z-index:45;display:none;
     flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
-  #summary.show{display:flex;}
-  #summary h2{color:#ffe9b0;font-size:24px;letter-spacing:4px;margin-bottom:4px;}
-  #summary .sub{color:#cfe2e6;font-size:13px;margin-bottom:20px;}
+  #summary.show,#intro.show,#ending.show{display:flex;}
+  #summary h2,#intro h2,#ending h2{color:#ffe9b0;font-size:24px;letter-spacing:4px;margin-bottom:4px;}
+  #summary .sub,#intro .sub,#ending .sub{color:#cfe2e6;font-size:13px;margin-bottom:20px;}
   #sumStats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:18px;}
   #sumStats .st{background:rgba(255,255,255,.08);border-radius:14px;padding:14px 20px;min-width:88px;}
   #sumStats .st .v{color:#ffd98a;font-size:26px;font-weight:700;line-height:1;}
@@ -83,7 +84,11 @@
   #sumNew .nb .n{font-size:11px;font-weight:700;margin-top:2px;}
   @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
   #sumSubjects{color:#cfe2e6;font-size:12px;margin-bottom:18px;line-height:1.8;}
-  #sumClose{color:#fff;background:#e8945b;padding:12px 32px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  #sumClose,.narrBtn{color:#fff;background:#e8945b;padding:12px 32px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  /* 서사 본문 — 인트로/엔딩 공용. 한 문장씩 줄바꿈되게 */
+  .narrLines{color:#eaf2f5;font-size:15px;line-height:2.0;margin-bottom:18px;max-width:520px;}
+  .narrLetter{background:rgba(255,255,255,.08);border-left:3px solid #e8945b;color:#ffe9b0;
+    font-size:14px;line-height:1.9;padding:14px 20px;border-radius:8px;margin-bottom:18px;max-width:520px;text-align:left;}
   /* 이모지 보내기 바 */
   #emotes{position:fixed;bottom:52px;right:14px;display:flex;gap:6px;z-index:21;}
   #emotes button{width:42px;height:42px;border:none;border-radius:50%;background:rgba(40,70,80,.55);font-size:21px;cursor:pointer;line-height:1;padding:0;transition:transform .1s;}
@@ -143,6 +148,21 @@
     <div id="codexGrid"></div>
     <div id="badgeGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px;max-width:680px;width:100%;max-height:62vh;overflow:auto;"></div>
     <div id="codexClose">닫기</div>
+  </div>
+
+  <!-- 인트로 / 엔딩 — #summary와 CSS를 공유한다(새 CSS 0줄) -->
+  <div id="intro">
+    <h2 id="introTitle"></h2>
+    <div class="narrLines" id="introLines"></div>
+    <div class="sub" id="introHint"></div>
+    <div class="narrBtn" id="introBtn"></div>
+  </div>
+
+  <div id="ending">
+    <h2 id="endTitle"></h2>
+    <div class="narrLetter" id="endLetter"></div>
+    <div class="narrLines" id="endLines"></div>
+    <div class="narrBtn" id="endBtn"></div>
   </div>
 
   <!-- 세션 요약 — 하루 목표를 달성하면 뜬다 -->

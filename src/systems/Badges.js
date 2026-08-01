@@ -30,6 +30,10 @@ export const BADGES = [
   { id: 'explorer', emoji: '🗺️', name: '탐험가',       desc: '7개 구역을 모두 찾았어요',   test: s => s.regionsFound >= 7 },
   { id: 'summit',   emoji: '⛰️', name: '별빛 언덕 정상', desc: '행성에서 가장 높은 곳에 올랐어요', test: s => !!s.summit },
   { id: 'jumper',   emoji: '🦘', name: '깡충깡충',      desc: '100번 점프했어요',          test: s => s.jumps >= 100 },
+
+  // ── 이야기 ──
+  // 서사의 유일한 영구 산출물. 도감에 남고 세션 요약에도 자동으로 등장한다.
+  { id: 'lastLetter', emoji: '💌', name: '마지막 편지', desc: '잊혀진 우체국에 편지를 전했어요', test: s => !!s.lastLetter },
 ];
 
 const EMPTY = {

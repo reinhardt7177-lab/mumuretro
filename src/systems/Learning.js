@@ -20,10 +20,19 @@ const CANDIDATES = 4;        // 한 문제에 팻말을 거는 집 수(정답 1 
 //  - 너무 멀면 지평선(R=68에서 약 28u) 너머라 팻말을 읽지 못해 찍기가 된다.
 const MIN_DIST = 10;
 const MAX_DIST = 30;
+// 절대 상한. 집이 드문 구역(안개 골짜기)에서 밴드를 무한히 넓히면 후보가 149u 밖까지 잡혀
+// 시련 이탈 반경(46u)을 넘겨 시련이 시작하자마자 중단된다. 걷는 맛으로도 149u는 논외다.
+// 상한 안에 집이 모자라면 밴드를 더 넓히는 대신 **후보 수를 줄인다**(2개까지).
+const HARD_MAX = 42;
+const MIN_CANDIDATES = 2;
 
 // 텍스트 팻말 텍스처. 글자 길이에 맞춰 캔버스 폭을 늘린다.
-function signTexture(text) {
-  const pad = 26, fontPx = 60;
+// 월드 안 텍스트 렌더러는 이거 하나로 유지한다 — 두 개가 되는 순간 폰트·여백이 갈라진다.
+// style로 색/크기만 바꿔 유령 이름표(창백한 종이) 같은 변형에 재사용한다.
+export function signTexture(text, style = {}) {
+  const pad = style.pad ?? 26, fontPx = style.fontPx ?? 60;
+  const bg = style.bg ?? '#f6ead0', border = style.border ?? '#8a6a44';
+  const fg = style.fg ?? '#3b3226';
   const probe = document.createElement('canvas').getContext('2d');
   probe.font = `bold ${fontPx}px system-ui, sans-serif`;
   const w = Math.ceil(probe.measureText(text).width) + pad * 2;
@@ -31,9 +40,9 @@ function signTexture(text) {
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const x = c.getContext('2d');
-  // 나무 팻말 느낌
-  x.fillStyle = '#f6ead0';
-  x.strokeStyle = '#8a6a44'; x.lineWidth = 8;
+  // 나무 팻말 느낌(기본). style로 창백한 종이 등으로 바꿀 수 있다.
+  x.fillStyle = bg;
+  x.strokeStyle = border; x.lineWidth = 8;
   const r = 16;
   x.beginPath();
   x.moveTo(r, 4); x.lineTo(w - r, 4); x.quadraticCurveTo(w - 4, 4, w - 4, r);
@@ -41,7 +50,7 @@ function signTexture(text) {
   x.lineTo(r, h - 4); x.quadraticCurveTo(4, h - 4, 4, h - r);
   x.lineTo(4, r); x.quadraticCurveTo(4, 4, r, 4);
   x.closePath(); x.fill(); x.stroke();
-  x.fillStyle = '#3b3226';
+  x.fillStyle = fg;
   x.font = `bold ${fontPx}px system-ui, sans-serif`;
   x.textAlign = 'center'; x.textBaseline = 'middle';
   x.fillText(text, w / 2, h / 2 + 2);
@@ -126,16 +135,20 @@ export class LearningSystem {
       .map(h => ({ h, d: playerPos.angleTo(h.pos) * R }))
       .sort((a, b) => a.d - b.d);
     let band = withDist.filter(x => x.d >= MIN_DIST && x.d <= MAX_DIST);
-    for (let grow = 1; band.length < CANDIDATES && grow <= 4; grow++) {
-      band = withDist.filter(x => x.d >= MIN_DIST * 0.6 && x.d <= MAX_DIST + 20 * grow);
+    if (band.length < CANDIDATES) {
+      band = withDist.filter(x => x.d >= MIN_DIST * 0.6 && x.d <= HARD_MAX);
     }
-    if (band.length < CANDIDATES) band = withDist.filter(x => x.d >= MIN_DIST * 0.6);
     const pool = band.map(x => x.h);
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    const chosen = pool.slice(0, Math.min(CANDIDATES, pool.length));
+    // 상한 안에 집이 모자라면 후보를 줄인다(정답 1 + 오답 1이면 문제는 성립한다).
+    // 그래도 0개면 최후 수단으로 가장 가까운 집들을 쓴다.
+    let chosen = pool.slice(0, Math.min(CANDIDATES, pool.length));
+    if (chosen.length < MIN_CANDIDATES) {
+      chosen = withDist.slice(0, Math.min(CANDIDATES, withDist.length)).map(x => x.h);
+    }
     const texts = [q.a, ...q.d].slice(0, chosen.length);
     // 정답이 항상 첫 집에 가지 않도록 섞는다.
     for (let i = texts.length - 1; i > 0; i--) {

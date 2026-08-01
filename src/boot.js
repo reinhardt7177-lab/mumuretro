@@ -30,6 +30,9 @@ import { CURRICULA, byRegion, DEFAULT_CURRICULUM } from './data/curriculum/index
 import { Badges } from './systems/Badges.js';
 import { Abilities, ABILITIES } from './systems/Abilities.js';
 import { Trials, TRIAL_STREAK } from './systems/Trials.js';
+import { Story, INTRO, ENDING } from './systems/Story.js';
+import { signTexture } from './systems/Learning.js';
+import { parcelKindFor } from './data/story.js';
 
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
@@ -112,14 +115,22 @@ const parcelEl = document.getElementById('parcel');
 const deliverEl = document.getElementById('deliver');
 const toastsEl = document.getElementById('toasts');
 const codexCountEl = document.getElementById('codexCount');
-function toast(msg, ms = 2200) {
+// cls='story'면 이야기 토스트(보라 + 이탤릭). 아이가 "문제"와 "이야기"를 색으로 구분하게 한다.
+function toast(msg, ms = 2200, cls = '') {
   if (!toastsEl) return;
-  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  const t = document.createElement('div'); t.className = 'toast' + (cls ? ' ' + cls : ''); t.textContent = msg;
   toastsEl.appendChild(t);
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, ms);
 }
 function updateCodexCount() { if (codexCountEl) codexCountEl.textContent = `${codex.count()}/${codex.total()}`; }
+// ── 서사(M9) ─────────────────────────────────────────────────────────────
+// 옛 집배원들이 편지를 다 전하지 못한 채 안개 골짜기에 남았다는 설정으로
+// 이미 있는 시스템(유령·시련소·능력·골짜기·도깨비)을 하나로 꿴다. 새 시스템은 만들지 않는다.
+const story = new Story({
+  toast, planet, scene: engine.scene, makeSign: signTexture,
+});
+
 // ── 능력 해금(M8) ────────────────────────────────────────────────────────
 // 경사 제한이 먼저 있어야 "못 가는 곳"이 생기고, 그래야 벽 오르기가 능력이 된다.
 const MAX_CLIMB_DEG = 32;
@@ -155,16 +166,23 @@ const answerHouses = world.placed
   .filter(p => HOUSE_KEYS.has(p.key))
   .map((p, i) => {
     // 수령인 집이면 주민을 붙여 정답 시 고마워하는 연출을 살린다.
+    // 수령인이 아닌 집도 이름을 준다 — 한 줄로 모든 배달이 이름 있는 사람에게 간다.
     const r = recipients.find(x => x.pos.distanceToSquared(p.pos) < 0.01);
-    return { id: 'h' + i, name: r ? r.name : '이웃', pos: p.pos, dir: p.dir, npc: r ? r.npc : null };
+    return {
+      id: 'h' + i,
+      name: r ? r.name : RECIPIENT_NAMES[i % RECIPIENT_NAMES.length],
+      pos: p.pos, dir: p.dir, npc: r ? r.npc : null,
+    };
   });
 
 const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICULA, {
   range: 5,
   initial: byRegion(regionAt(player.position, world.anchors).id) || DEFAULT_CURRICULUM,
   onQuestion: (q, labels, cur) => {
+    // 문제 앞에는 아이콘 한 글자만. 플레이버 텍스트를 붙이면 그게 곧 읽기 부담이다.
+    const kind = parcelKindFor(q.id);
     if (parcelEl) parcelEl.innerHTML =
-      `${cur.emoji} <b>${q.q}</b> <span style="opacity:.7">— ${cur.subject}</span>`;
+      `${kind.icon} <b>${q.q}</b> <span style="opacity:.7">— ${cur.subject}</span>`;
   },
   onResult: (res) => {
     // 배지 갱신 — 오답이었던 문제를 맞히면 comeback으로 잡힌다.
@@ -176,11 +194,14 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
       if (bres.comeback) session.comebacks++;
       chime();
       codex.add(res.question.id); updateCodexCount();
+      // 정답/문제 확인은 학습적으로 중요하므로 형식을 유지하고 수령인만 뒤에 붙인다.
+      const who = res.label.house.name;
       toast(bres.comeback
-        ? `💪 다시 도전 성공! ${res.question.q} = ${res.question.a}`
-        : `⭕ 정답! ${res.question.q} = ${res.question.a} · 우표 +1`, 2400);
+        ? `💪 이 편지, 드디어 전했어요! ${res.question.q} = ${res.question.a}`
+        : `⭕ 정답! ${res.question.q} = ${res.question.a} · ${who}께 전했어요`, 2600);
       if (res.label.house.npc) res.label.house.npc.thank(emoji);
-      emoji.spawn(player.position, player.up, bres.comeback ? '💪' : '🎉', { size: 1.6, life: 2.2 });
+      emoji.spawn(player.position, player.up,
+        bres.comeback ? '💪' : parcelKindFor(res.question.id).icon, { size: 1.6, life: 2.2 });
       // 하루 목표 달성 → 세션 요약(한 판을 마무리하는 순간)
       if (!session.goalShown && session.correct >= DAILY_GOAL) {
         session.goalShown = true;
@@ -225,6 +246,16 @@ const trials = new Trials(engine.scene, planet, trialSpots, abilities, {
     toast(`🏆 ${t.name} 시련 클리어! (시련소 ${abilities.clearedCount()}/${trialSpots.length})`, 3600);
     applyAbilities();
     badges.setStat('trialsCleared', abilities.clearedCount());
+
+    // 잊혀진 우체국(안개 골짜기 8번째 탑) = 마지막 편지.
+    // 도깨비에게서 이름 없는 편지를 되찾은 뒤여야 이야기가 성립한다.
+    if (t.regionId === 'mist' && _dokkaebiCaught > 0) {
+      _finalTarget = null;                       // 유도 화살표 해제
+      badges.setStat('lastLetter', true);
+      if (story.needsEnding()) setTimeout(showEnding, 1000);
+    } else {
+      story.onTrialClear(abilities.clearedCount());
+    }
   },
 });
 
@@ -259,6 +290,7 @@ function updateDokkaebi(dt) {
     const a = MIST_ZONE.rim * 0.5;
     spawn.multiplyScalar(Math.cos(a)).addScaledVector(t, Math.sin(a)).normalize().multiplyScalar(planet.R);
     dokkaebi.spawnAt(spawn);
+    story.onValleyEnter();                    // 최초 1회만(내부 게이트)
     toast('🌫️ 도깨비가 편지를 들고 달아나요! 쫓아가서 잡으세요 (Shift로 달리기)', 4200);
     emoji.spawn(dokkaebi.position, dokkaebi.up, '😈', { size: 1.8, life: 2.4 });
   }
@@ -271,8 +303,16 @@ function updateDokkaebi(dt) {
     emoji.spawn(player.position, player.up, '📨', { size: 1.8, life: 2.6 });
     toast(`📨 편지를 되찾았어요! (${_dokkaebiCaught}번째)`, 3000);
     badges.setStat('dokkaebiCaught', _dokkaebiCaught);
+    // 최초 포획에만 서사 + 잊혀진 우체국으로 유도.
+    // 8구역짜리 행성에서 말로만 가리키면 아이는 못 찾는다 — 서사가 아니라 유실 방지다.
+    if (_dokkaebiCaught === 1) {
+      story.onDokkaebiFirst();
+      const mistTower = trials.towers.find(t => t.regionId === 'mist');
+      if (mistTower && !mistTower.cleared) _finalTarget = { pos: mistTower.pos, dir: mistTower.dir };
+    }
   }
 }
+let _finalTarget = null;   // 마지막 편지 목적지(잊혀진 우체국). 엔딩 시 해제된다.
 const _dp = new THREE.Vector3();
 const _dirOfPlayer = () => _dp.copy(player.position).normalize();
 
@@ -312,6 +352,32 @@ function showSummary() {
   }
   summaryEl.classList.add('show');
 }
+// ── 인트로 / 엔딩 오버레이 ───────────────────────────────────────────────
+// #summary와 CSS를 공유한다. 일시정지는 만들지 않는다 — 실패 상태가 없는 게임이라
+// 뒤에서 행성이 돌아도 무방하고, 일시정지는 새 상태기계다.
+function showIntro() {
+  const el = document.getElementById('intro'); if (!el) return;
+  document.getElementById('introTitle').textContent = INTRO.title;
+  document.getElementById('introLines').innerHTML = INTRO.lines.join('<br>');
+  document.getElementById('introHint').textContent = INTRO.hint;
+  const btn = document.getElementById('introBtn');
+  btn.textContent = INTRO.button;
+  btn.onclick = () => { el.classList.remove('show'); story.markIntroShown(); resumeAudio(); };
+  el.classList.add('show');
+}
+
+function showEnding() {
+  const el = document.getElementById('ending'); if (!el) return;
+  document.getElementById('endTitle').textContent = ENDING.title;
+  document.getElementById('endLetter').innerHTML = ENDING.letter.join('<br>');
+  document.getElementById('endLines').innerHTML = ENDING.lines.join('<br>');
+  const btn = document.getElementById('endBtn');
+  btn.textContent = ENDING.button;
+  btn.onclick = () => el.classList.remove('show');
+  story.markEndingShown();
+  el.classList.add('show');
+}
+
 const sumCloseEl = document.getElementById('sumClose');
 if (sumCloseEl) sumCloseEl.addEventListener('click', () => {
   summaryEl.classList.remove('show');
@@ -475,6 +541,10 @@ function doDeliver() {
   const tower = trials.towerInRange(player.position);
   if (tower && !tower.cleared && !trials.active) {
     if (trials.start(tower)) {
+      // 시련을 시작하면 문제를 새로 낸다.
+      // 안 그러면 직전 문제의 답 집이 탑에서 멀리(실측 134u) 잡혀 있어
+      // 첫 배달에 이탈 반경(46u)을 넘겨 시련이 시작하자마자 중단된다.
+      learning.nextQuestion(player.position);
       updateTrialHUD(trials.active);
       if (deliverEl) deliverEl.classList.remove('show');
       _inRangePrev = false;
@@ -590,10 +660,16 @@ function step(dt) {
   cullProps();
   // ★ 학습 모드에서는 네비를 기본으로 끈다. 켜두면 화살표가 정답 집을 가리켜 학습이 사라진다.
   //   오답 2회 후에만 hintTarget이 채워져 길잡이가 열린다.
-  nav.update(player, learning.hintTarget, dt);
+  // 마지막 편지 목적지가 있으면 그쪽을 우선 가리킨다(유실 방지).
+  nav.update(player, _finalTarget || learning.hintTarget, dt);
   learning.update(engine.camera);   // 팻말 빌보드
   trials.update(dt, player.position);
   updateDokkaebi(dt);
+  story.ghostTick(dt, player.position, ghosts.values(), {
+    trialActive: !!trials.active,
+    wrongStreak: learning.wrongStreak,
+    camera: engine.camera,
+  });
 
   // 근접 시 프롬프트 + E/탭. 시련소 앞이면 "시련 시작"으로 바뀐다.
   const tower = trials.towerInRange(player.position);
@@ -686,7 +762,18 @@ window.__dbg = {
     player._initFrame(); player.syncMesh();
     return t.name;
   },
-  startTrial() { const t = trials.towerInRange(player.position); const ok = trials.start(t); if (ok) updateTrialHUD(trials.active); return ok ? t.name : 'cannot start'; },
+  startTrial() {
+    const t = trials.towerInRange(player.position);
+    const ok = trials.start(t);
+    if (ok) { learning.nextQuestion(player.position); updateTrialHUD(trials.active); }
+    return ok ? t.name : 'cannot start';
+  },
+  // 서사(M9) 검증용 — 최초 1회 이벤트라 reset 없이는 반복 테스트가 불가능하다
+  get story() { return { ...story.state(), finalTarget: !!_finalTarget }; },
+  resetStory() { return story.reset(); },
+  showIntro() { showIntro(); return 'intro'; },
+  showEnding() { showEnding(); return 'ending'; },
+  parcelOf(id) { const k = parcelKindFor(id); return k.icon + ' ' + k.kind; },
   // 능력(M8) 검증용
   get abilities() {
     return {
@@ -884,4 +971,5 @@ loadHealingEnv();
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';
 loop.start();
+if (story.needsIntro()) showIntro();
 console.log('[boot] 무무 행성 집배원 — 7개 구역(M6). __selftest()/__dbg로 검증.');

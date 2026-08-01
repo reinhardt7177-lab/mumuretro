@@ -6,7 +6,9 @@ import { moveOnSphere, orthonormalizeHeading, randomTangent } from '../world/Sur
 import { makeRNG } from '../util/math.js';
 
 const NAMES = ['바람', '구름', '초롱', '노을', '별이', '달이', '소리', '그림자', '안개', '햇살'];
-const EMOJIS = ['👋', '😊', '✨', '🎈', '📮', '🎵', '🙂', '🐱', '☀️', '💤', '🌙', '🍙'];
+// 우편 정서로 맞춘 이모지 풀. 빈 우편함(📭)을 머리에 띄운 반투명 아이 하나면
+// "못 전한 편지"가 글자 없이 설명된다 — 배열 한 줄로 유령 전원이 서사화된다.
+const EMOJIS = ['📭', '✉️', '💤', '🌫️', '…', '📮', '🙂', '🕯️'];
 const _out = { lastAxis: new THREE.Vector3(), lastArc: 0 };
 
 // 구면 균일 샘플 후 지형 표면으로 투영.

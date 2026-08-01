@@ -128,6 +128,17 @@ function fillRegionCell(id, scene, planet, center, rng, placed, inWater) {
     if (rng() < 0.4) put('bush', jit(6), jit(6), 0);
     if (rng() < 0.3) put('rock', jit(7), jit(7), rng() * 360);
     if (rng() < 0.25) put('jangdokdae', jit(5), jit(5), rng() * 360);
+  } else if (id === 'mist') {
+    // 안개 골짜기 — 옛 집배원들이 살던 빈 집들.
+    // 서사용 장식이 아니라 **기능 요구사항**이다: 마지막 시련의 답 팻말이 걸릴 집이 없으면
+    // 가장 가까운 집이 69u가 되어 시련 이탈 반경(46u)을 넘고, 시련이 시작하자마자 중단된다.
+    if (rng() < 0.80) put('house', jit(3), jit(3), baseRot, { stories: 1 });
+    if (rng() < 0.55) put('house', 5, -4, baseRot + 150, { stories: 1 });
+    if (rng() < 0.40) put('house', -5, 4, baseRot + 40, { stories: 1 });
+    if (rng() < 0.40) put('alleyWall', -3, jit(2), baseRot + 90, { length: 4 + rng() * 2 });
+    if (rng() < 0.35) put('gravestone', jit(6), jit(6), rng() * 360);
+    if (rng() < 0.30) put('lantern', jit(5), jit(5), 0);
+    if (rng() < 0.25) put('rock', jit(7), jit(7), rng() * 360);
   } else { // hill
     for (let i = 0; i < 2; i++) put('flowerPatch', jit(9), jit(9), rng() * 360);
     if (rng() < 0.4) put('bench', jit(7), jit(7), rng() * 360);
