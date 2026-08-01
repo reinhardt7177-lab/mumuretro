@@ -5,6 +5,10 @@ import { tintUniforms } from '../rendering/Toon.js';
 
 const _cA = new THREE.Color(), _cB = new THREE.Color();
 
+// ACES 톤매핑을 켜면 중간톤이 눌려 전체가 어두워진다. 키프레임 값은 NoToneMapping 기준으로
+// 튜닝돼 있으므로 여기서 한 번에 보정한다(키프레임 20여 개를 다시 손대지 않아도 되게).
+const SUN_BOOST = 1.55, HEMI_BOOST = 1.4;
+
 export class Atmosphere {
   constructor(engine, opts = {}) {
     this.engine = engine;
@@ -43,9 +47,10 @@ export class Atmosphere {
     _cA.set(a.sky); _cB.set(b.sky); scene.background.copy(_cA.lerp(_cB, t));
     _cA.set(a.fog); _cB.set(b.fog); scene.fog.color.copy(_cA.lerp(_cB, t));
     _cA.set(a.sun); _cB.set(b.sun); e.sun.color.copy(_cA.lerp(_cB, t));
-    e.sun.intensity = a.sunI + (b.sunI - a.sunI) * t;
+    e.sun.intensity = (a.sunI + (b.sunI - a.sunI) * t) * SUN_BOOST;
     _cA.set(a.hemiSky); _cB.set(b.hemiSky); e.hemi.color.copy(_cA.lerp(_cB, t));
     _cA.set(a.hemiGround); _cB.set(b.hemiGround); e.hemi.groundColor.copy(_cA.lerp(_cB, t));
+    e.hemi.intensity = HEMI_BOOST;
 
     // 글로벌 틴트(전 세계 툰 머티리얼). 공유 유니폼 값만 갱신 → 한 프레임에 재채색.
     _cA.set(a.tint); _cB.set(b.tint); tintUniforms.uTint.value.copy(_cA.lerp(_cB, t));

@@ -21,14 +21,42 @@ const SKY_VERT = `
   }
 `;
 
+// 원경 산맥 — 작은 행성은 28u에서 지평선 너머로 꺾여서 "먼 풍경"이 물리적으로 존재할 수 없다.
+// 그래서 하늘 돔에 실루엣을 그려 깊이를 만든다. 실제로 갈 수는 없지만 시각적 효과는 그대로다.
+// 지오메트리 없이 방위각의 함수로 그리므로 플레이어 up이 바뀌어도 자동으로 따라온다.
 const SKY_FRAG = `
-  uniform vec3 uUp, uTop, uHorizon, uGround;
+  uniform vec3 uUp, uEast, uNorth, uTop, uHorizon, uGround;
+  uniform vec3 uMtnFar, uMtnNear;
+  uniform float uMtnBase, uMtnAmp;
   varying vec3 vDir;
+
+  // 방위각에 대한 능선 높이(사인 합성 — 노이즈 텍스처 없이 싸게).
+  float ridge(float a, float seed) {
+    return 0.34 * sin(a * 2.0 + seed)
+         + 0.24 * sin(a * 3.7 + seed * 2.3)
+         + 0.16 * sin(a * 6.1 + seed * 3.9)
+         + 0.10 * sin(a * 11.3 + seed * 1.7);
+  }
+
   void main() {
-    float d = dot(normalize(vDir), uUp);    // 1=천정, 0=지평선, -1=발밑
-    vec3 c = mix(uHorizon, uTop, smoothstep(0.0, 0.62, d));
-    c = mix(uGround, c, smoothstep(-0.30, 0.03, d));   // 지평선 아래는 살짝 어둡게
+    vec3 d = normalize(vDir);
+    float e = dot(d, uUp);                  // 1=천정, 0=수평, -1=발밑
+    vec3 c = mix(uHorizon, uTop, smoothstep(0.0, 0.62, e));
+    c = mix(uGround, c, smoothstep(-0.30, 0.03, e));
+
+    float a = atan(dot(d, uNorth), dot(d, uEast));
+
+    // 뒤쪽 산맥(옅고 높음) → 앞쪽 산맥(진하고 낮음) 두 겹으로 깊이감
+    float hFar  = uMtnBase + uMtnAmp * (0.55 + 0.45 * ridge(a, 1.3));
+    float hNear = uMtnBase - 0.035 + uMtnAmp * 0.72 * (0.5 + 0.5 * ridge(a * 1.4, 4.1));
+    float aa = 0.006;
+    c = mix(c, uMtnFar,  smoothstep(hFar + aa, hFar - aa, e));
+    c = mix(c, uMtnNear, smoothstep(hNear + aa, hNear - aa, e));
+
     gl_FragColor = vec4(c, 1.0);
+    // 렌더러 톤매핑을 그대로 타야 지상과 하늘의 밝기 관계가 유지된다.
+    // (빼먹으면 하늘만 톤매핑을 안 받아 혼자 밝게 뜬다.)
+    #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;
@@ -45,9 +73,16 @@ export class Sky {
     // ── 돔 ──
     this.uniforms = {
       uUp: { value: new THREE.Vector3(0, 1, 0) },
+      uEast: { value: new THREE.Vector3(1, 0, 0) },
+      uNorth: { value: new THREE.Vector3(0, 0, 1) },
       uTop: { value: new THREE.Color(0x5fa8dd) },
       uHorizon: { value: new THREE.Color(0xd8f0f2) },
       uGround: { value: new THREE.Color(0x9ec0c4) },
+      // 원경 산맥 — 지평선 아래(-0.405 근처가 행성 가장자리)와 수평선 사이에 걸친다.
+      uMtnFar: { value: new THREE.Color(0x8fa6c4) },
+      uMtnNear: { value: new THREE.Color(0x6d84a6) },
+      uMtnBase: { value: -0.055 },
+      uMtnAmp: { value: 0.085 },
     };
     const domeMat = new THREE.ShaderMaterial({
       uniforms: this.uniforms, vertexShader: SKY_VERT, fragmentShader: SKY_FRAG,
@@ -143,6 +178,10 @@ export class Sky {
     _cA.set(a.skyHorizon); _cB.set(b.skyHorizon); u.uHorizon.value.copy(_cA.lerp(_cB, t));
     // 지평선 아래는 지평선 색을 살짝 어둡게
     u.uGround.value.copy(u.uHorizon.value).multiplyScalar(0.72);
+    // 원경 산은 대기 원근 — 멀수록 하늘색에 가깝고 옅다. 시간대 색을 그대로 따라가야
+    // 노을엔 주황 실루엣, 밤엔 검푸른 실루엣이 된다.
+    u.uMtnFar.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.45).multiplyScalar(0.80);
+    u.uMtnNear.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.30).multiplyScalar(0.58);
     this.starMat.opacity = a.starI + (b.starI - a.starI) * t;
     this.stars.visible = this.starMat.opacity > 0.015;      // 낮에는 아예 그리지 않음
     _cA.set(a.cloudTint); _cB.set(b.cloudTint); this.cloudMat.color.copy(_cA.lerp(_cB, t));
@@ -155,6 +194,10 @@ export class Sky {
     this.phase = phase;
     const up = player.up;
     this.uniforms.uUp.value.copy(up);
+    // 산맥 방위각 기준 프레임. up과 함께 갱신해야 산이 플레이어를 따라 돌지 않고 제자리에 있다.
+    const mref = Math.abs(up.y) > 0.99 ? _X : _Y;
+    this.uniforms.uEast.value.crossVectors(mref, up).normalize();
+    this.uniforms.uNorth.value.crossVectors(up, this.uniforms.uEast.value).normalize();
 
     this.dome.position.copy(camera.position);
     this.stars.position.copy(camera.position);

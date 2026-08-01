@@ -26,7 +26,13 @@ export class Engine {
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setSize(innerWidth, innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.NoToneMapping;
+    // 톤매핑 — NoToneMapping이면 밝은 곳이 그냥 잘려서(clip) 색이 물 빠져 보인다.
+    // ACES는 하이라이트를 부드럽게 말아 올려 채도와 대비가 살아난다.
+    // 대신 전체가 어두워지므로 노출과 광원 강도를 같이 올려야 한다(아래 SUN_I/HEMI_I 보정).
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // 노출 1.1 — A/B 실측상 원래와 같은 밝기(88 vs 90)에서 채도가 0.44 → 0.51로 오른다.
+    // 더 올리면 밝아지는 대신 채도를 다시 잃는다(1.6에서 0.45).
+    renderer.toneMappingExposure = 1.1;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer = renderer;
