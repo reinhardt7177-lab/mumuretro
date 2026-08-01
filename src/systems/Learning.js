@@ -25,6 +25,9 @@ const MAX_DIST = 30;
 // 상한 안에 집이 모자라면 밴드를 더 넓히는 대신 **후보 수를 줄인다**(2개까지).
 const HARD_MAX = 42;
 const MIN_CANDIDATES = 2;
+// 최근 이만큼의 문제는 다시 내지 않는다(간격 반복의 "간격").
+// 과목당 문제가 12~17개이므로 3이면 충분히 사이가 벌어지고, 풀이 마르지도 않는다.
+const RECENT_GAP = 3;
 
 // 텍스트 팻말 텍스처. 글자 길이에 맞춰 캔버스 폭을 늘린다.
 // 월드 안 텍스트 렌더러는 이거 하나로 유지한다 — 두 개가 되는 순간 폰트·여백이 갈라진다.
@@ -81,6 +84,7 @@ export class LearningSystem {
     this.current = null;      // {question, labels:[{house, text, correct, sign}]}
     this.wrongStreak = 0;     // 현재 문제에서 틀린 횟수 — 2회부터 네비 힌트
     this.solved = 0;
+    this._recent = [];        // 최근 출제 id — 바로 다시 내지 않기 위한 큐
 
     this.boxes = this._load();   // { [questionId]: 0~3 }  Leitner 상자
     this.signs = new THREE.Group();
@@ -112,13 +116,28 @@ export class LearningSystem {
 
   // 다음 문제 — 상자가 낮은(=덜 익힌) 것부터. 같은 상자 안에서는 무작위.
   // 이게 곧 간격 반복이다: 틀리면 상자가 내려가 금방 다시 나오고, 맞히면 올라가 뜸해진다.
+  //
+  // ★ 최근 출제분 제외가 핵심이다. 이게 없으면 틀린 문제가 상자 0이 되어 **바로 다음 문제로**
+  // 똑같이 다시 나온다(실측 간격 0). 그러면 답이 작업기억에 남아 있어 인출 연습이 전혀 안 되고,
+  // 후보 4개 중 하나를 이미 배제한 상태라 남은 3개에서 찍기만 하면 된다.
+  // 사이에 다른 문제를 끼워 넣어야 비로소 "다시 떠올리는" 연습이 된다.
   _pickQuestion() {
-    const qs = this.active.questions.filter(q => this.boxOf(q.id) < 3);
-    const pool = qs.length ? qs : this.active.questions;   // 다 익혔으면 전체 복습
+    const all = this.active.questions;
+    const unlearned = all.filter(q => this.boxOf(q.id) < 3);
+    let pool = unlearned.length ? unlearned : all;         // 다 익혔으면 전체 복습
+
+    // 최근 낸 문제는 뒤로 미룬다. 남는 게 없을 때만 허용(문제 수가 적은 과목 대비).
+    const fresh = pool.filter(q => !this._recent.includes(q.id));
+    if (fresh.length) pool = fresh;
+
     let minBox = Infinity;
     for (const q of pool) minBox = Math.min(minBox, this.boxOf(q.id));
     const low = pool.filter(q => this.boxOf(q.id) === minBox);
-    return low[Math.floor(this.rng() * low.length)];
+    const picked = low[Math.floor(this.rng() * low.length)];
+
+    this._recent.push(picked.id);
+    if (this._recent.length > RECENT_GAP) this._recent.shift();
+    return picked;
   }
 
   // 플레이어 근처 집 중 CANDIDATES개를 골라 정답/오답 팻말을 건다.
