@@ -24,7 +24,7 @@ import { makeRNG } from './util/math.js';
 import { loadGLB, prepModel } from './core/Assets.js';
 import { HERO_ASSETS } from './data/healingAssets.js';
 import { PROP_BUILDERS } from './world/Props.js';
-import { reserveSpot } from './world/Districts.js';
+import { reserveSpot, localToSurface } from './world/Districts.js';
 import { regionAt } from './data/regions.js';
 import { LearningSystem } from './systems/Learning.js';
 import { CURRICULA, byRegion, DEFAULT_CURRICULUM } from './data/curriculum/index.js';
@@ -126,6 +126,38 @@ function toast(msg, ms = 2200, cls = '') {
 }
 function updateCodexCount() { if (codexCountEl) codexCountEl.textContent = `${codex.count()}/${codex.total()}`; }
 
+// 문제 안내 배너 — 새 문제마다 크게 띄운다.
+// 좌상단 작은 HUD만으로는 4학년이 "무엇을 해야 하는지" 못 알아챈다.
+const qBannerEl = document.getElementById('qBanner');
+let _qBannerT = 0;
+function showQuestionBanner(q, cur, labels) {
+  if (!qBannerEl) return;
+  const n = labels ? labels.length : 4;
+  document.getElementById('qSub').textContent = `${cur.emoji} ${cur.subject}`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('qHow').innerHTML =
+    `이 문제의 <b>답이 걸린 집</b>을 찾아가서<br>가까이 가면 <b>E</b>를 눌러 편지를 배달하세요 (팻말 ${n}개)`;
+  qBannerEl.classList.add('show');
+  _qBannerT = 4.5;
+}
+function updateQuestionBanner(dt) {
+  if (_qBannerT > 0) { _qBannerT -= dt; if (_qBannerT <= 0 && qBannerEl) qBannerEl.classList.remove('show'); }
+}
+
+// 경사로 막혔을 때 안내. 말없이 멈추면 "맵이 고장났나?"로 읽힌다.
+// 자주 뜨면 시끄러우니 넉넉히 쿨다운을 둔다.
+let _slopeMsgCD = 0;
+function updateSlopeHint(dt) {
+  if (_slopeMsgCD > 0) _slopeMsgCD -= dt;
+  if (!player.blockedBySlope) return;
+  player.blockedBySlope = false;
+  if (_slopeMsgCD > 0) return;
+  _slopeMsgCD = 14;
+  toast(player.canClimb
+    ? '너무 가팔라요! 다른 길로 돌아가 볼까요?'
+    : '너무 가팔라요! 🧗 벽 오르기를 배우면 오를 수 있어요', 3200);
+}
+
 // 힌트 HUD — 오답 후 계속 남아 있다. 토스트만 쓰면 놓친 아이가 다시 볼 방법이 없다.
 const hintBtnEl = document.getElementById('hintBtn');
 function setHint(text) {
@@ -194,6 +226,7 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
     if (parcelEl) parcelEl.innerHTML =
       `${kind.icon} <b>${q.q}</b> <span style="opacity:.7">— ${cur.subject}</span>`;
     setHint(null);   // 새 문제 → 힌트 감춤(처음부터 주면 생각을 건너뛴다)
+    showQuestionBanner(q, cur, labels);
   },
   onResult: (res) => {
     // 배지 갱신 — 오답이었던 문제를 맞히면 comeback으로 잡힌다.
@@ -236,9 +269,28 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
 
 // ── 시련소(M8) ───────────────────────────────────────────────────────────
 // 구역마다 하나. 힐링 포인트 자리를 쓰되 급경사는 피해 앉힌다.
+// 시련소는 반드시 걸어서 닿을 수 있어야 한다. 힐링 포인트가 급경사에 걸리면
+// 벽 오르기(시련 3개 필요) 없이는 접근이 막혀 진행이 멈춘다 —
+// 실측에서 8곳 중 4곳이 그랬다. 주변에서 완만한 자리를 찾아 옮긴다.
+const _tsTmp = new THREE.Vector3();
+function findGentleSpot(pos, radius) {
+  let best = pos.clone(), bestSlope = planet.slopeDegAt(_tsTmp.copy(pos).normalize());
+  if (bestSlope <= 12) return best;
+  const N = 28;
+  for (let i = 0; i < N; i++) {
+    const a = i * 2.399963;                      // 황금각 나선
+    const r = radius * Math.sqrt((i + 1) / N);
+    const cand = localToSurface(pos, Math.cos(a) * r, Math.sin(a) * r, planet);
+    const s = planet.slopeDegAt(_tsTmp.copy(cand).normalize());
+    if (s < bestSlope) { bestSlope = s; best = cand; }
+    if (bestSlope <= 8) break;
+  }
+  return best;
+}
+
 const trialSpots = world.healingPoints.map(hp => {
   const a = world.anchors.find(x => x.id === hp.region);
-  const pos = hp.pos.clone();
+  const pos = findGentleSpot(hp.pos.clone(), 20);
   planet.seatOnSurface(pos, 3.2);   // 넓어진 기단에 맞춰 접지 반경도 키운다
   return { regionId: hp.region, name: a ? a.name : hp.region, emoji: a ? a.emoji : '🗼', pos, dir: pos.clone().normalize() };
 });
@@ -540,14 +592,24 @@ function cullProps() {
 const SOLID_KEYS = new Set(['house', 'cornerShop', 'stationery', 'bathhouse', 'schoolFacade']);
 const buildings = world.placed.filter(p => SOLID_KEYS.has(p.key));
 for (const b of buildings) { b.meshes = []; b.group.traverse(o => { if (o.isMesh) b.meshes.push(o); }); }
+// 플레이어 충돌용 원형 콜라이더. 발자국이 모서리 기준이라 그대로 쓰면 벽면에서 너무 멀리
+// 막히므로 0.78을 곱해 내접에 가깝게 맞춘다(모서리는 조금 파고들지만 통과보다는 낫다).
+// (+0.35는 플레이어 몸 반경. 없으면 벽에 얼굴이 파묻힌 채로 멈춘다.)
+for (const b of buildings) b.hitR = Math.max(1.3, (b.group.userData.footprint || 1.4) * 0.82 + 0.35);
+
 let _ccT = 0;
 function updateCamColliders(dt) {
   _ccT -= dt;
   if (_ccT > 0) return;
   _ccT = 0.15;
-  const near = [];
-  for (const b of buildings) if (player.position.angleTo(b.pos) < COLLIDER_ANG) for (const m of b.meshes) near.push(m);
+  const near = [], hits = [];
+  for (const b of buildings) {
+    if (player.position.angleTo(b.pos) >= COLLIDER_ANG) continue;
+    for (const m of b.meshes) near.push(m);
+    hits.push({ pos: b.pos, r: b.hitR });     // 같은 근접 판정을 플레이어 충돌에도 재사용
+  }
   engine.camColliders = near;
+  player.colliders = hits;
 }
 
 // 배달 = 정답 제출 (키 E / 탭 공용). 시련소 앞에서는 시련 시작.
@@ -670,6 +732,8 @@ function step(dt) {
   emoji.update(dt);
   animateWater(dt);
   updateRegion(dt);
+  updateQuestionBanner(dt);
+  updateSlopeHint(dt);
 
   cullProps();
   // ★ 학습 모드에서는 네비를 기본으로 끈다. 켜두면 화살표가 정답 집을 가리켜 학습이 사라진다.

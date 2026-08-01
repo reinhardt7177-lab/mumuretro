@@ -1,12 +1,12 @@
 // 행성 표면 위에 서고 걷는 모든 것의 베이스(플레이어/주민/유령 공용).
 // mesh(외부 그룹)는 구면 변환을 담고, body(키드 등)는 자식으로 footOffset+bob 만큼 up 방향으로 떠 있음.
 import * as THREE from 'three';
-import { moveOnSphere, turnHeading, orthonormalizeHeading, orientationFromFrame } from '../world/SurfaceTransform.js';
+import { moveOnSphere, turnHeading, orthonormalizeHeading, orientationFromFrame, projectTangent } from '../world/SurfaceTransform.js';
 
 const _q = new THREE.Quaternion();
 // 등반 판정용 임시값(후보 이동을 실제로 굴려보고 되돌린다)
 const _try = new THREE.Vector3(), _tryH = new THREE.Vector3();
-const _sideA = new THREE.Vector3(), _sideB = new THREE.Vector3();
+const _sideA = new THREE.Vector3(), _sideB = new THREE.Vector3(), _push = new THREE.Vector3();
 const _scratch = { lastAxis: new THREE.Vector3(), lastArc: 0 };
 
 export class SurfaceActor {
@@ -48,6 +48,10 @@ export class SurfaceActor {
     this.canClimb = false;         // 벽 오르기 해금 시 true → 제한 무시
     this.canGlide = false;         // 활공 해금
     this.gliding = false;
+
+    // 건물 충돌 — [{pos, r}]. boot이 근처 것만 주기적으로 채운다(전체 검사는 낭비).
+    this.colliders = [];
+    this.blockedBySlope = false;   // 이번 프레임에 경사로 막혔는가(boot이 읽고 리셋)
     this.lastAxis = new THREE.Vector3(0, 1, 0);
     this.lastArc = 0;
     this._initFrame();
@@ -103,6 +107,7 @@ export class SurfaceActor {
         _sideB.copy(moveDir).applyAxisAngle(this.up, -Math.PI / 2);
         const ca = this._climbOf(_sideA, dist), cb = this._climbOf(_sideB, dist);
         const best = ca < cb ? _sideA : _sideB;
+        this.blockedBySlope = true;    // 안내 문구 트리거(막혔는데 아무 말이 없으면 고장으로 느껴진다)
         if (Math.min(ca, cb) > this.maxClimbTan) { this.lastArc = 0; return; }   // 사방이 절벽
         dir = best;
       }
@@ -110,7 +115,25 @@ export class SurfaceActor {
 
     moveOnSphere(this.position, this.heading, dir, dist, this.planet, this);
     this.up.copy(this.position).normalize();
+    this.resolveCollisions();
     turnHeading(this.heading, dir, this.up, this.turnRate * dt);
+  }
+
+  // 건물 밖으로 밀어내기. 벽을 따라 자연스럽게 미끄러진다(막고 멈추면 끼인 느낌이 난다).
+  // 원형 콜라이더라 네모난 집의 모서리는 살짝 여유가 생기는데, 뚫고 지나가는 것보다는 낫다.
+  resolveCollisions() {
+    if (!this.colliders.length) return;
+    for (const c of this.colliders) {
+      const d = this.position.distanceTo(c.pos);
+      if (d >= c.r || d < 1e-6) continue;
+      _push.copy(this.position).sub(c.pos);
+      projectTangent(_push, this.up);
+      if (_push.lengthSq() < 1e-9) continue;      // 정확히 중심 — 밀 방향이 없다
+      _push.normalize();
+      this.position.copy(c.pos).addScaledVector(_push, c.r);
+      this.planet.projectToSurface(this.position);
+      this.up.copy(this.position).normalize();
+    }
   }
 
   // 도약. 남은 점프 횟수가 있으면 공중에서도 가능(이단 점프).

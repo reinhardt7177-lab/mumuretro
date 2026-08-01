@@ -29,15 +29,18 @@ export function buildGroundCover(scene, planet, anchors, opts = {}) {
   const rng = makeRNG(opts.seed ?? 31);
   const R = planet.R;
 
-  // 풀 — 4면 스파이크. 8삼각형짜리라 만 개를 깔아도 가볍다.
-  const grassGeo = new THREE.ConeGeometry(0.13, 0.62, 4);
-  grassGeo.translate(0, 0.31, 0);
+  // 풀 — 낮고 넓은 포기. 가늘고 뾰족하면 검은 가시처럼 보인다.
+  const grassGeo = new THREE.ConeGeometry(0.22, 0.34, 5);
+  grassGeo.translate(0, 0.17, 0);
   // 꽃 — 줄기 없이 작은 판. 멀리서 색점으로 읽히면 충분하다.
-  const flowerGeo = new THREE.ConeGeometry(0.11, 0.3, 5);
-  flowerGeo.translate(0, 0.34, 0);
+  const flowerGeo = new THREE.ConeGeometry(0.13, 0.26, 5);
+  flowerGeo.translate(0, 0.2, 0);
 
-  const grassMat = toon(0xffffff, { vertexColors: true });
-  const flowerMat = toon(0xffffff, { vertexColors: true });
+  // ★ vertexColors를 켜면 안 된다. InstancedMesh의 setColorAt은 instanceColor를 쓰는데,
+  // vertexColors=true면 셰이더가 geometry의 color 속성을 찾고, 그게 없어서 전부 검게 그려진다
+  // (실측: 뾰족한 검은 가시로 보였다). 인스턴스 색은 setColorAt만으로 적용된다.
+  const grassMat = toon(0xffffff);
+  const flowerMat = toon(0xffffff);
   grassMat.userData.outlineParameters = { visible: false };   // 풀에 외곽선은 지저분하다
   flowerMat.userData.outlineParameters = { visible: false };
 

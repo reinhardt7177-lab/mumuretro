@@ -30,6 +30,13 @@ const _bb = new THREE.Box3();
 // 프롭을 확률로만 뿌리면 서로 겹친다(실측: 824개 중 101쌍). 발자국이 서로 침범하면
 // 아예 놓지 않는다. 밀도는 줄지만 "여유 있게 펼쳐진" 그림이 나온다.
 const SPACING = 1.15;        // 발자국 합에 이만큼 여유를 더 둔다
+// 건물은 발자국이 실제 부피보다 작게 잡혀(모서리 기준) 서로 붙어 보인다.
+// 종류별로 최소 확보 반경을 따로 줘서 마당이 생기게 한다.
+const CLAIM = {
+  house: 5.0, bathhouse: 6.0, schoolFacade: 6.0, cornerShop: 4.5, stationery: 4.5,
+  playground: 4.5, alleyWall: 2.6, utilityPole: 2.2, streetlamp: 2.0,
+  tree: 1.8, palmTree: 1.8, willow_tree: 2.4,
+};
 const _occupied = [];        // { pos, r }
 
 export function resetOccupancy() { _occupied.length = 0; }
@@ -72,7 +79,7 @@ export function placeProp(scene, planet, key, pos, rotDeg = 0, opts = {}, rng = 
     : 0;
   group.userData.footprint = foot;
   // 이미 다른 프롭이 차지한 자리면 놓지 않는다.
-  const claim = Math.max(foot, 0.5);
+  const claim = Math.max(foot, CLAIM[key] ?? 0.5);
   if (!spotFree(pos, claim)) { disposeGroup(group); return null; }
   reserveSpot(pos, claim);
   // 모든 프롭을 발자국 안 최저 높이에 앉힌다. 작은 프롭도 비탈에서는 0.2~0.4u 떠 보이는데,
