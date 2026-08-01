@@ -635,6 +635,13 @@ function updateCamColliders(dt) {
     for (const m of b.meshes) near.push(m);
     hits.push({ pos: b.pos, r: b.hitR });     // 같은 근접 판정을 플레이어 충돌에도 재사용
   }
+  // 시련소 탑도 단단하다. world.placed가 아니라 Trials가 만든 것이라 따로 넣어야 한다
+  // (안 넣으면 돌탑을 그대로 통과해 지나간다).
+  for (const t of trials.towers) {
+    if (player.position.angleTo(t.pos) >= COLLIDER_ANG) continue;
+    for (const m of t.solidMeshes) near.push(m);
+    hits.push({ pos: t.pos, r: t.hitR });
+  }
   engine.camColliders = near;
   player.colliders = hits;
 }
@@ -862,6 +869,32 @@ window.__dbg = {
     input.setTestIntent(null);
     return { caught: _dokkaebiCaught > before, sec: +(f / 60).toFixed(1),
              dist: +(player.position.angleTo(dokkaebi.position) * planet.R).toFixed(1) };
+  },
+  // 탑을 향해 걸어가 실제로 막히는지 확인(통과 버그 회귀 안전망).
+  // 정면으로 밀어붙였을 때 최종 거리가 콜라이더 반경 근처에서 멈춰야 한다.
+  walkIntoTower(i = 0, frames = 600) {
+    const t = trials.towers[i]; if (!t) return 'no tower';
+    // 탑에서 12u 떨어진 곳에서 출발
+    const away = new THREE.Vector3().copy(player.position).sub(t.pos);
+    away.addScaledVector(t.dir, -away.dot(t.dir));
+    if (away.lengthSq() < 1e-9) away.copy(engine.camFwd);
+    away.normalize();
+    player.position.copy(t.pos).addScaledVector(away, 12);
+    planet.projectToSurface(player.position);
+    const dir = new THREE.Vector3();
+    input.setTestIntent({ x: 0, y: 1, run: false });
+    let min = Infinity;
+    for (let f = 0; f < frames; f++) {
+      dir.copy(t.pos).sub(player.position);
+      dir.addScaledVector(player.up, -dir.dot(player.up));
+      if (dir.lengthSq() > 1e-9) { dir.normalize(); engine.camFwd.copy(dir); }
+      step(1 / 60);
+      min = Math.min(min, player.position.distanceTo(t.pos));
+    }
+    input.setTestIntent(null);
+    return { name: t.name, hitR: +t.hitR.toFixed(2), minDist: +min.toFixed(2),
+             finalDist: +player.position.distanceTo(t.pos).toFixed(2),
+             blocked: min > t.hitR - 0.35, canEnter: !!trials.towerInRange(player.position) };
   },
   // 시련소(M8) 검증용
   get trials() {

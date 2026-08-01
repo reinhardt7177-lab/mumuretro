@@ -187,8 +187,11 @@ export class Sky {
     u.uMtnFar.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.45).multiplyScalar(0.80);
     u.uMtnNear.value.copy(u.uHorizon.value).lerp(u.uTop.value, 0.30).multiplyScalar(0.58);
     this._starI = a.starI + (b.starI - a.starI) * t;
-    this.starMat.color.setScalar(this._starI);              // 불투명 유지 + 색으로 페이드
-    this.stars.visible = this._starI > 0.015;               // 낮에는 아예 그리지 않음
+    // 페이드 대상은 검정이 아니라 **그 시각의 하늘색**이다.
+    // 검정으로 어둡게 하면 밤에는 맞지만, 여명·황혼처럼 하늘이 밝을 때는
+    // 별이 사라지는 게 아니라 '검은 점'으로 남는다(실측: 낮 화면에 흑점이 찍혔다).
+    this.starMat.color.copy(u.uTop.value).lerp(_WHITE, this._starI);
+    this.stars.visible = this._starI > 0.015;               // 완전한 낮엔 아예 그리지 않음
     _cA.set(a.cloudTint); _cB.set(b.cloudTint); this.cloudMat.color.copy(_cA.lerp(_cB, t));
     // 해의 고도도 키프레임에서 직접 보간 — 시간대 이름과 하늘 색이 항상 일치한다.
     this.sunElev = (a.sunElev + (b.sunElev - a.sunElev) * t) * Math.PI / 180;
@@ -232,4 +235,5 @@ export class Sky {
 }
 
 const _cA = new THREE.Color(), _cB = new THREE.Color();
+const _WHITE = new THREE.Color(1, 1, 1);
 const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);

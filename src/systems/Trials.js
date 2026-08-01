@@ -11,7 +11,10 @@ import { toon } from '../rendering/Toon.js';
 
 export const TRIAL_STREAK = 5;      // 클리어에 필요한 연속 정답
 const TOWER_H = 15;                 // 플레이어 키 1.5u의 10배 — 멀리서 랜드마크로 읽히는 크기
-const BASE_R = 2.8;                 // 기단 반경(접지 계산에 쓰임)
+const BASE_R = 2.8;                 // 기단 반경(접지 계산·충돌에 쓰임)
+// 플레이어를 막을 원형 콜라이더 반경. 기단 최대폭(BASE_R*1.08) + 몸 반경.
+// 시련 시작 반경(ENTER_R=7)보다 한참 작아야 탑에 닿아 E를 누를 수 있다.
+export const TOWER_HIT_R = BASE_R * 1.08 + 0.35;
 const ENTER_R = 7;                  // 시련 시작 가능 반경(월드)
 const LEAVE_R = 46;                 // 이보다 멀어지면 시련 중단
 
@@ -87,7 +90,11 @@ export class Trials {
       t.group.position.copy(s.pos);
       t.group.quaternion.copy(planet.frameAt(s.pos, 0).quaternion);
       scene.add(t.group);
-      return { ...s, ...t, cleared };
+      // 카메라 충돌용 실물 메시. 빛기둥(40u 반투명 원통)과 오브는 뺀다 —
+      // 넣으면 카메라가 빛기둥에 막혀 멀리서부터 확 당겨진다.
+      const solid = [];
+      t.group.traverse(o => { if (o.isMesh && o !== t.orb && o !== t.beam) solid.push(o); });
+      return { ...s, ...t, cleared, solidMeshes: solid, hitR: TOWER_HIT_R };
     });
   }
 
