@@ -163,7 +163,8 @@ export class LearningSystem {
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
     // 상한 안에 집이 모자라면 후보를 줄인다(정답 1 + 오답 1이면 문제는 성립한다).
-    // 그래도 0개면 최후 수단으로 가장 가까운 집들을 쓴다.
+    // 최후 폴백도 거리순 정렬을 유지해 가장 가까운 것부터 쓴다 —
+    // 그냥 아무거나 쓰면 54u짜리가 섞여 팻말이 19px로 찍혀 읽을 수가 없다.
     let chosen = pool.slice(0, Math.min(CANDIDATES, pool.length));
     if (chosen.length < MIN_CANDIDATES) {
       chosen = withDist.slice(0, Math.min(CANDIDATES, withDist.length)).map(x => x.h);
@@ -178,7 +179,8 @@ export class LearningSystem {
     const labels = chosen.map((house, i) => {
       const text = texts[i];
       const sign = this._makeSign(house, text);
-      return { house, text, correct: text === q.a, sign };
+      // tried — 이미 가본 오답 집. 표시해 두지 않으면 아이가 같은 집을 또 간다.
+      return { house, text, correct: text === q.a, sign, tried: false };
     });
 
     this.current = { question: q, labels, curriculum: this.active };
@@ -189,12 +191,29 @@ export class LearningSystem {
   _makeSign(house, text) {
     const { tex, aspect } = signTexture(text);
     const h = 1.5, w = h * aspect;
-    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true });
+    const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false });
     mat.userData.outlineParameters = { visible: false };
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     mesh.position.copy(house.pos).addScaledVector(house.dir, SIGN_H);
     this.signs.add(mesh);
     return mesh;
+  }
+
+  // 오답 표시 — 팻말을 회색 종이에 ✗ 붙인 모습으로 다시 그린다.
+  _markTried(label) {
+    if (!label || !label.sign) return;
+    const mesh = label.sign;
+    const { tex, aspect } = signTexture(`✗ ${label.text}`, {
+      bg: '#cfcbc4', border: '#8f8a83', fg: '#7a736b',
+    });
+    if (mesh.material.map) mesh.material.map.dispose();
+    mesh.material.map = tex;
+    mesh.material.opacity = 0.72;
+    mesh.material.transparent = true;
+    mesh.material.needsUpdate = true;
+    const h = 1.5;
+    mesh.geometry.dispose();
+    mesh.geometry = new THREE.PlaneGeometry(h * aspect, h);
   }
 
   clearSigns() {
@@ -231,6 +250,9 @@ export class LearningSystem {
     } else {
       this.boxes[q.id] = Math.max(0, this.boxOf(q.id) - 1);
       this.wrongStreak++;
+      // 틀린 집은 팻말을 흐리게 + ✗ 표시. 4학년이 "여긴 아까 가봤다"를 기억하게 만들지 않는다.
+      label.tried = true;
+      this._markTried(label);
     }
     this._save();
     const res = { correct, question: q, label, wrongStreak: this.wrongStreak, box: this.boxes[q.id] };
@@ -246,8 +268,19 @@ export class LearningSystem {
     return l ? l.house : null;
   }
 
-  // 팻말이 항상 카메라를 보게(빌보드).
+  // 팻말이 항상 카메라를 보게(빌보드) + 거리 보정.
+  //
+  // 원근만 따르면 먼 팻말이 화면에서 19px까지 줄어 4학년이 읽을 수가 없다(실측).
+  // 일정 거리부터는 거리에 비례해 키워서 화면상 크기를 유지한다 —
+  // 원근감은 조금 잃지만, 읽히지 않는 팻말은 찍기를 유도할 뿐이다.
   update(camera) {
-    for (const m of this.signs.children) m.quaternion.copy(camera.quaternion);
+    const REF = 18;      // 이 거리까지는 원근 그대로
+    const MAX_K = 3.0;   // 최대 3배까지만 키운다
+    for (const m of this.signs.children) {
+      m.quaternion.copy(camera.quaternion);
+      const d = m.position.distanceTo(camera.position);
+      const k = Math.min(MAX_K, Math.max(1, d / REF));
+      m.scale.setScalar(k);
+    }
   }
 }

@@ -124,6 +124,15 @@ function toast(msg, ms = 2200, cls = '') {
   setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, ms);
 }
 function updateCodexCount() { if (codexCountEl) codexCountEl.textContent = `${codex.count()}/${codex.total()}`; }
+
+// 힌트 HUD — 오답 후 계속 남아 있다. 토스트만 쓰면 놓친 아이가 다시 볼 방법이 없다.
+const hintBtnEl = document.getElementById('hintBtn');
+function setHint(text) {
+  if (!hintBtnEl) return;
+  if (!text) { hintBtnEl.classList.remove('show'); hintBtnEl.textContent = ''; return; }
+  hintBtnEl.textContent = `💡 ${text}`;
+  hintBtnEl.classList.add('show');
+}
 // ── 서사(M9) ─────────────────────────────────────────────────────────────
 // 옛 집배원들이 편지를 다 전하지 못한 채 안개 골짜기에 남았다는 설정으로
 // 이미 있는 시스템(유령·시련소·능력·골짜기·도깨비)을 하나로 꿴다. 새 시스템은 만들지 않는다.
@@ -183,6 +192,7 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
     const kind = parcelKindFor(q.id);
     if (parcelEl) parcelEl.innerHTML =
       `${kind.icon} <b>${q.q}</b> <span style="opacity:.7">— ${cur.subject}</span>`;
+    setHint(null);   // 새 문제 → 힌트 감춤(처음부터 주면 생각을 건너뛴다)
   },
   onResult: (res) => {
     // 배지 갱신 — 오답이었던 문제를 맞히면 comeback으로 잡힌다.
@@ -213,8 +223,11 @@ const learning = new LearningSystem(engine.scene, planet, answerHouses, CURRICUL
       // 벌점 없음 — 다시 찾으면 된다. 2회 틀리면 힌트(네비)가 열린다.
       pickup();
       emoji.spawn(player.position, player.up, '😅', { size: 1.3, life: 1.8 });
+      // 힌트는 토스트로 한 번 보여주고, HUD에도 남긴다.
+      // 3초짜리 토스트를 놓치면 영영 못 보는 건 4학년에게 가혹하다.
+      setHint(res.question.hint);
       toast(res.wrongStreak >= 2
-        ? `아니에요! 💡 힌트: ${res.question.hint} (길잡이를 켰어요)`
+        ? `아니에요! 💡 ${res.question.hint} (길잡이를 켰어요)`
         : `아니에요! 다시 찾아볼까요? 💡 ${res.question.hint}`, 3000);
     }
   },

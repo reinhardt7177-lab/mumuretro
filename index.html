@@ -16,6 +16,11 @@
   /* 배달 HUD */
   #parcel{position:fixed;top:52px;left:14px;background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:20;max-width:70vw;box-shadow:0 3px 0 rgba(150,74,28,.6);}
   #parcel b{color:#ffe9b0;}
+  /* 힌트 — 토스트는 사라지지만 이건 남는다. 놓친 아이가 다시 볼 수 있어야 한다. */
+  #hintBtn{position:fixed;top:52px;left:14px;transform:translateY(38px);background:rgba(90,105,150,.86);
+    color:#fff;font-size:13px;padding:7px 13px;border-radius:14px;z-index:21;cursor:pointer;
+    display:none;max-width:70vw;}
+  #hintBtn.show{display:block;}
   #codexBtn{position:fixed;top:14px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
   #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:#e8945b;color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 #b86a38;z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
   #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;pointer-events:auto;cursor:pointer;}
@@ -123,6 +128,7 @@
   <div id="codexBtn">📒 우표 도감 <span id="codexCount">0/0</span></div>
   <div id="customizeBtn">👕 꾸미기</div>
   <div id="muteBtn">🔊</div>
+  <div id="hintBtn"></div>
   <div id="deliver">E — 배달하기</div>
   <button id="jumpBtn" aria-label="점프">점프</button>
   <div id="trialHud"></div>
