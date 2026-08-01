@@ -32,6 +32,7 @@ import { Badges } from './systems/Badges.js';
 import { Abilities, ABILITIES } from './systems/Abilities.js';
 import { Trials, TRIAL_STREAK } from './systems/Trials.js';
 import { Story, INTRO, ENDING } from './systems/Story.js';
+import { Quest } from './systems/Quest.js';
 import { signTexture } from './systems/Learning.js';
 import { parcelKindFor } from './data/story.js';
 
@@ -154,8 +155,20 @@ function updateSlopeHint(dt) {
   if (_slopeMsgCD > 0) return;
   _slopeMsgCD = 14;
   toast(player.canClimb
-    ? '너무 가팔라요! 다른 길로 돌아가 볼까요?'
-    : '너무 가팔라요! 🧗 벽 오르기를 배우면 오를 수 있어요', 3200);
+    ? '너무 가팔라요! 다른 길로 돌아가 볼까요? (M: 지도)'
+    : '너무 가팔라요! 🧗 벽 오르기를 배우면 오를 수 있어요 (M: 지도·할 일)', 3600);
+}
+
+// 건물에 막혔을 때. 막아 놓고 아무 말이 없으면 "게임이 고장났나?"가 된다.
+// 경사 안내보다 훨씬 드물게(60초) — 마을에서는 계속 부딪히므로 잦으면 잔소리가 된다.
+let _propMsgCD = 0;
+function updatePropHint(dt) {
+  if (_propMsgCD > 0) _propMsgCD -= dt;
+  if (!player.blockedByProp) return;
+  player.blockedByProp = false;
+  if (_propMsgCD > 0) return;
+  _propMsgCD = 60;
+  toast('건물 안으로는 못 들어가요. 대문 앞에서 E를 눌러 배달해요', 3400);
 }
 
 // 힌트 HUD — 오답 후 계속 남아 있다. 토스트만 쓰면 놓친 아이가 다시 볼 방법이 없다.
@@ -428,7 +441,11 @@ function showIntro() {
   document.getElementById('introHint').textContent = INTRO.hint;
   const btn = document.getElementById('introBtn');
   btn.textContent = INTRO.button;
-  btn.onclick = () => { el.classList.remove('show'); story.markIntroShown(); resumeAudio(); };
+  btn.onclick = () => {
+    el.classList.remove('show'); story.markIntroShown(); resumeAudio();
+    // 지도가 있다는 걸 인트로 직후 한 번만 알린다. 메뉴는 아무도 먼저 열어 보지 않는다.
+    setTimeout(() => toast('🗺️ M을 누르면 지도와 할 일 목록이 열려요', 4200), 2600);
+  };
   el.classList.add('show');
 }
 
@@ -480,6 +497,16 @@ const closeCodex = () => codexOverlay.classList.remove('show');
 document.getElementById('codexBtn').addEventListener('click', openCodex);
 document.getElementById('codexClose').addEventListener('click', closeCodex);
 addEventListener('keydown', e => { if (e.code === 'KeyC') (codexOverlay.classList.contains('show') ? closeCodex() : openCodex()); });
+
+// 퀘스트 + 전체 지도 — "지금 뭘 해야 하나 / 저긴 왜 못 가나"를 한 화면에.
+// 새 상태를 만들지 않는다. abilities·trials·learning의 현재값을 읽어 그때그때 그린다.
+const quest = new Quest({
+  planet, player, trials, abilities, learning, world,
+  dokkaebiCaught: () => _dokkaebiCaught > 0,
+});
+document.getElementById('questBtn').addEventListener('click', () => quest.toggle());
+document.getElementById('questClose').addEventListener('click', () => quest.hide());
+addEventListener('keydown', e => { if (e.code === 'KeyM') quest.toggle(); });
 
 // 꾸미기 오버레이 토글
 const czOverlay = document.getElementById('customize');
@@ -734,6 +761,7 @@ function step(dt) {
   updateRegion(dt);
   updateQuestionBanner(dt);
   updateSlopeHint(dt);
+  updatePropHint(dt);
 
   cullProps();
   // ★ 학습 모드에서는 네비를 기본으로 끈다. 켜두면 화살표가 정답 집을 가리켜 학습이 사라진다.
@@ -767,6 +795,16 @@ window.game = game;
 
 // ── 디버그 인트로스펙션(스크린샷 없이 preview_eval로 읽기) ──
 window.__dbg = {
+  // 퀘스트 패널 — 목록/지도를 실제로 그려 보고 결과를 문자열로 확인한다.
+  quest(open = true) {
+    if (open) quest.show(); else quest.hide();
+    return {
+      open: quest.open,
+      items: [...document.querySelectorAll('#questList .qi')]
+        .map(e => `[${e.className.replace('qi ', '')}] ${e.querySelector('.qi-t').textContent}`),
+      mapPx: quest.canvas ? `${quest.canvas.width}x${quest.canvas.height}` : null,
+    };
+  },
   get altitude() { return +player.position.length().toFixed(4); },
   get pos() { return player.position.toArray().map(v => +v.toFixed(2)); },
   get heading() { return player.heading.toArray().map(v => +v.toFixed(3)); },

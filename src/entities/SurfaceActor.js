@@ -52,6 +52,7 @@ export class SurfaceActor {
     // 건물 충돌 — [{pos, r}]. boot이 근처 것만 주기적으로 채운다(전체 검사는 낭비).
     this.colliders = [];
     this.blockedBySlope = false;   // 이번 프레임에 경사로 막혔는가(boot이 읽고 리셋)
+    this.blockedByProp = false;    // 건물에 막혔는가(같은 방식)
     this.lastAxis = new THREE.Vector3(0, 1, 0);
     this.lastArc = 0;
     this._initFrame();
@@ -130,6 +131,7 @@ export class SurfaceActor {
       projectTangent(_push, this.up);
       if (_push.lengthSq() < 1e-9) continue;      // 정확히 중심 — 밀 방향이 없다
       _push.normalize();
+      this.blockedByProp = true;
       this.position.copy(c.pos).addScaledVector(_push, c.r);
       this.planet.projectToSurface(this.position);
       this.up.copy(this.position).normalize();

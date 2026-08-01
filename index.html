@@ -83,6 +83,35 @@
   #codexTabs{display:flex;gap:8px;margin-bottom:12px;}
   #codexTabs .tab{color:#cfe2e6;background:rgba(255,255,255,.08);padding:6px 16px;border-radius:14px;font-size:12px;cursor:pointer;}
   #codexTabs .tab.on{background:#e8945b;color:#fff;}
+  /* 퀘스트 + 전체 지도 — '무엇을 할 수 있고 무엇이 왜 잠겼는가' */
+  #questBtn{position:fixed;top:90px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;
+    padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
+  #questPanel{position:fixed;inset:0;background:rgba(24,38,48,.93);z-index:44;display:none;
+    flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;}
+  #questPanel.show{display:flex;}
+  #questPanel h2{color:#ffe9b0;font-size:20px;letter-spacing:4px;}
+  #questWrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:center;
+    max-height:74vh;overflow:auto;}
+  #mapCanvas{border-radius:14px;border:2px solid rgba(255,255,255,.22);background:#4a6a4a;
+    width:440px;max-width:88vw;height:auto;image-rendering:auto;}
+  #questList{width:360px;max-width:88vw;display:flex;flex-direction:column;gap:8px;}
+  .qi{border-radius:12px;padding:10px 14px;border-left:4px solid #888;background:rgba(255,255,255,.07);}
+  .qi-t{font-size:14px;font-weight:700;color:#fff;}
+  .qi-d{font-size:12px;color:#cfe2e6;margin-top:3px;line-height:1.5;}
+  .qi.now{border-left-color:#e8945b;background:rgba(232,148,91,.18);}
+  .qi.todo{border-left-color:#6fc6d6;}
+  .qi.lock{border-left-color:#8a8a9a;opacity:.72;}
+  .qi.done{border-left-color:#8fd08f;opacity:.85;}
+  #questClose{color:#fff;background:#e8945b;padding:10px 28px;border-radius:24px;cursor:pointer;
+    letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  /* 좁은 화면에서는 우측 버튼 3개를 한 줄로 압축한다. 세로로 쌓으면 화면 오른쪽이 다 잠기고
+     HUD(왼쪽 텍스트)와도 겹친다(실측: 375px에서 27px 침범). */
+  @media (max-width:640px){
+    /* 우측 버튼 묶음을 통째로 아래로 내린다 — 좁은 화면에서 좌상단 HUD 텍스트와 겹쳤다
+       (실측: 375px에서 27px 침범). 버튼 폭이 글자 수마다 달라 가로 배치는 자리를 못 잡는다. */
+    #codexBtn{top:56px;} #customizeBtn{top:94px;} #questBtn{top:132px;right:14px;}
+    #mapCanvas{width:min(92vw,440px);}
+  }
   /* 세션 요약 — 한 판을 마무리하는 순간. 배지가 실제로 읽히는 유일한 화면. */
   #summary,#intro,#ending{position:fixed;inset:0;background:rgba(24,38,48,.92);z-index:45;display:none;
     flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
@@ -139,6 +168,15 @@
   <div id="codexBtn">📒 우표 도감 <span id="codexCount">0/0</span></div>
   <div id="customizeBtn">👕 꾸미기</div>
   <div id="muteBtn">🔊</div>
+  <div id="questBtn">🗺️ 지도·할 일</div>
+  <div id="questPanel">
+    <h2>지 도 · 할  일</h2>
+    <div id="questWrap">
+      <canvas id="mapCanvas" width="440" height="220"></canvas>
+      <div id="questList"></div>
+    </div>
+    <div id="questClose">닫기</div>
+  </div>
   <div id="qBanner">
     <div class="qsub" id="qSub"></div>
     <div class="qtext" id="qText"></div>
