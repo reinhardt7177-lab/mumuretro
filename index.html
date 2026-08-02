@@ -105,7 +105,10 @@
   #questWrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:center;
     max-height:74vh;overflow:auto;}
   #mapCanvas{border-radius:14px;border:2px solid rgba(255,255,255,.22);background:#4a6a4a;
-    width:440px;max-width:88vw;height:auto;image-rendering:auto;}
+    width:440px;max-width:88vw;height:auto;image-rendering:auto;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #mapWrap{display:flex;flex-direction:column;gap:6px;align-items:center;}
+  #mapLegend{font-size:11px;color:#a8c0c8;letter-spacing:.3px;}
   #questList{width:360px;max-width:88vw;display:flex;flex-direction:column;gap:8px;}
   .qi{border-radius:12px;padding:10px 14px;border-left:4px solid #888;background:rgba(255,255,255,.07);}
   .qi-t{font-size:14px;font-weight:700;color:#fff;}
@@ -184,7 +187,10 @@
   <div id="questPanel">
     <h2>지 도 · 할  일</h2>
     <div id="questWrap">
-      <canvas id="mapCanvas" width="440" height="220"></canvas>
+      <div id="mapWrap">
+        <canvas id="mapCanvas" width="880" height="440"></canvas>
+        <div id="mapLegend">🔺 나 · 🗼 시련소 · ✅ 깬 곳 · 🔒 아직 못 가는 곳</div>
+      </div>
       <div id="questList"></div>
     </div>
     <div id="questClose">닫기</div>

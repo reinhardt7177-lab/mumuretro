@@ -810,6 +810,8 @@ window.__dbg = {
       items: [...document.querySelectorAll('#questList .qi')]
         .map(e => `[${e.className.replace('qi ', '')}] ${e.querySelector('.qi-t').textContent}`),
       mapPx: quest.canvas ? `${quest.canvas.width}x${quest.canvas.height}` : null,
+      bakeMs: +quest._bakeMs.toFixed(0),
+      worstChunkMs: +quest._worstChunkMs.toFixed(1),
     };
   },
   get altitude() { return +player.position.length().toFixed(4); },
