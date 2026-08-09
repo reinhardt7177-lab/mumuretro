@@ -237,10 +237,14 @@ function buildRegionFeatures(region, scene, planet, rng, ctx) {
     putG('bench', -2, 4, 0);
   } else if (region.id === 'lake') {
     hero('gazebo', 0, wa ? wa.ang * R + 4 : 7, 180);
-    hero('wooden_bridge', 0, 0, 90, true);
-    for (let i = 0; i < 5; i++) hero('lotus', (rng() - 0.5) * 8, (rng() - 0.5) * 8, rng() * 360, true);
-    for (let i = 0; i < 3; i++) hero('duck', (rng() - 0.5) * 7, (rng() - 0.5) * 7, rng() * 360, true);
-    for (let i = 0; i < 2; i++) hero('koi', (rng() - 0.5) * 6, (rng() - 0.5) * 6, rng() * 360, true);
+    // 물 위 장식은 호수 크기에 맞춰 퍼뜨린다. 고정 오프셋(±8u)으로 두면 호수를 키웠을 때
+    // 넓은 수면 한가운데에 오리와 연잎이 옹기종기 모여 있는 그림이 된다.
+    const lakeR = wa ? wa.ang * R : 6;
+    const spread = (f) => (rng() - 0.5) * 2 * lakeR * f;
+    hero('wooden_bridge', spread(0.5), lakeR * 0.45, 90, true);   // 한가운데보다 물가 쪽이 자연스럽다
+    for (let i = 0; i < 5; i++) hero('lotus', spread(0.75), spread(0.75), rng() * 360, true);
+    for (let i = 0; i < 3; i++) hero('duck', spread(0.65), spread(0.65), rng() * 360, true);
+    for (let i = 0; i < 2; i++) hero('koi', spread(0.6), spread(0.6), rng() * 360, true);
   } else if (region.id === 'temple') {
     hero('pagoda', 0, 0, rng() * 360);
     hero('torii_gate', 0, 9, 0);
@@ -302,7 +306,7 @@ export function buildTown(scene, planet, seed = 7) {
   }
 
   // 3.5) 지면 디테일(풀·꽃) — 인스턴싱 2 드로우콜. 빈 땅이 레퍼런스와의 큰 차이였다.
-  const cover = buildGroundCover(scene, planet, anchors, { count: 9000, seed: 31 });
+  const cover = buildGroundCover(scene, planet, anchors, { count: 26000, seed: 31 });
 
   // 4) 구역 특징(앵커/필러/힐링 포컬)
   const ctx = { placed, water, heroSpots, healingPoints, waterAreas, roads };

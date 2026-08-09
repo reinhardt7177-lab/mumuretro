@@ -45,7 +45,7 @@ const sky = new Sky(engine, planet);
 atmosphere.setSky(sky);                     // 하늘도 같은 시간대 키프레임으로 구동
 const world = buildTown(engine.scene, planet, 7);
 const player = new Player(planet);
-player.setLatLon(15, -4);   // 골목 주택가(우체통 허브) 근처에서 시작
+player.setLatLon(15, -4);   // 골목 주택가(우체통 허브) 근처에서 시작(아래에서 탑 밖으로 밀어냄)
 engine.scene.add(player.mesh);
 const customizer = new Customizer(player);   // 저장된 로드아웃 로드 + 적용
 
@@ -504,6 +504,31 @@ const quest = new Quest({
   planet, player, trials, abilities, learning, world,
   dokkaebiCaught: () => _dokkaebiCaught > 0,
 });
+// 시작 위치를 시련소 탑 밖으로 밀어낸다.
+// 마을 시련소는 구역 중심(=우체통 허브)에 서고 시작 좌표도 같은 점이라 거리가 정확히 0이었다.
+// 탑에 충돌을 넣은 뒤로는 그게 곧 '탑 속에 파묻힌 채 시작'이 된다.
+// 좌표를 손으로 옮기지 않고 밀어내는 이유: 나중에 탑이나 허브가 움직여도 알아서 맞는다.
+(function pushStartOutOfTower() {
+  const CLEAR = 6;                     // 탑 표면에서 이만큼 떨어져 선다(충돌반경 3.4 + 여유)
+  for (const t of trials.towers) {
+    const d = player.position.angleTo(t.pos) * planet.R;
+    if (d >= t.hitR + CLEAR) continue;
+    // 탑에서 멀어지는 접선 방향. 거리가 0이면 밀 방향이 없으니 현재 진행 방향을 쓴다.
+    const away = player.position.clone().sub(t.pos);
+    away.addScaledVector(t.dir, -away.dot(t.dir));
+    if (away.lengthSq() < 1e-9) away.copy(player.heading);
+    away.addScaledVector(t.dir, -away.dot(t.dir)).normalize();
+    player.position.copy(t.pos).addScaledVector(away, t.hitR + CLEAR);
+    planet.projectToSurface(player.position);
+    player.heading.copy(t.pos).sub(player.position);       // 탑을 바라보게 — 첫 화면에 목표가 보인다
+    const up = player.position.clone().normalize();
+    player.heading.addScaledVector(up, -player.heading.dot(up)).normalize();
+    player.syncMesh();
+    engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+    break;
+  }
+})();
+
 document.getElementById('questBtn').addEventListener('click', () => quest.toggle());
 document.getElementById('questClose').addEventListener('click', () => quest.hide());
 addEventListener('keydown', e => { if (e.code === 'KeyM') quest.toggle(); });
@@ -812,6 +837,7 @@ window.__dbg = {
       mapPx: quest.canvas ? `${quest.canvas.width}x${quest.canvas.height}` : null,
       bakeMs: +quest._bakeMs.toFixed(0),
       worstChunkMs: +quest._worstChunkMs.toFixed(1),
+      paintMs: quest._paintMs ?? null,
     };
   },
   get altitude() { return +player.position.length().toFixed(4); },

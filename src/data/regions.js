@@ -53,6 +53,11 @@ export function offsetDir(centerDir, u, v, R) {
 
 // 바다/호수 영역 — {id, center(단위방향), ang(반경 라디안)}.
 // 지형(함몰)과 물 메시가 같은 값을 써야 호수가 언덕 위에 뜨지 않는다.
+// 호수 반경(0.15rad = 10.2u)은 실측으로 정한 값이다.
+// 이 숫자 하나가 물 메시·지형 함몰·프롭 제외·길 회피에 전부 쓰이고,
+// 정자(ang*R+4)와 시련소 탑(ang*R+5)도 여기에 맞춰 자동으로 밀려난다.
+// 더 키울 때 먼저 확인할 것: 배달용 집이 물에 잠기는가(잠기면 그 구역 시련이 성립하지 않는다.
+// 안개 골짜기에서 똑같은 문제를 겪었다). 실측 당시 가장 가까운 집이 43.9u라 여유가 컸다.
 export function waterZones(R) {
   const out = [];
   for (const r of REGIONS) {
@@ -60,7 +65,7 @@ export function waterZones(R) {
     const c = latLonDir(r.lat, r.lon);
     const z = r.water === 'sea'
       ? { id: r.id, center: offsetDir(c, 0, -10, R), ang: 0.2 }
-      : { id: r.id, center: c.clone(), ang: 0.085 };
+      : { id: r.id, center: c.clone(), ang: 0.15 };   // 호수
     // heightAt이 acos 없이 영향권을 빠르게 걸러내기 위한 내적 임계값.
     // 물가 성형이 u=2.2까지 이어지므로 그보다 넉넉해야 경계에서 지형이 끊기지 않는다.
     z.cosOuter = Math.cos(Math.min(Math.PI, z.ang * 2.3));

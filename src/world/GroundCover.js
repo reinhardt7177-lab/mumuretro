@@ -24,22 +24,74 @@ const COVER = {
 
 const FLOWER_COLORS = [0xf2c14e, 0xe8737d, 0xf0f0f0, 0xc98bdc, 0xf59b42];
 
+// ── 풀잎 다발 ──────────────────────────────────────────────────────────────
+// 원뿔 하나로는 아무리 비율을 맞춰도 '고깔'로 보인다(실측: 아이 눈에 교통 콘처럼 보였다).
+// 부드러운 풀은 **끝으로 갈수록 가늘어지며 휘는 얇은 잎** 여러 장이 만든다.
+// 잎 한 장 = 3단 띠(테이퍼 + 앞으로 휨), 그걸 방향을 달리해 세 장 세운 게 한 포기.
+//
+// 법선은 면의 실제 법선이 아니라 위쪽으로 기울여 준다. 얇은 판의 진짜 법선을 쓰면
+// 각도에 따라 어떤 잎은 새까맣고 어떤 잎은 하얗게 튀어서 잔디밭이 얼룩덜룩해진다.
+// 위쪽으로 몰아 주면 전부 부드럽게 같은 빛을 받는다(스타일라이즈드 식생의 상투 수단).
+const BLADE_SEGS = 3;
+
+function pushBlade(pos, nor, idx, yaw, lean, height, halfW, bend) {
+  const base = pos.length / 3;
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  for (let i = 0; i <= BLADE_SEGS; i++) {
+    const t = i / BLADE_SEGS;
+    const y = height * t;
+    // 끝으로 갈수록 가늘어진다. 지수를 1보다 작게 둬야 밑동이 통통하고 끝만 뾰족하다.
+    const hw = halfW * Math.pow(1 - t, 0.65);
+    // 휨 — t²이라 밑동은 곧고 끝만 눕는다. 이게 '부드러움'의 대부분을 만든다.
+    const off = bend * t * t + lean * t;
+    for (const sgn of [-1, 1]) {
+      // 잎의 폭 방향은 yaw에 수직, 휨은 yaw 방향으로
+      const lx = sgn * hw, lz = 0;
+      const bx = off;
+      pos.push((lx + bx) * cy - lz * sy, y, (lx + bx) * sy + lz * cy);
+      // 위로 몰아 준 법선(위 0.8 + 잎이 눕는 쪽 0.2)
+      const nx = 0.2 * cy, nz = 0.2 * sy;
+      nor.push(nx, 0.96, nz);
+    }
+  }
+  for (let i = 0; i < BLADE_SEGS; i++) {
+    const a = base + i * 2, b = a + 1, c = a + 2, d = a + 3;
+    idx.push(a, c, b, b, c, d);
+  }
+}
+
+function makeGrassTuft() {
+  const pos = [], nor = [], idx = [];
+  // 세 장이면 어느 각도에서 봐도 최소 한 장은 넓은 면을 보여 준다. 네 장부터는
+  // 삼각형만 늘고 눈에 띄는 차이가 없다(포기당 15 → 20삼각형).
+  const blades = [
+    { yaw: 0.0, lean: 0.02, h: 0.50, w: 0.055, bend: 0.14 },
+    { yaw: 2.1, lean: -0.01, h: 0.42, w: 0.050, bend: 0.17 },
+    { yaw: 4.2, lean: 0.03, h: 0.34, w: 0.045, bend: 0.11 },
+  ];
+  for (const b of blades) pushBlade(pos, nor, idx, b.yaw, b.lean, b.h, b.w, b.bend);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setIndex(idx);
+  return g;
+}
+
 export function buildGroundCover(scene, planet, anchors, opts = {}) {
-  const count = opts.count ?? 9000;
+  const count = opts.count ?? 9000;   // 표본 수(밀도 컷을 통과한 것만 실제로 심긴다)
   const rng = makeRNG(opts.seed ?? 31);
   const R = planet.R;
 
-  // 풀 — 낮고 넓은 포기. 가늘고 뾰족하면 검은 가시처럼 보인다.
-  const grassGeo = new THREE.ConeGeometry(0.22, 0.34, 5);
-  grassGeo.translate(0, 0.17, 0);
+  const grassGeo = makeGrassTuft();
   // 꽃 — 줄기 없이 작은 판. 멀리서 색점으로 읽히면 충분하다.
-  const flowerGeo = new THREE.ConeGeometry(0.13, 0.26, 5);
-  flowerGeo.translate(0, 0.2, 0);
+  const flowerGeo = new THREE.ConeGeometry(0.11, 0.30, 5);
+  flowerGeo.translate(0, 0.24, 0);
 
   // ★ vertexColors를 켜면 안 된다. InstancedMesh의 setColorAt은 instanceColor를 쓰는데,
   // vertexColors=true면 셰이더가 geometry의 color 속성을 찾고, 그게 없어서 전부 검게 그려진다
   // (실측: 뾰족한 검은 가시로 보였다). 인스턴스 색은 setColorAt만으로 적용된다.
   const grassMat = toon(0xffffff);
+  grassMat.side = THREE.DoubleSide;      // 얇은 잎이라 뒷면이 사라지면 구멍이 뚫린 것처럼 보인다
   const flowerMat = toon(0xffffff);
   grassMat.userData.outlineParameters = { visible: false };   // 풀에 외곽선은 지저분하다
   flowerMat.userData.outlineParameters = { visible: false };
@@ -76,7 +128,8 @@ export function buildGroundCover(scene, planet, anchors, opts = {}) {
     // +Y를 up으로 정렬 + 랜덤 yaw
     q.setFromUnitVectors(_Y, up);
     q.multiply(new THREE.Quaternion().setFromAxisAngle(_Y, rng() * Math.PI * 2));
-    const s = cfg.scale * (0.7 + rng() * 0.7);
+    // 포기가 크면 성겨 보인다 — 하나하나가 도드라져 '잔디밭'이 아니라 '풀 몇 포기'가 된다.
+    const s = cfg.scale * (0.55 + rng() * 0.5);
     scl.set(s, s * (0.8 + rng() * 0.6), s);
     m.compose(pos, q, scl);
 
@@ -84,8 +137,10 @@ export function buildGroundCover(scene, planet, anchors, opts = {}) {
       col.set(FLOWER_COLORS[Math.floor(rng() * FLOWER_COLORS.length)]);
       fList.push({ m: m.clone(), c: col.clone() });
     } else {
-      // 구역 지면색을 기준으로 밝기만 흔들어 자연스럽게
-      col.copy(region.color).multiplyScalar(0.78 + rng() * 0.5);
+      // 구역 지면색보다 조금 어둡게. 밝게 흔들면 지면과 대비가 사라져
+      // 창백한 삼각형이 떠 있는 것처럼 보이고(실측: 0.78~1.28 범위),
+      // 너무 어둡게 하면 얇은 잎이 검게 뭉친다.
+      col.copy(region.color).multiplyScalar(0.72 + rng() * 0.30);
       gList.push({ m: m.clone(), c: col.clone() });
     }
   }
