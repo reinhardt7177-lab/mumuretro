@@ -68,6 +68,7 @@ export class Quest {
     this.el = document.getElementById('questPanel');
     this.canvas = document.getElementById('mapCanvas');
     this.listEl = document.getElementById('questList');
+    this.axisEl = document.getElementById('questAxis');
     this.open = false;
     this._bg = null;      // 구운 지형 이미지(캔버스). 한 번만 만든다.
     this._grid = null;
@@ -82,8 +83,23 @@ export class Quest {
   show() {
     this.open = true;
     if (this.el) this.el.classList.add('show');
+    this.renderAxis();
     this.renderList();
     this.renderMap();
+  }
+
+  // ── 진행 축 한 줄 ───────────────────────────────────────────────────────
+  // 시련소 → 능력 → 갈 수 있는 곳. 이 게임의 진행은 이 사슬 하나뿐이다.
+  // 목록보다 먼저 이게 읽혀야 "지금 어디쯤 왔나"가 한눈에 잡힌다.
+  renderAxis() {
+    if (!this.axisEl) return;
+    const { trials, abilities } = this.d;
+    const cleared = abilities.clearedCount(), total = trials.towers.length;
+    const next = abilities.next();
+    this.axisEl.textContent = next
+      ? `🗼 시련소 ${cleared}/${total}  →  다음 능력 ${next.emoji} ${next.name}` +
+        (next.at > cleared ? ` (${next.at - cleared}곳 더)` : ' — 곧!')
+      : `🗼 시련소 ${cleared}/${total}  →  능력을 모두 얻었어요 ✨`;
   }
 
   // ── 퀘스트 목록 ─────────────────────────────────────────────────────────
@@ -91,7 +107,6 @@ export class Quest {
   renderList() {
     if (!this.listEl) return;
     const { trials, abilities, learning, dokkaebiCaught } = this.d;
-    const cleared = abilities.clearedCount();
     const rows = [];
 
     const item = (state, title, desc) =>
@@ -107,17 +122,10 @@ export class Quest {
     // (탑 플래그는 submit()에서만 갱신되므로 다른 경로로 클리어되면 어긋난다).
     const isDone = t => abilities.cleared.has(t.regionId);
     const openTowers = trials.towers.filter(t => !isDone(t) && t.regionId !== 'mist');
+    // 개수와 다음 능력은 위 진행 축 한 줄이 이미 말한다. 여기선 "어디로 가면 되나"만.
     if (openTowers.length) {
-      rows.push(item('todo', `🗼 시련소 (${cleared}/${trials.towers.length})`,
+      rows.push(item('todo', '🗼 시련소 깨기',
         `빛기둥이 보이는 탑에서 E → 5문제 연속 정답. 남은 곳: ${openTowers.map(t => t.emoji).join(' ')}`));
-    }
-
-    // 다음 능력
-    const next = abilities.next();
-    if (next) {
-      const need = next.at - cleared;
-      rows.push(item(need <= 0 ? 'todo' : 'lock', `${next.emoji} ${next.name}`,
-        need <= 0 ? '곧 열려요!' : `시련소를 ${need}곳 더 깨면 열려요 (${cleared}/${next.at})`));
     }
 
     // 잠긴 것들 — 왜 잠겼는지 반드시 밝힌다

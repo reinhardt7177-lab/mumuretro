@@ -19,7 +19,9 @@
       "Bash(npx --yes @gltf-transform/cli@latest inspect assets/env/house_a.glb)",
       "Bash(mkdir -p /tmp/glbtest)",
       "Bash(npx --yes @gltf-transform/cli@latest optimize assets/env/house_a.glb /tmp/glbtest/house_a.glb --texture-compress webp --texture-size 512 --compress draco)",
-      "Bash(awk '{print $5, $9}')"
+      "Bash(awk '{print $5, $9}')",
+      "Bash(git rm *)",
+      "Bash(git -c core.quotepath=false status --short)"
     ]
   }
 }

@@ -17,24 +17,71 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://mumuretro.vercel.app/assets/og.jpg">
 <style>
+  /* ── 팔레트 ───────────────────────────────────────────────────────────────
+     색 계열은 다섯 개까지만 쓴다. 여기 없는 색을 코드에 직접 적지 않는다 —
+     그렇게 하나씩 늘어난 색이 여덟 계열이 되면서 화면이 난잡해졌다.
+       ink   어두운 청록 · 패널과 칩의 바탕
+       act   주황 · "누르는 것"은 전부 이 색. 다른 색 버튼을 만들지 않는다
+       warm  크림/금/종이 · 강조 텍스트, 획득물, 수집품
+       mist  연한 청록 · 보조 설명 텍스트
+       story 보라 · 이야기 토스트. 문제(ink)와 이야기를 아이가 색으로 가른다 */
+  :root{
+    --ink:#1c2a34; --ink-2:rgba(28,42,52,.88); --chip:rgba(40,70,80,.55);
+    --act:#e8945b; --act-d:#b86a38;
+    --cream:#ffe9b0; --gold:#ffd76a; --paper:#f3ead6; --paper-ink:#5a3a22;
+    --mist:#cfe2e6; --mist-2:#a8c0c8;
+    --story:rgba(90,105,150,.9);
+    --line:rgba(255,255,255,.18); --fill:rgba(255,255,255,.08);
+  }
   *{margin:0;padding:0;box-sizing:border-box;}
   html,body{width:100%;height:100%;overflow:hidden;background:#aee0e6;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-user-select:none;user-select:none;}
   #c{display:block;width:100vw;height:100vh;touch-action:none;}
   #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#aee0e6;color:#2a4a52;font-size:15px;letter-spacing:3px;z-index:50;}
+
+  /* ── 상시 화면 ─────────────────────────────────────────────────────────────
+     상시로 떠 있는 것은 다섯 뿐이다: 내가 어디에 있나(hud) · 지금 할 일(parcel) ·
+     어디로 가나(topRight) · 세계에 말 걸기(emotes) · 조작법(hint).
+     그 외에는 전부 ☰ 뒤에 있다. */
   #hud{position:fixed;top:14px;left:14px;display:flex;gap:8px;z-index:20;pointer-events:none;}
-  #hud .pill{background:rgba(40,70,80,.42);color:#fff;font-size:13px;padding:7px 13px;border-radius:20px;letter-spacing:1px;}
-  #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(40,70,80,.42);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;letter-spacing:1px;z-index:20;white-space:nowrap;}
-  @media (max-width:640px){#hint{font-size:11px;white-space:normal;text-align:center;width:90%;}}
-  /* 배달 HUD */
-  #parcel{position:fixed;top:52px;left:14px;background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:20;max-width:70vw;box-shadow:0 3px 0 rgba(150,74,28,.6);}
-  #parcel b{color:#ffe9b0;}
+  #hud .pill{background:var(--chip);color:#fff;font-size:13px;padding:7px 13px;border-radius:20px;letter-spacing:1px;}
+
+  /* 지금 할 일 — 화면에서 가장 중요한 한 줄. 유일하게 act 색을 쓰는 표시물이다. */
+  #parcel{position:fixed;top:52px;left:14px;background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:20;max-width:60vw;box-shadow:0 3px 0 var(--act-d);}
+  #parcel b{color:var(--cream);}
   /* 힌트 — 토스트는 사라지지만 이건 남는다. 놓친 아이가 다시 볼 수 있어야 한다. */
-  #hintBtn{position:fixed;top:52px;left:14px;transform:translateY(38px);background:rgba(90,105,150,.86);
+  #hintBtn{position:fixed;top:52px;left:14px;transform:translateY(38px);background:var(--story);
     color:#fff;font-size:13px;padding:7px 13px;border-radius:14px;z-index:21;cursor:pointer;
-    display:none;max-width:70vw;}
+    display:none;max-width:60vw;}
   #hintBtn.show{display:block;}
-  #codexBtn{position:fixed;top:14px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
-  #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:#e8945b;color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 #b86a38;z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
+
+  /* ── 우상단 스택 ───────────────────────────────────────────────────────────
+     버튼마다 top/right를 손으로 찍었더니 1280px에서 지도 버튼과 음소거 버튼이
+     38px 겹쳤다(실측). 좌표를 못 찍게 만드는 게 유일한 해법이라 flex 컬럼으로 바꿨다 —
+     여기에 무엇을 더 넣든 겹칠 수가 없다. */
+  #topRight{position:fixed;top:14px;right:14px;z-index:21;display:flex;flex-direction:column;
+    align-items:flex-end;gap:8px;}
+  .trBtn{background:var(--chip);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;
+    cursor:pointer;white-space:nowrap;}
+  #menuBtn{font-size:15px;padding:6px 14px;line-height:1.3;}
+  /* 시련소 진행 — 이 게임의 유일한 진행 축이라 상시로 보이는 유일한 카운터다.
+     우표 103개·배지 14개는 세션 요약과 도감이 무대다(상시로 띄우면 축이 셋이 된다). */
+  #trialCount{color:var(--gold);}
+  #menuSheet{display:none;flex-direction:column;gap:2px;background:var(--ink-2);border-radius:14px;
+    padding:6px;min-width:172px;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  #menuSheet.show{display:flex;}
+  .mi{color:#fff;font-size:13px;padding:9px 12px;border-radius:9px;cursor:pointer;
+    display:flex;justify-content:space-between;gap:10px;align-items:center;}
+  .mi:hover{background:var(--fill);}
+  .mi span{color:var(--mist-2);font-size:12px;}
+
+  #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--chip);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;letter-spacing:1px;z-index:20;white-space:nowrap;
+    animation:hintFade .5s ease-in 30s forwards;}
+  /* 조작법은 처음 30초만 필요하다. 그 뒤로는 화면 아래를 계속 먹는 띠일 뿐이라
+     알아서 사라지고, ☰ → 조작법으로 다시 부를 수 있다. */
+  @keyframes hintFade{to{opacity:0;visibility:hidden;}}
+  #hint.pin{animation:none;opacity:1;visibility:visible;}
+
+  #deliver{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--act);color:#fff;font-size:16px;letter-spacing:2px;padding:11px 26px;border-radius:26px;box-shadow:0 5px 0 var(--act-d);z-index:22;opacity:0;pointer-events:none;transition:opacity .15s, transform .15s;}
   #deliver.show{opacity:1;transform:translateX(-50%) translateY(0);animation:bob 1s ease-in-out infinite;pointer-events:auto;cursor:pointer;}
   @keyframes bob{0%,100%{margin-bottom:0;}50%{margin-bottom:7px;}}
   #regionBanner{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%) scale(.9);background:rgba(28,42,52,.5);color:#fff;font-size:26px;letter-spacing:6px;padding:14px 34px;border-radius:30px;z-index:24;opacity:0;pointer-events:none;transition:opacity .5s, transform .5s;text-shadow:0 2px 8px rgba(0,0,0,.4);}
@@ -42,117 +89,120 @@
   @media (max-width:640px){#regionBanner{font-size:19px;letter-spacing:3px;padding:11px 22px;}}
   /* 문제 안내 배너 — 새 문제가 나올 때 크게 띄운다. 4학년은 좌상단 작은 HUD를 잘 안 본다. */
   #qBanner{position:fixed;top:34%;left:50%;transform:translate(-50%,-50%) scale(.92);
-    background:rgba(28,42,52,.88);color:#fff;padding:22px 36px;border-radius:24px;z-index:25;
+    background:var(--ink-2);color:#fff;padding:22px 36px;border-radius:24px;z-index:25;
     opacity:0;pointer-events:none;transition:opacity .45s,transform .45s;text-align:center;
     max-width:86vw;box-shadow:0 8px 28px rgba(0,0,0,.35);}
   #qBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
-  #qBanner .qsub{color:#9fd8e0;font-size:13px;letter-spacing:2px;margin-bottom:8px;}
-  #qBanner .qtext{color:#ffe9b0;font-size:32px;font-weight:700;line-height:1.35;}
-  #qBanner .qhow{color:#dbe9ee;font-size:15px;margin-top:12px;line-height:1.5;}
+  #qBanner .qsub{color:var(--mist-2);font-size:13px;letter-spacing:2px;margin-bottom:8px;}
+  #qBanner .qtext{color:var(--cream);font-size:32px;font-weight:700;line-height:1.35;}
+  #qBanner .qhow{color:var(--mist);font-size:15px;margin-top:12px;line-height:1.5;}
   @media (max-width:640px){#qBanner .qtext{font-size:23px;}#qBanner .qhow{font-size:13px;}
     #qBanner{padding:16px 20px;}}
   #toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:23;display:flex;flex-direction:column;gap:7px;align-items:center;pointer-events:none;}
-  .toast.story{background:rgba(90,105,150,.9);font-style:italic;}
   .toast{background:rgba(40,70,80,.9);color:#fff;font-size:14px;padding:10px 20px;border-radius:16px;opacity:0;transform:translateY(-8px);transition:opacity .25s,transform .25s;}
+  .toast.story{background:var(--story);font-style:italic;}
   .toast.show{opacity:1;transform:translateY(0);}
-  /* 도감 오버레이 */
-  #codex{position:fixed;inset:0;background:rgba(28,42,52,.86);z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
-  #codex.show{display:flex;}
-  #codex h2{color:#ffe9b0;font-size:20px;letter-spacing:4px;margin-bottom:6px;}
-  #codex .sub{color:#cfe2e6;font-size:13px;margin-bottom:18px;}
-  #codexGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;max-width:680px;width:100%;max-height:62vh;overflow:auto;}
-  .stamp{background:rgba(255,255,255,.07);border:2px dashed rgba(255,255,255,.18);border-radius:12px;padding:12px 6px;text-align:center;color:#8aa;}
-  .stamp.got{background:#f3ead6;border:2px solid #d87631;color:#5a3a22;box-shadow:0 3px 0 rgba(0,0,0,.2);}
+
+  /* ── 오버레이 공통 ─────────────────────────────────────────────────────────
+     도감·꾸미기·지도·요약·인트로·엔딩이 전부 같은 뼈대를 쓴다. */
+  #codex,#questPanel,#summary,#intro,#ending{position:fixed;inset:0;background:rgba(24,38,48,.92);
+    z-index:44;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  #codex.show,#questPanel.show,#summary.show,#intro.show,#ending.show{display:flex;}
+  #codex h2,#questPanel h2,#summary h2,#intro h2,#ending h2{color:var(--cream);font-size:20px;letter-spacing:4px;margin-bottom:6px;}
+  #codex .sub,#summary .sub,#intro .sub,#ending .sub{color:var(--mist);font-size:13px;margin-bottom:18px;}
+  /* 닫기·확인 버튼 — 화면에서 누를 수 있는 것은 전부 이 한 가지 모양이다. */
+  #codexClose,#questClose,#czClose,#sumClose,.narrBtn{color:#fff;background:var(--act);
+    padding:10px 28px;border-radius:24px;cursor:pointer;letter-spacing:2px;text-align:center;
+    box-shadow:0 4px 0 var(--act-d);}
+
+  /* 도감 */
+  #codexGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px;max-width:680px;width:100%;max-height:56vh;overflow:auto;}
+  .stamp{background:var(--fill);border:2px dashed var(--line);border-radius:12px;padding:12px 6px;text-align:center;color:var(--mist-2);opacity:.7;}
+  .stamp.got{background:var(--paper);border:2px solid var(--act);color:var(--paper-ink);box-shadow:0 3px 0 rgba(0,0,0,.2);opacity:1;}
   .stamp .ic{font-size:26px;line-height:1.1;}
   .stamp .nm{font-size:11px;margin-top:4px;}
-  #codexClose{margin-top:18px;color:#fff;background:#e8945b;padding:10px 28px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
-  /* 커스터마이즈 */
-  #customizeBtn{position:fixed;top:52px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
-  #muteBtn{position:fixed;top:90px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:15px;width:38px;height:38px;border-radius:50%;z-index:21;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-  #customize{position:fixed;top:0;right:0;width:320px;max-width:86vw;height:100%;background:rgba(28,42,52,.92);z-index:41;display:none;flex-direction:column;padding:22px 20px;overflow:auto;box-shadow:-6px 0 24px rgba(0,0,0,.3);}
-  #customize.show{display:flex;}
-  #customize h2{color:#ffe9b0;font-size:18px;letter-spacing:3px;margin-bottom:4px;}
-  #customize .sub{color:#cfe2e6;font-size:12px;margin-bottom:16px;}
-  .cz-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
-  .cz-label{color:#cfe2e6;font-size:13px;width:52px;flex:none;}
-  .cz-arrow{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:13px;}
-  .cz-name{color:#ffe9b0;font-size:14px;min-width:64px;text-align:center;}
-  .cz-sw{display:flex;gap:6px;flex-wrap:wrap;}
-  .cz-chip{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0;}
-  .cz-chip.sel{border-color:#ffe9b0;box-shadow:0 0 0 2px #e8945b;}
-  .cz-toggle{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:10px;padding:6px 16px;cursor:pointer;font-size:13px;}
-  .cz-toggle.on{background:#e8945b;}
-  #czClose{margin-top:auto;color:#fff;background:#e8945b;padding:10px 0;border-radius:20px;cursor:pointer;text-align:center;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
-  /* 도감 진행 바 */
-  #codexBar{width:280px;max-width:80%;height:10px;background:rgba(255,255,255,.12);border-radius:6px;margin-bottom:14px;overflow:hidden;}
-  #codexBarFill{height:100%;width:0;background:#e8945b;transition:width .3s;}
-  /* 배지 그리드(도감 오버레이 안 탭) */
-  .badge{background:rgba(255,255,255,.07);border:2px dashed rgba(255,255,255,.18);border-radius:12px;padding:10px 6px;text-align:center;color:#8aa;}
-  .badge.got{background:#efe6d0;border:2px solid #c9a227;color:#4a3a18;box-shadow:0 3px 0 rgba(0,0,0,.2);}
+  #codexBar{width:280px;max-width:80%;height:10px;background:var(--fill);border-radius:6px;margin-bottom:14px;overflow:hidden;}
+  #codexBarFill{height:100%;width:0;background:var(--act);transition:width .3s;}
+  .badge{background:var(--fill);border:2px dashed var(--line);border-radius:12px;padding:10px 6px;text-align:center;color:var(--mist-2);opacity:.7;}
+  .badge.got{background:var(--paper);border:2px solid var(--gold);color:var(--paper-ink);box-shadow:0 3px 0 rgba(0,0,0,.2);opacity:1;}
   .badge .bic{font-size:26px;line-height:1.1;}
   .badge .bnm{font-size:11px;margin-top:4px;font-weight:700;}
   .badge .bds{font-size:9px;margin-top:2px;opacity:.75;line-height:1.25;}
   #codexTabs{display:flex;gap:8px;margin-bottom:12px;}
-  #codexTabs .tab{color:#cfe2e6;background:rgba(255,255,255,.08);padding:6px 16px;border-radius:14px;font-size:12px;cursor:pointer;}
-  #codexTabs .tab.on{background:#e8945b;color:#fff;}
-  /* 퀘스트 + 전체 지도 — '무엇을 할 수 있고 무엇이 왜 잠겼는가' */
-  #questBtn{position:fixed;top:90px;right:14px;background:rgba(40,70,80,.55);color:#fff;font-size:13px;
-    padding:8px 14px;border-radius:14px;z-index:21;cursor:pointer;}
-  #questPanel{position:fixed;inset:0;background:rgba(24,38,48,.93);z-index:44;display:none;
-    flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:14px;}
-  #questPanel.show{display:flex;}
-  #questPanel h2{color:#ffe9b0;font-size:20px;letter-spacing:4px;}
+  #codexTabs .tab{color:var(--mist);background:var(--fill);padding:6px 16px;border-radius:14px;font-size:12px;cursor:pointer;}
+  #codexTabs .tab.on{background:var(--act);color:#fff;}
+  #codexClose{margin-top:18px;}
+
+  /* 꾸미기 — 유일한 사이드 시트 */
+  #customize{position:fixed;top:0;right:0;width:320px;max-width:86vw;height:100%;background:var(--ink-2);z-index:45;display:none;flex-direction:column;padding:22px 20px;overflow:auto;box-shadow:-6px 0 24px rgba(0,0,0,.3);}
+  #customize.show{display:flex;}
+  #customize h2{color:var(--cream);font-size:18px;letter-spacing:3px;margin-bottom:4px;}
+  #customize .sub{color:var(--mist);font-size:12px;margin-bottom:16px;}
+  .cz-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .cz-label{color:var(--mist);font-size:13px;width:52px;flex:none;}
+  .cz-arrow{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:13px;}
+  .cz-name{color:var(--cream);font-size:14px;min-width:64px;text-align:center;}
+  .cz-sw{display:flex;gap:6px;flex-wrap:wrap;}
+  .cz-chip{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;padding:0;}
+  .cz-chip.sel{border-color:var(--cream);box-shadow:0 0 0 2px var(--act);}
+  .cz-toggle{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:10px;padding:6px 16px;cursor:pointer;font-size:13px;}
+  .cz-toggle.on{background:var(--act);}
+  #czClose{margin-top:auto;padding:10px 0;border-radius:20px;}
+
+  /* ── 지도 · 할 일 ──────────────────────────────────────────────────────────
+     이 게임은 "안 되는 것"이 많다. 여기가 그 이유를 밝히는 유일한 화면이다. */
+  #questPanel{gap:14px;padding:20px;}
+  /* 진행 축 한 줄 — 시련소 → 능력 → 구역. 패널을 열면 제일 먼저 이게 읽혀야 한다. */
+  #questAxis{color:var(--gold);font-size:14px;letter-spacing:1px;margin-bottom:2px;}
   #questWrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;justify-content:center;
-    max-height:74vh;overflow:auto;}
-  #mapCanvas{border-radius:14px;border:2px solid rgba(255,255,255,.22);background:#4a6a4a;
+    max-height:70vh;overflow:auto;}
+  #mapCanvas{border-radius:14px;border:2px solid var(--line);background:#4a6a4a;
     width:440px;max-width:88vw;height:auto;image-rendering:auto;
     box-shadow:0 8px 24px rgba(0,0,0,.35);}
   #mapWrap{display:flex;flex-direction:column;gap:6px;align-items:center;}
-  #mapLegend{font-size:11px;color:#a8c0c8;letter-spacing:.3px;}
+  #mapLegend{font-size:11px;color:var(--mist-2);letter-spacing:.3px;}
   #questList{width:360px;max-width:88vw;display:flex;flex-direction:column;gap:8px;}
-  .qi{border-radius:12px;padding:10px 14px;border-left:4px solid #888;background:rgba(255,255,255,.07);}
+  /* 할 일 상태는 색이 아니라 위치와 아이콘으로 가른다.
+     상태마다 색을 하나씩 붙였더니(초록·하늘·회색·주황) 목록이 무지개가 됐다.
+     지금 할 일만 act로 띄우고 나머지는 전부 같은 톤에 둔다 — 눈이 맨 위로 간다. */
+  .qi{border-radius:12px;padding:10px 14px;border-left:4px solid var(--line);background:var(--fill);}
   .qi-t{font-size:14px;font-weight:700;color:#fff;}
-  .qi-d{font-size:12px;color:#cfe2e6;margin-top:3px;line-height:1.5;}
-  .qi.now{border-left-color:#e8945b;background:rgba(232,148,91,.18);}
-  .qi.todo{border-left-color:#6fc6d6;}
-  .qi.lock{border-left-color:#8a8a9a;opacity:.72;}
-  .qi.done{border-left-color:#8fd08f;opacity:.85;}
-  #questClose{color:#fff;background:#e8945b;padding:10px 28px;border-radius:24px;cursor:pointer;
-    letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
-  /* 좁은 화면에서는 우측 버튼 3개를 한 줄로 압축한다. 세로로 쌓으면 화면 오른쪽이 다 잠기고
-     HUD(왼쪽 텍스트)와도 겹친다(실측: 375px에서 27px 침범). */
-  @media (max-width:640px){
-    /* 우측 버튼 묶음을 통째로 아래로 내린다 — 좁은 화면에서 좌상단 HUD 텍스트와 겹쳤다
-       (실측: 375px에서 27px 침범). 버튼 폭이 글자 수마다 달라 가로 배치는 자리를 못 잡는다. */
-    #codexBtn{top:56px;} #customizeBtn{top:94px;} #questBtn{top:132px;right:14px;}
-    #mapCanvas{width:min(92vw,440px);}
-  }
+  .qi-d{font-size:12px;color:var(--mist);margin-top:3px;line-height:1.5;}
+  .qi.now{border-left-color:var(--act);background:rgba(232,148,91,.18);}
+  .qi.todo{border-left-color:var(--mist-2);}
+  .qi.lock{opacity:.6;}
+  .qi.done{opacity:.72;}
+
   /* 세션 요약 — 한 판을 마무리하는 순간. 배지가 실제로 읽히는 유일한 화면. */
-  #summary,#intro,#ending{position:fixed;inset:0;background:rgba(24,38,48,.92);z-index:45;display:none;
-    flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
-  #summary.show,#intro.show,#ending.show{display:flex;}
-  #summary h2,#intro h2,#ending h2{color:#ffe9b0;font-size:24px;letter-spacing:4px;margin-bottom:4px;}
-  #summary .sub,#intro .sub,#ending .sub{color:#cfe2e6;font-size:13px;margin-bottom:20px;}
+  #summary,#intro,#ending{z-index:46;text-align:center;}
+  #summary h2,#intro h2,#ending h2{font-size:24px;margin-bottom:4px;}
+  #summary .sub,#intro .sub,#ending .sub{margin-bottom:20px;}
   #sumStats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:18px;}
-  #sumStats .st{background:rgba(255,255,255,.08);border-radius:14px;padding:14px 20px;min-width:88px;}
-  #sumStats .st .v{color:#ffd98a;font-size:26px;font-weight:700;line-height:1;}
-  #sumStats .st .k{color:#bcd; font-size:11px;margin-top:6px;}
+  #sumStats .st{background:var(--fill);border-radius:14px;padding:14px 20px;min-width:88px;}
+  #sumStats .st .v{color:var(--gold);font-size:26px;font-weight:700;line-height:1;}
+  #sumStats .st .k{color:var(--mist-2);font-size:11px;margin-top:6px;}
   #sumNew{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:560px;margin-bottom:16px;}
-  #sumNew .nb{background:#efe6d0;color:#4a3a18;border-radius:12px;padding:10px 14px;box-shadow:0 3px 0 rgba(0,0,0,.2);
+  #sumNew .nb{background:var(--paper);color:var(--paper-ink);border-radius:12px;padding:10px 14px;box-shadow:0 3px 0 rgba(0,0,0,.2);
     animation:pop .4s ease-out backwards;}
   #sumNew .nb .e{font-size:24px;}
   #sumNew .nb .n{font-size:11px;font-weight:700;margin-top:2px;}
   @keyframes pop{from{transform:scale(.6);opacity:0;}to{transform:scale(1);opacity:1;}}
-  #sumSubjects{color:#cfe2e6;font-size:12px;margin-bottom:18px;line-height:1.8;}
-  #sumClose,.narrBtn{color:#fff;background:#e8945b;padding:12px 32px;border-radius:24px;cursor:pointer;letter-spacing:2px;box-shadow:0 4px 0 #b86a38;}
+  #sumSubjects{color:var(--mist);font-size:12px;margin-bottom:18px;line-height:1.8;}
+  #sumClose{padding:12px 32px;}
   /* 서사 본문 — 인트로/엔딩 공용. 한 문장씩 줄바꿈되게 */
   .narrLines{color:#eaf2f5;font-size:15px;line-height:2.0;margin-bottom:18px;max-width:520px;}
-  .narrLetter{background:rgba(255,255,255,.08);border-left:3px solid #e8945b;color:#ffe9b0;
+  .narrLetter{background:var(--fill);border-left:3px solid var(--act);color:var(--cream);
     font-size:14px;line-height:1.9;padding:14px 20px;border-radius:8px;margin-bottom:18px;max-width:520px;text-align:left;}
-  /* 이모지 보내기 바 */
-  #emotes{position:fixed;bottom:52px;right:14px;display:flex;gap:6px;z-index:21;}
-  #emotes button{width:42px;height:42px;border:none;border-radius:50%;background:rgba(40,70,80,.55);font-size:21px;cursor:pointer;line-height:1;padding:0;transition:transform .1s;}
+  .narrBtn{padding:12px 32px;}
+
+  /* ── 이모지 ────────────────────────────────────────────────────────────────
+     세계에 말을 거는 유일한 수단이라 남기되, 상시 버튼 다섯 개는 화면을 너무 먹는다.
+     하나로 접어 두고 누를 때만 편다. */
+  #emotes{position:fixed;bottom:52px;right:14px;display:flex;gap:6px;z-index:21;align-items:center;}
+  #emotes button{width:42px;height:42px;border:none;border-radius:50%;background:var(--chip);font-size:21px;cursor:pointer;line-height:1;padding:0;transition:transform .1s;}
   #emotes button:active{transform:scale(.86);}
+  #emoteRow{display:none;gap:6px;}
+  #emoteRow.show{display:flex;}
   @media (max-width:640px){#emotes{bottom:88px;}#emotes button{width:38px;height:38px;font-size:19px;}}
   /* 점프 버튼 — 모바일에서 오른손 엄지 위치. 데스크톱은 Space가 있으니 숨긴다. */
   #jumpBtn{position:fixed;bottom:52px;right:14px;width:64px;height:64px;border:none;border-radius:50%;
@@ -162,9 +212,21 @@
   #jumpBtn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(184,106,56,.9);}
   /* 시련 진행 표시 */
   #trialHud{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-8px);
-    background:rgba(60,45,20,.72);color:#ffd76a;font-size:15px;letter-spacing:3px;
+    background:rgba(60,45,20,.72);color:var(--gold);font-size:15px;letter-spacing:3px;
     padding:8px 20px;border-radius:16px;z-index:22;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;}
   #trialHud.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 조작 설명은 입력 장치에 따라 반만 쓸모가 있다.
+     둘 다 보여주면 모바일에서 세 줄이 되어 점프 버튼까지 밀고 올라간다(실측 5px 침범). */
+  .kbd{display:inline;} .tch{display:none;}
+  @media (pointer:coarse){.kbd{display:none;} .tch{display:inline;}}
+  @media (max-width:640px){
+    /* 제목 pill은 장식이다. 375px에서 우상단 스택을 5px 밀어서 뺀다 — 시간만 남긴다. */
+    #hud .pill:first-child{display:none;}
+    /* 하단 띠를 가운데가 아니라 왼쪽에 붙인다. 오른쪽 아래는 점프 버튼 자리다. */
+    #hint{font-size:11px;white-space:normal;text-align:left;left:14px;transform:none;max-width:264px;}
+    #parcel,#hintBtn{max-width:52vw;}
+    #mapCanvas{width:min(92vw,440px);}
+  }
   @media (max-width:640px), (pointer:coarse){
     #jumpBtn{display:flex;}
     #emotes{bottom:126px;}
@@ -180,12 +242,22 @@
     <div class="pill" id="phase">🕓 한낮</div>
   </div>
   <div id="parcel">📮 배달 준비 중…</div>
-  <div id="codexBtn">📒 우표 도감 <span id="codexCount">0/0</span></div>
-  <div id="customizeBtn">👕 꾸미기</div>
-  <div id="muteBtn">🔊</div>
-  <div id="questBtn">🗺️ 지도·할 일</div>
+  <div id="hintBtn"></div>
+
+  <div id="topRight">
+    <div class="trBtn" id="questBtn">🗺️ 지도 · <span id="trialCount">🗼 0/7</span></div>
+    <div class="trBtn" id="menuBtn">☰</div>
+    <div id="menuSheet">
+      <div class="mi" id="codexBtn">📒 우표 도감 <span id="codexCount">0/0</span></div>
+      <div class="mi" id="customizeBtn">👕 꾸미기</div>
+      <div class="mi" id="muteBtn">소리 <span id="muteIcon">🔊</span></div>
+      <div class="mi" id="helpBtn">⌨️ 조작법</div>
+    </div>
+  </div>
+
   <div id="questPanel">
     <h2>지 도 · 할  일</h2>
+    <div id="questAxis"></div>
     <div id="questWrap">
       <div id="mapWrap">
         <canvas id="mapCanvas" width="880" height="440"></canvas>
@@ -195,25 +267,28 @@
     </div>
     <div id="questClose">닫기</div>
   </div>
+
   <div id="qBanner">
     <div class="qsub" id="qSub"></div>
     <div class="qtext" id="qText"></div>
     <div class="qhow" id="qHow"></div>
   </div>
-  <div id="hintBtn"></div>
   <div id="deliver">E — 배달하기</div>
   <button id="jumpBtn" aria-label="점프">점프</button>
   <div id="trialHud"></div>
   <div id="toasts"></div>
   <div id="regionBanner"></div>
   <div id="emotes">
-    <button data-e="👋">👋</button>
-    <button data-e="😊">😊</button>
-    <button data-e="✨">✨</button>
-    <button data-e="❤️">❤️</button>
-    <button data-e="🎵">🎵</button>
+    <div id="emoteRow">
+      <button data-e="👋">👋</button>
+      <button data-e="😊">😊</button>
+      <button data-e="✨">✨</button>
+      <button data-e="❤️">❤️</button>
+      <button data-e="🎵">🎵</button>
+    </div>
+    <button id="emoteToggle" aria-label="이모지">💬</button>
   </div>
-  <div id="hint">WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · E 배달 · (모바일: 왼쪽 이동 / 오른쪽 시점)</div>
+  <div id="hint"><span class="kbd">WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · E 배달 · C 도감 · M 지도</span><span class="tch">왼쪽 절반 이동 · 오른쪽 절반 시점 · 배달 버튼 탭 · 🗺️ 지도·할 일</span></div>
 
   <div id="codex">
     <h2>우 표 도 감</h2>
@@ -224,7 +299,7 @@
       <div class="tab" data-tab="badges">배지 <span id="badgeCount"></span></div>
     </div>
     <div id="codexGrid"></div>
-    <div id="badgeGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px;max-width:680px;width:100%;max-height:62vh;overflow:auto;"></div>
+    <div id="badgeGrid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:12px;max-width:680px;width:100%;max-height:56vh;overflow:auto;"></div>
     <div id="codexClose">닫기</div>
   </div>
 
@@ -260,7 +335,7 @@
     <div id="czClose">닫기</div>
   </div>
 
-<!-- 에러 오버레이: 모듈/런타임 오류를 로딩 화면에 스택과 함께 표시 (town.html:70-71 패턴) -->
+<!-- 에러 오버레이: 모듈/런타임 오류를 로딩 화면에 스택과 함께 표시 -->
 <script>
 window.addEventListener('error',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.fontSize='12px';el.style.padding='24px';el.style.whiteSpace='pre-wrap';el.style.textAlign='left';el.style.lineHeight='1.5';el.style.alignItems='flex-start';el.textContent='⚠ 오류:\n'+(e.message||'')+'\n'+((e.error&&e.error.stack)||'')+'\n@'+(e.filename||'')+':'+(e.lineno||'');}console.error('CAUGHT',e.message,e.error&&e.error.stack);});
 window.addEventListener('unhandledrejection',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.whiteSpace='pre-wrap';el.style.padding='24px';el.style.alignItems='flex-start';el.textContent='⚠ Promise 오류:\n'+(e.reason&&(e.reason.stack||e.reason.message)||e.reason);}});

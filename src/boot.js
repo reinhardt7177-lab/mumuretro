@@ -324,6 +324,7 @@ const trials = new Trials(engine.scene, planet, trialSpots, abilities, {
     emoji.spawn(player.position, player.up, '🏆', { size: 2.0, life: 3.0 });
     toast(`🏆 ${t.name} 시련 클리어! (시련소 ${abilities.clearedCount()}/${trialSpots.length})`, 3600);
     applyAbilities();
+    updateTrialCount();
     badges.setStat('trialsCleared', abilities.clearedCount());
 
     // 잊혀진 우체국(안개 골짜기 8번째 탑) = 마지막 편지.
@@ -346,6 +347,15 @@ function updateTrialHUD(a) {
   trialHudEl.textContent = `🗼 시련 ${trials.streakDots}`;
   trialHudEl.classList.add('show');
 }
+
+// 상시로 보이는 유일한 카운터. 이 게임의 진행 축은 시련소 하나뿐이고,
+// 우표(103)·배지(14)·Leitner 상자는 축이 아니라 그 축을 걷다 남는 기록이다.
+// 셋을 다 상시로 띄웠더니 아이 눈에 진도 막대가 여섯 개였다.
+const trialCountEl = document.getElementById('trialCount');
+function updateTrialCount() {
+  if (trialCountEl) trialCountEl.textContent = `🗼 ${abilities.clearedCount()}/${trialSpots.length}`;
+}
+updateTrialCount();
 
 // ── 도깨비(M8) ───────────────────────────────────────────────────────────
 // 안개 골짜기에 들어오면 나타나 편지를 훔쳐 달아난다. 잡아야 배달을 이어갈 수 있다.
@@ -486,6 +496,22 @@ function showCodexTab(which) {
 document.querySelectorAll('#codexTabs .tab').forEach(t =>
   t.addEventListener('click', () => showCodexTab(t.dataset.tab)));
 
+// ── ☰ 메뉴 ───────────────────────────────────────────────────────────────
+// 도감·꾸미기·소리·조작법은 "가끔 여는 것"이라 상시 버튼일 이유가 없었다.
+// 상시로 남는 건 지금 할 일(parcel)과 어디로 가나(지도)뿐이다.
+const menuSheet = document.getElementById('menuSheet');
+const closeMenu = () => menuSheet.classList.remove('show');
+document.getElementById('menuBtn').addEventListener('click', (e) => {
+  e.stopPropagation(); menuSheet.classList.toggle('show');
+});
+// 메뉴 밖 아무 데나 누르면 닫힌다. 캔버스를 누르면 곧 시점 드래그가 시작되므로
+// 열린 채로 남아 있으면 시야를 가린 채 따라다닌다.
+addEventListener('pointerdown', (e) => {
+  if (menuSheet.classList.contains('show') && !e.target.closest('#topRight')) closeMenu();
+});
+// 메뉴 항목은 누르면 무언가를 열기 때문에, 열자마자 메뉴가 남아 있으면 그 위를 덮는다.
+document.querySelectorAll('#menuSheet .mi').forEach(m => m.addEventListener('click', closeMenu));
+
 const openCodex = () => {
   codex.renderInto(codexGridEl);
   if (badgeCountEl) badgeCountEl.textContent = `${badges.count()}/${badges.total()}`;
@@ -540,8 +566,15 @@ const closeCz = () => czOverlay.classList.remove('show');
 document.getElementById('customizeBtn').addEventListener('click', openCz);
 document.getElementById('czClose').addEventListener('click', closeCz);
 
+// 이모지 — 평소엔 💬 하나로 접혀 있고 누를 때만 펼친다.
+const emoteRow = document.getElementById('emoteRow');
+const emoteToggle = document.getElementById('emoteToggle');
+if (emoteToggle && emoteRow) emoteToggle.addEventListener('click', () => emoteRow.classList.toggle('show'));
+
 // 플레이어 이모지 보내기 → 머리 위 이모지 + 가까운 유령이 손 흔들기로 답함
-document.querySelectorAll('#emotes button').forEach(b => {
+// #emotes 전체가 아니라 #emoteRow만 훑는다 — 펼침 버튼에는 data-e가 없어서
+// 같이 잡히면 undefined 이모지를 띄운다.
+document.querySelectorAll('#emoteRow button').forEach(b => {
   b.addEventListener('click', () => {
     resumeAudio();
     emoji.spawn(player.position, player.up, b.dataset.e, { size: 1.5, life: 2.6 });
@@ -567,9 +600,18 @@ if (jumpBtn) {
   jumpBtn.addEventListener('touchcancel', releaseJump);
 }
 
-// BGM 음소거 토글
+// BGM 음소거 토글 — 아이콘만 바꾼다. 행(row) 전체를 갈아치우면 "소리" 글자가 지워진다.
 const muteBtn = document.getElementById('muteBtn');
-if (muteBtn) muteBtn.addEventListener('click', () => { const on = toggleBGM(); muteBtn.textContent = on ? '🔊' : '🔇'; });
+const muteIconEl = document.getElementById('muteIcon');
+if (muteBtn) muteBtn.addEventListener('click', () => {
+  const on = toggleBGM();
+  if (muteIconEl) muteIconEl.textContent = on ? '🔊' : '🔇';
+});
+
+// 조작법 — 30초 뒤 CSS로 알아서 사라진다. 여기서 다시 부르거나 치운다.
+const hintEl = document.getElementById('hint');
+const helpBtn = document.getElementById('helpBtn');
+if (helpBtn && hintEl) helpBtn.addEventListener('click', () => hintEl.classList.toggle('pin'));
 
 // 수평선 컬링 — 카메라에서 보이는 건 지평선 안쪽 캡뿐. 뒤편(지평선 아래) 프롭은 숨김.
 //
