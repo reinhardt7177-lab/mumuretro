@@ -24,7 +24,8 @@
       "Bash(git -c core.quotepath=false status --short)",
       "WebFetch(domain:github.com)",
       "Bash(awk 'NR>=1118 && NR<=1160' src/boot.js)",
-      "Bash(python -)"
+      "Bash(python -)",
+      "Bash(git show HEAD:src/world/Props.js | sed -n '/PROP_BUILDERS = {/,/^};/p' | grep -o \"^  [a-zA-Z]*:\" | tr -d ' :' | sort > /tmp/old.txt *)"
     ]
   }
 }

@@ -118,6 +118,9 @@ python tools/serve.py 5500
 - 구조: `src/{core,world,rendering,entities,systems,ui,data,debug,util}/`
   `boot.js`는 **조립만** 한다 — 화면은 `ui/`, `__dbg`/`__selftest`는 `debug/`.
   이 규칙이 없던 동안 boot.js가 1,197줄까지 자랐다(현재 781줄).
+- 소품은 **"동네 어디에 서는가"**로 나눈다 — `world/props/{buildings,street,nature,water}.js`.
+  새 소품을 어디 둘지 고민이 한 번에 끝난다. 한 파일에 32종 1,586줄이던 때는
+  하나를 손보려고 관계없는 서른한 개를 스크롤해야 했다.
 - 3D 에셋: [Meshy AI](https://www.meshy.ai/) text-to-3D (`tools/meshy_gen.py`, 키는 `MESHY_API_KEY` 환경변수로만 — 저장소 미포함)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
