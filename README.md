@@ -97,7 +97,9 @@ python tools/serve.py 5500
 
 ## 기술
 - [Three.js](https://threejs.org/) r160 (CDN), 순수 ES 모듈, 빌드 시스템 없음
-- 구조: `src/{core,world,rendering,entities,systems,data,util}/`
+- 구조: `src/{core,world,rendering,entities,systems,ui,data,debug,util}/`
+  `boot.js`는 **조립만** 한다 — 화면은 `ui/`, `__dbg`/`__selftest`는 `debug/`.
+  이 규칙이 없던 동안 boot.js가 1,197줄까지 자랐다(현재 781줄).
 - 3D 에셋: [Meshy AI](https://www.meshy.ai/) text-to-3D (`tools/meshy_gen.py`, 키는 `MESHY_API_KEY` 환경변수로만 — 저장소 미포함)
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

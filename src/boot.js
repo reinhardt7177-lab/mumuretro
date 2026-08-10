@@ -1,4 +1,11 @@
-// 진입점 — 행성/플레이어/입력/엔진/루프 연결 + __dbg/__selftest(블라인드 검증).
+// 진입점 — 행성·플레이어·입력·엔진·루프를 연결하고 시스템을 조립한다.
+//
+// 여기 있어야 할 것은 **조립**뿐이다. 화면을 그리는 코드(ui/), 게임에 기여하지 않는
+// 검증 코드(debug/)가 섞이면 "이 파일이 무슨 파일인지"가 흐려지고,
+// 기능을 하나 붙일 때마다 이 파일만 커진다(실제로 1,197줄까지 갔다).
+//   ui/Screens.js   전면 화면 — 요약·인트로·엔딩
+//   ui/Shell.js     버튼 배선 — 무엇을 누르면 무엇이 열리나
+//   debug/introspect.js  window.__dbg / __selftest
 import { Planet, R, SCALE, TERRAIN } from './world/Planet.js';
 import * as THREE from 'three';
 import { Player } from './entities/Player.js';
@@ -35,6 +42,9 @@ import { Story, INTRO, ENDING } from './systems/Story.js';
 import { Quest } from './systems/Quest.js';
 import { signTexture } from './systems/Learning.js';
 import { parcelKindFor } from './data/story.js';
+import { createScreens } from './ui/Screens.js';
+import { wireShell } from './ui/Shell.js';
+import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
@@ -408,121 +418,12 @@ const _dirOfPlayer = () => _dp.copy(player.position).normalize();
 learning.nextQuestion(player.position);
 updateCodexCount();
 
-// ── 세션 요약 ────────────────────────────────────────────────────────────
-// 리서치상 아이들이 보상에 집중하는 건 플레이 중이 아니라 "끝나고 보는 화면"이다.
-// 그래서 배지의 진짜 무대는 여기다.
-const summaryEl = document.getElementById('summary');
-function showSummary() {
-  if (!summaryEl) return;
-  const total = session.correct + session.wrong;
-  const acc = total ? Math.round(100 * session.correct / total) : 0;
-  document.getElementById('sumSub').textContent =
-    `오늘 목표 ${DAILY_GOAL}통을 모두 배달했어요!`;
-
-  const st = (v, k) => `<div class="st"><div class="v">${v}</div><div class="k">${k}</div></div>`;
-  document.getElementById('sumStats').innerHTML =
-    st(session.correct, '맞힌 문제') + st(acc + '%', '정답률') +
-    st(session.comebacks, '다시 도전 성공') + st(badges.count() + '/' + badges.total(), '배지');
-
-  // 이번 세션에 새로 얻은 배지 — 중복 제거
-  const seen = new Set(), fresh = [];
-  for (const b of session.newBadges) { if (!seen.has(b.id)) { seen.add(b.id); fresh.push(b); } }
-  document.getElementById('sumNew').innerHTML = fresh.length
-    ? fresh.map((b, i) => `<div class="nb" style="animation-delay:${i * 0.12}s"><div class="e">${b.emoji}</div><div class="n">${b.name}</div></div>`).join('')
-    : '';
-
-  // 과목별 진도
-  if (learning) {
-    document.getElementById('sumSubjects').innerHTML = CURRICULA.map(c => {
-      const done = c.questions.filter(q => learning.boxOf(q.id) >= 3).length;
-      const pct = Math.round(100 * done / c.questions.length);
-      return `${c.emoji} ${c.subject} — ${done}/${c.questions.length} 익힘 (${pct}%)`;
-    }).join('<br>');
-  }
-  summaryEl.classList.add('show');
-}
-// ── 인트로 / 엔딩 오버레이 ───────────────────────────────────────────────
-// #summary와 CSS를 공유한다. 일시정지는 만들지 않는다 — 실패 상태가 없는 게임이라
-// 뒤에서 행성이 돌아도 무방하고, 일시정지는 새 상태기계다.
-function showIntro() {
-  const el = document.getElementById('intro'); if (!el) return;
-  document.getElementById('introTitle').textContent = INTRO.title;
-  document.getElementById('introLines').innerHTML = INTRO.lines.join('<br>');
-  document.getElementById('introHint').textContent = INTRO.hint;
-  const btn = document.getElementById('introBtn');
-  btn.textContent = INTRO.button;
-  btn.onclick = () => {
-    el.classList.remove('show'); story.markIntroShown(); resumeAudio();
-    // 지도가 있다는 걸 인트로 직후 한 번만 알린다. 메뉴는 아무도 먼저 열어 보지 않는다.
-    setTimeout(() => toast('🗺️ M을 누르면 지도와 할 일 목록이 열려요', 4200), 2600);
-  };
-  el.classList.add('show');
-}
-
-function showEnding() {
-  const el = document.getElementById('ending'); if (!el) return;
-  document.getElementById('endTitle').textContent = ENDING.title;
-  document.getElementById('endLetter').innerHTML = ENDING.letter.join('<br>');
-  document.getElementById('endLines').innerHTML = ENDING.lines.join('<br>');
-  const btn = document.getElementById('endBtn');
-  btn.textContent = ENDING.button;
-  btn.onclick = () => el.classList.remove('show');
-  story.markEndingShown();
-  el.classList.add('show');
-}
-
-const sumCloseEl = document.getElementById('sumClose');
-if (sumCloseEl) sumCloseEl.addEventListener('click', () => {
-  summaryEl.classList.remove('show');
-  session.newBadges = [];      // 다음 요약에는 그 이후 것만
+// ── 전면 화면(요약 · 인트로 · 엔딩) ──
+const { showSummary, showIntro, showEnding, summaryEl } = createScreens({
+  session, badges, learning, story, curricula: CURRICULA, dailyGoal: DAILY_GOAL,
+  INTRO, ENDING, toast, resumeAudio,
 });
 
-// 도감 오버레이 토글 + 진행 바
-const codexOverlay = document.getElementById('codex');
-const codexBarFill = document.getElementById('codexBarFill');
-// 도감 안 탭 — 우표 / 배지
-const codexGridEl = document.getElementById('codexGrid');
-const badgeGridEl = document.getElementById('badgeGrid');
-const badgeCountEl = document.getElementById('badgeCount');
-function showCodexTab(which) {
-  if (!codexGridEl || !badgeGridEl) return;
-  const stamps = which === 'stamps';
-  codexGridEl.style.display = stamps ? 'grid' : 'none';
-  badgeGridEl.style.display = stamps ? 'none' : 'grid';
-  document.querySelectorAll('#codexTabs .tab').forEach(t =>
-    t.classList.toggle('on', t.dataset.tab === which));
-  if (!stamps) badges.renderInto(badgeGridEl);
-}
-document.querySelectorAll('#codexTabs .tab').forEach(t =>
-  t.addEventListener('click', () => showCodexTab(t.dataset.tab)));
-
-// ── ☰ 메뉴 ───────────────────────────────────────────────────────────────
-// 도감·꾸미기·소리·조작법은 "가끔 여는 것"이라 상시 버튼일 이유가 없었다.
-// 상시로 남는 건 지금 할 일(parcel)과 어디로 가나(지도)뿐이다.
-const menuSheet = document.getElementById('menuSheet');
-const closeMenu = () => menuSheet.classList.remove('show');
-document.getElementById('menuBtn').addEventListener('click', (e) => {
-  e.stopPropagation(); menuSheet.classList.toggle('show');
-});
-// 메뉴 밖 아무 데나 누르면 닫힌다. 캔버스를 누르면 곧 시점 드래그가 시작되므로
-// 열린 채로 남아 있으면 시야를 가린 채 따라다닌다.
-addEventListener('pointerdown', (e) => {
-  if (menuSheet.classList.contains('show') && !e.target.closest('#topRight')) closeMenu();
-});
-// 메뉴 항목은 누르면 무언가를 열기 때문에, 열자마자 메뉴가 남아 있으면 그 위를 덮는다.
-document.querySelectorAll('#menuSheet .mi').forEach(m => m.addEventListener('click', closeMenu));
-
-const openCodex = () => {
-  codex.renderInto(codexGridEl);
-  if (badgeCountEl) badgeCountEl.textContent = `${badges.count()}/${badges.total()}`;
-  showCodexTab('stamps');
-  if (codexBarFill) codexBarFill.style.width = (codex.total() ? (codex.count() / codex.total() * 100) : 0) + '%';
-  codexOverlay.classList.add('show');
-};
-const closeCodex = () => codexOverlay.classList.remove('show');
-document.getElementById('codexBtn').addEventListener('click', openCodex);
-document.getElementById('codexClose').addEventListener('click', closeCodex);
-addEventListener('keydown', e => { if (e.code === 'KeyC') (codexOverlay.classList.contains('show') ? closeCodex() : openCodex()); });
 
 // 퀘스트 + 전체 지도 — "지금 뭘 해야 하나 / 저긴 왜 못 가나"를 한 화면에.
 // 새 상태를 만들지 않는다. abilities·trials·learning의 현재값을 읽어 그때그때 그린다.
@@ -555,63 +456,11 @@ const quest = new Quest({
   }
 })();
 
-document.getElementById('questBtn').addEventListener('click', () => quest.toggle());
-document.getElementById('questClose').addEventListener('click', () => quest.hide());
-addEventListener('keydown', e => { if (e.code === 'KeyM') quest.toggle(); });
-
-// 꾸미기 오버레이 토글
-const czOverlay = document.getElementById('customize');
-const openCz = () => { customizer.buildUI(document.getElementById('czControls')); czOverlay.classList.add('show'); };
-const closeCz = () => czOverlay.classList.remove('show');
-document.getElementById('customizeBtn').addEventListener('click', openCz);
-document.getElementById('czClose').addEventListener('click', closeCz);
-
-// 이모지 — 평소엔 💬 하나로 접혀 있고 누를 때만 펼친다.
-const emoteRow = document.getElementById('emoteRow');
-const emoteToggle = document.getElementById('emoteToggle');
-if (emoteToggle && emoteRow) emoteToggle.addEventListener('click', () => emoteRow.classList.toggle('show'));
-
-// 플레이어 이모지 보내기 → 머리 위 이모지 + 가까운 유령이 손 흔들기로 답함
-// #emotes 전체가 아니라 #emoteRow만 훑는다 — 펼침 버튼에는 data-e가 없어서
-// 같이 잡히면 undefined 이모지를 띄운다.
-document.querySelectorAll('#emoteRow button').forEach(b => {
-  b.addEventListener('click', () => {
-    resumeAudio();
-    emoji.spawn(player.position, player.up, b.dataset.e, { size: 1.5, life: 2.6 });
-    pickup();
-    const gid = presence.sendEmote(player.position);
-    if (gid) { const gm = ghosts.get(gid); if (gm) setTimeout(() => emoji.spawn(gm.position, gm.up, '👋', { life: 2.2 }), 350); }
-  });
+wireShell({
+  codex, badges, quest, customizer, emoji, player, presence, ghosts, input,
+  resumeAudio, pickup, startBGM, toggleBGM,
 });
 
-// 첫 사용자 제스처에 오디오 활성화 + BGM 시작(브라우저 자동재생 정책)
-const _wake = () => { resumeAudio(); startBGM('assets/audio/bgm_village.mp3'); removeEventListener('pointerdown', _wake); removeEventListener('keydown', _wake); };
-addEventListener('pointerdown', _wake); addEventListener('keydown', _wake);
-
-// 모바일 점프 버튼 — 탭 지연/중복을 피하려고 touchend에서 preventDefault 후 직접 트리거.
-const jumpBtn = document.getElementById('jumpBtn');
-if (jumpBtn) {
-  const doJump = (e) => { if (e) e.preventDefault(); resumeAudio(); input.requestJump(); };
-  jumpBtn.addEventListener('click', doJump);
-  // 누르고 있으면 활공 — touchstart에서 점프, 유지 동안 hold, 떼면 해제.
-  jumpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); doJump(); input.setHoldJump(true); }, { passive: false });
-  const releaseJump = () => input.setHoldJump(false);
-  jumpBtn.addEventListener('touchend', (e) => { e.preventDefault(); releaseJump(); }, { passive: false });
-  jumpBtn.addEventListener('touchcancel', releaseJump);
-}
-
-// BGM 음소거 토글 — 아이콘만 바꾼다. 행(row) 전체를 갈아치우면 "소리" 글자가 지워진다.
-const muteBtn = document.getElementById('muteBtn');
-const muteIconEl = document.getElementById('muteIcon');
-if (muteBtn) muteBtn.addEventListener('click', () => {
-  const on = toggleBGM();
-  if (muteIconEl) muteIconEl.textContent = on ? '🔊' : '🔇';
-});
-
-// 조작법 — 30초 뒤 CSS로 알아서 사라진다. 여기서 다시 부르거나 치운다.
-const hintEl = document.getElementById('hint');
-const helpBtn = document.getElementById('helpBtn');
-if (helpBtn && hintEl) helpBtn.addEventListener('click', () => hintEl.classList.toggle('pin'));
 
 // 수평선 컬링 — 카메라에서 보이는 건 지평선 안쪽 캡뿐. 뒤편(지평선 아래) 프롭은 숨김.
 //
@@ -867,285 +716,20 @@ const loop = new Loop(step, () => engine.render());
 const game = { step, planet, player, engine, input, loop, atmosphere, sky, world, learning, badges, nav, codex, customizer, presence, emoji };
 window.game = game;
 
-// ── 디버그 인트로스펙션(스크린샷 없이 preview_eval로 읽기) ──
-window.__dbg = {
-  // 퀘스트 패널 — 목록/지도를 실제로 그려 보고 결과를 문자열로 확인한다.
-  quest(open = true) {
-    if (open) quest.show(); else quest.hide();
-    return {
-      open: quest.open,
-      items: [...document.querySelectorAll('#questList .qi')]
-        .map(e => `[${e.className.replace('qi ', '')}] ${e.querySelector('.qi-t').textContent}`),
-      mapPx: quest.canvas ? `${quest.canvas.width}x${quest.canvas.height}` : null,
-      bakeMs: +quest._bakeMs.toFixed(0),
-      worstChunkMs: +quest._worstChunkMs.toFixed(1),
-      paintMs: quest._paintMs ?? null,
-    };
-  },
-  get altitude() { return +player.position.length().toFixed(4); },
-  get pos() { return player.position.toArray().map(v => +v.toFixed(2)); },
-  get heading() { return player.heading.toArray().map(v => +v.toFixed(3)); },
-  get up() { return player.up.toArray().map(v => +v.toFixed(3)); },
-  get camPos() { return engine.camera.position.toArray().map(v => +v.toFixed(2)); },
-  get camDist() { return +input.camDist.toFixed(2); },
-  get R() { return planet.R; },
-  get propCount() { return world.placed.length; },
-  get visibleProps() { return world._visible ?? 0; },
-  get zones() { return (world.heroSpots ? [...new Set(world.heroSpots.map(s => s.zone))] : []); },
-  get heroSpots() { return (world.heroSpots || []).length; },
-  get waterCaps() { return (world.water || []).length; },
-  get heroGlb() { return world._heroGlb ?? -1; },
-  // 구역(M6) 검증용
-  get region() { return regionAt(player.position, world.anchors).id; },
-  get healingPoints() { return (world.healingPoints || []).map(h => h.region); },
-  get discovered() { return discovered.size; },
-  warpToLatLon(lat, lon) { player.setLatLon(lat, lon); engine.camFwd.copy(player.heading); engine.camUp.copy(player.up); return regionAt(player.position, world.anchors).id; },
-  regionFill() { const m = {}; for (const p of world.placed) m[p.theme] = (m[p.theme] || 0) + 1; return m; },
-  // 하늘(검증용)
-  // 안개 골짜기 · 도깨비(M8) 검증용
-  get mist() {
-    const inV = planet.inMistValley(_dirOfPlayer());
-    return {
-      inValley: inV,
-      distToDokkaebiU: dokkaebi.mesh.visible
-        ? +(player.position.angleTo(dokkaebi.position) * planet.R).toFixed(1) : null,
-      dokkaebiVisible: dokkaebi.mesh.visible,
-      caughtTotal: _dokkaebiCaught,
-      rimMaxSlope: +planet.slopeDegAt(
-        planet.mistDir.clone().applyAxisAngle(
-          new THREE.Vector3(1, 0, 0).cross(planet.mistDir).normalize(), MIST_ZONE.rim * 0.85)).toFixed(0),
-    };
-  },
-  warpToMist() {
-    player.position.copy(planet.mistDir).multiplyScalar(planet.R);
-    planet.projectToSurface(player.position);
-    player._initFrame(); player.syncMesh();
-    return 'mist valley';
-  },
-  // 도깨비를 향해 실제로 조준하며 추격(검증용). 카메라 접선 프레임을 매 프레임 도깨비 쪽으로 돌린다.
-  chaseDokkaebi(run = true, maxFrames = 1800) {
-    if (!dokkaebi.mesh.visible) return 'no dokkaebi';
-    const before = _dokkaebiCaught;
-    const dir = new THREE.Vector3();
-    input.setTestIntent({ x: 0, y: 1, run });
-    let f = 0;
-    for (; f < maxFrames; f++) {
-      dir.copy(dokkaebi.position).sub(player.position);
-      dir.addScaledVector(player.up, -dir.dot(player.up));
-      if (dir.lengthSq() > 1e-9) { dir.normalize(); engine.camFwd.copy(dir); }
-      step(1 / 60);
-      if (_dokkaebiCaught > before) break;
-    }
-    input.setTestIntent(null);
-    return { caught: _dokkaebiCaught > before, sec: +(f / 60).toFixed(1),
-             dist: +(player.position.angleTo(dokkaebi.position) * planet.R).toFixed(1) };
-  },
-  // 탑을 향해 걸어가 실제로 막히는지 확인(통과 버그 회귀 안전망).
-  // 정면으로 밀어붙였을 때 최종 거리가 콜라이더 반경 근처에서 멈춰야 한다.
-  walkIntoTower(i = 0, frames = 600) {
-    const t = trials.towers[i]; if (!t) return 'no tower';
-    // 탑에서 12u 떨어진 곳에서 출발
-    const away = new THREE.Vector3().copy(player.position).sub(t.pos);
-    away.addScaledVector(t.dir, -away.dot(t.dir));
-    if (away.lengthSq() < 1e-9) away.copy(engine.camFwd);
-    away.normalize();
-    player.position.copy(t.pos).addScaledVector(away, 12);
-    planet.projectToSurface(player.position);
-    const dir = new THREE.Vector3();
-    input.setTestIntent({ x: 0, y: 1, run: false });
-    let min = Infinity;
-    for (let f = 0; f < frames; f++) {
-      dir.copy(t.pos).sub(player.position);
-      dir.addScaledVector(player.up, -dir.dot(player.up));
-      if (dir.lengthSq() > 1e-9) { dir.normalize(); engine.camFwd.copy(dir); }
-      step(1 / 60);
-      min = Math.min(min, player.position.distanceTo(t.pos));
-    }
-    input.setTestIntent(null);
-    return { name: t.name, hitR: +t.hitR.toFixed(2), minDist: +min.toFixed(2),
-             finalDist: +player.position.distanceTo(t.pos).toFixed(2),
-             blocked: min > t.hitR - 0.35, canEnter: !!trials.towerInRange(player.position) };
-  },
-  // 시련소(M8) 검증용
-  get trials() {
-    return {
-      towers: trials.towers.map(t => `${t.emoji}${t.name}${t.cleared ? '✅' : ''}`),
-      active: trials.active ? { region: trials.active.regionId, streak: trials.active.streak } : null,
-      dots: trials.streakDots,
-      nearTower: (() => { const t = trials.towerInRange(player.position); return t ? t.name : null; })(),
-    };
-  },
-  warpToTrial(i = 0) {
-    const t = trials.towers[i]; if (!t) return 'no tower';
-    player.position.copy(t.pos); planet.projectToSurface(player.position);
-    player._initFrame(); player.syncMesh();
-    return t.name;
-  },
-  startTrial() {
-    const t = trials.towerInRange(player.position);
-    const ok = trials.start(t);
-    if (ok) { learning.nextQuestion(player.position); updateTrialHUD(trials.active); }
-    return ok ? t.name : 'cannot start';
-  },
-  // 서사(M9) 검증용 — 최초 1회 이벤트라 reset 없이는 반복 테스트가 불가능하다
-  get story() { return { ...story.state(), finalTarget: !!_finalTarget }; },
-  resetStory() { return story.reset(); },
-  showIntro() { showIntro(); return 'intro'; },
-  showEnding() { showEnding(); return 'ending'; },
-  parcelOf(id) { const k = parcelKindFor(id); return k.icon + ' ' + k.kind; },
-  // 능력(M8) 검증용
-  get abilities() {
-    return {
-      cleared: [...abilities.cleared], count: abilities.clearedCount(),
-      unlocked: [...abilities.unlocked],
-      next: abilities.next() ? abilities.next().name + '(시련소 ' + abilities.next().at + '개)' : '전부 해금',
-      player: { maxJumps: player.maxJumps, canClimb: player.canClimb, canGlide: player.canGlide,
-                maxClimbDeg: +(Math.atan(player.maxClimbTan) * 180 / Math.PI).toFixed(0) },
-    };
-  },
-  clearTrial(regionId) { const f = abilities.clearTrial(regionId); applyAbilities(); return f.map(a => a.name); },
-  grantAllAbilities() { abilities.grantAll(); applyAbilities(); return [...abilities.unlocked]; },
-  resetAbilities() { abilities.reset(); applyAbilities(); return 'reset'; },
-  // 배지/세션(M7) 검증용
-  get badges() {
-    return { earned: [...badges.earned], count: badges.count() + '/' + badges.total(), stats: { ...badges.stats } };
-  },
-  get session() { return { ...session, newBadges: session.newBadges.map(b => b.id) }; },
-  summaryVisible() { return !!summaryEl && summaryEl.classList.contains('show'); },
-  showSummary() { showSummary(); return true; },
-  // 학습(M7) 검증용
-  get learn() {
-    if (!learning) return null;
-    const c = learning.current;
-    return {
-      q: c ? c.question.q : null,
-      answer: c ? c.question.a : null,
-      labels: c ? c.labels.map(l => l.text + (l.correct ? '✓' : '')) : [],
-      signCount: learning.signs.children.length,
-      wrongStreak: learning.wrongStreak,
-      hintUnlocked: learning.hintUnlocked,
-      navActive: nav.beacon.visible,
-      subject: learning.active.subject,
-      curriculumId: learning.active.id,
-      pending: learning.pending ? learning.pending.id : null,
-      solved: learning.solved,
-      mastered: learning.masteredCount() + '/' + learning.totalCount(),
-      masteredAll: learning.masteredAll() + '/' + learning.totalAll(),
-      // 후보 집까지의 거리(월드) — 걷는 맛 튜닝용
-      distU: c ? c.labels.map(l => +(player.position.angleTo(l.house.pos) * planet.R).toFixed(1)) : [],
-    };
-  },
-  // 정답/오답 집으로 순간이동 후 제출(검증용)
-  learnGoto(wantCorrect = true) {
-    if (!learning || !learning.current) return 'no question';
-    const l = learning.current.labels.find(x => x.correct === wantCorrect);
-    if (!l) return 'no such label';
-    player.position.copy(l.house.pos); planet.projectToSurface(player.position);
-    player._initFrame(); player.syncMesh();
-    return l.text;
-  },
-  learnSubmit() {
-    if (!learning) return null;
-    const r = learning.submit(player.position);
-    if (r && r.correct) learning.nextQuestion(player.position);
-    return r ? { correct: r.correct, box: r.box } : 'not in range';
-  },
-  get skyState() {
-    return {
-      domeAtCamera: sky.dome.position.distanceTo(engine.camera.position) < 0.01,
-      starsVisible: sky.stars.visible,
-      starOpacity: +sky._starI.toFixed(2),
-      sunVisible: sky.sunDisc.visible,
-      moonVisible: sky.moonDisc.visible,
-      sunElevDeg: +(Math.asin(Math.max(-1, Math.min(1,
-        sky.sunDisc.position.clone().sub(engine.camera.position).normalize().dot(player.up)))) * 180 / Math.PI).toFixed(1),
-      clouds: sky.clouds.count,
-      skyTop: '#' + sky.uniforms.uTop.value.getHexString(),
-      skyHorizon: '#' + sky.uniforms.uHorizon.value.getHexString(),
-    };
-  },
-  get timePhase() { return +atmosphere.phase.toFixed(3); },
-  get timeName() { return atmosphere.timeName; },
-  setTime(p) { atmosphere.setPhase(p); return atmosphere.timeName; },   // 0~1 시간대 스크럽(검증용)
-  onSurface(eps = 1e-2) { return Math.abs(surfaceDev(player.position)) < eps; },
-  get inRange() { return !!learning.labelInRange(player.position); },
-  get codex() { return codex.count() + '/' + codex.total(); },
-  get recipients() { return recipients.length; },
-  get townsfolk() { return townsfolk.length; },
-  get ghosts() { return ghosts.size; },
-  get emojiActive() { return emoji.items.length; },
-  get actorsVisible() { return actors.filter(a => a.mesh.visible).length; },
-  ghostPositions() { return [...ghosts.values()].map(g => g.position.toArray().map(v => +v.toFixed(1))); },
-  onSurfaceActors(eps = 0.05) { return actors.every(a => Math.abs(surfaceDev(a.position)) < eps); },
-  get terrainH() { return +planet.heightAt(player.position.clone().normalize()).toFixed(2); },
-  terrainRange(n = 4000) {   // 지형 높이 분포 확인용(검증)
-    let lo = Infinity, hi = -Infinity, sum = 0;
-    const rng = makeRNG(7), v = new THREE.Vector3();
-    for (let i = 0; i < n; i++) {
-      const z = rng() * 2 - 1, th = rng() * Math.PI * 2, r = Math.sqrt(1 - z * z);
-      const h = planet.heightAt(v.set(r * Math.cos(th), z, r * Math.sin(th)));
-      lo = Math.min(lo, h); hi = Math.max(hi, h); sum += h;
-    }
-    return { min: +lo.toFixed(2), max: +hi.toFixed(2), avg: +(sum / n).toFixed(2) };
-  },
-  // 커스터마이즈(M4) 검증용
-  get loadout() { return { ...player.loadout }; },
-  get bodyMeshes() { let n = 0; player.body.traverse(o => { if (o.isMesh) n++; }); return n; },
-  setPart(part, val) { customizer.set(part, val); return { ...player.loadout }; },
-  cycleHair(d = 1) { customizer.cycleHair(d); return player.loadout.hairId; },
-  // 현재 목표 집 앞으로 순간이동 후 배달(검증용)
-  deliverNow() { const r = learning.submit(player.position); if (r && r.correct) learning.nextQuestion(player.position); return r || 'not in range'; },
-};
-
-// ── 결정론 셀프테스트(rAF 불필요) ──
-function runStraight(lat, lon, headingVec, nSteps, dt = 1 / 60) {
-  player.setLatLon(lat, lon);
-  player.heading.copy(headingVec); player._initFrame();
-  engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
-  input.setTestIntent({ x: 0, y: 1, run: false });
-  let maxDev = 0, nan = false;
-  for (let i = 0; i < nSteps; i++) {
-    step(dt);
-    const dev = Math.abs(surfaceDev(player.position));
-    if (dev > maxDev) maxDev = dev;
-    const q = player.mesh.quaternion;
-    if (Number.isNaN(player.position.x) || Number.isNaN(q.x) || Number.isNaN(q.w)) nan = true;
-  }
-  input.setTestIntent(null);
-  return { maxDev, nan, end: player.position.clone() };
-}
-
-window.__selftest = function () {
-  const log = [], R = planet.R;
-  // 한 바퀴에 필요한 총 시간(초). 대원 이동은 임의의 dt에서 정확(회전 각도 = dist/R)하므로
-  // 프레임 수를 고정하고 dt를 늘려도 결과가 같다. R이 커져도 테스트 시간이 폭발하지 않게 한다.
-  const lapSec = 2 * Math.PI * R / player.speed;
-  const STEPS = 1500;
-  const dt = lapSec / STEPS;
-
-  // A) 대원 한 바퀴 → 시작점 복귀 + 반지름 일정
-  const start = planet.projectToSurface(planet.latLonToPos(5, 0));
-  const a = runStraight(5, 0, new THREE.Vector3(0, 0, 1), STEPS, dt);
-  const back = a.end.distanceTo(start);
-  const aDevOK = a.maxDev < 1e-2, aNanOK = !a.nan, loopOK = back < R * 0.2;
-  log.push(`A radius dev max=${a.maxDev.toExponential(2)} -> ${aDevOK ? 'PASS' : 'FAIL'}`);
-  log.push(`A no NaN -> ${aNanOK ? 'PASS' : 'FAIL'}`);
-  log.push(`A great-circle return dist=${back.toFixed(2)} (<${(R * 0.2).toFixed(1)}) -> ${loopOK ? 'PASS' : 'FAIL'}`);
-
-  // B) 극점 통과: 적도(R,0,0)에서 +Y로 직진 → 북극 통과. 롤/플립/NaN 없어야.
-  const b = runStraight(0, 0, new THREE.Vector3(0, 1, 0), Math.round(STEPS * 0.6), dt);
-  const bDevOK = b.maxDev < 1e-2, bNanOK = !b.nan;
-  log.push(`B pole-cross radius dev=${b.maxDev.toExponential(2)} -> ${bDevOK ? 'PASS' : 'FAIL'}`);
-  log.push(`B pole-cross no NaN -> ${bNanOK ? 'PASS' : 'FAIL'}`);
-
-  const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK;
-  console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===', 'font-family:monospace');
-
-  // 상태 복원
-  player.setLatLon(8, 0);
-  engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
-  return ok;
-};
+// ── 디버그 인트로스펙션 ──
+// __dbg/__selftest는 src/debug/introspect.js로 옮겼다. 게임의 모든 시스템을 만지지만
+// 게임에는 아무것도 기여하지 않는 278줄이라, 여기 두면 조립 코드가 검증 코드에 파묻힌다.
+// 아래 인자 목록이 곧 "이 게임의 상태 전부"다 — 늘어나기 시작하면 그게 곧 경고다.
+installDebug({
+  planet, player, engine, input, world, step, surfaceDev,
+  quest, trials, learning, abilities, badges, story, codex, nav, sky, atmosphere,
+  customizer, emoji, dokkaebi, session, discovered, recipients, townsfolk, ghosts, actors,
+  applyAbilities, updateTrialHUD, showIntro, showEnding, showSummary, summaryEl,
+  dirOfPlayer: _dirOfPlayer,
+  // 이 둘만 함수다 — boot.js에서 계속 바뀌는 지역 변수라 값으로 넘기면 초기값에 얼어붙는다.
+  dokkaebiCaught: () => _dokkaebiCaught,
+  finalTarget: () => _finalTarget,
+});
 
 // 힐링 존 히어로 — Meshy GLB(assets/env/*.glb)가 있으면 배치, 없으면 절차 폴백. 비동기(파일 추가 후 새로고침 시 자동 반영).
 const _heroBB = new THREE.Box3();
