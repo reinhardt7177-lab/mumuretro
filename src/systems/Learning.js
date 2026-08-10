@@ -28,31 +28,63 @@ const MIN_CANDIDATES = 2;
 // 최근 이만큼의 문제는 다시 내지 않는다(간격 반복의 "간격").
 // 과목당 문제가 12~17개이므로 3이면 충분히 사이가 벌어지고, 풀이 마르지도 않는다.
 const RECENT_GAP = 3;
+// 숙달도(Leitner 상자 0~3)가 후보 집을 얼마나 "먼 쪽"에서 고를지.
+//
+// 절대 거리(10~15u처럼)로 자르는 방법을 먼저 썼는데 실측에서 무너졌다:
+// 후보로 쓸 수 있는 집이 49채인데 밴드(10~30u) 안에 드는 건 평균 5채뿐이라,
+// 상자별로 더 자르면 0~3채가 되어 CANDIDATES(4)를 못 채우고 매번 폴백으로 떨어졌다.
+// → 절대 거리 대신 **가까운 순 순위**를 민다. 밴드 안 집이 몇 채든 후보는 항상 채워지고,
+//   숙달도가 오를수록 평균 거리가 늘어난다. 밀도와 무관하게 작동한다.
+const BOX_MAX = 3;
 
 // 텍스트 팻말 텍스처. 글자 길이에 맞춰 캔버스 폭을 늘린다.
 // 월드 안 텍스트 렌더러는 이거 하나로 유지한다 — 두 개가 되는 순간 폰트·여백이 갈라진다.
 // style로 색/크기만 바꿔 유령 이름표(창백한 종이) 같은 변형에 재사용한다.
 export function signTexture(text, style = {}) {
   const pad = style.pad ?? 26, fontPx = style.fontPx ?? 60;
-  const bg = style.bg ?? '#f6ead0', border = style.border ?? '#8a6a44';
+  const bg = style.bg ?? '#f6ead0', border = style.border ?? '#4a3722';
   const fg = style.fg ?? '#3b3226';
+  // 팻말 바깥 여백 — 후광이 그려질 자리. 이만큼 캔버스를 키우지 않으면 후광이 잘린다.
+  const HALO = 20;
   const probe = document.createElement('canvas').getContext('2d');
   probe.font = `bold ${fontPx}px system-ui, sans-serif`;
-  const w = Math.ceil(probe.measureText(text).width) + pad * 2;
-  const h = fontPx + pad * 2;
+  const w = Math.ceil(probe.measureText(text).width) + pad * 2 + HALO * 2;
+  const h = fontPx + pad * 2 + HALO * 2;
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const x = c.getContext('2d');
-  // 나무 팻말 느낌(기본). style로 창백한 종이 등으로 바꿀 수 있다.
+
+  // 팻말 외곽선(HALO 안쪽 사각형)
+  const r = 16, L = HALO, T = HALO, R = w - HALO, B = h - HALO;
+  const plaque = () => {
+    x.beginPath();
+    x.moveTo(L + r, T); x.lineTo(R - r, T); x.quadraticCurveTo(R, T, R, T + r);
+    x.lineTo(R, B - r); x.quadraticCurveTo(R, B, R - r, B);
+    x.lineTo(L + r, B); x.quadraticCurveTo(L, B, L, B - r);
+    x.lineTo(L, T + r); x.quadraticCurveTo(L, T, L + r, T);
+    x.closePath();
+  };
+
+  // ── 어두운 후광 ──────────────────────────────────────────────────────────
+  // 팻말은 MeshBasicMaterial(무조명)이라 항상 밝은 크림색이다. 그래서 배경이 밝아지면
+  // 휘도가 수렴해 사라진다 — 실측 대비: 한낮 1.37:1, 노을 1.02:1(구분 불가), 밤 2.64:1.
+  // (WCAG 비텍스트 최소 3:1)
+  // 밝기를 더 올려도 노을은 못 이긴다. 어두운 테두리를 두르는 쪽이 밝은 배경과 어두운 배경
+  // 양쪽에서 동시에 먹히는 유일한 해법이다.
+  // 채우기만으로는 부족했다 — 블룸이 밝은 팻말 면에서 번져 얇은 후광을 덮어버린다
+  // (실측: 한낮 대비 2.17:1). stroke로 어두운 판을 바깥으로 7px 넓혀 블룸이 못 지우게 한다.
+  x.shadowColor = 'rgba(24,17,9,0.9)';
+  x.shadowBlur = 18;
+  x.fillStyle = '#241b12';
+  x.strokeStyle = '#241b12'; x.lineWidth = 14;
+  plaque(); x.fill(); x.stroke();
+  x.shadowBlur = 0;
+
+  // 나무 팻말 본체. style로 창백한 종이 등으로 바꿀 수 있다.
   x.fillStyle = bg;
-  x.strokeStyle = border; x.lineWidth = 8;
-  const r = 16;
-  x.beginPath();
-  x.moveTo(r, 4); x.lineTo(w - r, 4); x.quadraticCurveTo(w - 4, 4, w - 4, r);
-  x.lineTo(w - 4, h - r); x.quadraticCurveTo(w - 4, h - 4, w - r, h - 4);
-  x.lineTo(r, h - 4); x.quadraticCurveTo(4, h - 4, 4, h - r);
-  x.lineTo(4, r); x.quadraticCurveTo(4, 4, r, 4);
-  x.closePath(); x.fill(); x.stroke();
+  x.strokeStyle = border; x.lineWidth = 9;
+  plaque(); x.fill(); x.stroke();
+
   x.fillStyle = fg;
   x.font = `bold ${fontPx}px system-ui, sans-serif`;
   x.textAlign = 'center'; x.textBaseline = 'middle';
@@ -149,6 +181,11 @@ export class LearningSystem {
     const q = this._pickQuestion();
 
     // 거리 밴드 안의 집만 후보로. 부족하면 밴드를 점점 넓혀 항상 CANDIDATES개를 채운다.
+    //
+    // ★ 밴드를 숙달도(Leitner 상자)로 민다. 이 게임에서 "걸어가는 시간"은 낭비가 아니라
+    // 답을 머릿속에 붙들고 있는 인출 간격 그 자체다. 그러니 간격도 숙달도를 따라야 한다:
+    // 갓 배운 문제는 가까이(간격 짧게), 익은 문제는 멀리(간격 길게) — 확장 인출.
+    // 상자가 곧 간격이 되므로 새 상태를 만들지 않는다.
     const R = this.planet.R;
     const withDist = this.houses
       .map(h => ({ h, d: playerPos.angleTo(h.pos) * R }))
@@ -157,7 +194,12 @@ export class LearningSystem {
     if (band.length < CANDIDATES) {
       band = withDist.filter(x => x.d >= MIN_DIST * 0.6 && x.d <= HARD_MAX);
     }
-    const pool = band.map(x => x.h);
+    // 숙달도만큼 창을 먼 쪽으로 민다(band는 거리순 정렬 상태).
+    // 남는 여유가 없으면 offset은 0이 되어 지금까지와 똑같이 동작한다.
+    const slack = Math.max(0, band.length - CANDIDATES);
+    const offset = Math.round(slack * Math.min(BOX_MAX, this.boxOf(q.id)) / BOX_MAX);
+    const window = band.slice(offset, offset + CANDIDATES);
+    const pool = window.map(x => x.h);
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(this.rng() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -203,8 +245,10 @@ export class LearningSystem {
   _markTried(label) {
     if (!label || !label.sign) return;
     const mesh = label.sign;
+    // 회색으로 바래되 글자는 읽혀야 한다 — 아이가 "여긴 아까 가봤다"를 읽는 게 이 표시의 전부다.
+    // 이전 값(#cfcbc4 바탕 / #7a736b 글자)은 대비 2.89:1로 WCAG 4.5:1에 못 미쳤다.
     const { tex, aspect } = signTexture(`✗ ${label.text}`, {
-      bg: '#cfcbc4', border: '#8f8a83', fg: '#7a736b',
+      bg: '#d6d2cb', border: '#6b665e', fg: '#3f3a34',
     });
     if (mesh.material.map) mesh.material.map.dispose();
     mesh.material.map = tex;

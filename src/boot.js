@@ -49,7 +49,10 @@ import { installDebug } from './debug/introspect.js';
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
 const planet = new Planet(engine.scene);
-const atmosphere = new Atmosphere(engine, { dayLength: 300, phase: 0.28 });
+// 하루 15분. 5분이던 때는 20분 세션에 밤낮이 네 번 돌았고, 평균 화면 휘도가
+// 한낮 0.52 ↔ 밤 0.15로 3.6배씩 출렁여 눈이 계속 재적응해야 했다(실측).
+// 팻말이 배경에 묻히는 노을 구간도 그만큼 자주 왔다.
+const atmosphere = new Atmosphere(engine, { dayLength: 900, phase: 0.28 });
 engine.attachPost(new Post(engine.renderer, engine.scene, engine.camera, engine.outline));
 const sky = new Sky(engine, planet);
 atmosphere.setSky(sky);                     // 하늘도 같은 시간대 키프레임으로 구동
