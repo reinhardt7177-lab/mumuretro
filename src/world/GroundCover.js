@@ -25,18 +25,30 @@ const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);
 // 넓게 얇게 까는 대신 **몇 구역에 몰아서 진하게** 깐다. 나머지는 맨땅이 낫다 —
 // 맨땅은 그냥 맨땅으로 보이지만, 성긴 풀은 고장난 것처럼 보인다.
 const COVER = {
-  village: { grass: 0.30, flower: 0.20, scale: 0.85 },  // 골목 사이 잡초 정도
-  temple:  { grass: 0.18, flower: 0.10, scale: 0.9 },   // 비어 있는 게 절 마당이다
-  beach:   { grass: 0.03, flower: 0.02, scale: 0.7 },   // 모래엔 거의 안 난다
-  lake:    { grass: 1.00, flower: 0.60, scale: 1.15 },  // 물가 — 넘실
-  meadow:  { grass: 1.00, flower: 0.90, scale: 1.30 },  // 바람언덕 목장. 여기가 주인공이다
-  forest:  { grass: 0.85, flower: 0.20, scale: 1.05 },
-  hill:    { grass: 0.06, flower: 0.10, scale: 0.9 },   // 별빛 언덕은 라벤더 맨땅이 주인공
-  mist:    { grass: 0.10, flower: 0.03, scale: 0.8 },   // 스산하게
+// ★★ 밀도는 0 아니면 1이다. 중간값을 쓰지 않는다.
+// 0.03~0.30처럼 어중간하게 깔면 "성긴 풀"이 되는데, 그건 풀밭으로도 맨땅으로도 안 읽히고
+// 그냥 지면에 뭔가 흩뿌려진 것처럼 보인다. 맨땅은 맨땅이라 괜찮고, 풀밭은 풀밭이라 좋다.
+// 애매한 게 나쁘다. 그래서 구역마다 **있다/없다**만 정한다.
+  village: { grass: 0,    flower: 0,    scale: 1.0 },   // 골목은 흙바닥
+  temple:  { grass: 0,    flower: 0,    scale: 1.0 },   // 비어 있는 게 절 마당이다
+  beach:   { grass: 0,    flower: 0,    scale: 1.0 },   // 모래
+  hill:    { grass: 0,    flower: 0,    scale: 1.0 },   // 별빛 언덕은 라벤더 맨땅이 주인공
+  mist:    { grass: 0,    flower: 0,    scale: 1.0 },   // 스산하게 — 아무것도 안 자란다
+  lake:    { grass: 1.00, flower: 0.55, scale: 1.10 },  // 물가 — 넘실
+  meadow:  { grass: 1.00, flower: 0.85, scale: 1.30 },  // 바람언덕 목장. 여기가 주인공이다
+  forest:  { grass: 1.00, flower: 0.20, scale: 1.05 },  // 숲 바닥
 };
 
+// 잎 끝에 남기는 폭 비율. 0이면 바늘 끝이 되고, 1이면 띠가 된다.
+// 0.32면 끝이 둥근 진짜 풀잎 모양이면서 실루엣은 여전히 잎으로 읽힌다.
+const TIP_W = 0.32;
+
 // 바람 — 넘실거림. 잎 끝일수록 크게 흔들리고 포기마다 위상이 달라야 '물결'이 된다.
-const WIND = { speed: 1.4, amp: 0.5 };
+//
+// amp는 y²에 곱해지므로 **키를 올리면 흔들림이 제곱으로 커진다.**
+// 잎이 0.5u였을 때 0.5는 끝에서 0.13u(적당)였지만, 1.3u가 된 지금 같은 값이면
+// 0.85u가 흔들려 풀이 바닥에 드러눕는다. 끝 흔들림이 키의 ~13%가 되게 잡는다.
+const WIND = { speed: 1.4, amp: 0.10 };
 
 const FLOWER_COLORS = [0xf2c14e, 0xe8737d, 0xf0f0f0, 0xc98bdc, 0xf59b42];
 
@@ -48,9 +60,9 @@ const FLOWER_COLORS = [0xf2c14e, 0xe8737d, 0xf0f0f0, 0xc98bdc, 0xf59b42];
 // 법선은 면의 실제 법선이 아니라 위쪽으로 기울여 준다. 얇은 판의 진짜 법선을 쓰면
 // 각도에 따라 어떤 잎은 새까맣고 어떤 잎은 하얗게 튀어서 잔디밭이 얼룩덜룩해진다.
 // 위쪽으로 몰아 주면 전부 부드럽게 같은 빛을 받는다(스타일라이즈드 식생의 상투 수단).
-// 2단이면 휨이 살짝 각지지만, 3단은 포기당 삼각형이 1.5배다.
-// 풀은 수만 포기라 이 1.5배가 곧 수십만 삼각형이 된다 — 각진 건 안 보이고 프레임은 보인다.
-const BLADE_SEGS = 2;
+// 풀이 길어지면 2단으로는 '한 번 꺾인 막대'로 보인다. 휘어야 부드럽고, 휘려면 마디가 필요하다.
+// 다섯 구역을 맨땅으로 비운 덕에 포기 수가 줄어 3단을 감당할 수 있게 됐다.
+const BLADE_SEGS = 3;
 
 function pushBlade(pos, nor, idx, yaw, lean, height, halfW, bend, ox = 0, oz = 0) {
   const base = pos.length / 3;
@@ -58,8 +70,9 @@ function pushBlade(pos, nor, idx, yaw, lean, height, halfW, bend, ox = 0, oz = 0
   for (let i = 0; i <= BLADE_SEGS; i++) {
     const t = i / BLADE_SEGS;
     const y = height * t;
-    // 끝으로 갈수록 가늘어진다. 지수를 1보다 작게 둬야 밑동이 통통하고 끝만 뾰족하다.
-    const hw = halfW * Math.pow(1 - t, 0.65);
+    // 끝을 뾰족하게 만들지 않는다. pow(1-t, 0.65)는 t=1에서 폭이 0이 되어 바늘이 됐고,
+    // 수만 개가 그러면 화면이 가시밭처럼 보인다. 끝에도 폭을 남겨 **끝이 둥근 잎**으로 만든다.
+    const hw = halfW * (TIP_W + (1 - TIP_W) * Math.pow(1 - t, 0.55));
     // 휨 — t²이라 밑동은 곧고 끝만 눕는다. 이게 '부드러움'의 대부분을 만든다.
     const off = bend * t * t + lean * t;
     for (const sgn of [-1, 1]) {
@@ -80,14 +93,17 @@ function pushBlade(pos, nor, idx, yaw, lean, height, halfW, bend, ox = 0, oz = 0
 
 function makeGrassTuft() {
   const pos = [], nor = [], idx = [];
-  // 잎을 한 점에서 세우면 포기가 '뾰족한 심지' 하나로 보이고, 그게 원경에서 점이 된다.
-  // 밑동을 0.16u쯤 벌려 심으면 포기 하나가 바닥을 **면으로** 덮어서 잔디로 읽힌다.
-  // 잎도 굵혔다(0.055 → 0.075) — 얇은 잎은 멀어지면 1픽셀 미만이라 검은 얼룩이 된다.
+  // 잎을 한 점에서 세우면 포기가 '뾰족한 심지' 하나로 보인다. 밑동을 0.2u쯤 벌려 심으면
+  // 포기 하나가 바닥을 **면으로** 덮어서 잔디로 읽힌다.
+  //
+  // 키: 플레이어가 1.5u다. 0.5u짜리 풀은 발목에도 안 와서 '깎은 잔디'로 보였고,
+  // 넘실거릴 여지도 없었다. 무릎~허리(0.9~1.3u)로 올려야 바람에 물결이 생긴다.
+  // 휨(bend)도 키에 비례해 키운다 — 안 그러면 긴 막대가 꼿꼿이 선 것처럼 보인다.
   const blades = [
-    { yaw: 0.0, lean: 0.02, h: 0.50, w: 0.085, bend: 0.14, ox: 0.02, oz: 0.00 },
-    { yaw: 2.1, lean: -0.01, h: 0.42, w: 0.080, bend: 0.17, ox: 0.22, oz: 0.08 },
-    { yaw: 4.2, lean: 0.03, h: 0.36, w: 0.075, bend: 0.11, ox: -0.15, oz: 0.19 },
-    { yaw: 1.1, lean: -0.02, h: 0.45, w: 0.078, bend: 0.15, ox: -0.19, oz: -0.14 },
+    { yaw: 0.0, lean: 0.03, h: 1.30, w: 0.105, bend: 0.42, ox: 0.02, oz: 0.00 },
+    { yaw: 2.1, lean: -0.02, h: 1.05, w: 0.100, bend: 0.50, ox: 0.22, oz: 0.08 },
+    { yaw: 4.2, lean: 0.04, h: 0.88, w: 0.095, bend: 0.34, ox: -0.16, oz: 0.20 },
+    { yaw: 1.1, lean: -0.03, h: 1.14, w: 0.100, bend: 0.46, ox: -0.20, oz: -0.15 },
   ];
   for (const b of blades) pushBlade(pos, nor, idx, b.yaw, b.lean, b.h, b.w, b.bend, b.ox, b.oz);
   const g = new THREE.BufferGeometry();
@@ -165,12 +181,17 @@ export function buildGroundCover(scene, planet, anchors, opts = {}) {
     for (const w of planet.waterZones) if (d.angleTo(w.center) < w.ang * 1.05) return true;
     return false;
   };
+  // 길 위에는 풀을 심지 않는다. 프롭이 이미 지키는 규칙인데 풀만 빠져 있었다.
+  // 잎이 0.5u일 때는 길 위로 삐죽 나오는 정도였지만 1.3u가 된 지금은 길을 통째로 덮는다 —
+  // 그러면 "어디로 걸어야 하는지"라는 길의 존재 이유가 사라진다.
+  const onRoad = opts.onRoad || (() => false);
 
   for (let i = 0; i < count; i++) {
     const z = rng() * 2 - 1, th = rng() * Math.PI * 2, r = Math.sqrt(1 - z * z);
     dir.set(r * Math.cos(th), z, r * Math.sin(th));
     if (inWater(dir)) continue;
     if (planet.slopeDegAt(dir) > MAX_SLOPE) continue;
+    if (onRoad(dir)) continue;
 
     const region = regionAt(dir, anchors);
     const cfg = COVER[region.id] || COVER.village;
