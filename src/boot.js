@@ -656,6 +656,7 @@ function updateRegion(dt) {
 
 const phaseEl = document.getElementById('phase');
 let _hudT = 1, _inRangePrev = false, _stepT = 0;
+let _windT = 0;
 function step(dt) {
   const intent = input.poll();
   const wasGrounded = player.grounded;
@@ -672,6 +673,9 @@ function step(dt) {
   engine.updateCamera(player, input, dt);
   atmosphere.update(dt);
   sky.update(atmosphere.phase, player, engine.camera);   // 카메라 갱신 이후여야 돔이 정확히 따라온다
+  // 풀·꽃 바람 시계. 정점 셰이더가 이 값 하나로 전부 흔든다(CPU 작업 0).
+  _windT += dt;
+  if (world.cover) world.cover.update(_windT);
 
   // 주민 — 가까운 주민만 이모지 스폰(풀 절약)
   for (const t of townsfolk) t.update(dt, t.position.angleTo(player.position) < NEAR_ANG ? emoji : null);

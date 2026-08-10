@@ -306,7 +306,10 @@ export function buildTown(scene, planet, seed = 7) {
   }
 
   // 3.5) 지면 디테일(풀·꽃) — 인스턴싱 2 드로우콜. 빈 땅이 레퍼런스와의 큰 차이였다.
-  const cover = buildGroundCover(scene, planet, anchors, { count: 26000, seed: 31 });
+  // 표본 수다(심긴 수가 아니다). 밀도 컷을 통과한 것만 실제로 심긴다 —
+  // 이제 대부분의 구역이 0에 가까우므로, 목장·호수·숲을 진짜 잔디밭으로 만들려면
+  // 표본을 넉넉히 뿌려야 그 구역 몫이 충분히 떨어진다.
+  const cover = buildGroundCover(scene, planet, anchors, { count: 55000, seed: 31 });
 
   // 4) 구역 특징(앵커/필러/힐링 포컬)
   const ctx = { placed, water, heroSpots, healingPoints, waterAreas, roads };

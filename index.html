@@ -42,16 +42,21 @@
      상시로 떠 있는 것은 다섯 뿐이다: 내가 어디에 있나(hud) · 지금 할 일(parcel) ·
      어디로 가나(topRight) · 세계에 말 걸기(emotes) · 조작법(hint).
      그 외에는 전부 ☰ 뒤에 있다. */
-  #hud{position:fixed;top:14px;left:14px;display:flex;gap:8px;z-index:20;pointer-events:none;}
+  /* ── 좌상단 스택 ───────────────────────────────────────────────────────────
+     우상단과 같은 이유로 flex 컬럼이다. hintBtn을 `top:52px + translateY(38px)`로
+     찍어 뒀더니 문제 문장이 길어져 parcel이 두 줄이 되는 순간(모바일에서 흔하다)
+     그 위로 겹쳐 올라탔다. 좌표를 못 찍게 만드는 것 말고는 재발을 막을 방법이 없다. */
+  #topLeft{position:fixed;top:14px;left:14px;z-index:20;display:flex;flex-direction:column;
+    align-items:flex-start;gap:8px;max-width:60vw;}
+  #hud{display:flex;gap:8px;pointer-events:none;}
   #hud .pill{background:var(--chip);color:#fff;font-size:13px;padding:7px 13px;border-radius:20px;letter-spacing:1px;}
 
   /* 지금 할 일 — 화면에서 가장 중요한 한 줄. 유일하게 act 색을 쓰는 표시물이다. */
-  #parcel{position:fixed;top:52px;left:14px;background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;z-index:20;max-width:60vw;box-shadow:0 3px 0 var(--act-d);}
+  #parcel{background:rgba(216,118,49,.82);color:#fff;font-size:13px;padding:8px 14px;border-radius:14px;box-shadow:0 3px 0 var(--act-d);}
   #parcel b{color:var(--cream);}
   /* 힌트 — 토스트는 사라지지만 이건 남는다. 놓친 아이가 다시 볼 수 있어야 한다. */
-  #hintBtn{position:fixed;top:52px;left:14px;transform:translateY(38px);background:var(--story);
-    color:#fff;font-size:13px;padding:7px 13px;border-radius:14px;z-index:21;cursor:pointer;
-    display:none;max-width:60vw;}
+  #hintBtn{background:var(--story);color:#fff;font-size:13px;padding:7px 13px;border-radius:14px;
+    cursor:pointer;display:none;}
   #hintBtn.show{display:block;}
 
   /* ── 우상단 스택 ───────────────────────────────────────────────────────────
@@ -237,12 +242,14 @@
   <canvas id="c"></canvas>
   <div id="load">행성을 빚는 중…</div>
 
-  <div id="hud">
-    <div class="pill">무무 행성 집배원</div>
-    <div class="pill" id="phase">🕓 한낮</div>
+  <div id="topLeft">
+    <div id="hud">
+      <div class="pill">무무 행성 집배원</div>
+      <div class="pill" id="phase">🕓 한낮</div>
+    </div>
+    <div id="parcel">📮 배달 준비 중…</div>
+    <div id="hintBtn"></div>
   </div>
-  <div id="parcel">📮 배달 준비 중…</div>
-  <div id="hintBtn"></div>
 
   <div id="topRight">
     <div class="trBtn" id="questBtn">🗺️ 지도 · <span id="trialCount">🗼 0/7</span></div>

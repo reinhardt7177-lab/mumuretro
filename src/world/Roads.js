@@ -3,6 +3,7 @@
 // 길은 지형을 깎지 않고 표면에 밀착하는 리본으로 깐다(비탈에서는 자연스럽게 기운다).
 import * as THREE from 'three';
 import { toon } from '../rendering/Toon.js';
+import { regionAt } from '../data/regions.js';
 
 const ROAD = {
   width: 2.6,        // 길 폭(월드 단위)
@@ -15,6 +16,14 @@ const ROAD = {
   // 급경사에는 길을 깔지 않는다. 리본이 절벽을 그대로 타고 올라가면 지형을 뚫고 나오고,
   // 무엇보다 "여기로 걸어가라"는 신호가 거짓이 된다. 끊긴 길은 산기슭에서 멈춘 것으로 읽힌다.
   maxSlopeDeg: 24,
+  // 길을 깔지 않는 구역. 별빛 언덕은 기복이 심해 경사 컷에 계속 걸렸고,
+  // 그래서 길이 이어지지 못하고 비탈에 조각으로 흩어졌다 — 길이 아니라 물감 얼룩으로 읽힌다.
+  // 라벤더 지면(0xa9a2cc)에 주황 흙(0xb59a6e)이 조각으로 얹히니 색 충돌까지 겹쳤다.
+  // 언덕은 길 없이 두는 게 맞다. "길이 끊긴 곳"이라는 정보도 그 자체로 쓸모가 있다.
+  skipRegions: new Set(['hill']),
+  // 이보다 짧은 연속 구간은 통째로 버린다. 두세 샘플짜리 리본은 길로 안 읽히고
+  // 지면에 떨어진 얼룩으로 보인다 — 경사 컷이 만드는 파편이 전부 이 경우다.
+  minRun: 8,
 };
 
 // 단위벡터 구면 선형보간.
@@ -82,32 +91,20 @@ export function buildRoads(scene, planet, anchors) {
     return false;
   };
 
-  for (const [ia, ib] of edges) {
-    const a = dirs[ia], b = dirs[ib];
-    const arc = a.angleTo(b);
-    const steps = Math.max(6, Math.ceil(arc * R / ROAD.segLen));
-
-    let prevBase = -1;          // 이전 샘플의 좌/우 정점 인덱스(없으면 -1 → 이어붙이지 않음)
-    for (let s = 0; s <= steps; s++) {
-      slerpDir(a, b, s / steps, _d);
-      // 진행 방향(접선) — 다음 샘플과의 차이로 구하고 마지막은 이전 방향 재사용
-      slerpDir(a, b, Math.min(1, (s + 0.5) / steps), _dn);
-      _t.copy(_dn).addScaledVector(_d, -_dn.dot(_d));
-      if (_t.lengthSq() < 1e-12) { prevBase = -1; continue; }
-      _t.normalize();
-      _perp.crossVectors(_d, _t).normalize();      // 길 폭 방향
-
-      // 물 위·급경사에는 깔지 않는다(나루터·산기슭처럼 끊김)
-      if (inWater(_d) || planet.slopeDegAt(_d) > ROAD.maxSlopeDeg) { prevBase = -1; continue; }
-
-      centerline.push(_d.clone());
-
-      // 폭 방향으로도 나눠서 각 정점을 지형에 붙인다 → 리본이 지형 곡률을 따라 휜다.
-      const CS = ROAD.crossSeg;
+  // 샘플을 바로 정점으로 굽지 않고 **연속 구간(run)** 으로 먼저 모은다.
+  // 경사·물·구역 컷은 길 한가운데를 아무 데서나 끊는데, 그렇게 남은 두세 샘플짜리
+  // 조각까지 그리면 길이 아니라 지면에 떨어진 얼룩이 된다. 짧은 run은 통째로 버린다.
+  const CS = ROAD.crossSeg;
+  const emitRun = (run) => {
+    if (run.length < ROAD.minRun) return;               // 파편 — 버린다
+    let prevBase = -1;
+    for (const { d, perp } of run) {
+      centerline.push(d);
       const base = verts.length / 3;
+      // 폭 방향으로도 나눠서 각 정점을 지형에 붙인다 → 리본이 지형 곡률을 따라 휜다.
       for (let k = 0; k <= CS; k++) {
         const off = (k / CS) * 2 - 1;                    // -1(좌) → +1(우)
-        _l.copy(_d).addScaledVector(_perp, halfAng * off).normalize();
+        _l.copy(d).addScaledVector(perp, halfAng * off).normalize();
         planet.projectToSurface(_l);
         _l.multiplyScalar(1 + ROAD.lift / _l.length());
         verts.push(_l.x, _l.y, _l.z);
@@ -121,6 +118,32 @@ export function buildRoads(scene, planet, anchors) {
       }
       prevBase = base;
     }
+  };
+
+  let dropped = 0;
+  for (const [ia, ib] of edges) {
+    const a = dirs[ia], b = dirs[ib];
+    const arc = a.angleTo(b);
+    const steps = Math.max(6, Math.ceil(arc * R / ROAD.segLen));
+
+    let run = [];
+    const cut = () => { if (run.length && run.length < ROAD.minRun) dropped++; emitRun(run); run = []; };
+    for (let s = 0; s <= steps; s++) {
+      slerpDir(a, b, s / steps, _d);
+      // 진행 방향(접선) — 다음 샘플과의 차이로 구하고 마지막은 이전 방향 재사용
+      slerpDir(a, b, Math.min(1, (s + 0.5) / steps), _dn);
+      _t.copy(_dn).addScaledVector(_d, -_dn.dot(_d));
+      if (_t.lengthSq() < 1e-12) { cut(); continue; }
+      _t.normalize();
+      _perp.crossVectors(_d, _t).normalize();      // 길 폭 방향
+
+      // 물 위·급경사·길 없는 구역에는 깔지 않는다(나루터·산기슭처럼 끊김)
+      if (inWater(_d) || planet.slopeDegAt(_d) > ROAD.maxSlopeDeg
+          || ROAD.skipRegions.has(regionAt(_d, anchors).id)) { cut(); continue; }
+
+      run.push({ d: _d.clone(), perp: _perp.clone() });
+    }
+    cut();
   }
 
   const geo = new THREE.BufferGeometry();
@@ -151,6 +174,6 @@ export function buildRoads(scene, planet, anchors) {
     return false;
   };
 
-  console.log(`[roads] 간선 ${edges.length} · 중심선 샘플 ${centerline.length} · 삼각형 ${idx.length / 3}`);
+  console.log(`[roads] 간선 ${edges.length} · 중심선 샘플 ${centerline.length} · 삼각형 ${idx.length / 3} · 버린 파편 ${dropped}`);
   return { mesh, centerline, onRoad, edges };
 }
