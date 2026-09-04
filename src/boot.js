@@ -83,7 +83,7 @@ const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, dun
 // 관문 셋 — 구간을 찾아 그 자리에 기믹을 세운다. 좌표를 손으로 적지 않는다.
 const segOf = (id) => dungeon.rects.find(r => r.id === id);
 const gates = [
-  { room: 'r1', gate: new TileGate(roomScene, segOf('r1')), solved: false },
+  { room: 'r1', gate: new TileGate(roomScene, segOf('r1'), { entryRect: segOf('entry') }), solved: false },
   { room: 'r2', gate: new LaserGate(roomScene, segOf('r2')), solved: false },
   { room: 'r3', gate: new PlateGate(roomScene, segOf('r3')), solved: false },
 ];
@@ -177,7 +177,12 @@ function stepRoom(dt, intent) {
   for (const g of gates) {
     const inSeg = seg && seg.id === g.room;
     const r = g.gate.update(dt, roomActor) || {};
-    if (inSeg && r.fail) failTo(segOf(g.room), r.fail);
+    if (inSeg && r.fail) {
+      // 타일 관문은 갇혀 있으므로 되돌릴 곳이 없다 — 시계만 초기화하고 자리는 그대로 둔다.
+      // 나머지 관문은 방 처음으로 보낸다(사당 처음이 아니다).
+      if (g.room === 'r1') { failMsg = r.fail; failT = 1.6; }
+      else failTo(segOf(g.room), r.fail);
+    }
     if (!g.solved && g.gate.solvedBy(roomActor)) {
       g.solved = true;
       dungeon.openDoor(g.room);
@@ -238,7 +243,7 @@ const game = {
   enterShrine, exitShrine,
 };
 window.game = game;
-installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS });
+installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS, dungeon, roomActor });
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';

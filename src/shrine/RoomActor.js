@@ -45,13 +45,27 @@ export class RoomActor {
     this.syncMesh();
   }
 
-  // 이 점이 걸을 수 있는 영역 안인가.
-  _walkable(x, z, m = 0.5) {
+  // 이 점이 열린 영역 **아무 데나** 들어 있는가(여백 없음).
+  _in(x, z) {
     for (const r of this.rects) {
       if (!r.open) continue;
-      if (x >= r.x0 + m && x <= r.x1 - m && z >= r.z0 + m && z <= r.z1 - m) return true;
+      if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1) return true;
     }
     return false;
+  }
+
+  // 이 점이 걸을 수 있는가.
+  // ★ 처음엔 사각형 하나하나를 여백만큼 **안쪽으로 줄여** 검사했다. 그랬더니
+  //   구간들이 맞닿기만 하고 겹치지 않아서(입구 z≥6, r1 z≤6) 이음매마다
+  //   폭 1.0u의 **어디에도 속하지 않는 띠**가 생겼고, 아이는 z=6.54에서 벽도 없는데
+  //   막혔다. 방 하나가 아니라 문 일곱 개가 전부 이랬다(실사용 확인).
+  //   고치는 법: 여백을 사각형이 아니라 **합집합의 경계**에 건다.
+  //   내 주변 네 방향이 전부 열린 영역이면 벽에서 떨어져 있는 것이고,
+  //   이음매에서는 옆 구간이 그 자리를 메워 주므로 자연히 통과된다.
+  _walkable(x, z, m = 0.5) {
+    return this._in(x, z)
+      && this._in(x + m, z) && this._in(x - m, z)
+      && this._in(x, z + m) && this._in(x, z - m);
   }
 
   // 벽에 부딪히면 멈추지 않고 **미끄러진다.** 정면으로 막히면 옆으로 흐르게 —
@@ -117,13 +131,19 @@ export class RoomActor {
 
   // 이 점이 방(또는 통로) 안인가. 카메라를 가두는 데 쓴다.
   // 여백을 두는 이유: 벽에 정확히 붙으면 근평면(0.3u)이 벽을 뚫어 벽 너머가 보인다.
-  _inside(p, m = 0.45) {
+  // 닫힌 문도 카메라에겐 통과 가능하다 — 문 너머가 보이는 건 오히려 좋다(다음 목표).
+  // 걷기와 같은 이유로 여백은 합집합 경계에 건다. 안 그러면 이음매마다 카메라가 튄다.
+  _inAny(x, z, y) {
     for (const r of this.rects) {
-      // 닫힌 문도 카메라에겐 통과 가능하다 — 문 너머가 보이는 건 오히려 좋다(다음 목표)
-      if (p.x >= r.x0 + m && p.x <= r.x1 - m && p.z >= r.z0 + m && p.z <= r.z1 - m
-          && p.y >= 0.4 && p.y <= r.h - 0.35) return true;
+      if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && y >= 0.4 && y <= r.h - 0.35) return true;
     }
     return false;
+  }
+
+  _inside(p, m = 0.45) {
+    return this._inAny(p.x, p.z, p.y)
+      && this._inAny(p.x + m, p.z, p.y) && this._inAny(p.x - m, p.z, p.y)
+      && this._inAny(p.x, p.z + m, p.y) && this._inAny(p.x, p.z - m, p.y);
   }
 
   // 3인칭 카메라.

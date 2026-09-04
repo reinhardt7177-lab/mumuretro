@@ -18,81 +18,235 @@ const glowMat = (c, o = {}) => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════
-// 관문 1 — 빛 타일
+// 관문 1 — 색 발판
 //
-// 녹색만 안전하다. 나머지를 밟으면 꺼지고 떨어진다.
-// 앞 절반은 색이 고정이라 눈으로 길을 읽고, 뒤 절반은 색이 주기적으로 바뀌어 타이밍이 붙는다.
-// 학습: 규칙 찾기. 수학 4학년 「규칙과 대응」의 몸으로 하는 전 단계.
-// ══════════════════════════════════════════════════════════════════════════
+// 레퍼런스: 마리오 파티 「버섯 대소동」(1998) · 「용암 육각형」(MP2).
+// 깃발이 색을 알리면 그 색 발판만 남고 나머지는 가라앉는다. 갈수록 빨라진다.
+// 30년 가까이 검증된 구조라 규칙을 설명할 필요가 없다 — 한 라운드만 보면 안다.
+//
+// ★ 첫 판은 이렇지 않았다. 손으로 짠 고정 패턴 위를 건너는 방식이었는데
+//   (1) 부활 지점이 타일 밭 **안**이라 들어서자마자 무한 실패였고
+//   (2) 입구 정중앙 칸이 안전색이 아니어서 진입 자체가 막혔다(실사용 확인).
+//   고정 패턴은 한 번 외우면 끝이라 재미도 짧다. 라운드제로 바꾼다.
+//
+// 안전 발판 규칙: 입구 발판은 **항상 안전**하다. 대신 거기 서 있으면 시계가 멈춘다 —
+// 한 라운드를 안전하게 지켜보고 규칙을 익힐 수 있되, 버티기만 해서는 못 깬다.
+const T_START = 3.0;      // 문이 닫히고 전부 검정. 이 동안 시계는 안 간다
+const T_READY = 1.0;      // 검정. 다음 라운드 준비
+const T_JUDGE = 0.9;      // 빨강이 가라앉고 판정이 난다
+const SURVIVE = 20;       // 이만큼 발판 위에서 버티면 열린다
+const ROPE_Y = 0.55;      // 줄 높이. 점프 최고점 0.9u라 여유를 두고 넘긴다
+const ROPE_FROM = 3;      // 이 라운드부터 줄이 돈다
+
 export class TileGate {
-  constructor(scene, seg) {
+  constructor(scene, seg, opts = {}) {
     this.seg = seg;
-    this.z0 = seg.z0 + 1.2; this.z1 = seg.z1 - 1.2;   // 양끝은 안전지대로 비운다
-    this.COLS = 4; this.ROWS = 8;
+    this.entryRect = opts.entryRect || null;
+    this.COLS = 5; this.ROWS = 5;
+    // 격자는 방 전체가 아니다. 앞뒤로 안전 발판을 남긴다.
+    this.z1 = seg.z1 - 2.5;              // 입구 쪽(큰 z)
+    this.z0 = seg.z0 + 2.5;              // 출구 쪽
     this.TW = (seg.x1 - seg.x0) / this.COLS;
     this.TD = (this.z1 - this.z0) / this.ROWS;
-    this.safeMat = glowMat(0x5fd08a);
-    this.badMat = glowMat(0x3a4750);
-    this.phase = 0;
 
-    // 손으로 짠 패턴. 각 행마다 안전한 열의 집합이다.
-    // ★ 무작위로 만들면 막다른 길이 생기거나 반대로 한 줄이 통째로 안전해진다.
-    //   행마다 **최소 하나는 안전**하고, 앞뒤 행의 안전 열이 붙어 있어야 건널 수 있다.
-    this.rows = [
-      { safe: [0, 1], shift: false },
-      { safe: [1, 2], shift: false },
-      { safe: [2], shift: false },
-      { safe: [1, 2, 3], shift: false },
-      { safe: [3], shift: true },     // 여기부터 색이 바뀐다
-      { safe: [2, 3], shift: true },
-      { safe: [0, 2], shift: true },
-      { safe: [0, 1], shift: true },
-    ];
+    this.matSafe = glowMat(0x5fd08a);
+    this.matBad = glowMat(0xe0736b);
+    // 쉬는 색이 한 가지면 통짜 바닥으로 보인다. 두 톤을 번갈아 두면 그 자체로 바둑판이 되고,
+    // 색이 꺼져 있는 동안에도 "칸이 있다"가 읽힌다.
+    this.matIdle = [glowMat(0x39434f), glowMat(0x232a33)];
 
-    this.tiles = [];
+    this.phase = 'ready'; this.t = T_READY; this.round = 0;
+    this.left = SURVIVE; this.cleared = false; this.locked = false;
+    this.safe = new Set();
+
     const g = new THREE.Group();
     scene.add(g);
+    this.group = g;
+    this.tiles = [];
     for (let r = 0; r < this.ROWS; r++) {
       for (let c = 0; c < this.COLS; c++) {
         const m = new THREE.Mesh(
-          new THREE.BoxGeometry(this.TW - 0.12, 0.08, this.TD - 0.12), this.badMat);
-        m.position.set(seg.x0 + (c + 0.5) * this.TW, 0.05, this.z0 + (r + 0.5) * this.TD);
+          new THREE.BoxGeometry(this.TW - 0.14, 0.22, this.TD - 0.14), this.matIdle[(r + c) % 2]);
+        m.position.set(seg.x0 + (c + 0.5) * this.TW, 0.11, this.z0 + (r + 0.5) * this.TD);
         m.receiveShadow = true;
         g.add(m);
-        this.tiles.push({ r, c, mesh: m });
+        this.tiles.push({ r, c, mesh: m, baseY: 0.11, idle: this.matIdle[(r + c) % 2] });
       }
     }
-    this.group = g;
-    this._paint();
+
+    // 입구를 막는 문 — "들어오면 닫힌다". 이게 긴장을 만든다.
+    // 벌은 없지만 되돌아 나갈 수는 없다. 20초만 버티면 되니 갇혀도 무섭지 않다.
+    const bm = new THREE.MeshBasicMaterial({ color: 0x5fd08a, transparent: true, opacity: 0.75 });
+    bm.userData.outlineParameters = { visible: false };
+    this.barrier = new THREE.Mesh(new THREE.BoxGeometry(seg.x1 - seg.x0, 3.4, 0.22), bm);
+    this.barrier.position.set(0, 1.7, seg.z1 - 0.15);
+    this.barrier.visible = false;
+    scene.add(this.barrier);
+
+    // 색 표지 — 지금 어느 색이 안전한지 알리는 판. 마리오 파티의 깃발 역할.
+    const sm = glowMat(0x2f3841);
+    this.flag = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 0.2), sm);
+    this.flag.position.set(0, 2.6, seg.z0 - 0.2);
+    scene.add(this.flag);
+    this.flagMat = sm;
+
+    // ── 불줄넘기 ──────────────────────────────────────────────────────────
+    // 레퍼런스: 마리오 파티 「불줄넘기(Hot Rope Jump)」 — 가운데 기둥에 매인 줄이
+    // 바닥을 쓸며 돌고, 올 때마다 뛰어넘는다. 갈수록 빨라진다.
+    // 색 기억(머리)만 있으면 방이 조용하다. 줄이 몸을 얹어 리듬을 만든다.
+    // 3라운드부터 나온다 — 규칙 둘을 동시에 배우게 하지 않는다.
+    // 벽을 뚫지 않는 최대 길이. 모서리까지는 안 닿지만 그래도 된다 —
+    // 어차피 색 규칙이 아이를 가운데로 계속 불러낸다.
+    this.ropeR = Math.min(seg.x1 - seg.x0, this.z1 - this.z0) * 0.5 - 0.1;
+    this.ropeCX = (seg.x0 + seg.x1) / 2;
+    this.ropeCZ = (this.z0 + this.z1) / 2;
+    this.ropeA = 0;
+    const rope = new THREE.Group();
+    rope.position.set(this.ropeCX, 0, this.ropeCZ);
+    const rm = glowMat(0xf0a860, { transparent: true, opacity: 0.9 });
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, this.ropeR * 2, 6), rm);
+    bar.rotation.z = Math.PI / 2;                 // 눕혀서 지름이 되게
+    bar.position.y = ROPE_Y;
+    rope.add(bar);
+    // 기둥 — 줄이 어디에 매여 도는지 안 보이면 그냥 튀어나온 막대로 읽힌다
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 2.4, 6), toon(SHRINE.stoneLite));
+    post.position.y = 1.2;
+    rope.add(post);
+    rope.visible = false;
+    scene.add(rope);
+    this.rope = rope;
   }
 
-  // 이 칸이 지금 안전한가. shift 행은 주기적으로 안전 열이 한 칸씩 밀린다.
-  _safe(r, c) {
-    const row = this.rows[r];
-    const off = row.shift ? Math.floor(this.phase) % this.COLS : 0;
-    return row.safe.some(s => (s + off) % this.COLS === c);
+  // 줄이 도는 중인가. 라운드가 오를수록 빨라진다.
+  _ropeSpeed() { return Math.min(2.3, 1.05 + (this.round - ROPE_FROM) * 0.13); }
+  _ropeOn() { return this.round >= ROPE_FROM && !this.cleared; }
+
+  // 줄에 걸렸는가. 줄은 중심을 지나는 **선분**이라 중심에서의 수직거리로 본다.
+  _ropeHit(p) {
+    if (!this._ropeOn()) return false;
+    if (p.y > ROPE_Y + 0.12) return false;        // 뛰어서 넘고 있다
+    const dx = p.x - this.ropeCX, dz = p.z - this.ropeCZ;
+    if (dx * dx + dz * dz > this.ropeR * this.ropeR) return false;
+    // |rel × 줄방향| = 줄에서 떨어진 거리
+    return Math.abs(dx * Math.sin(this.ropeA) - dz * Math.cos(this.ropeA)) < 0.34;
   }
 
-  _paint() {
-    for (const t of this.tiles) t.mesh.material = this._safe(t.r, t.c) ? this.safeMat : this.badMat;
+  _cell(p) {
+    if (p.z < this.z0 || p.z > this.z1) return null;
+    const c = Math.floor((p.x - this.seg.x0) / this.TW);
+    const r = Math.floor((p.z - this.z0) / this.TD);
+    if (c < 0 || c >= this.COLS || r < 0 || r >= this.ROWS) return null;
+    return r * this.COLS + c;
+  }
+
+  // 안전 칸을 새로 뽑는다. 라운드가 갈수록 줄지만 최소 6칸은 남긴다 —
+  // 너무 적으면 운이 되고, 운으로 지면 아이는 배우지 못한다.
+  _roll() {
+    this.round++;
+    const frac = Math.max(0.30, 0.60 - this.round * 0.045);
+    const n = Math.max(6, Math.round(this.COLS * this.ROWS * frac));
+    const idx = [...Array(this.COLS * this.ROWS).keys()];
+    for (let i = idx.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [idx[i], idx[j]] = [idx[j], idx[i]];
+    }
+    this.safe = new Set(idx.slice(0, n));
+  }
+
+  _paint(mode) {
+    for (let i = 0; i < this.tiles.length; i++) {
+      const t = this.tiles[i];
+      t.mesh.material = mode === 'idle' ? t.idle
+        : (this.safe.has(i) ? this.matSafe : this.matBad);
+      // 판정 중에는 위험 칸이 가라앉는다. 색만 바꾸면 "왜 죽었는지"가 안 보인다.
+      const sink = (mode === 'judge' && !this.safe.has(i)) ? -0.55 : 0;
+      t.mesh.position.y = t.baseY + sink;
+    }
+    this.flagMat.color.set(mode === 'idle' ? 0x2f3841 : 0x5fd08a);
   }
 
   update(dt, actor) {
-    const before = Math.floor(this.phase);
-    this.phase += dt * 0.35;                    // 2.9초에 한 칸. 4학년이 보고 판단할 시간
-    if (Math.floor(this.phase) !== before) this._paint();
-
+    if (this.cleared) return {};
     const p = actor.position;
-    if (p.z < this.z0 || p.z > this.z1) return {};   // 안전지대
-    const c = Math.floor((p.x - this.seg.x0) / this.TW);
-    const r = Math.floor((p.z - this.z0) / this.TD);
-    if (c < 0 || c >= this.COLS || r < 0 || r >= this.ROWS) return {};
-    if (!this._safe(r, c)) return { fail: '어두운 타일을 밟았어요' };
+    const onGrid = this._cell(p) !== null;
+
+    // 방에 발을 들이면 잠긴다
+    if (!this.locked && p.z < this.seg.z1 - 0.6) {
+      this.locked = true;
+      this.barrier.visible = true;
+      if (this.entryRect) this.entryRect.open = false;
+      // 문이 닫히면 검정 3초. 규칙을 읽을 틈을 주고 그다음 시작한다.
+      this.phase = 'ready'; this.t = T_START;
+      this._paint('idle');
+    }
+    if (!this.locked) return {};
+
+    // 줄넘기 — 색 판정과 별개로 매 프레임 돈다.
+    this.rope.visible = this._ropeOn();
+    if (this._ropeOn()) {
+      this.ropeA += dt * this._ropeSpeed();
+      this.rope.rotation.y = -this.ropeA;
+      if (onGrid && this._ropeHit(p)) {
+        this.reset();
+        return { fail: '줄에 걸렸어요 — 올 때 뛰어넘어요' };
+      }
+    }
+
+    // 시계는 **발판 위에 있을 때만** 간다. 입구 발판에서 지켜보는 건 공짜지만 진도는 안 나간다.
+    // 첫 라운드가 뜨기 전(round 0)에는 안 간다 — 카운트다운은 생존 시간이 아니다.
+    if (onGrid && this.round > 0) this.left = Math.max(0, this.left - dt);
+
+    this.t -= dt;
+    if (this.t <= 0) {
+      if (this.phase === 'ready') {
+        this._roll();
+        this.phase = 'show';
+        // 보여 주는 시간이 곧 난이도다. 2.6초에서 1.2초까지 줄어든다.
+        this.t = Math.max(1.2, 2.6 - this.round * 0.16);
+        this._paint('show');
+      } else if (this.phase === 'show') {
+        this.phase = 'judge'; this.t = T_JUDGE;
+        this._paint('judge');
+        const cell = this._cell(p);
+        if (cell !== null && !this.safe.has(cell)) {
+          this.reset();
+          return { fail: '빨간 발판이 가라앉았어요' };
+        }
+      } else {
+        this.phase = 'ready'; this.t = T_READY;
+        this._paint('idle');
+      }
+    }
+
+    if (this.left <= 0 && !this.cleared) {
+      this.cleared = true;
+      this.rope.visible = false;
+      this.barrier.visible = false;
+      if (this.entryRect) this.entryRect.open = true;
+      this._paint('idle');
+    }
     return {};
   }
 
-  // 방 끝에 닿으면 통과. 별도 스위치를 두지 않는다 — 건너는 것 자체가 답이다.
-  solvedBy(actor) { return actor.position.z < this.z0 - 0.4; }
+  prompt() {
+    if (this.cleared) return null;
+    if (!this.locked) return '들어가면 문이 닫혀요 — 20초 버티기';
+    if (this.round === 0) return `⬛ ${Math.max(1, Math.ceil(this.t))}… 곧 시작해요`;
+    const rope = this._ropeOn() ? ' · 줄은 뛰어넘기' : '';
+    if (this.phase === 'show') return `🟩 초록 발판으로!${rope} · ${Math.ceil(this.left)}초`;
+    if (this.phase === 'judge') return `🟥 가라앉는 중${rope} · ${Math.ceil(this.left)}초`;
+    return `준비… · ${Math.ceil(this.left)}초`;
+  }
+
+  // 실패해도 방에서 쫓아내지 않는다. 시계만 되돌린다.
+  reset() {
+    this.left = SURVIVE; this.round = 0;
+    this.phase = 'ready'; this.t = T_READY;
+    this.ropeA = 0; this.rope.visible = false;
+    this._paint('idle');
+  }
+
+  solvedBy() { return this.cleared; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
