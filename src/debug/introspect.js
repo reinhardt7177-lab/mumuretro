@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 
 export function installDebug(ctx) {
-  const { planet, player, engine, input, step, sky, scatter, PEAKS } = ctx;
+  const { planet, player, engine, input, step, sky, scatter, carpet, PEAKS } = ctx;
 
   const srgb = (v) => (v /= 255, v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
   const lum = (r, g, b) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
@@ -150,12 +150,47 @@ export function installDebug(ctx) {
       return {
         terrainTris: g.attributes.position.count / 3,
         scatterTris: scatter ? Math.round(scatter.tris) : 0,
+        carpetTris: carpet ? carpet.tris : 0,
+        carpetCoveredPct: carpet ? +(carpet.coveredPct * 100).toFixed(1) : 0,
         scatterMeshes: scatter ? scatter.meshes.length : 0,
         scatterCounts: scatter ? scatter.counts : null,
         ridgeTris: sky.ridges.reduce((a, m) => a + m.geometry.index.count / 3, 0),
         sceneChildren: engine.scene.children.length,
       };
     },
+    // ★ "맵에 구분이 있는가" — 이걸 안 재서 온 행성이 균일한 숲이 된 걸 놓쳤다.
+    // 바이옴이 골고루 나오고, 특히 시야가 트인 구획(meadow)이 충분해야 §1이 성립한다.
+    biomes(samples = 8000) {
+      if (!scatter || !scatter.biomeAt) return null;
+      const v = new THREE.Vector3(); const tally = {};
+      let s = 5;
+      const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+      for (let i = 0; i < samples; i++) {
+        const z = rnd() * 2 - 1, th = rnd() * Math.PI * 2, r = Math.sqrt(1 - z * z);
+        v.set(r * Math.cos(th), z, r * Math.sin(th));
+        const b = scatter.biomeAt(planet.heightAt(v), planet.slopeDegAt(v), scatter.zoneAt(v));
+        tally[b] = (tally[b] || 0) + 1;
+      }
+      const out = {};
+      for (const k of Object.keys(tally)) out[k] = +(100 * tally[k] / samples).toFixed(1) + '%';
+      return out;
+    },
+    // 나무 간격 — 숲 안에서 실제로 몇 u마다 한 그루인가.
+    // 수관 반경이 1.4u쯤이라 3u 아래로 내려가면 걸어 다닐 수 없는 벽이 된다.
+    treeSpacing() {
+      if (!scatter) return null;
+      const b = this.biomes(4000);
+      const forestPct = parseFloat(b.forest || '0') / 100;
+      const area = 4 * Math.PI * planet.R * planet.R * forestPct;
+      const n = scatter.counts.tree;
+      return {
+        trees: n, forestArea: Math.round(area),
+        perU2: +(n / area).toFixed(4),
+        spacingU: +Math.sqrt(area / n).toFixed(1),
+        canopyRadiusU: 1.4,
+      };
+    },
+
     // 컬링이 실제로 걸리는지 — v1에서 frustumCulled=false 하나가 100만 삼각형을 매 프레임
     // 통과시켰다. 그때 이걸 안 재서 몰랐다.
     get culling() {

@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LIGHT } from '../data/lighting.js';
+import { fbm } from '../util/noise.js';
 
 // 구를 나누는 셀 — 위도 4띠 × 경도 6구간 = 24셀.
 // 지평선이 28u(각 23.6°)라 보통 두세 셀만 프러스텀에 들어온다.
@@ -21,22 +22,40 @@ const LAT_BANDS = 4, LON_SECTORS = 6;
 // 구역 데이터를 따로 두지 않고 **지형 자신**에서 유도한다. 높이와 경사 두 축이면
 // "여기 뭐가 자랄까"가 정해진다. 새 데이터가 늘지 않는 게 이 방식의 값어치다.
 //
-// h  기준 R로부터의 높이(월드)   s  경사(도)
-function biomeAt(h, s) {
+// ★ 높이·경사만으로 유도했더니 평지가 전부 같은 값이 나와서 **온 행성이 균일한 숲**이 됐다.
+// 그건 §1을 정면으로 깬다 — 나무가 시야를 막으면 랜드마크가 안 보이고 삼각형 규칙이 무의미해진다.
+// 그래서 축을 하나 더 둔다: **대역 노이즈**. 주파수를 낮게(1.3) 잡아 구획이 약 50u로 나온다.
+// 지평선이 28u이므로 "숲 안에 있다" / "초원에 있다"가 명확히 갈린다.
+const ZONE_FREQ = 1.3;
+export function zoneAt(dir) {
+  return fbm(dir.x * ZONE_FREQ, dir.y * ZONE_FREQ, dir.z * ZONE_FREQ, 3) * 0.5 + 0.5;   // 0..1
+}
+
+// h 높이(월드)   s 경사(도)   z 대역값(0..1)
+export function biomeAt(h, s, z) {
   if (s > 32) return 'bare';            // 절벽 — 아무것도 못 붙는다
   if (h > 7.5) return 'alpine';         // 고지대 — 바위와 마른 덤불만
+  if (s > 22) return 'slope';           // 비탈 — 바위와 덤불
+  if (z > 0.55) return 'forest';        // 숲 구획
   if (h < -1.2) return 'basin';         // 분지 바닥 — 풀이 무성하다
-  if (s > 20) return 'slope';           // 비탈 — 바위와 덤불
-  return 'meadow';                      // 평지 — 풀밭과 나무
+  return 'meadow';                      // 초원 — 나무 0. 여기서 시야가 열린다
 }
 
 // 바이옴별 밀도. 0이면 아예 안 깐다(중간값 금지).
+//
+// ★ 나무 밀도를 0.10 → 0.020으로 낮췄다. 계산해 보면 0.10은 4u²당 한 그루로,
+//   수관 반경 1.5u짜리 나무가 서로 닿는 밀도다(실사용에서 벽이 됐다).
+//   숲으로 읽히면서 걸어 다닐 수 있는 간격은 15~20u²당 한 그루다.
 const DENSITY = {
-  meadow: { grass: 0.62, tree: 0.10, rock: 0.04, bush: 0.08 },
-  basin:  { grass: 0.70, tree: 0.05, rock: 0.02, bush: 0.12 },
-  slope:  { grass: 0,    tree: 0.04, rock: 0.16, bush: 0.10 },
-  alpine: { grass: 0,    tree: 0,    rock: 0.22, bush: 0.04 },
-  bare:   { grass: 0,    tree: 0,    rock: 0,    bush: 0 },
+// ★ grass는 이제 인스턴스가 아니다. 잔디는 GrassCarpet이 지면 한 장으로 덮는다.
+//   여기 남은 grass는 카펫 **위에 얹는 억새 몇 포기**다 — 밀도를 확 낮춰 악센트로만 쓴다.
+//   잔디를 개수로 세는 순간 그건 잔디가 아니라 지면에 꽂아 놓은 물건이 된다.
+  forest: { grass: 0.030, tree: 0.026, rock: 0.010, bush: 0.070 },
+  meadow: { grass: 0.055, tree: 0,     rock: 0.008, bush: 0.030 },   // 나무 없음 — 시야 확보
+  basin:  { grass: 0.070, tree: 0.004, rock: 0.006, bush: 0.090 },
+  slope:  { grass: 0,     tree: 0.006, rock: 0.130, bush: 0.070 },
+  alpine: { grass: 0,     tree: 0,     rock: 0.190, bush: 0.030 },
+  bare:   { grass: 0,     tree: 0,     rock: 0,     bush: 0 },
 };
 
 const PALETTE = {
@@ -53,14 +72,19 @@ const PALETTE = {
 
 // 나무 — 원기둥 줄기 + 원뿔 3단. 실루엣이 이 게임에서 가장 큰 식생 요소다.
 // 3단으로 나누는 이유: 원뿔 하나는 크리스마스 트리로 읽히고, 3단이면 수관이 된다.
+// ★ 줄기가 1.5u뿐이라 수관 밑동이 y=0.88이었다. 캐릭터 키가 1.5u이므로
+//   **나무 밑을 지나갈 수 없었다** — 숲이 통과 불가능한 벽이 됐다(실사용 확인).
+//   줄기를 3.0u로 늘려 수관 밑동을 y=2.2로 올린다. 머리 위로 지나간다.
+// 비율도 같이 잡는다: 전체 높이 1.9~3.8u(캐릭터의 1.3~2.5배)는 관목이지 나무가 아니다.
+//   실제 나무는 사람의 10배, 스타일라이즈드 게임도 보통 3~5배다.
 function treeGeo(seed) {
   const parts = [];
-  const trunk = new THREE.CylinderGeometry(0.13, 0.20, 1.5, 5);
-  trunk.translate(0, 0.75, 0);
+  const trunk = new THREE.CylinderGeometry(0.16, 0.26, 3.0, 5);
+  trunk.translate(0, 1.5, 0);
   parts.push({ geo: trunk, kind: 'trunk' });
   const tiers = seed % 2
-    ? [{ r: 1.05, h: 1.35, y: 1.55 }, { r: 0.82, h: 1.15, y: 2.30 }, { r: 0.52, h: 0.95, y: 2.95 }]
-    : [{ r: 1.20, h: 1.10, y: 1.45 }, { r: 0.88, h: 1.00, y: 2.10 }, { r: 0.50, h: 0.85, y: 2.70 }];
+    ? [{ r: 1.30, h: 1.80, y: 3.10 }, { r: 1.00, h: 1.50, y: 4.20 }, { r: 0.62, h: 1.20, y: 5.10 }]
+    : [{ r: 1.45, h: 1.60, y: 2.90 }, { r: 1.08, h: 1.40, y: 3.90 }, { r: 0.60, h: 1.10, y: 4.80 }];
   for (const t of tiers) {
     const g = new THREE.ConeGeometry(t.r, t.h, 6);
     g.translate(0, t.y, 0);
@@ -70,14 +94,25 @@ function treeGeo(seed) {
 }
 
 // 바위 — 이코사헤드론을 찌그러뜨린다. 구는 바위로 안 보이고, 상자는 벽돌로 보인다.
+//
+// ★ IcosahedronGeometry는 **인덱스 없는** 지오메트리라 면마다 정점이 따로 있다.
+//   여기에 정점마다 독립적인 난수로 변위를 주면 같은 자리에 있던 정점들이 서로 다른 곳으로
+//   흩어져 **면이 갈라진다** — 바위가 판자 파편이 됐던 원인이다(실사용 확인).
+//   그래서 난수를 위치에서 해시해 뽑는다. 같은 자리의 정점은 반드시 같은 값을 받는다.
 function rockGeo(seed) {
   const g = new THREE.IcosahedronGeometry(0.55, 0);
   const p = g.attributes.position;
-  let s = seed * 7919;
-  const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  // 위치 해시 — 좌표를 정수로 양자화해 섞는다. 좌표가 같으면 결과가 같다.
+  const hash = (x, y, z) => {
+    const q = (v) => Math.round(v * 1000);
+    let h = (q(x) * 73856093) ^ (q(y) * 19349663) ^ (q(z) * 83492791) ^ (seed * 2654435761);
+    h = (h ^ (h >>> 13)) >>> 0;
+    return (h % 100000) / 100000;
+  };
   for (let i = 0; i < p.count; i++) {
-    const k = 0.55 + rnd() * 0.85;
-    p.setXYZ(i, p.getX(i) * k * 1.25, p.getY(i) * k * 0.72, p.getZ(i) * k * 1.1);
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const k = 0.60 + hash(x, y, z) * 0.75;
+    p.setXYZ(i, x * k * 1.25, y * k * 0.72, z * k * 1.1);
   }
   g.computeVertexNormals();
   g.translate(0, 0.16, 0);
@@ -185,7 +220,7 @@ function injectWind(mat, ampScale, uTime) {
 
 export function buildScatter(scene, planet, opts = {}) {
   const R = planet.R;
-  const samples = opts.samples ?? 90000;
+  const samples = opts.samples ?? 160000;
   let seed = opts.seed ?? 91;
   const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
   const uTime = { value: 0 };
@@ -261,13 +296,13 @@ export function buildScatter(scene, planet, opts = {}) {
     dir.set(r * Math.cos(th), z, r * Math.sin(th));
     const h = planet.heightAt(dir);
     const s = planet.slopeDegAt(dir);
-    const d = DENSITY[biomeAt(h, s)];
+    const d = DENSITY[biomeAt(h, s, zoneAt(dir))];
     const cell = cellOf(dir);
     const roll = rnd();
 
     if (roll < d.tree) {
       const b = rnd() < 0.5;
-      const sz = 0.55 + rnd() * 0.55;
+      const sz = 0.80 + rnd() * 0.60;   // 전체 4.6~8.4u = 캐릭터(1.5u)의 3~5.6배
       place(cell, 'trunk', sz, 0.10, col.set(PALETTE.trunk));
       const pal = h > 5.5 ? PALETTE.canopyDry : PALETTE.canopy;
       place(cell, b ? 'canopyA' : 'canopyB', sz, 0.10,
@@ -282,7 +317,7 @@ export function buildScatter(scene, planet, opts = {}) {
         col.set(PALETTE.bush[Math.floor(rnd() * PALETTE.bush.length)]).multiplyScalar(0.88 + rnd() * 0.24));
       counts.bush++;
     } else if (roll < d.grass) {
-      place(cell, 'grass', 0.42 + rnd() * 0.34, 0.10,
+      place(cell, 'grass', 0.85 + rnd() * 0.55, 0.10,
         col.set(PALETTE.grass[Math.floor(rnd() * PALETTE.grass.length)]).multiplyScalar(0.85 + rnd() * 0.3));
       counts.grass++;
     }
@@ -319,5 +354,12 @@ export function buildScatter(scene, planet, opts = {}) {
   console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush} · 풀 ${counts.grass}`
     + ` · 메시 ${meshes.length}개 · ~${Math.round(tris / 1000)}k삼각형`);
 
-  return { meshes, counts, tris, update(t) { uTime.value = t; } };
+  // 카펫이 "여기 풀이 자라는가"를 물을 때 쓴다. 바이옴 판정을 그대로 재사용하므로
+  // 카펫과 산포물이 절대 어긋나지 않는다 — 규칙이 한 곳에만 있다.
+  const grassAt = (dir) => {
+    const b = biomeAt(planet.heightAt(dir), planet.slopeDegAt(dir), zoneAt(dir));
+    return b === 'meadow' || b === 'basin' ? 1 : (b === 'forest' ? 0.75 : 0);
+  };
+
+  return { meshes, counts, tris, biomeAt, zoneAt, grassAt, update(t) { uTime.value = t; } };
 }

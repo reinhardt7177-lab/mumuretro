@@ -16,6 +16,7 @@ import { Loop } from './core/Loop.js';
 import { Sky } from './render/Sky.js';
 import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
+import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -36,7 +37,11 @@ engine._inited = true;
 // 지면 산포 — 나무·바위·덤불·풀. 화면을 채우는 것은 빛이 아니라 밀도다.
 // 봉우리에 세워 뒀던 주황 원뿔 표식은 뺐다. 이제 식생이 그 역할을 한다 —
 // 나무가 없는 능선과 바위뿐인 고지대가 곧 "저기는 다르다"는 신호가 된다.
-const scatter = buildScatter(engine.scene, planet, { samples: 90000, seed: 91 });
+const scatter = buildScatter(engine.scene, planet, { samples: 160000, seed: 91 });
+
+// 잔디 카펫 — 지면을 덮는 한 장. 풀을 개수로 흩뿌리는 대신 바닥이 통째로 흐물거린다.
+// 산포물과 같은 바이옴 판정을 쓰므로 둘이 어긋날 수 없다.
+const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt });
 
 let _windT = 0;
 function step(dt) {
@@ -47,13 +52,14 @@ function step(dt) {
   // 바람 시계. 정점 셰이더가 이 값 하나로 풀·수관·덤불을 전부 흔든다(CPU 작업 0).
   _windT += dt;
   scatter.update(_windT);
+  carpet.update(_windT);
 }
 
 const loop = new Loop(step, () => engine.render());
 
-const game = { step, planet, player, engine, input, loop, sky, scatter };
+const game = { step, planet, player, engine, input, loop, sky, scatter, carpet };
 window.game = game;
-installDebug({ planet, player, engine, input, step, sky, scatter, PEAKS });
+installDebug({ planet, player, engine, input, step, sky, scatter, carpet, PEAKS });
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';
