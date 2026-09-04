@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { SurfaceActor } from './SurfaceActor.js';
 import { buildKid, animateLimbs, DEFAULT_LOADOUT } from './Character.js';
-import { projectTangent } from '../world/SurfaceTransform.js';
+import { projectTangent } from './SurfaceTransform.js';
 
 const _moveDir = new THREE.Vector3();
 

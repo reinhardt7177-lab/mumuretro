@@ -1,7 +1,7 @@
 // 행성 표면 위에 서고 걷는 모든 것의 베이스(플레이어/주민/유령 공용).
 // mesh(외부 그룹)는 구면 변환을 담고, body(키드 등)는 자식으로 footOffset+bob 만큼 up 방향으로 떠 있음.
 import * as THREE from 'three';
-import { moveOnSphere, turnHeading, orthonormalizeHeading, orientationFromFrame, projectTangent } from '../world/SurfaceTransform.js';
+import { moveOnSphere, turnHeading, orthonormalizeHeading, orientationFromFrame, projectTangent } from './SurfaceTransform.js';
 
 const _q = new THREE.Quaternion();
 // 등반 판정용 임시값(후보 이동을 실제로 굴려보고 되돌린다)

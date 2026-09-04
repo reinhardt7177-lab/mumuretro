@@ -25,7 +25,11 @@
       "WebFetch(domain:github.com)",
       "Bash(awk 'NR>=1118 && NR<=1160' src/boot.js)",
       "Bash(python -)",
-      "Bash(git show HEAD:src/world/Props.js | sed -n '/PROP_BUILDERS = {/,/^};/p' | grep -o \"^  [a-zA-Z]*:\" | tr -d ' :' | sort > /tmp/old.txt *)"
+      "Bash(git show HEAD:src/world/Props.js | sed -n '/PROP_BUILDERS = {/,/^};/p' | grep -o \"^  [a-zA-Z]*:\" | tr -d ' :' | sort > /tmp/old.txt *)",
+      "Bash(git tag *)",
+      "Bash(xargs wc -l)",
+      "Bash(set -e)",
+      "Bash(git mv *)"
     ]
   }
 }

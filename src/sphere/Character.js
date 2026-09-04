@@ -1,7 +1,7 @@
 // 절차적 저폴리 집배원. loadout(머리스타일·색·자켓·바지·신발·모자)으로 커스터마이즈.
 // 정면 +Z, 발끝은 SurfaceActor가 Box3로 보정. 파츠 교체는 buildKid로 통째 재생성(드물어 저렴).
 import * as THREE from 'three';
-import { toon } from '../rendering/Toon.js';
+import { toon } from '../render/Toon.js';
 
 export const KID_H = 1.5;
 

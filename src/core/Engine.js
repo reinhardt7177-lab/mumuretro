@@ -2,12 +2,16 @@
 // 카메라는 자체 접선 forward(camFwd)를 유지: 플레이어 이동 시 평행수송, 드래그 시 up축 회전. 극점에서도 롤 없음.
 import * as THREE from 'three';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
-import { orthonormalizeHeading } from '../world/SurfaceTransform.js';
+import { orthonormalizeHeading } from '../sphere/SurfaceTransform.js';
 import { smoothK } from '../util/math.js';
+import { LIGHT, SKY as SKY_C, INTENSITY, FOG_DENSITY, SUN_ELEV_DEG, SUN_AZIM_DEG } from '../data/lighting.js';
 
-const SKY = 0xaee0e6;
+const SKY = SKY_C.horizon;   // 배경·안개는 반드시 하늘 지평선 색과 같아야 한다(§3)
 const _ray = new THREE.Raycaster();
 const _camOff = new THREE.Vector3();
+// 태양 방향 계산용 — 매 프레임 할당하지 않는다
+const _WY = new THREE.Vector3(0, 1, 0), _WX = new THREE.Vector3(1, 0, 0);
+const _east = new THREE.Vector3(), _north = new THREE.Vector3(), _sunDir = new THREE.Vector3();
 
 // 그림자/안개는 행성 반지름에 그대로 비례시키면 안 된다.
 // 그림자: 맵 해상도는 고정인데 커버 범위만 커지면 텍셀 밀도가 R에 반비례해 뭉갠다 → 절대 범위로 상한.
@@ -32,7 +36,9 @@ export class Engine {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     // 노출 1.1 — A/B 실측상 원래와 같은 밝기(88 vs 90)에서 채도가 0.44 → 0.51로 오른다.
     // 더 올리면 밝아지는 대신 채도를 다시 잃는다(1.6에서 0.45).
-    renderer.toneMappingExposure = 1.1;
+    // 노출 1.0 — 구버전 1.1은 평균 휘도를 0.519까지 밀어 화면이 떠 보였다(§2 표).
+    // 대신 광원 강도를 올려 형태 대비는 유지한다.
+    renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer = renderer;
@@ -47,19 +53,23 @@ export class Engine {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(SKY);
-    // 지평선에 살짝 걸치는 대기 원근 — 행성이 커질수록 수평선 컬링 팝인이 눈에 띄므로 이를 덮어준다.
-    const hz = horizonDist(planetR);
-    scene.fog = new THREE.Fog(SKY, hz * FOG_NEAR_K, hz * FOG_FAR_K);
+    // ── 대기 원근 (§3) ──────────────────────────────────────────────────
+    // 구버전엔 이게 사실상 없어서 근경과 원경의 채도가 같았다 — 화면이 납작해 보인 진짜 원인.
+    // 선형 안개 대신 지수 안개를 쓴다: 1 − exp(−(d·k)²)라 근경은 거의 손대지 않고
+    // 원경만 빠르게 대기색으로 간다. k는 "지평선 28u에서 0.60 수렴"에서 역산한 값이다.
+    scene.fog = new THREE.FogExp2(SKY, FOG_DENSITY);
     this.scene = scene;
 
     // far: 가시 지오메트리는 전부 구 표면 위 → 지평선 림까지 √(L²−R²) 정도면 충분. R*3이면 넉넉.
     // near를 0.1→0.3으로 올려 깊이 정밀도 확보(카메라 최소 거리는 2.5로 클램프됨).
     this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.3, planetR * 3);
 
-    // 조명: 반구광 + 그림자 던지는 태양(플레이어 up을 따라감) + 약한 필. (색/강도는 Atmosphere가 구동)
-    this.hemi = new THREE.HemisphereLight(0xcfeef2, 0x6b7355, 1.1);
+    // ── 조명 (§2) ───────────────────────────────────────────────────────
+    // 규칙 하나: 빛은 따뜻하게, 그림자는 차갑게. 그림자는 "빛이 없는 곳"이 아니라
+    // "하늘이 비추는 곳"이다. 반구광의 하늘색이 곧 그림자 색이 된다.
+    this.hemi = new THREE.HemisphereLight(LIGHT.air, 0x8a8560, INTENSITY.hemi);
     scene.add(this.hemi);
-    const sun = new THREE.DirectionalLight(0xfff2d6, 2.4);
+    const sun = new THREE.DirectionalLight(LIGHT.sun, INTENSITY.sun);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     // 범위를 절대값으로 상한 → 2048맵 기준 텍셀 밀도가 R과 무관하게 최소 25 texel/u 유지.
@@ -73,9 +83,11 @@ export class Engine {
     sun.shadow.bias = -0.0006;
     scene.add(sun); scene.add(sun.target);
     this.sun = sun;
-    const fill = new THREE.DirectionalLight(0xbfd6ff, 0.35);
+    // 반대편 약한 보조광 — 이게 없으면 그림자 면이 단색 판이 되어 형태가 사라진다.
+    const fill = new THREE.DirectionalLight(LIGHT.shadow, INTENSITY.fill);
     fill.position.set(-26, 20, -18);
     scene.add(fill);
+    this.fill = fill;
 
     // 카메라 접선 프레임(이동 입력 기준). 첫 프레임은 lookHeight 위를 봄.
     this.camFwd = new THREE.Vector3(0, 0, 1);
@@ -128,8 +140,24 @@ export class Engine {
     this.camera.lookAt(target);
 
     // 태양이 플레이어 위를 따라가 그림자가 항상 발밑에 잡힘
-    this.sun.position.copy(player.position).addScaledVector(up, SUN_HEIGHT).addScaledVector(this.camRight, 12);
+    // ── 태양 방향 (§2) ──────────────────────────────────────────────────
+    // 구버전은 플레이어 바로 위(고도 ≈79°)에 태양을 뒀다. 그러면 그림자가 발밑으로
+    // 사라져 지형이 납작해진다 — 삼각형 규칙(§1)으로 만든 능선이 아무것도 드러내지 못한다.
+    // 고도 42° 측광으로 내려서 능선이 자기 그림자를 길게 드리우게 한다.
+    //
+    // 방위는 **카메라가 아니라 지역 좌표계**에 건다. camRight에 걸면 시점을 돌릴 때마다
+    // 그림자가 같이 돌아서 형태를 못 읽는다. worldY에서 유도한 지역 북쪽을 기준으로 고정한다.
+    const ref = Math.abs(up.y) > 0.99 ? _WX : _WY;
+    _east.crossVectors(ref, up).normalize();
+    _north.crossVectors(up, _east).normalize();
+    const el = SUN_ELEV_DEG * Math.PI / 180, az = SUN_AZIM_DEG * Math.PI / 180;
+    _sunDir.copy(up).multiplyScalar(Math.sin(el))
+      .addScaledVector(_north, Math.cos(az) * Math.cos(el))
+      .addScaledVector(_east, Math.sin(az) * Math.cos(el))
+      .normalize();
+    this.sun.position.copy(player.position).addScaledVector(_sunDir, SUN_HEIGHT);
     this.sun.target.position.copy(player.position);
+    this.sun.target.updateMatrixWorld();
   }
 
   // 후처리를 붙이면 컴포저가 외곽선 패스까지 감싸서 그린다. 없으면 기존 경로 그대로.
