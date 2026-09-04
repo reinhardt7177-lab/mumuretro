@@ -354,7 +354,11 @@ export class PlateGate {
   constructor(scene, seg) {
     this.seg = seg;
     this.held = null;
-    this.REACH = 1.6;
+    // ★ 1.6이었다. 판 지름이 1.9라 **판 위에 거의 올라서야만** E가 먹었고,
+    //   한 발짝 물러나 판을 바라보는 자세에서는 프롬프트조차 안 떴다.
+    //   "넣고 다시 집어서 빼는 게 안 됨"이 이거였다(실사용 확인).
+    //   집는 거리는 인색할 이유가 없다 — 인색해서 얻는 건 아무것도 없다.
+    this.REACH = 2.6;
     this.glow = glowMat(SHRINE.glow);
     const g = new THREE.Group();
     scene.add(g);
@@ -436,8 +440,12 @@ export class PlateGate {
     // 막다른 길에 들어섰으면 그 사실부터 말한다. 아이가 스스로 알아낼 수 없는 종류다.
     const stuck = !this._canFinish() ? ' — 지금은 못 맞춰요, 되가져와요' : '';
     const n = this._nearest(pos);
-    if (!n) return stuck ? `⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)` : null;
-    if (n.kind === 'stock') return this.held ? null : `E — ${n.item.w}kg 상자 들기`;
+    // 손에 뭘 들었는지, 어디로 가야 하는지 항상 말해 준다. 방 안에서 침묵하지 않는다.
+    if (!n) {
+      if (this.held) return `${this.held.w}kg 상자를 들고 있어요 — 판 가까이 가서 E`;
+      return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)' : '상자나 판 가까이 가면 E로 집어요';
+    }
+    if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있어요 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
     const p = this._sum(n.plate), need = n.plate.need;
     if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
     if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무거워요' : stuck}`;
