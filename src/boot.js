@@ -18,12 +18,15 @@ import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
 import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { pickShrineSpots, buildShrines } from './world/Shrine.js';
+import { ShrineRoom, ROOM, ENTRY_Z, EXIT_Z } from './shrine/Room.js';
+import { RoomActor } from './shrine/RoomActor.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
 const planet = new Planet(engine.scene);
-engine.attachPost(new Post(engine.renderer, engine.scene, engine.camera, engine.outline));
+const planetScene = engine.scene;   // 사당에서 돌아올 때 갈아 끼울 대상
+engine.attachPost(new Post(engine));
 const sky = new Sky(engine, planet);
 
 const player = new Player(planet);
@@ -67,6 +70,52 @@ const shrines = buildShrines(engine.scene, planet, shrineSpots);
   engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
 })();
 
+// ── 사당 안팎 전환 ────────────────────────────────────────────────────────
+// 행성과 사당은 서로 다른 Scene이다. engine.setScene으로 갈아 끼우고,
+// 어느 쪽을 도는지는 mode 하나가 정한다. 상태기계를 더 만들지 않는다.
+const room = new ShrineRoom();
+const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, ROOM);
+let mode = 'planet';                 // 'planet' | 'room'
+let activeShrine = null;             // 어느 사당에 들어와 있나
+const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
+
+const promptEl = document.getElementById('prompt');
+function setPrompt(text) {
+  if (!promptEl) return;
+  if (text) { promptEl.textContent = text; promptEl.classList.add('show'); }
+  else promptEl.classList.remove('show');
+}
+
+function enterShrine(shrine) {
+  savedPlanet.pos.copy(player.position);
+  savedPlanet.heading.copy(player.heading);
+  activeShrine = shrine;
+  mode = 'room';
+  engine.scene.remove(player.mesh);
+  contact.visible = false;
+  room.scene.add(player.mesh);
+  // 통로 끝에서 방을 바라보고 시작한다 — 좁은 데서 넓은 데로 나오는 낙차가 '들어왔다'를 만든다
+  roomActor.setAt(0, ENTRY_Z, -1);
+  engine.setScene(room.scene);
+  setPrompt(null);
+}
+
+function exitShrine() {
+  mode = 'planet';
+  room.scene.remove(player.mesh);
+  engine.scene = planetScene;         // setScene은 아래에서 쓰므로 여기선 직접
+  engine.setScene(planetScene);
+  engine.scene.add(player.mesh);
+  contact.visible = true;
+  player.position.copy(savedPlanet.pos);
+  player.heading.copy(savedPlanet.heading);
+  player._initFrame(); player.syncMesh();
+  engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+  engine._camPlaced = false;
+  activeShrine = null;
+  setPrompt(null);
+}
+
 let _windT = 0;
 // 발밑 접지 자국 — 잔디가 눌린 것처럼 보이는 어두운 원반.
 // 그림자만으로는 캐릭터가 지면에 "닿아" 있는 느낌이 약하다. 이 원반 하나가 그걸 만든다.
@@ -80,8 +129,23 @@ engine.scene.add(contact);
 
 const _cUp = new THREE.Vector3();
 const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
+
 function step(dt) {
   const intent = input.poll();
+  if (mode === 'room') { stepRoom(dt, intent); return; }
+  stepPlanet(dt, intent);
+}
+
+// 실내 — 평면 이동. 통로 끝을 넘어서면 밖으로 나간다.
+function stepRoom(dt, intent) {
+  roomActor.update(dt, intent, engine.camera);
+  roomActor.updateCamera(engine.camera, input, dt);
+  const atExit = roomActor.position.z > EXIT_Z - 0.9;
+  setPrompt(atExit ? 'E — 사당 밖으로' : null);
+  if (atExit && intent.action) exitShrine();
+}
+
+function stepPlanet(dt, intent) {
   player.update(dt, intent, engine.camFwd, engine.camRight);
   // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
   // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
@@ -100,11 +164,22 @@ function step(dt) {
   _windT += dt;
   scatter.update(_windT);
   carpet.update(_windT);
+
+  // 사당 진입 — 기단 가까이 오면 프롬프트, E로 들어간다.
+  const near = shrines.nearest(player.position);
+  const canEnter = near.shrine && near.distU < shrines.ENTER_R;
+  setPrompt(canEnter ? 'E — 사당에 들어가기' : null);
+  if (canEnter && intent.action) enterShrine(near.shrine);
 }
 
 const loop = new Loop(step, () => engine.render());
 
-const game = { step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact };
+const game = {
+  step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
+  room, roomActor, planetScene,
+  get mode() { return mode; },
+  enterShrine, exitShrine,
+};
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS });
 

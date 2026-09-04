@@ -16,6 +16,13 @@
   #c{display:block;width:100vw;height:100vh;touch-action:none;}
   #load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
     background:var(--air);color:var(--ink);font-size:15px;letter-spacing:3px;z-index:50;}
+  /* 상호작용 프롬프트 — 화면에 겹치는 유일한 것. 나머지는 월드 안에 있다(§9). */
+  #prompt{position:fixed;bottom:64px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:rgba(111,227,210,.92);color:#0d1519;font-size:15px;font-weight:700;
+    letter-spacing:1px;padding:10px 24px;border-radius:22px;z-index:22;
+    opacity:0;pointer-events:none;transition:opacity .16s,transform .16s;
+    box-shadow:0 4px 0 rgba(63,168,155,.9);}
+  #prompt.show{opacity:1;transform:translateX(-50%) translateY(0);}
   #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
     background:rgba(40,70,80,.5);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;
     letter-spacing:1px;z-index:20;white-space:nowrap;
@@ -28,6 +35,7 @@
 <body>
   <canvas id="c"></canvas>
   <div id="load">행성을 빚는 중…</div>
+  <div id="prompt"></div>
   <div id="hint">WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · Shift 달리기 · Space 점프</div>
 
 <!-- 모듈/런타임 오류를 로딩 화면에 스택과 함께 띄운다 -->

@@ -18,17 +18,19 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
+// ★ 씬을 생성 시점에 붙잡지 않고 매 프레임 engine에서 읽는다.
+// 사당 안팎이 서로 다른 Scene이라, 붙잡아 두면 전환해도 바깥 행성만 계속 그린다.
 class OutlineScenePass extends Pass {
-  constructor(outline, scene, camera) {
+  constructor(engine) {
     super();
-    this.outline = outline; this.scene = scene; this.camera = camera;
+    this.engine = engine;
     this.needsSwap = false;      // readBuffer에 직접 그린다
     this.clear = true;
   }
   render(renderer, writeBuffer, readBuffer) {
     renderer.setRenderTarget(this.renderToScreen ? null : readBuffer);
     if (this.clear) renderer.clear();
-    this.outline.render(this.scene, this.camera);
+    this.engine.outline.render(this.engine.scene, this.engine.camera);
   }
 }
 
@@ -65,11 +67,11 @@ const GradeShader = {
 };
 
 export class Post {
-  constructor(renderer, scene, camera, outline) {
-    this.renderer = renderer;
+  constructor(engine) {
+    this.renderer = engine.renderer;
     this.enabled = true;
-    this.composer = new EffectComposer(renderer);
-    this.composer.addPass(new OutlineScenePass(outline, scene, camera));
+    this.composer = new EffectComposer(engine.renderer);
+    this.composer.addPass(new OutlineScenePass(engine));
 
     this.bloom = new UnrealBloomPass(
       new THREE.Vector2(innerWidth, innerHeight),

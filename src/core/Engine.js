@@ -163,6 +163,9 @@ export class Engine {
   // 후처리를 붙이면 컴포저가 외곽선 패스까지 감싸서 그린다. 없으면 기존 경로 그대로.
   attachPost(post) { this.post = post; }
 
+  // 사당 안팎 전환. 배경·안개는 씬마다 다르므로 씬 자신이 들고 있고, 여기선 갈아 끼우기만 한다.
+  setScene(scene) { this.scene = scene; }
+
   render() {
     if (this.post && this.post.enabled) this.post.render();
     else this.outline.render(this.scene, this.camera);
