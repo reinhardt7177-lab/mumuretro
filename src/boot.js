@@ -18,7 +18,8 @@ import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
 import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { pickShrineSpots, buildShrines } from './world/Shrine.js';
-import { ShrineRoom, ROOM, ENTRY_Z, EXIT_Z } from './shrine/Room.js';
+import { buildDungeon, LAYOUT, ENTRY_Z, EXIT_Z } from './shrine/Dungeon.js';
+import { TileGate, LaserGate, PlateGate } from './shrine/Gates.js';
 import { RoomActor } from './shrine/RoomActor.js';
 import { BalanceScale } from './shrine/Scale.js';
 import { installDebug } from './debug/introspect.js';
@@ -74,17 +75,31 @@ const shrines = buildShrines(engine.scene, planet, shrineSpots);
 // ── 사당 안팎 전환 ────────────────────────────────────────────────────────
 // 행성과 사당은 서로 다른 Scene이다. engine.setScene으로 갈아 끼우고,
 // 어느 쪽을 도는지는 mode 하나가 정한다. 상태기계를 더 만들지 않는다.
-const room = new ShrineRoom();
-const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, ROOM);
-// 양팔저울 — 이 사당이 존재하는 이유. 수평이 되면 문이 열린다.
-const scale = new BalanceScale(room.scene, {
-  origin: new THREE.Vector3(0, 0, -1.0),
-  onBalance: () => room.open(),
+const roomScene = new THREE.Scene();
+roomScene.background = new THREE.Color(0x0b1216);
+const dungeon = buildDungeon(roomScene);
+const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, dungeon.rects);
+
+// 관문 셋 — 구간을 찾아 그 자리에 기믹을 세운다. 좌표를 손으로 적지 않는다.
+const segOf = (id) => dungeon.rects.find(r => r.id === id);
+const gates = [
+  { room: 'r1', gate: new TileGate(roomScene, segOf('r1')), solved: false },
+  { room: 'r2', gate: new LaserGate(roomScene, segOf('r2')), solved: false },
+  { room: 'r3', gate: new PlateGate(roomScene, segOf('r3')), solved: false },
+];
+
+// 신전의 양팔저울 — 사당이 존재하는 이유. 수평이 되면 보상이 나온다.
+const shrineSeg = segOf('shrine');
+const scale = new BalanceScale(roomScene, {
+  origin: new THREE.Vector3(0, 0, shrineSeg.z0 + 7.5),
+  onBalance: () => { cleared = true; setPrompt('✨ 지혜의 구슬을 얻었어요 — E로 나가기'); },
 });
-// 석상 안으로 걸어 들어가지 못하게. 저울 막대 밑은 지나갈 수 있어야 하므로 석상만 막는다.
-roomActor.obstacles = [{ x: 0, z: -3.4, r: 1.9 }];
+roomActor.obstacles = [{ x: 0, z: shrineSeg.z0 + 7.5 - 2.4, r: 1.9 }];
+
 let mode = 'planet';                 // 'planet' | 'room'
-let activeShrine = null;             // 어느 사당에 들어와 있나
+let activeShrine = null;
+let cleared = false;                 // 이번 사당을 깼나
+let failMsg = null, failT = 0;       // 실패 안내(3초)
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
 
 const promptEl = document.getElementById('prompt');
@@ -94,6 +109,13 @@ function setPrompt(text) {
   else promptEl.classList.remove('show');
 }
 
+// 실패 — 방 처음으로. 사당 처음이 아니다.
+// 레이저에서 몇 번 죽고 사당 입구로 쫓겨나면 아이는 그만둔다.
+function failTo(seg, msg) {
+  failMsg = msg; failT = 1.6;
+  roomActor.setAt(0, seg.z1 - 1.4, -1);
+}
+
 function enterShrine(shrine) {
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
@@ -101,17 +123,15 @@ function enterShrine(shrine) {
   mode = 'room';
   engine.scene.remove(player.mesh);
   contact.visible = false;
-  room.scene.add(player.mesh);
-  // 통로 끝에서 방을 바라보고 시작한다 — 좁은 데서 넓은 데로 나오는 낙차가 '들어왔다'를 만든다
+  roomScene.add(player.mesh);
   roomActor.setAt(0, ENTRY_Z, -1);
-  engine.setScene(room.scene);
+  engine.setScene(roomScene);
   setPrompt(null);
 }
 
 function exitShrine() {
   mode = 'planet';
-  room.scene.remove(player.mesh);
-  engine.scene = planetScene;         // setScene은 아래에서 쓰므로 여기선 직접
+  roomScene.remove(player.mesh);
   engine.setScene(planetScene);
   engine.scene.add(player.mesh);
   contact.visible = true;
@@ -144,19 +164,40 @@ function step(dt) {
   stepPlanet(dt, intent);
 }
 
-// 실내 — 평면 이동. 통로 끝을 넘어서면 밖으로 나간다.
+// 실내 — 관문 셋을 지나 신전으로. 통로 끝을 넘어서면 밖으로 나간다.
 function stepRoom(dt, intent) {
   roomActor.update(dt, intent, engine.camera);
   roomActor.updateCamera(engine.camera, input, dt);
-  scale.update(dt, roomActor, room.scene);
 
-  // 프롬프트는 한 번에 하나다. 출구가 저울보다 우선 — 나가려는 사람을 붙잡지 않는다.
+  const seg = dungeon.segmentAt(roomActor.position.z);
+  let prompt = null;
+
+  // 관문 — 자기 구간에 있을 때만 돈다. 레이저는 방 밖에서도 움직여야 자연스럽지만
+  // 판정은 방 안에서만 한다(통로에서 맞으면 부당하다).
+  for (const g of gates) {
+    const inSeg = seg && seg.id === g.room;
+    const r = g.gate.update(dt, roomActor) || {};
+    if (inSeg && r.fail) failTo(segOf(g.room), r.fail);
+    if (!g.solved && g.gate.solvedBy(roomActor)) {
+      g.solved = true;
+      dungeon.openDoor(g.room);
+    }
+    if (inSeg && g.gate.prompt) prompt = g.gate.prompt(roomActor.position) || prompt;
+  }
+
+  scale.update(dt, roomActor, roomScene);
+  if (seg && seg.id === 'shrine') prompt = scale.prompt(roomActor.position) || prompt;
+
+  // 실패 안내가 떠 있으면 그게 우선이다
+  if (failT > 0) { failT -= dt; prompt = '💫 ' + failMsg; }
   const atExit = roomActor.position.z > EXIT_Z - 0.9;
-  setPrompt(atExit ? 'E — 사당 밖으로' : scale.prompt(roomActor.position));
+  if (atExit) prompt = 'E — 사당 밖으로';
+  setPrompt(prompt);
 
   if (intent.action) {
-    if (atExit) exitShrine();
-    else scale.interact(roomActor.position);
+    if (atExit) { exitShrine(); return; }
+    if (seg && seg.id === 'shrine') scale.interact(roomActor.position);
+    else if (seg && seg.id === 'r3') gates[2].gate.interact(roomActor.position);
   }
 }
 
@@ -191,7 +232,8 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  room, roomActor, scale, planetScene,
+  dungeon, roomScene, roomActor, scale, gates, planetScene,
+  get cleared() { return cleared; },
   get mode() { return mode; },
   enterShrine, exitShrine,
 };

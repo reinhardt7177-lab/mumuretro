@@ -8,18 +8,24 @@ import { animateLimbs } from '../sphere/Character.js';
 import { smoothK } from '../util/math.js';
 
 const SPEED = 3.6, RUN = 6.0, TURN = 12;
+// 점프 높이 ≈ v²/2g = 0.9u. 레이저 낮은 줄(0.75u)을 넘고 높은 줄(2.2u)에는 안 닿는다.
+const JUMP_V = 4.2, GRAVITY = 9.8;
 
 export class RoomActor {
   // SurfaceActor는 mesh(위치 캐리어)와 body(캐릭터 모델)를 나눠 갖는다.
   // 실내에서도 그 구조를 그대로 쓴다 — body를 따로 만들면 커스터마이즈가 갈라진다.
   //   mesh   씬에 넣고 빼는 대상. 위치·회전을 여기에 건다
   //   body   팔다리 애니메이션 대상. 발끝이 로컬 0이라 footOffset만큼 띄운다
-  // bounds: {W, D, H, CORR_W, CORR_D} — 벽을 뚫고 나가지 않게 가둔다
-  constructor(mesh, body, footOffset, bounds) {
+  // rects: [{x0,x1,z0,z1,h,open}] — 걸을 수 있는 영역. 닫힌 문은 open=false다.
+  // ★ 처음엔 방 하나를 L자 사각형 둘로 하드코딩했다. 방이 넷이 되면서 못 쓴다.
+  //   영역 목록으로 바꾸면 방을 몇 개 잇든 코드가 그대로다.
+  constructor(mesh, body, footOffset, rects) {
     this.mesh = mesh;
     this.body = body;
     this.footOffset = footOffset || 0;
-    this.b = bounds;
+    this.rects = rects || [];
+    // 점프 — 레이저를 넘으려면 필요하다. 구면의 점프는 up 방향이라 여기선 못 쓴다.
+    this.vy = 0; this.grounded = true;
     this.position = new THREE.Vector3();
     this.heading = new THREE.Vector3(0, 0, -1);
     this.moving = false; this.running = false;
@@ -32,27 +38,28 @@ export class RoomActor {
 
   setAt(x, z, headingZ = -1) {
     this.position.set(x, 0, z);
+    this.vy = 0; this.grounded = true;
     this.heading.set(0, 0, headingZ).normalize();
     this.camYaw = Math.atan2(-this.heading.x, -this.heading.z);
     this._camPlaced = false;
     this.syncMesh();
   }
 
-  // 방과 통로를 합친 L자 영역에 가둔다. 두 사각형 중 하나에는 들어 있어야 한다.
-  _clamp(p) {
-    const { W, D, CORR_W, CORR_D } = this.b;
-    const hw = W / 2 - 0.55, hd = D / 2 - 0.55, chw = CORR_W / 2 - 0.45;
-    const inRoom = Math.abs(p.x) <= hw && p.z <= hd;
-    if (inRoom) { p.z = Math.max(p.z, -hd); return; }
-    // 통로 영역
-    const corrEnd = D / 2 + CORR_D + 0.6;
-    if (p.z > hd) {
-      p.x = Math.max(-chw, Math.min(chw, p.x));
-      p.z = Math.min(p.z, corrEnd);
-      return;
+  // 이 점이 걸을 수 있는 영역 안인가.
+  _walkable(x, z, m = 0.5) {
+    for (const r of this.rects) {
+      if (!r.open) continue;
+      if (x >= r.x0 + m && x <= r.x1 - m && z >= r.z0 + m && z <= r.z1 - m) return true;
     }
-    p.x = Math.max(-hw, Math.min(hw, p.x));
-    p.z = Math.max(p.z, -hd);
+    return false;
+  }
+
+  // 벽에 부딪히면 멈추지 않고 **미끄러진다.** 정면으로 막히면 옆으로 흐르게 —
+  // 안 그러면 좁은 통로 입구에서 걸려 아이가 "못 지나간다"고 느낀다.
+  _move(from, dx, dz) {
+    if (this._walkable(from.x + dx, from.z + dz)) { from.x += dx; from.z += dz; return; }
+    if (this._walkable(from.x + dx, from.z)) { from.x += dx; return; }
+    if (this._walkable(from.x, from.z + dz)) { from.z += dz; return; }
   }
 
   // 장애물 밀어내기 — 석상 안으로 걸어 들어가면 즉시 고장으로 읽힌다.
@@ -75,8 +82,7 @@ export class RoomActor {
     if (this.moving) {
       _move.normalize();
       const sp = this.running ? RUN : SPEED;
-      this.position.addScaledVector(_move, sp * dt);
-      this._clamp(this.position);
+      this._move(this.position, _move.x * sp * dt, _move.z * sp * dt);
       this._pushOut(this.position);
       // 진행 방향으로 부드럽게 돈다
       const target = Math.atan2(_move.x, _move.z);
@@ -89,12 +95,21 @@ export class RoomActor {
       this.heading.set(Math.sin(na), 0, Math.cos(na));
     }
 
+    // 점프 — 레이저 관문에서만 쓰지만 어디서든 뛸 수 있어야 한다.
+    // 아이가 "뛰어 보는" 행동을 막으면 세계가 죽은 것처럼 느껴진다.
+    if (intent.jump && this.grounded) { this.vy = JUMP_V; this.grounded = false; }
+    if (!this.grounded) {
+      this.vy -= GRAVITY * dt;
+      this.position.y += this.vy * dt;
+      if (this.position.y <= 0) { this.position.y = 0; this.vy = 0; this.grounded = true; }
+    }
+
     animateLimbs(this.body, dt, this.moving, this.running);
     this.syncMesh();
   }
 
   syncMesh() {
-    this.mesh.position.copy(this.position);
+    this.mesh.position.copy(this.position);   // y는 점프 높이를 포함한다
     this.mesh.quaternion.setFromAxisAngle(_Y, Math.atan2(this.heading.x, this.heading.z));
     // 바깥에서는 SurfaceActor가 해 주던 일. 실내에서는 여기서 한다.
     if (this.body) this.body.position.y = this.footOffset + (this.body.userData.bob || 0);
@@ -102,14 +117,13 @@ export class RoomActor {
 
   // 이 점이 방(또는 통로) 안인가. 카메라를 가두는 데 쓴다.
   // 여백을 두는 이유: 벽에 정확히 붙으면 근평면(0.3u)이 벽을 뚫어 벽 너머가 보인다.
-  _inside(p, m = 0.5) {
-    const { W, D, H, CORR_W, CORR_D } = this.b;
-    if (p.y < 0.4 || p.y > H - 0.4) return false;
-    const inRoom = Math.abs(p.x) <= W / 2 - m && p.z >= -D / 2 + m && p.z <= D / 2 - m;
-    if (inRoom) return true;
-    const inCorr = Math.abs(p.x) <= CORR_W / 2 - m
-      && p.z >= D / 2 - m - 0.6 && p.z <= D / 2 + CORR_D - m;
-    return inCorr;
+  _inside(p, m = 0.45) {
+    for (const r of this.rects) {
+      // 닫힌 문도 카메라에겐 통과 가능하다 — 문 너머가 보이는 건 오히려 좋다(다음 목표)
+      if (p.x >= r.x0 + m && p.x <= r.x1 - m && p.z >= r.z0 + m && p.z <= r.z1 - m
+          && p.y >= 0.4 && p.y <= r.h - 0.35) return true;
+    }
+    return false;
   }
 
   // 3인칭 카메라.
@@ -123,7 +137,7 @@ export class RoomActor {
     const pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
     const dist = Math.max(3.2, Math.min(6.5, input.camDist));
     const dir = _dir.set(Math.sin(this.camYaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(this.camYaw) * Math.cos(pitch));
-    const target = _tgt.copy(this.position).setY(1.25);
+    const target = _tgt.copy(this.position).setY(this.position.y + 1.25);
 
     // 벽에 닿기 직전까지만 물러난다. 16단이면 방 크기(16u) 기준 1u 간격이라 충분하다.
     const STEPS = 16;
