@@ -18,7 +18,10 @@ import { SHRINE } from '../data/lighting.js';
 const BEAM_LEN = 8, BEAM_Y = 1.15;     // 막대가 캐릭터 허리 높이. 상자를 올리고 내리기 좋다
 const SLOT_STEP = 1.2, SLOTS = 3;      // 받침점에서 1·2·3칸
 const MAX_TILT = 20 * Math.PI / 180;   // 이보다 기울면 상자가 미끄러져 보인다
-const REACH = 1.7;                     // 상호작용 거리
+// 상호작용 거리. 압력판에서 1.6이 인색해 "빼는 게 안 된다"는 말을 들었다(실사용 확인).
+// 저울도 같은 병이라 함께 늘린다. 선반(x=-6.4)과 끝칸(x=-3.6)이 2.8 떨어져 있어
+// 2.1까지는 둘이 안 헷갈린다.
+const REACH = 2.1;
 const BALANCE_EPS = 0.001;
 
 // 상자 무게. ★ 5를 뺐다 — 소수라 다른 조합과 맞아떨어지지 않아 막다른 길만 만든다.
@@ -210,15 +213,23 @@ export class BalanceScale {
   }
 
   // 지금 무엇을 할 수 있나 — 프롬프트 문구를 돌려준다(없으면 null)
+  // ★ 예전엔 여기서 null을 네 군데나 돌려줬다. 그중 둘은 **가장 흔한 상태**다 —
+  //   상자를 든 채 이미 찬 칸 앞에 섰을 때, 그리고 고정된 추를 건드렸을 때.
+  //   화면이 침묵하면 아이는 "고장났다"로 읽는다. 못 하는 것도 못 한다고 말해 준다.
   prompt(pos) {
     if (this.balanced) return null;
+    const held = this.held ? `${this.held.w}kg 들고 있어요` : null;
     const n = this._nearest(pos);
-    if (!n) return this.held ? `${this.held.w}kg 상자를 들고 있어요` : null;
-    if (n.kind === 'stock') return this.held ? null : `E — ${n.item.w}kg 상자 들기`;
+    if (!n) return held ? `${held} — 막대의 빈 칸으로 가서 E` : '선반에서 추를 골라 E로 들어요';
+    if (n.kind === 'stock') return held ? `${held} — 막대의 빈 칸으로 가서 E` : `E — ${n.item.w}kg 추 들기`;
     const s = n.slot;
-    if (this.held) return s.box ? null : `E — 여기 놓기 (${s.index}칸)`;
-    if (s.box && !s.fixed) return `E — ${s.box.w}kg 되가져오기`;
-    return null;
+    if (this.held) {
+      if (s.box) return `${held} — 이 칸엔 이미 있어요, 빈 칸으로`;
+      return `E — 여기 놓기 (${s.side < 0 ? '왼쪽' : '오른쪽'} ${s.index}칸)`;
+    }
+    if (s.box && s.fixed) return '이건 고정된 추예요 — 반대쪽으로 수평을 맞춰요';
+    if (s.box) return `E — ${s.box.w}kg 되가져오기`;
+    return '여기는 비었어요 — 선반에서 추를 가져와요';
   }
 
   // E를 눌렀다. 무언가 했으면 true.
