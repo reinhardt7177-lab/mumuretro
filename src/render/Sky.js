@@ -51,36 +51,64 @@ export class Sky {
     this.dome.frustumCulled = false;
     engine.scene.add(this.dome);
 
-    // ── 원경 산 두 겹 ────────────────────────────────────────────────────────
-    // 지평선 아래에서 살짝 올라온 톱니 링. 실제 지형이 아니라 그림이다.
-    // 먼 겹일수록 대기색에 가깝게 — 이것만으로 깊이가 두 단계 생긴다.
-    this.mtnFar = this._ring(R * 2.05, 0.055, 0.030, SKY.mtnFar, 31, 7);
-    this.mtnNear = this._ring(R * 1.85, 0.078, 0.046, SKY.mtnNear, 23, 3);
-    engine.scene.add(this.mtnFar, this.mtnNear);
+    // ── 원경 산맥 세 겹 ──────────────────────────────────────────────────────
+    // ★ 처음엔 세그먼트마다 독립 삼각형을 세웠다. 밑변이 서로 붙지 않아 사이가 비었고,
+    //   폭이 전부 같아서 산맥이 아니라 **판지로 오린 피라미드 줄**로 보였다(실사용 확인).
+    //   닫힌 스트립 하나로 바꾸고 능선 높이를 다중 옥타브로 흔든다.
+    // 먼 겹일수록 대기색(LIGHT.air)에 가깝게 — 이것만으로 깊이가 세 단계 생긴다.
+    this.ridges = [
+      this._ridge(R * 2.15, 3,  SKY.mtnFar,  0.070, 0.012, 0.72),
+      this._ridge(R * 1.92, 17, SKY.mtnNear, 0.092, 0.008, 0.42),
+      this._ridge(R * 1.72, 41, SKY.mtnNear, 0.108, 0.004, 0.16),
+    ];
+    for (const m of this.ridges) engine.scene.add(m);
 
     this._up = new THREE.Vector3(0, 1, 0);
   }
 
-  // 톱니 링 하나. seg개의 봉우리를 만들고 높이를 seed로 흔든다.
-  _ring(radius, peakH, baseH, color, seg, seed) {
-    const pos = [], idx = [];
+  // 능선 하나. 닫힌 띠라서 봉우리 사이가 비지 않는다.
+  //   amp/base   반경 대비 능선 진폭 / 기본 높이
+  //   airMix     대기색과 섞는 비율. 먼 겹일수록 크게 — 이게 깊이를 만든다
+  _ridge(radius, seed, color, amp, base, airMix) {
+    const N = 160;                       // 능선 표본. 이보다 성기면 봉우리가 각져 보인다
     let s = seed;
     const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
-    for (let i = 0; i < seg; i++) {
-      const a0 = (i / seg) * Math.PI * 2, a1 = ((i + 1) / seg) * Math.PI * 2;
-      const am = (a0 + a1) / 2;
-      // 봉우리 높이를 크게 흔든다 — 같은 높이 톱니는 톱니로 보이고 산으로 안 보인다
-      const h = radius * (baseH + peakH * (0.35 + rnd() * 0.9));
-      const yb = -radius * 0.02;
-      const p = (a, y, r) => { pos.push(Math.cos(a) * r, y, Math.sin(a) * r); return pos.length / 3 - 1; };
-      const i0 = p(a0, yb, radius), i1 = p(a1, yb, radius), i2 = p(am, h, radius * 0.995);
-      idx.push(i0, i1, i2);
+    const ph = [rnd() * 6.283, rnd() * 6.283, rnd() * 6.283, rnd() * 6.283];
+
+    // 다중 옥타브 — 하나만 쓰면 사인파 언덕이 되고, 넷을 겹치면 산맥이 된다.
+    // 마지막에 지수를 먹여 골을 눌러야 '봉우리만 솟은' 실루엣이 나온다.
+    const hs = new Float32Array(N);
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      let v = Math.sin(a * 3 + ph[0]) * 0.55
+            + Math.sin(a * 7 + ph[1]) * 0.27
+            + Math.sin(a * 13 + ph[2]) * 0.13
+            + Math.sin(a * 23 + ph[3]) * 0.05;
+      v = Math.pow(Math.max(0, v * 0.5 + 0.5), 1.7);
+      hs[i] = radius * (base + amp * v);
+    }
+
+    // 바닥은 지평선 한참 아래로. 얕게 두면 띠의 밑변이 화면에 가로줄로 보인다(구버전 실측).
+    const yBot = -radius * 0.30;
+    const pos = [], idx = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2, cx = Math.cos(a) * radius, cz = Math.sin(a) * radius;
+      pos.push(cx, yBot, cz);      // 2i
+      pos.push(cx, hs[i], cz);     // 2i+1
+    }
+    for (let i = 0; i < N; i++) {
+      const j = (i + 1) % N;
+      const b0 = i * 2, t0 = i * 2 + 1, b1 = j * 2, t1 = j * 2 + 1;
+      idx.push(b0, b1, t1, b0, t1, t0);
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     geo.setIndex(idx);
     geo.computeVertexNormals();
-    const mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, fog: false, depthWrite: false });
+
+    // 대기 원근을 색으로 직접 굽는다. 이 메시들은 안개 밖(fog:false)이라 자동으로는 안 걸린다.
+    const c = new THREE.Color(color).lerp(new THREE.Color(LIGHT.air), airMix);
+    const mat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, fog: false, depthWrite: false });
     mat.userData.outlineParameters = { visible: false };
     const m = new THREE.Mesh(geo, mat);
     m.renderOrder = -90;
@@ -92,7 +120,7 @@ export class Sky {
   update(player, camera) {
     const up = this._up.copy(player.position).normalize();
     const q = new THREE.Quaternion().setFromUnitVectors(_Y, up);
-    for (const m of [this.dome, this.mtnFar, this.mtnNear]) {
+    for (const m of [this.dome, ...this.ridges]) {
       m.position.copy(camera.position);
       m.quaternion.copy(q);
     }

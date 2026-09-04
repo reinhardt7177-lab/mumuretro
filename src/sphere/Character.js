@@ -1,130 +1,171 @@
-// 절차적 저폴리 집배원. loadout(머리스타일·색·자켓·바지·신발·모자)으로 커스터마이즈.
-// 정면 +Z, 발끝은 SurfaceActor가 Box3로 보정. 파츠 교체는 buildKid로 통째 재생성(드물어 저렴).
+// 절차적 저폴리 집배원.
+//
+// ★ 재설계: 이전 버전은 파츠 33개가 **전부 직육면체**였다. 튜닉·망토·뾰족귀를 붙여 놨는데도
+//   전부 상자라 실루엣이 마인크래프트에서 벗어나지 못했다(실사용 확인).
+//
+// 아트 바이블의 "로우폴리로 가되 디테일은 놓치지 않는다"를 캐릭터에 적용한 것이 이 파일이다.
+// 디테일은 폴리곤 수가 아니라 네 곳에서 온다:
+//   실루엣 다양성 — 상자 대신 **테이퍼 진 6~8각 기둥**. 면 수는 거의 같은데 형태가 깎인다
+//   비율          — 4.5헤드 → 3.8헤드. 원경에서 머리가 읽혀야 캐릭터로 보인다
+//   색 분리       — 자켓·모자·바지가 전부 청색이면 실루엣 안이 한 덩어리가 된다
+//   흐르는 요소   — 스카프. 각진 몸에서 유일하게 흔들리는 것이라 시선이 여기 붙는다
+//
+// 정면 +Z. 발끝은 SurfaceActor가 Box3로 보정한다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 
 export const KID_H = 1.5;
 
-// 커스터마이즈 선택지(커스터마이저 UI가 사용)
 export const HAIR_STYLES = [
   { id: 'bowl', name: '바가지' },
   { id: 'short', name: '짧은머리' },
   { id: 'bob', name: '단발' },
   { id: 'long', name: '긴머리' },
 ];
-export const SKIN_COLORS = [0xeab78f, 0xd9a06f, 0xf0c39a, 0xc68642, 0x8d5524];
-export const HAIR_COLORS = [0x352f2b, 0x1a1410, 0x5a3a22, 0x7a5230, 0x9a9a9a, 0xc0392b];
-export const JACKET_COLORS = [0x3a6ea5, 0xc0584e, 0x4f8a86, 0xd9a441, 0x6a5a8a, 0x3a3a44, 0xe8e2d4];
-export const PANTS_COLORS = [0x33414f, 0x4a4a55, 0x5a4a3a, 0x2a3a2a, 0x6a3a3a, 0x8a8a8a];
-export const SHOE_COLORS = [0x33302d, 0xc0392b, 0xffffff, 0x2a5a8a, 0x6a4f3a];
+export const SKIN_COLORS = [0xf0c9a4, 0xdda876, 0xf6d8b8, 0xc68642, 0x8d5524];
+export const HAIR_COLORS = [0x3a3230, 0x1a1410, 0x5a3a22, 0x7a5230, 0x9a9a9a, 0xc0392b];
+export const JACKET_COLORS = [0x3f77b0, 0xc0584e, 0x4f8a86, 0xd9a441, 0x6a5a8a, 0x3a3a44, 0xe8e2d4];
+// ★ 바지를 청색 계열에서 뺐다. 자켓과 같은 계열이면 원경에서 상하가 한 덩어리로 뭉친다.
+export const PANTS_COLORS = [0x6b4f38, 0x7a5b3f, 0x5a4634, 0x4a4a55, 0x8a6b48, 0x3a3a2e];
+export const SHOE_COLORS = [0x3a322b, 0xc0392b, 0xe8e2d4, 0x2a5a8a, 0x6a4f3a];
 export const CAP_COLORS = [0x2f5fa0, 0xc0584e, 0x3a3a44, 0xd9a441, 0x4f8a86];
+export const SCARF_COLORS = [0xe4674a, 0xf0a860, 0xe8e2d4, 0x8fc4a8, 0xd9a441];
 
 export const DEFAULT_LOADOUT = {
-  skin: 0xeab78f, hairId: 'bowl', hairColor: 0x352f2b,
-  jacket: 0x3a6ea5, pants: 0x33414f, shoe: 0x33302d, cap: 0x2f5fa0, hasCap: true,
+  skin: 0xf0c9a4, hairId: 'bowl', hairColor: 0x3a3230,
+  jacket: 0x3f77b0, pants: 0x6b4f38, shoe: 0x3a322b,
+  cap: 0x2f5fa0, hasCap: true, scarf: 0xe4674a,
+};
+
+// ── 형태 헬퍼 ───────────────────────────────────────────────────────────────
+// 테이퍼 진 기둥. 이게 이 파일의 핵심이다 — 상자를 이걸로 바꾸는 것만으로 실루엣이 깎인다.
+// 면 수: 6각 기둥 20삼각형 vs 상자 12삼각형. 파츠 여덟 개에 써도 64삼각형 차이다.
+const prism = (rTop, rBot, h, mat, sides = 6) => {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, h, sides), mat);
+  m.castShadow = true;
+  return m;
+};
+const box = (w, h, d, mat) => {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.castShadow = true;
+  return m;
 };
 
 // 머리카락 — 모자 아래로 보이는 림/뒷머리. 스타일별 실루엣.
-function buildHair(id, color, k) {
+function buildHair(id, color, k, headY) {
   const mat = toon(color);
-  const add = (w, h, d, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; k.add(m); };
+  const at = (mesh, x, y, z) => { mesh.position.set(x, y, z); k.add(mesh); return mesh; };
   if (id === 'short') {
-    add(0.40, 0.16, 0.40, 0, 1.59, 0);
+    at(prism(0.25, 0.27, 0.10, mat, 8), 0, headY + 0.16, 0);
   } else if (id === 'bob') {
-    add(0.42, 0.20, 0.42, 0, 1.58, 0);
-    add(0.44, 0.30, 0.16, 0, 1.40, -0.16);          // 뒷머리
-    add(0.10, 0.26, 0.40, 0.21, 1.40, 0); add(0.10, 0.26, 0.40, -0.21, 1.40, 0); // 옆머리
+    at(prism(0.25, 0.28, 0.12, mat, 8), 0, headY + 0.15, 0);
+    at(box(0.40, 0.26, 0.14, mat), 0, headY - 0.06, -0.18);
   } else if (id === 'long') {
-    add(0.42, 0.20, 0.42, 0, 1.58, 0);
-    add(0.44, 0.60, 0.16, 0, 1.18, -0.18);          // 긴 뒷머리(어깨까지)
-    add(0.10, 0.36, 0.42, 0.21, 1.34, 0); add(0.10, 0.36, 0.42, -0.21, 1.34, 0);
-  } else { // bowl(바가지) — 넓은 림
-    add(0.44, 0.22, 0.44, 0, 1.57, 0);
-    add(0.44, 0.10, 0.44, 0, 1.46, 0);              // 림 한 단 더(바가지 느낌)
+    at(prism(0.25, 0.28, 0.12, mat, 8), 0, headY + 0.15, 0);
+    // 긴 뒷머리 — 아래로 갈수록 좁아진다. 상자로 두면 판자가 된다.
+    at(prism(0.19, 0.14, 0.46, mat, 6), 0, headY - 0.24, -0.17);
+  } else { // bowl — 넓은 림
+    at(prism(0.26, 0.30, 0.14, mat, 8), 0, headY + 0.14, 0);
   }
 }
 
 export function buildKid(loadout = DEFAULT_LOADOUT) {
   const L = { ...DEFAULT_LOADOUT, ...loadout };
-  if (loadout.hair != null && loadout.hairColor == null) L.hairColor = loadout.hair;  // 구 스키마(NPC) 호환
+  if (loadout.hair != null && loadout.hairColor == null) L.hairColor = loadout.hair;  // 구 스키마 호환
   const k = new THREE.Group();
   const skin = toon(L.skin), jacket = toon(L.jacket), pants = toon(L.pants), shoe = toon(L.shoe);
+  const belt = toon(0x4a3a2a), scarf = toon(L.scarf), dark = toon(0x2a2622);
 
-  // 파츠를 늘리되 머티리얼 인스턴스는 재사용한다 — 캐릭터가 177명이라 머티리얼이 늘면 그대로 비용이 된다.
-  const belt = toon(0x4a3a2a), cape = toon(L.cap);
+  const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); k.add(mesh); return mesh; };
 
-  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.3), jacket);
-  torso.position.y = 1.0; k.add(torso);
-  // 튜닉 자락 — 허리 아래로 퍼지는 한 단. 실루엣이 확 살아난다.
-  const tunic = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.26, 0.36), jacket);
-  tunic.position.y = 0.68; k.add(tunic);
-  const beltM = new THREE.Mesh(new THREE.BoxGeometry(0.53, 0.09, 0.33), belt);
-  beltM.position.y = 0.79; k.add(beltM);
-  const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.11, 0.06), toon(0xe0c060));
-  buckle.position.set(0, 0.79, 0.18); k.add(buckle);
-  // 어깨 — 팔 뿌리를 덮어 각진 느낌을 줄인다
-  for (const s of [-1, 1]) {
-    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.3), jacket);
-    sh.position.set(s * 0.31, 1.19, 0); k.add(sh);
+  // ── 몸통 ────────────────────────────────────────────────────────────────
+  // 어깨 넓고 허리 좁게. 이 테이퍼 하나가 상자 인간과 캐릭터를 가른다.
+  put(prism(0.30, 0.23, 0.44, jacket, 8), 0, 1.06, 0);
+  // 튜닉 자락 — 허리에서 밑단으로 벌어지는 사다리꼴. 실루엣의 주 형태다.
+  put(prism(0.23, 0.34, 0.30, jacket, 8), 0, 0.70, 0);
+  put(prism(0.245, 0.245, 0.07, belt, 8), 0, 0.855, 0);
+  put(box(0.09, 0.09, 0.05, toon(0xe0c060)), 0, 0.855, 0.21);
+
+  // ── 스카프 ──────────────────────────────────────────────────────────────
+  // 각진 몸에서 유일하게 흐르는 요소. 3단으로 나눠 뒤로 날린다 —
+  // 한 판때기로 두면 그냥 등에 붙은 널빤지가 된다.
+  put(prism(0.19, 0.21, 0.10, scarf, 8), 0, 1.30, 0);
+  const tail = [];
+  for (const t of [
+    { w: 0.17, h: 0.20, y: 1.20, z: -0.20, rx: -0.35 },
+    { w: 0.15, h: 0.20, y: 1.03, z: -0.30, rx: -0.75 },
+    { w: 0.12, h: 0.18, y: 0.88, z: -0.36, rx: -1.05 },
+  ]) {
+    const m = put(box(t.w, t.h, 0.05, scarf), 0, t.y, t.z);
+    m.rotation.x = t.rx;
+    tail.push(m);
   }
-  // 망토 — 뒤로 살짝 벌어지게 기울인다
-  const cp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.66, 0.07), cape);
-  cp.position.set(0, 0.95, -0.2); cp.rotation.x = -0.12; k.add(cp);
 
-  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.44, 0.22), toon(0xd06a32));
-  pack.position.set(0, 0.98, -0.3); k.add(pack);                 // 우편가방
-  const strap = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.5, 0.42), belt);
-  strap.position.set(0.14, 1.02, -0.06); strap.rotation.z = 0.22; k.add(strap);
+  // 어깨 — 팔 뿌리를 덮는다
+  for (const s of [-1, 1]) put(prism(0.10, 0.12, 0.14, jacket, 6), s * 0.245, 1.20, 0);
 
-  const neck = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.09, 0.16), skin);
-  neck.position.y = 1.28; k.add(neck);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.36), skin);
-  head.position.y = 1.45; k.add(head);
-  // 뾰족 귀 — 레퍼런스의 실루엣 포인트
+  // 우편가방 — 실루엣의 비대칭 포인트. 한쪽으로 메야 캐릭터에 방향이 생긴다.
+  const pack = put(box(0.30, 0.30, 0.16, toon(0xd06a32)), 0.02, 0.92, -0.24);
+  pack.rotation.x = 0.10;
+  put(box(0.34, 0.05, 0.04, toon(0xa84f22)), 0.02, 0.99, -0.16);
+  const strap = put(box(0.06, 0.46, 0.05, belt), 0.16, 1.06, 0.02);
+  strap.rotation.z = 0.30; strap.rotation.x = -0.05;
+
+  // ── 머리 ────────────────────────────────────────────────────────────────
+  // 0.36 → 0.44. 4.5헤드에서 3.8헤드로. 원경에서 머리가 읽혀야 사람으로 보인다.
+  const HEAD_Y = 1.50;
+  put(prism(0.12, 0.14, 0.10, skin, 6), 0, 1.34, 0);              // 목
+  const head = put(prism(0.215, 0.225, 0.42, skin, 8), 0, HEAD_Y, 0);
+  put(prism(0.19, 0.16, 0.06, skin, 8), 0, HEAD_Y - 0.22, 0);     // 턱 — 아래로 좁아진다
+
+  // 뾰족 귀 — 실루엣 포인트
   for (const s of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 4), skin);
-    ear.position.set(s * 0.2, 1.47, -0.02);
-    ear.rotation.z = s * -0.9; ear.rotation.y = s * 0.3;
-    k.add(ear);
+    const ear = put(new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.19, 4), skin), s * 0.20, HEAD_Y + 0.04, -0.02);
+    ear.rotation.z = s * -0.95; ear.rotation.y = s * 0.35; ear.castShadow = true;
   }
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.05), skin);
-  nose.position.set(0, 1.42, 0.19); k.add(nose);
+  // 얼굴 — 없으면 인형이다. 눈 두 개면 충분하다.
+  for (const s of [-1, 1]) {
+    put(box(0.045, 0.075, 0.03, dark), s * 0.082, HEAD_Y + 0.01, 0.205);
+    put(box(0.065, 0.022, 0.02, toon(L.hairColor)), s * 0.085, HEAD_Y + 0.10, 0.20);   // 눈썹
+  }
+  put(prism(0.02, 0.028, 0.05, skin, 5), 0, HEAD_Y - 0.06, 0.21);   // 코
 
-  buildHair(L.hairId, L.hairColor, k);
+  buildHair(L.hairId, L.hairColor, k, HEAD_Y);
 
   if (L.hasCap) {
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.16, 0.42), toon(L.cap));
-    cap.position.y = 1.64; cap.castShadow = true; k.add(cap);
-    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.07, 0.24), toon(L.cap));
-    brim.position.set(0, 1.60, 0.32); brim.castShadow = true; k.add(brim);
+    const capMat = toon(L.cap);
+    put(prism(0.20, 0.245, 0.13, capMat, 8), 0, HEAD_Y + 0.23, 0);
+    // 크림 밴드 — 모자와 자켓이 같은 청색이라 이게 없으면 머리와 몸이 한 덩어리로 뭉친다.
+    put(prism(0.248, 0.252, 0.045, toon(0xe8e2d4), 8), 0, HEAD_Y + 0.165, 0);
+    const brim = put(box(0.30, 0.045, 0.20, capMat), 0, HEAD_Y + 0.165, 0.20);
+    brim.rotation.x = -0.12;
   }
 
-  function limb(s, hy, gU, cU, gL, cL, foot) {
+  // ── 팔다리 ──────────────────────────────────────────────────────────────
+  // 위팔 → 아래팔로 가늘어진다. 같은 굵기 상자 두 개면 로봇이 된다.
+  function limb(s, hy, rU0, rU1, hU, cU, rL0, rL1, hL, cL, foot) {
     const p = new THREE.Group(); p.position.set(s, hy, 0);
-    const u = new THREE.Mesh(gU, cU); u.position.y = -gU.parameters.height / 2; p.add(u);
-    const lo = new THREE.Mesh(gL, cL);
-    lo.position.y = -gU.parameters.height - gL.parameters.height / 2 + 0.02; p.add(lo);
+    const u = prism(rU0, rU1, hU, cU, 6); u.position.y = -hU / 2; p.add(u);
+    const lo = prism(rL0, rL1, hL, cL, 6); lo.position.y = -hU - hL / 2 + 0.02; p.add(lo);
     if (foot) {
-      // 부츠 — 발등 + 목 한 단. 각진 발보다 실루엣이 낫다.
-      const ff = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.11, 0.28), foot);
-      ff.position.set(0, -gU.parameters.height - gL.parameters.height - 0.02, 0.06); p.add(ff);
-      const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.13, 0.19), foot);
-      cuff.position.set(0, -gU.parameters.height - gL.parameters.height + 0.09, 0); p.add(cuff);
+      const ff = box(0.15, 0.10, 0.26, foot);
+      ff.position.set(0, -hU - hL - 0.01, 0.05); p.add(ff);
+      const cuff = prism(0.095, 0.085, 0.12, foot, 6);
+      cuff.position.set(0, -hU - hL + 0.09, 0); p.add(cuff);
     } else {
-      // 손
-      const hand = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.13, 0.14), cL);
-      hand.position.y = -gU.parameters.height - gL.parameters.height - 0.03; p.add(hand);
+      const hand = prism(0.058, 0.052, 0.11, cL, 6);
+      hand.position.y = -hU - hL - 0.04; p.add(hand);
     }
     k.add(p); return p;
   }
-  const armL = limb(0.33, 1.18, new THREE.BoxGeometry(0.13, 0.46, 0.13), jacket, new THREE.BoxGeometry(0.12, 0.16, 0.12), skin, null);
-  const armR = limb(-0.33, 1.18, new THREE.BoxGeometry(0.13, 0.46, 0.13), jacket, new THREE.BoxGeometry(0.12, 0.16, 0.12), skin, null);
-  const legL = limb(0.14, 0.68, new THREE.BoxGeometry(0.18, 0.40, 0.18), pants, new THREE.BoxGeometry(0.15, 0.34, 0.15), skin, shoe);
-  const legR = limb(-0.14, 0.68, new THREE.BoxGeometry(0.18, 0.40, 0.18), pants, new THREE.BoxGeometry(0.15, 0.34, 0.15), skin, shoe);
+  const armL = limb( 0.265, 1.20, 0.068, 0.058, 0.34, jacket, 0.052, 0.046, 0.24, skin, null);
+  const armR = limb(-0.265, 1.20, 0.068, 0.058, 0.34, jacket, 0.052, 0.046, 0.24, skin, null);
+  const legL = limb( 0.115, 0.72, 0.088, 0.076, 0.34, pants,  0.070, 0.062, 0.30, pants, shoe);
+  const legR = limb(-0.115, 0.72, 0.088, 0.076, 0.34, pants,  0.070, 0.062, 0.30, pants, shoe);
 
   k.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  k.scale.setScalar(KID_H / 1.64);
-  k.userData = { armL, armR, legL, legR, head, walkPhase: 0, anim: 0, bob: 0 };
+  k.scale.setScalar(KID_H / 1.78);      // 모자 꼭대기 1.78 → 키 1.5로 정규화
+  k.userData = { armL, armR, legL, legR, head, scarfTail: tail, walkPhase: 0, anim: 0, bob: 0 };
   return k;
 }
 
@@ -137,4 +178,13 @@ export function animateLimbs(k, dt, moving, running) {
   u.legL.rotation.x = sw * 0.7 * A; u.legR.rotation.x = -sw * 0.7 * A;
   u.armL.rotation.x = -sw * 0.55 * A; u.armR.rotation.x = sw * 0.55 * A;
   u.bob = Math.abs(sw) * 0.06 * A;
+
+  // 스카프 — 달릴수록 크게 날린다. 각진 몸에서 유일하게 움직이는 실루엣이다.
+  if (u.scarfTail) {
+    const f = 0.35 + A * (running ? 0.55 : 0.30);
+    for (let i = 0; i < u.scarfTail.length; i++) {
+      const base = [-0.35, -0.75, -1.05][i];
+      u.scarfTail[i].rotation.x = base - f * 0.35 + Math.sin(u.walkPhase * 0.8 + i * 0.7) * 0.10 * (0.4 + A);
+    }
+  }
 }
