@@ -20,6 +20,7 @@ import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { pickShrineSpots, buildShrines } from './world/Shrine.js';
 import { ShrineRoom, ROOM, ENTRY_Z, EXIT_Z } from './shrine/Room.js';
 import { RoomActor } from './shrine/RoomActor.js';
+import { BalanceScale } from './shrine/Scale.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -75,6 +76,13 @@ const shrines = buildShrines(engine.scene, planet, shrineSpots);
 // 어느 쪽을 도는지는 mode 하나가 정한다. 상태기계를 더 만들지 않는다.
 const room = new ShrineRoom();
 const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, ROOM);
+// 양팔저울 — 이 사당이 존재하는 이유. 수평이 되면 문이 열린다.
+const scale = new BalanceScale(room.scene, {
+  origin: new THREE.Vector3(0, 0, -1.0),
+  onBalance: () => room.open(),
+});
+// 석상 안으로 걸어 들어가지 못하게. 저울 막대 밑은 지나갈 수 있어야 하므로 석상만 막는다.
+roomActor.obstacles = [{ x: 0, z: -3.4, r: 1.9 }];
 let mode = 'planet';                 // 'planet' | 'room'
 let activeShrine = null;             // 어느 사당에 들어와 있나
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
@@ -140,9 +148,16 @@ function step(dt) {
 function stepRoom(dt, intent) {
   roomActor.update(dt, intent, engine.camera);
   roomActor.updateCamera(engine.camera, input, dt);
+  scale.update(dt, roomActor, room.scene);
+
+  // 프롬프트는 한 번에 하나다. 출구가 저울보다 우선 — 나가려는 사람을 붙잡지 않는다.
   const atExit = roomActor.position.z > EXIT_Z - 0.9;
-  setPrompt(atExit ? 'E — 사당 밖으로' : null);
-  if (atExit && intent.action) exitShrine();
+  setPrompt(atExit ? 'E — 사당 밖으로' : scale.prompt(roomActor.position));
+
+  if (intent.action) {
+    if (atExit) exitShrine();
+    else scale.interact(roomActor.position);
+  }
 }
 
 function stepPlanet(dt, intent) {
@@ -176,7 +191,7 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  room, roomActor, planetScene,
+  room, roomActor, scale, planetScene,
   get mode() { return mode; },
   enterShrine, exitShrine,
 };

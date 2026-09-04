@@ -26,6 +26,8 @@ export class RoomActor {
     // 카메라 자체 방위. 바깥과 달리 up이 항상 +Y라 각도 하나면 된다.
     this.camYaw = Math.PI;
     this._camPlaced = false;
+    // 방 안 장애물(석상 등). 원기둥 하나면 충분하다 — 실내엔 몇 개 없다.
+    this.obstacles = [];
   }
 
   setAt(x, z, headingZ = -1) {
@@ -53,6 +55,15 @@ export class RoomActor {
     p.z = Math.max(p.z, -hd);
   }
 
+  // 장애물 밀어내기 — 석상 안으로 걸어 들어가면 즉시 고장으로 읽힌다.
+  _pushOut(p) {
+    for (const o of this.obstacles) {
+      const dx = p.x - o.x, dz = p.z - o.z;
+      const d = Math.hypot(dx, dz);
+      if (d < o.r && d > 1e-6) { p.x = o.x + dx / d * o.r; p.z = o.z + dz / d * o.r; }
+    }
+  }
+
   update(dt, intent, camera) {
     // 카메라 기준 이동 — 화면에서 위로 밀면 화면 안쪽으로 간다
     const cf = _fwd.set(-Math.sin(this.camYaw), 0, -Math.cos(this.camYaw));
@@ -66,6 +77,7 @@ export class RoomActor {
       const sp = this.running ? RUN : SPEED;
       this.position.addScaledVector(_move, sp * dt);
       this._clamp(this.position);
+      this._pushOut(this.position);
       // 진행 방향으로 부드럽게 돈다
       const target = Math.atan2(_move.x, _move.z);
       const cur = Math.atan2(this.heading.x, this.heading.z);
