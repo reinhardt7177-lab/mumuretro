@@ -14,10 +14,13 @@
 import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
 
-// 카펫이 지면 위로 솟는 높이(월드). 플레이어 키가 1.5u라 0.35면 발목 언저리다.
-// 이보다 키우면 카펫이 지형에서 떠올라 '초록 껍질'로 보인다.
-const LIFT = 0.34;
-const LIFT_JITTER = 0.16;     // 두께 변주 — 이게 없으면 지형을 그대로 확대한 돔이 된다
+// 카펫이 지면 위로 솟는 높이(월드).
+// ★ 0.34로 잡았다가 0.15로 내렸다. 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은
+//   카펫이라, 카펫 두께가 곧 발이 잠기는 깊이가 된다(실사용 확인 — 발목까지 묻혔다).
+//   아래 liftAt으로 플레이어를 카펫 위에 올려 세우지만, 두께 자체도 얇아야
+//   지형 충돌(발밑)과 보이는 지면의 어긋남이 눈에 안 띈다.
+const LIFT = 0.15;
+const LIFT_JITTER = 0.07;     // 두께 변주 — 이게 없으면 지형을 그대로 확대한 돔이 된다
 const SINK = -1.2;            // 풀이 없는 곳은 지형 안으로 넣어 완전히 감춘다
 
 // 흐물거림. 파장이 짧으면 지글거리고, 길면 지면 전체가 출렁여 멀미가 난다.
@@ -29,6 +32,14 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
   const R = planet.R;
   const grassAt = opts.grassAt || (() => 1);      // dir → 0..1 (풀이 얼마나 자라는가)
   const uTime = { value: 0 };
+
+  // 이 방향의 카펫 두께. 메시를 만들 때 쓴 식과 **반드시 같아야** 한다 —
+  // 다르면 플레이어가 잔디 위에 뜨거나 다시 잠긴다.
+  const liftAt = (dir) => {
+    const g = grassAt(dir);
+    if (g <= 0.01) return 0;
+    return (LIFT + fbm(dir.x * 14, dir.y * 14, dir.z * 14, 2) * LIFT_JITTER) * g;
+  };
 
   // 지형과 같은 세밀도로 뜬다. 다르면 카펫이 지형을 뚫고 나오거나 파고든다.
   const geo = planet.mesh.geometry.clone();
@@ -98,5 +109,5 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
   console.log(`[carpet] 잔디 카펫 — 정점 ${n} · 삼각형 ${n / 3} · 덮인 정점 ${covered}`
     + ` (${Math.round(100 * covered / n)}%)`);
 
-  return { mesh, tris: n / 3, coveredPct: covered / n, update(t) { uTime.value = t; } };
+  return { mesh, tris: n / 3, coveredPct: covered / n, liftAt, LIFT, update(t) { uTime.value = t; } };
 }

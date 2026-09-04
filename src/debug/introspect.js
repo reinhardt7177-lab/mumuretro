@@ -228,6 +228,11 @@ export function installDebug(ctx) {
 
   window.__selftest = function () {
     const log = [], Rp = planet.R;
+    // ★ A·B는 **구면 보행 코어**를 재는 테스트다. 충돌이 켜져 있으면 직진 중 나무에
+    // 밀려나 "대원 한 바퀴 → 제자리 복귀"가 성립하지 않는다(충돌을 넣자마자 깨졌다).
+    // 코어와 충돌은 서로 다른 것이므로 따로 잰다.
+    const hadCollision = scatter && scatter.collision ? scatter.collision.enabled : false;
+    if (scatter && scatter.collision) scatter.collision.enabled = false;
     const lapSec = 2 * Math.PI * Rp / player.speed;
     const STEPS = 1500, dt = lapSec / STEPS;
 
@@ -255,7 +260,26 @@ export function installDebug(ctx) {
     const fogOK = window.__dbg.fog.matchesSky;
     log.push(`D 안개색 == 하늘 지평선색 -> ${fogOK ? 'PASS' : 'FAIL'}`);
 
-    const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK;
+    if (scatter && scatter.collision) scatter.collision.enabled = hadCollision;
+
+    // E) 충돌 — 콜라이더 안으로 밀어 넣고 정확히 밖으로 나오는지
+    let colOK = true;
+    if (scatter && scatter.colliders && scatter.colliders.length) {
+      const me = player.position.clone().normalize();
+      let best = null, bd = 9;
+      for (const c of scatter.colliders) { const d = me.angleTo(c.dir); if (d < bd) { bd = d; best = c; } }
+      const tan = new THREE.Vector3().copy(me).addScaledVector(best.dir, -me.dot(best.dir)).normalize();
+      const deep = (0.2 * best.r) / Rp;
+      player.position.copy(best.dir).multiplyScalar(Math.cos(deep))
+        .addScaledVector(tan, Math.sin(deep)).normalize();
+      planet.projectToSurface(player.position);
+      scatter.resolve(player.position, 0.32);
+      const after = player.position.clone().normalize().angleTo(best.dir) * Rp;
+      colOK = after >= best.r + 0.32 - 0.03;
+      log.push(`E 충돌 밀어내기 ${after.toFixed(2)}u (>=${(best.r + 0.32).toFixed(2)}) -> ${colOK ? 'PASS' : 'FAIL'}`);
+    }
+
+    const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

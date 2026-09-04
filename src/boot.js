@@ -44,9 +44,31 @@ const scatter = buildScatter(engine.scene, planet, { samples: 160000, seed: 91 }
 const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt });
 
 let _windT = 0;
+// 발밑 접지 자국 — 잔디가 눌린 것처럼 보이는 어두운 원반.
+// 그림자만으로는 캐릭터가 지면에 "닿아" 있는 느낌이 약하다. 이 원반 하나가 그걸 만든다.
+const contact = new THREE.Mesh(
+  new THREE.CircleGeometry(0.42, 14),
+  new THREE.MeshBasicMaterial({ color: 0x2c3a24, transparent: true, opacity: 0.28, depthWrite: false }),
+);
+contact.material.userData.outlineParameters = { visible: false };
+contact.renderOrder = 1;
+engine.scene.add(contact);
+
+const _cUp = new THREE.Vector3();
+const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
 function step(dt) {
   const intent = input.poll();
   player.update(dt, intent, engine.camFwd, engine.camRight);
+  // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
+  // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
+  scatter.resolve(player.position, 0.32);
+  // 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은 카펫(0.15u 위)이다.
+  // 그 차이만큼 시각적으로 올려 세운다. 안 그러면 발이 정확히 카펫 두께만큼 잠긴다.
+  _cUp.copy(player.position).normalize();
+  player.mesh.position.copy(player.position).addScaledVector(_cUp, carpet.liftAt(_cUp));
+  // 접지 자국은 카펫 표면 바로 위에
+  contact.position.copy(player.mesh.position).addScaledVector(_cUp, 0.03);
+  contact.quaternion.setFromUnitVectors(_CZ, _cUp);
   engine.updateCamera(player, input, dt);
   sky.update(player, engine.camera);
   // 바람 시계. 정점 셰이더가 이 값 하나로 풀·수관·덤불을 전부 흔든다(CPU 작업 0).
@@ -57,7 +79,7 @@ function step(dt) {
 
 const loop = new Loop(step, () => engine.render());
 
-const game = { step, planet, player, engine, input, loop, sky, scatter, carpet };
+const game = { step, planet, player, engine, input, loop, sky, scatter, carpet, contact };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, PEAKS });
 

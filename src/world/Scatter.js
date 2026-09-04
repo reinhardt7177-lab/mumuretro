@@ -275,6 +275,11 @@ export function buildScatter(scene, planet, opts = {}) {
   const col = new THREE.Color();
   const Y = new THREE.Vector3(0, 1, 0);
   const counts = { tree: 0, rock: 0, bush: 0, grass: 0 };
+  // ── 충돌체 ──────────────────────────────────────────────────────────────
+  // 나무 줄기와 바위만 막는다. 덤불·억새는 통과시킨다 — 작은 것에 걸리면
+  // 걷는 게 답답해지고, 아이는 "왜 여기서 막히지"를 이해하지 못한다.
+  // 방향 + 반경만 저장한다. 구면이라 이 둘이면 각거리 비교로 끝난다.
+  const colliders = [];
 
   const place = (cell, kind, size, tilt, color) => {
     up.copy(dir);
@@ -304,13 +309,16 @@ export function buildScatter(scene, planet, opts = {}) {
       const b = rnd() < 0.5;
       const sz = 0.80 + rnd() * 0.60;   // 전체 4.6~8.4u = 캐릭터(1.5u)의 3~5.6배
       place(cell, 'trunk', sz, 0.10, col.set(PALETTE.trunk));
+      colliders.push({ dir: dir.clone(), r: 0.26 * sz + 0.06 });   // 줄기 밑동 반경
       const pal = h > 5.5 ? PALETTE.canopyDry : PALETTE.canopy;
       place(cell, b ? 'canopyA' : 'canopyB', sz, 0.10,
         col.set(pal[Math.floor(rnd() * pal.length)]).multiplyScalar(0.88 + rnd() * 0.24));
       counts.tree++;
     } else if (roll < d.tree + d.rock) {
-      place(cell, rnd() < 0.5 ? 'rockA' : 'rockB', 0.5 + rnd() * 1.5, 0.6,
+      const rsz = 0.5 + rnd() * 1.5;
+      place(cell, rnd() < 0.5 ? 'rockA' : 'rockB', rsz, 0.6,
         col.set(PALETTE.rock[Math.floor(rnd() * PALETTE.rock.length)]).multiplyScalar(0.85 + rnd() * 0.3));
+      colliders.push({ dir: dir.clone(), r: 0.52 * rsz });
       counts.rock++;
     } else if (roll < d.tree + d.rock + d.bush) {
       place(cell, 'bush', 0.6 + rnd() * 0.8, 0.15,
@@ -351,8 +359,8 @@ export function buildScatter(scene, planet, opts = {}) {
     }
   }
 
-  console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush} · 풀 ${counts.grass}`
-    + ` · 메시 ${meshes.length}개 · ~${Math.round(tris / 1000)}k삼각형`);
+  console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush} · 억새 ${counts.grass}`
+    + ` · 메시 ${meshes.length}개 · ~${Math.round(tris / 1000)}k삼각형 · 충돌체 ${colliders.length}`);
 
   // 카펫이 "여기 풀이 자라는가"를 물을 때 쓴다. 바이옴 판정을 그대로 재사용하므로
   // 카펫과 산포물이 절대 어긋나지 않는다 — 규칙이 한 곳에만 있다.
@@ -361,5 +369,39 @@ export function buildScatter(scene, planet, opts = {}) {
     return b === 'meadow' || b === 'basin' ? 1 : (b === 'forest' ? 0.75 : 0);
   };
 
-  return { meshes, counts, tris, biomeAt, zoneAt, grassAt, update(t) { uTime.value = t; } };
+  // ── 충돌 해결 ───────────────────────────────────────────────────────────
+  // 구면이라 각거리 하나로 끝난다. 콜라이더가 5천 개대라 전수 비교해도
+  // 내적 5천 번이다 — 공간 분할을 넣을 이유가 없다(측정해 보고 필요하면 그때).
+  //
+  // 밀어내는 방향은 접선이어야 한다. 월드 직선으로 밀면 구 표면에서 벗어난다.
+  const _up = new THREE.Vector3(), _tan = new THREE.Vector3();
+  // 셀프테스트가 구면 보행 코어만 재려면 충돌을 잠깐 꺼야 한다 —
+  // 충돌이 있는 세계에서 "직진하면 제자리로 돌아온다"는 성립하지 않는다.
+  const api = { enabled: true };
+  const resolve = (position, playerR = 0.32) => {
+    if (!api.enabled) return 0;
+    _up.copy(position).normalize();
+    let hit = 0;
+    for (const c of colliders) {
+      const cosA = _up.dot(c.dir);
+      if (cosA <= 0) continue;                       // 행성 반대편
+      const need = (c.r + playerR) / R;
+      if (cosA >= Math.cos(need)) {                  // 파고들었다
+        _tan.copy(_up).addScaledVector(c.dir, -cosA);
+        if (_tan.lengthSq() < 1e-12) continue;       // 정확히 중심 — 밀 방향이 없다
+        _tan.normalize();
+        // 각거리 need 지점으로 정확히 밀어낸다
+        _up.copy(c.dir).multiplyScalar(Math.cos(need)).addScaledVector(_tan, Math.sin(need)).normalize();
+        hit++;
+      }
+    }
+    if (hit) { position.copy(_up); planet.projectToSurface(position); }
+    return hit;
+  };
+
+  return {
+    meshes, counts, tris, biomeAt, zoneAt, grassAt,
+    colliders, resolve, collision: api,
+    update(t) { uTime.value = t; },
+  };
 }
