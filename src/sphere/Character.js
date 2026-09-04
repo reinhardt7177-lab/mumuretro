@@ -75,16 +75,21 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   const k = new THREE.Group();
   const skin = toon(L.skin), jacket = toon(L.jacket), pants = toon(L.pants), shoe = toon(L.shoe);
   const belt = toon(0x4a3a2a), scarf = toon(L.scarf), dark = toon(0x2a2622);
+  // 소매는 자켓보다 한 단 어둡게. 같은 색이면 팔이 몸통에 묻혀 실루엣이 한 덩어리가 된다.
+  const sleeve = toon(new THREE.Color(L.jacket).multiplyScalar(0.78).getHex());
 
   const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); k.add(mesh); return mesh; };
 
   // ── 몸통 ────────────────────────────────────────────────────────────────
   // 어깨 넓고 허리 좁게. 이 테이퍼 하나가 상자 인간과 캐릭터를 가른다.
-  put(prism(0.30, 0.23, 0.44, jacket, 8), 0, 1.06, 0);
+  // ★ 0.30 → 0.255로 좁혔다. 키 1.78에 어깨 0.30이면 폭과 높이가 비슷해져 쭈그려 보인다.
+  put(prism(0.255, 0.195, 0.44, jacket, 8), 0, 1.06, 0);
   // 튜닉 자락 — 허리에서 밑단으로 벌어지는 사다리꼴. 실루엣의 주 형태다.
-  put(prism(0.23, 0.34, 0.30, jacket, 8), 0, 0.70, 0);
-  put(prism(0.245, 0.245, 0.07, belt, 8), 0, 0.855, 0);
-  put(box(0.09, 0.09, 0.05, toon(0xe0c060)), 0, 0.855, 0.21);
+  // ★ 밑단이 0.55까지 내려와 다리를 거의 다 덮었다(실사용 확인). 높이 0.30 → 0.22,
+  //   위치를 올려 밑단을 0.66에 둔다. 다리가 보여야 서 있는 자세가 읽힌다.
+  put(prism(0.195, 0.30, 0.22, jacket, 8), 0, 0.77, 0);
+  put(prism(0.208, 0.208, 0.065, belt, 8), 0, 0.875, 0);
+  put(box(0.085, 0.085, 0.05, toon(0xe0c060)), 0, 0.875, 0.185);
 
   // ── 스카프 ──────────────────────────────────────────────────────────────
   // 각진 몸에서 유일하게 흐르는 요소. 3단으로 나눠 뒤로 날린다 —
@@ -102,13 +107,13 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   }
 
   // 어깨 — 팔 뿌리를 덮는다
-  for (const s of [-1, 1]) put(prism(0.10, 0.12, 0.14, jacket, 6), s * 0.245, 1.20, 0);
+  for (const s of [-1, 1]) put(prism(0.095, 0.115, 0.14, jacket, 6), s * 0.215, 1.21, 0);
 
   // 우편가방 — 실루엣의 비대칭 포인트. 한쪽으로 메야 캐릭터에 방향이 생긴다.
   const pack = put(box(0.30, 0.30, 0.16, toon(0xd06a32)), 0.02, 0.92, -0.24);
   pack.rotation.x = 0.10;
   put(box(0.34, 0.05, 0.04, toon(0xa84f22)), 0.02, 0.99, -0.16);
-  const strap = put(box(0.06, 0.46, 0.05, belt), 0.16, 1.06, 0.02);
+  const strap = put(box(0.055, 0.44, 0.05, belt), 0.14, 1.07, 0.01);
   strap.rotation.z = 0.30; strap.rotation.x = -0.05;
 
   // ── 머리 ────────────────────────────────────────────────────────────────
@@ -125,8 +130,8 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   }
   // 얼굴 — 없으면 인형이다. 눈 두 개면 충분하다.
   for (const s of [-1, 1]) {
-    put(box(0.045, 0.075, 0.03, dark), s * 0.082, HEAD_Y + 0.01, 0.205);
-    put(box(0.065, 0.022, 0.02, toon(L.hairColor)), s * 0.085, HEAD_Y + 0.10, 0.20);   // 눈썹
+    put(box(0.058, 0.095, 0.03, dark), s * 0.085, HEAD_Y + 0.01, 0.203);
+    put(box(0.075, 0.026, 0.02, toon(L.hairColor)), s * 0.088, HEAD_Y + 0.115, 0.198);   // 눈썹
   }
   put(prism(0.02, 0.028, 0.05, skin, 5), 0, HEAD_Y - 0.06, 0.21);   // 코
 
@@ -134,11 +139,13 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
 
   if (L.hasCap) {
     const capMat = toon(L.cap);
-    put(prism(0.20, 0.245, 0.13, capMat, 8), 0, HEAD_Y + 0.23, 0);
-    // 크림 밴드 — 모자와 자켓이 같은 청색이라 이게 없으면 머리와 몸이 한 덩어리로 뭉친다.
-    put(prism(0.248, 0.252, 0.045, toon(0xe8e2d4), 8), 0, HEAD_Y + 0.165, 0);
-    const brim = put(box(0.30, 0.045, 0.20, capMat), 0, HEAD_Y + 0.165, 0.20);
-    brim.rotation.x = -0.12;
+    // ★ 크라운 0.13 → 0.20으로 높이고 폭을 줄였다. 낮고 넓으면 버섯 갓이 된다(실사용 확인).
+    put(prism(0.175, 0.222, 0.20, capMat, 8), 0, HEAD_Y + 0.28, 0);
+    // 크림 밴드 — 크라운 밑동(0.222)보다 확실히 튀어나와야 보인다. 이전엔 0.005 차이라 없는 것과 같았다.
+    put(prism(0.245, 0.248, 0.05, toon(0xe8e2d4), 8), 0, HEAD_Y + 0.175, 0);
+    // 챙은 앞쪽만. 사방으로 두르면 원반이 된다.
+    const brim = put(box(0.25, 0.038, 0.15, capMat), 0, HEAD_Y + 0.172, 0.175);
+    brim.rotation.x = -0.14;
   }
 
   // ── 팔다리 ──────────────────────────────────────────────────────────────
@@ -158,13 +165,13 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
     }
     k.add(p); return p;
   }
-  const armL = limb( 0.265, 1.20, 0.068, 0.058, 0.34, jacket, 0.052, 0.046, 0.24, skin, null);
-  const armR = limb(-0.265, 1.20, 0.068, 0.058, 0.34, jacket, 0.052, 0.046, 0.24, skin, null);
-  const legL = limb( 0.115, 0.72, 0.088, 0.076, 0.34, pants,  0.070, 0.062, 0.30, pants, shoe);
-  const legR = limb(-0.115, 0.72, 0.088, 0.076, 0.34, pants,  0.070, 0.062, 0.30, pants, shoe);
+  const armL = limb( 0.235, 1.21, 0.066, 0.055, 0.32, sleeve, 0.050, 0.045, 0.26, skin, null);
+  const armR = limb(-0.235, 1.21, 0.066, 0.055, 0.32, sleeve, 0.050, 0.045, 0.26, skin, null);
+  const legL = limb( 0.105, 0.74, 0.085, 0.073, 0.36, pants,  0.068, 0.060, 0.32, pants, shoe);
+  const legR = limb(-0.105, 0.74, 0.085, 0.073, 0.36, pants,  0.068, 0.060, 0.32, pants, shoe);
 
   k.traverse(o => { if (o.isMesh) o.castShadow = true; });
-  k.scale.setScalar(KID_H / 1.78);      // 모자 꼭대기 1.78 → 키 1.5로 정규화
+  k.scale.setScalar(KID_H / 1.86);      // 모자 꼭대기 1.86 → 키 1.5로 정규화
   k.userData = { armL, armR, legL, legR, head, scarfTail: tail, walkPhase: 0, anim: 0, bob: 0 };
   return k;
 }

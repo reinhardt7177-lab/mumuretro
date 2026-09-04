@@ -15,6 +15,7 @@ import { Input } from './core/Input.js';
 import { Loop } from './core/Loop.js';
 import { Sky } from './render/Sky.js';
 import { Post } from './render/Post.js';
+import { buildScatter } from './world/Scatter.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -32,41 +33,30 @@ engine.camFwd.copy(player.heading);
 engine.camUp.copy(player.up);
 engine._inited = true;
 
-// 봉우리 표식 — 임시. 삼각형 규칙이 "저기 가볼까"를 만드는지 확인하려면
-// 봉우리가 어디인지 눈으로 확인할 수 있어야 한다. 프롭이 들어오면 지운다.
-const markers = new THREE.Group();
-for (const p of PEAKS) {
-  const d = new THREE.Vector3(
-    Math.cos(p.lat * Math.PI / 180) * Math.cos(p.lon * Math.PI / 180),
-    Math.sin(p.lat * Math.PI / 180),
-    Math.cos(p.lat * Math.PI / 180) * Math.sin(p.lon * Math.PI / 180),
-  );
-  const m = new THREE.Mesh(
-    new THREE.ConeGeometry(0.45, 2.2, 5),
-    new THREE.MeshBasicMaterial({ color: 0xf0a860 }),
-  );
-  m.material.userData.outlineParameters = { visible: false };
-  const fr = planet.frameAt(planet.surfaceAt(d), 0);
-  m.position.copy(fr.position).addScaledVector(d, 1.4);
-  m.quaternion.copy(fr.quaternion);
-  markers.add(m);
-}
-engine.scene.add(markers);
+// 지면 산포 — 나무·바위·덤불·풀. 화면을 채우는 것은 빛이 아니라 밀도다.
+// 봉우리에 세워 뒀던 주황 원뿔 표식은 뺐다. 이제 식생이 그 역할을 한다 —
+// 나무가 없는 능선과 바위뿐인 고지대가 곧 "저기는 다르다"는 신호가 된다.
+const scatter = buildScatter(engine.scene, planet, { samples: 90000, seed: 91 });
 
+let _windT = 0;
 function step(dt) {
   const intent = input.poll();
   player.update(dt, intent, engine.camFwd, engine.camRight);
   engine.updateCamera(player, input, dt);
   sky.update(player, engine.camera);
+  // 바람 시계. 정점 셰이더가 이 값 하나로 풀·수관·덤불을 전부 흔든다(CPU 작업 0).
+  _windT += dt;
+  scatter.update(_windT);
 }
 
 const loop = new Loop(step, () => engine.render());
 
-const game = { step, planet, player, engine, input, loop, sky, markers };
+const game = { step, planet, player, engine, input, loop, sky, scatter };
 window.game = game;
-installDebug({ planet, player, engine, input, step, sky, markers, PEAKS });
+installDebug({ planet, player, engine, input, step, sky, scatter, PEAKS });
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';
 loop.start();
-console.log(`[boot] 재설계 v2 — 봉우리 ${PEAKS.length} · 지형면 ${planet.mesh.geometry.attributes.position.count / 3} · __dbg/__selftest`);
+console.log(`[boot] 재설계 v2 — 봉우리 ${PEAKS.length} · 지형면 ${planet.mesh.geometry.attributes.position.count / 3}`
+  + ` · 산포 ${scatter.meshes.length}메시 · __dbg/__selftest`);

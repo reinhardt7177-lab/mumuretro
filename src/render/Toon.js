@@ -8,9 +8,17 @@
 import * as THREE from 'three';
 import { LIGHT, INTENSITY } from '../data/lighting.js';
 
+// ★ 가장 어두운 단을 0으로 두면 안 된다. 확산광이 완전히 0이 되어 그림자 면이
+// 반구광만으로 칠해지고, 수관처럼 색이 진한 물체는 거의 검게 뭉친다(실측 24,48,24).
+// §2 규칙: 그림자는 "빛이 없는 곳"이 아니라 "하늘이 비추는 곳"이다.
+// 바닥을 0.38로 들어 올린다 — 하이라이트는 그대로 두고 그늘만 살린다.
+const SHADOW_FLOOR = 0.38;
 export function toonGradient(steps) {
   const d = new Uint8Array(steps);
-  for (let i = 0; i < steps; i++) d[i] = Math.round(255 * (i / (steps - 1)));
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1);
+    d[i] = Math.round(255 * (SHADOW_FLOOR + (1 - SHADOW_FLOOR) * t));
+  }
   const t = new THREE.DataTexture(d, steps, 1, THREE.RedFormat);
   t.minFilter = t.magFilter = THREE.NearestFilter;
   t.needsUpdate = true;
@@ -34,11 +42,20 @@ export function setRim(amt, color) {
 
 // vViewPosition은 조명 받는 머티리얼이면 항상 있는 varying이고, normal은 뷰 공간 셰이딩 법선이다.
 // 둘의 내적이 0에 가까울수록(=시선과 면이 나란할수록) 가장자리다.
-function injectRim(material) {
+// rimAmt를 주면 그 머티리얼만 자기 유니폼을 쓴다(공유 유니폼에서 떨어져 나온다).
+// ★ 얇은 판(풀잎)에는 림을 걸면 안 된다. 카메라에서 거의 항상 모서리로 보여서
+//   1-dot(N,V)가 1에 가깝고, 그러면 하늘색 림이 잎 전체를 덮어 흰 파편이 된다(실사용 확인).
+//   림은 덩어리의 가장자리를 떼어내는 도구지 면을 칠하는 도구가 아니다.
+function injectRim(material, rimAmt) {
+  const u = rimAmt === undefined ? rimUniforms : {
+    uRimColor: rimUniforms.uRimColor,
+    uRimAmt: { value: rimAmt },
+    uRimPow: rimUniforms.uRimPow,
+  };
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.uRimColor = rimUniforms.uRimColor;
-    shader.uniforms.uRimAmt = rimUniforms.uRimAmt;
-    shader.uniforms.uRimPow = rimUniforms.uRimPow;
+    shader.uniforms.uRimColor = u.uRimColor;
+    shader.uniforms.uRimAmt = u.uRimAmt;
+    shader.uniforms.uRimPow = u.uRimPow;
     shader.fragmentShader =
       'uniform vec3 uRimColor;\nuniform float uRimAmt;\nuniform float uRimPow;\n' + shader.fragmentShader;
     shader.fragmentShader = shader.fragmentShader.replace(
@@ -55,8 +72,10 @@ function injectRim(material) {
 }
 
 // 매 호출마다 새 머티리얼. 나중에 개별 변형이 필요한 곳에서 쓴다(캐릭터 커스터마이즈 등).
-export const toon = (color, o = {}) =>
-  injectRim(new THREE.MeshToonMaterial({ color, gradientMap: GRAD, ...o }));
+export const toon = (color, o = {}) => {
+  const { rim, ...params } = o;          // rim은 머티리얼 파라미터가 아니다 — 분리해서 넘긴다
+  return injectRim(new THREE.MeshToonMaterial({ color, gradientMap: GRAD, ...params }), rim);
+};
 
 // ── 공유(캐시) 머티리얼 ────────────────────────────────────────────────────
 // 같은 색/옵션이면 동일 인스턴스를 재사용. 생성 후 절대 변형하지 않는 것 전용.

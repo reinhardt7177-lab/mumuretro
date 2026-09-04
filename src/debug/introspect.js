@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 
 export function installDebug(ctx) {
-  const { planet, player, engine, input, step, sky, markers, PEAKS } = ctx;
+  const { planet, player, engine, input, step, sky, scatter, PEAKS } = ctx;
 
   const srgb = (v) => (v /= 255, v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
   const lum = (r, g, b) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
@@ -149,8 +149,21 @@ export function installDebug(ctx) {
       const g = planet.mesh.geometry;
       return {
         terrainTris: g.attributes.position.count / 3,
+        scatterTris: scatter ? Math.round(scatter.tris) : 0,
+        scatterMeshes: scatter ? scatter.meshes.length : 0,
+        scatterCounts: scatter ? scatter.counts : null,
+        ridgeTris: sky.ridges.reduce((a, m) => a + m.geometry.index.count / 3, 0),
         sceneChildren: engine.scene.children.length,
-        markers: markers ? markers.children.length : 0,
+      };
+    },
+    // 컬링이 실제로 걸리는지 — v1에서 frustumCulled=false 하나가 100만 삼각형을 매 프레임
+    // 통과시켰다. 그때 이걸 안 재서 몰랐다.
+    get culling() {
+      const all = scatter ? scatter.meshes : [];
+      return {
+        total: all.length,
+        allCullable: all.every(m => m.frustumCulled === true),
+        validSpheres: all.filter(m => m.boundingSphere && isFinite(m.boundingSphere.radius)).length,
       };
     },
 
