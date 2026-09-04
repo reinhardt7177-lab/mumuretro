@@ -106,7 +106,9 @@ export function installDebug(ctx) {
       };
     },
     get fog() {
+      // 사당 안에서 부르면 안개 없는 씬이라 f가 null이다. 계측이 게임을 죽이면 안 된다.
       const f = engine.scene.fog;
+      if (!f) return { note: '실내(안개 없음)' };
       const at = (d) => +(1 - Math.exp(-Math.pow(d * f.density, 2))).toFixed(3);
       return {
         color: '#' + f.color.getHexString(), density: f.density,

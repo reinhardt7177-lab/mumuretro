@@ -57,6 +57,7 @@ export class TileGate {
 
     this.phase = 'ready'; this.t = T_READY; this.round = 0;
     this.left = SURVIVE; this.cleared = false; this.locked = false;
+    this.fall = 0;                       // >0이면 떨어지는 중
     this.safe = new Set();
 
     const g = new THREE.Group();
@@ -165,9 +166,26 @@ export class TileGate {
     this.flagMat.color.set(mode === 'idle' ? 0x2f3841 : 0x5fd08a);
   }
 
+  // 죽으면 **진짜로 떨어진다.** 글자만 뜨고 제자리에 서 있으면 아이는
+  // "안 죽었는데?"라고 한다. 빨간 칸이 0.55u 가라앉는데 발은 허공에 그대로 있었다.
+  _die(actor, msg) {
+    this.fall = 0.5;
+    this.reset();
+    return { fail: msg };
+  }
+
   update(dt, actor) {
     if (this.cleared) return {};
     const p = actor.position;
+
+    // 떨어지는 중 — 이 동안은 어떤 판정도 없다. 다 떨어지면 입구 발판에 다시 세운다.
+    if (this.fall > 0) {
+      this.fall -= dt;
+      p.y -= 7 * dt;
+      actor.syncMesh();
+      if (this.fall <= 0) actor.setAt(0, this.seg.z1 - 1.2, -1);
+      return {};
+    }
     const onGrid = this._cell(p) !== null;
 
     // 방에 발을 들이면 잠긴다
@@ -186,10 +204,7 @@ export class TileGate {
     if (this._ropeOn()) {
       this.ropeA += dt * this._ropeSpeed();
       this.rope.rotation.y = -this.ropeA;
-      if (onGrid && this._ropeHit(p)) {
-        this.reset();
-        return { fail: '줄에 걸렸어요 — 올 때 뛰어넘어요' };
-      }
+      if (onGrid && this._ropeHit(p)) return this._die(actor, '줄에 걸렸어요 — 올 때 뛰어넘어요');
     }
 
     // 시계는 **발판 위에 있을 때만** 간다. 입구 발판에서 지켜보는 건 공짜지만 진도는 안 나간다.
@@ -207,15 +222,19 @@ export class TileGate {
       } else if (this.phase === 'show') {
         this.phase = 'judge'; this.t = T_JUDGE;
         this._paint('judge');
-        const cell = this._cell(p);
-        if (cell !== null && !this.safe.has(cell)) {
-          this.reset();
-          return { fail: '빨간 발판이 가라앉았어요' };
-        }
       } else {
         this.phase = 'ready'; this.t = T_READY;
         this._paint('idle');
       }
+    }
+
+    // 판정은 한 순간이 아니라 judge 내내 계속된다.
+    // ★ 처음엔 show→judge로 넘어가는 **그 한 프레임만** 봤다. 그래서 이미 가라앉은
+    //   빨간 칸 위를 0.9초 동안 마음껏 걸어 다녀도 아무 일이 없었다.
+    //   "빨간 발판에 있는데 안 죽음"이 정확히 이거였다(실사용 확인).
+    if (this.phase === 'judge') {
+      const cell = this._cell(p);
+      if (cell !== null && !this.safe.has(cell)) return this._die(actor, '빨간 발판이 가라앉았어요');
     }
 
     if (this.left <= 0 && !this.cleared) {
@@ -230,12 +249,17 @@ export class TileGate {
 
   prompt() {
     if (this.cleared) return null;
+    if (this.fall > 0) return '떨어졌어요!';
     if (!this.locked) return '들어가면 문이 닫혀요 — 20초 버티기';
-    if (this.round === 0) return `⬛ ${Math.max(1, Math.ceil(this.t))}… 곧 시작해요`;
+    // ★ 예전엔 "준비… · 17초"였다. 17이 시작 카운트다운인지 생존 시간인지 안 읽힌다
+    //   ("왜 17초임"). 숫자 하나에 두 가지 뜻을 담지 않는다 — 시작 카운트는 초 단위
+    //   맨숫자로, 생존 시계는 항상 "N초 남음"으로 못 박는다.
+    if (this.round === 0) return `⬛ 곧 시작해요 · ${Math.max(1, Math.ceil(this.t))}`;
     const rope = this._ropeOn() ? ' · 줄은 뛰어넘기' : '';
-    if (this.phase === 'show') return `🟩 초록 발판으로!${rope} · ${Math.ceil(this.left)}초`;
-    if (this.phase === 'judge') return `🟥 가라앉는 중${rope} · ${Math.ceil(this.left)}초`;
-    return `준비… · ${Math.ceil(this.left)}초`;
+    const clock = `${Math.ceil(this.left)}초 남음`;
+    if (this.phase === 'show') return `${clock} · 🟩 초록으로!${rope}`;
+    if (this.phase === 'judge') return `${clock} · 🟥 빨강 가라앉는 중${rope}`;
+    return `${clock} · 다음 라운드${rope}`;
   }
 
   // 실패해도 방에서 쫓아내지 않는다. 시계만 되돌린다.
@@ -263,45 +287,50 @@ export class LaserGate {
     const g = new THREE.Group();
     scene.add(g);
 
-    // y: 0.75는 점프로 넘는 높이(플레이어 1.5u의 절반), 2.2는 서서 지나가는 높이
-    // speed 부호를 섞어 틈이 규칙적으로 겹치지 않게 한다
-    const spec = [
-      { z: seg.z1 - 3.0, y: 0.75, speed: 1.5, phase: 0.0 },
-      { z: seg.z1 - 6.2, y: 2.20, speed: -1.1, phase: 1.4 },
-      { z: seg.z1 - 9.4, y: 0.75, speed: 2.1, phase: 2.6 },
-      { z: seg.z1 - 12.6, y: 0.75, speed: -1.8, phase: 0.7 },
-    ];
-    for (const s of spec) {
+    // ★ 처음엔 줄이 **좌우로** 미끄러졌고, 판정 폭도 방보다 좁았다. 그래서 벽에
+    //   붙어 옆으로 걸어가면 한 번도 안 뛰고 통과됐다("레이저에서 점프 기믹 없음").
+    //   고치는 법: 줄이 방을 **꽉 가로지르고**, 복도를 따라 앞뒤로 쓸고 온다.
+    //   옆으로 피할 데가 없으니 남는 답은 몸뿐이다.
+    //
+    // ★ 그다음엔 넷을 깔았다가 "너무 어려움"을 들었다(실사용 확인). 방을 꽉 막는
+    //   줄은 하나만 있어도 복도 전체를 지배한다 — 넷이면 벽이지 기믹이 아니다.
+    //   **딱 하나.** 낮게(0.75) 깔려 천천히 복도를 왕복하고, 뛰어넘으면 끝이다.
+    //   이 방이 가르치는 건 "타이밍을 보고 뛴다" 하나뿐이고, 그거면 충분하다.
+    const zA = seg.z0 + 2.5, zB = seg.z1 - 2.5;
+    this.zMid = (zA + zB) / 2;
+    this.zAmp = (zB - zA) / 2;
+    const spec = [{ y: 0.75, speed: 0.26, phase: 0.0 }];
+    for (const sp of spec) {
       const mat = glowMat(0xe0736b, { transparent: true, opacity: 0.85 });
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, w * 0.78, 6), mat);
-      m.rotation.z = Math.PI / 2;                 // X축을 가로지른다
-      m.position.set(0, s.y, s.z);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, w, 6), mat);
+      m.rotation.z = Math.PI / 2;                 // 눕혀서 방을 가로지른다
+      m.position.set(0, sp.y, this.zMid);
       g.add(m);
-      // 레일 — 레이저가 어디를 오가는지 보여 준다. 없으면 갑자기 튀어나온 것처럼 보인다
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, 0.05), glowMat(0x5a3a3a));
-      rail.position.set(0, s.y, s.z);
-      g.add(rail);
-      this.beams.push({ ...s, mesh: m, t: s.phase, amp: (seg.z1 - seg.z0) * 0.0 });
+      // 낮은 줄 아래에 그림자 띠 — 바닥 어디로 오는지 미리 보인다. 없으면 반응이 불가능하다.
+      const hint = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.5),
+        glowMat(0x8a4a44, { transparent: true, opacity: 0.55 }));
+      hint.position.set(0, 0.03, this.zMid);
+      g.add(hint);
+      this.beams.push({ ...sp, mesh: m, hint, t: sp.phase });
     }
     this.group = g;
-    this.range = w * 0.5 - 0.6;
   }
 
   update(dt, actor) {
     const p = actor.position;
+    let hit = null;
     for (const b of this.beams) {
-      b.t += dt * b.speed;
-      // 좌우 왕복. sin이라 끝에서 느려져 넘을 틈이 생긴다.
-      b.mesh.position.x = Math.sin(b.t) * this.range * 0.55;
-      // 충돌 — 플레이어의 몸통을 원기둥으로 본다. 발끝(y)과 머리(y+1.5) 사이에 걸리면 맞은 것.
-      const dz = Math.abs(p.z - b.z);
-      const dx = Math.abs(p.x - b.mesh.position.x);
-      if (dz < 0.42 && dx < this.range * 0.86) {
-        const footY = p.y;                       // 점프하면 올라간다
-        if (b.y > footY + 0.15 && b.y < footY + 1.5) return { fail: '레이저에 닿았어요' };
+      b.t += dt * b.speed * Math.PI;
+      // 복도를 따라 왕복. sin이라 끝에서 느려져 넘을 틈이 생긴다.
+      const z = this.zMid + Math.sin(b.t) * this.zAmp;
+      b.mesh.position.z = z;
+      b.hint.position.z = z;
+      // 방을 꽉 채우므로 x는 안 본다. 발끝(y)과 머리(y+1.5) 사이에 걸리면 맞은 것.
+      if (Math.abs(p.z - z) < 0.45 && b.y > p.y + 0.15 && b.y < p.y + 1.5) {
+        hit = '줄에 닿았어요 — 올 때 뛰어넘어요';
       }
     }
-    return {};
+    return hit ? { fail: hit } : {};
   }
 
   solvedBy(actor) { return actor.position.z < this.seg.z0 + 1.2; }
@@ -314,7 +343,11 @@ export class LaserGate {
 // 신전에서 무게를 처음 보면 아이가 규칙부터 배워야 한다.
 // 학습: 덧셈. 5 = 2+3, 3 = 1+2 … 답이 여러 개다.
 // ══════════════════════════════════════════════════════════════════════════
-const PLATE_WEIGHTS = [1, 2, 3, 4];
+// ★ 처음엔 [1,2,3,4]에 목표가 5와 3이었다. 답이 5={1,4}·3={3} **하나뿐**이라
+//   5를 2+3으로 맞추는 순간 남는 건 1과 4뿐이고 3을 만들 길이 없다.
+//   아이 눈에는 "한 판은 금색인데 문이 안 열린다"로만 보인다(실사용 확인).
+//   5를 더해 길을 여러 갈래로 열고, 막혔을 때는 막혔다고 말해 준다.
+const PLATE_WEIGHTS = [1, 2, 3, 4, 5];
 const pboxSize = (w) => 0.44 + w * 0.06;
 
 export class PlateGate {
@@ -359,7 +392,7 @@ export class PlateGate {
     this.stock = [];
     PLATE_WEIGHTS.forEach((w, i) => {
       const m = this._box(w);
-      const x = -3.6 + i * 2.4, z = cz + 2.6;
+      const x = -4.8 + i * 2.4, z = cz + 2.6;
       m.position.set(x, pboxSize(w) / 2, z);
       g.add(m);
       this.stock.push({ w, mesh: m, home: m.position.clone(), taken: false });
@@ -399,12 +432,15 @@ export class PlateGate {
   }
 
   prompt(pos) {
+    if (this.solvedBy()) return null;
+    // 막다른 길에 들어섰으면 그 사실부터 말한다. 아이가 스스로 알아낼 수 없는 종류다.
+    const stuck = !this._canFinish() ? ' — 지금은 못 맞춰요, 되가져와요' : '';
     const n = this._nearest(pos);
-    if (!n) return null;
+    if (!n) return stuck ? `⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)` : null;
     if (n.kind === 'stock') return this.held ? null : `E — ${n.item.w}kg 상자 들기`;
-    const p = n.plate, s = this._sum(p);
-    if (this.held) return `E — 판에 올리기 (${s} / ${p.need})`;
-    if (p.boxes.length) return `E — 되가져오기 (${s} / ${p.need})`;
+    const p = this._sum(n.plate), need = n.plate.need;
+    if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
+    if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무거워요' : stuck}`;
     return null;
   }
 
@@ -439,8 +475,28 @@ export class PlateGate {
   // 채워지면 판 테두리가 금색이 된다. 글자 없이 "됐다"를 말한다.
   _refresh() {
     for (const p of this.plates) {
-      p.ringMat.color.set(this._sum(p) === p.need ? 0xffd27a : SHRINE.glow);
+      const s = this._sum(p);
+      // 넘친 판은 붉게. 모자란 것과 넘친 것이 같은 색이면 어느 쪽으로 갈지 알 수 없다.
+      p.ringMat.color.set(s === p.need ? 0xffd27a : (s > p.need ? 0xe0736b : SHRINE.glow));
     }
+  }
+
+  // 지금 놓인 상태에서 **남은 상자만으로** 두 판을 다 채울 수 있나.
+  // 상자가 다섯이라 3^5=243가지를 전수로 본다 — 영리할 필요가 없다.
+  _canFinish() {
+    const onPlate = new Set();
+    for (const p of this.plates) for (const b of p.boxes) onPlate.add(b);
+    const free = this.stock.filter((it) => !onPlate.has(it));
+    const want = this.plates.map((p) => p.need - this._sum(p));
+    if (want.some((w) => w < 0)) return false;               // 이미 넘쳤다
+    const n = free.length;
+    for (let m = 0; m < 3 ** n; m++) {
+      const got = [0, 0];
+      let k = m;
+      for (let i = 0; i < n; i++) { const a = k % 3; k = (k / 3) | 0; if (a < 2) got[a] += free[i].w; }
+      if (got[0] === want[0] && got[1] === want[1]) return true;
+    }
+    return false;
   }
 
   update(dt, actor) {
