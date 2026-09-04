@@ -88,16 +88,42 @@ export class RoomActor {
     if (this.body) this.body.position.y = this.footOffset + (this.body.userData.bob || 0);
   }
 
-  // 3인칭 카메라. 실내라 거리를 짧게 잡는다 — 멀면 벽에 파고든다.
+  // 이 점이 방(또는 통로) 안인가. 카메라를 가두는 데 쓴다.
+  // 여백을 두는 이유: 벽에 정확히 붙으면 근평면(0.3u)이 벽을 뚫어 벽 너머가 보인다.
+  _inside(p, m = 0.5) {
+    const { W, D, H, CORR_W, CORR_D } = this.b;
+    if (p.y < 0.4 || p.y > H - 0.4) return false;
+    const inRoom = Math.abs(p.x) <= W / 2 - m && p.z >= -D / 2 + m && p.z <= D / 2 - m;
+    if (inRoom) return true;
+    const inCorr = Math.abs(p.x) <= CORR_W / 2 - m
+      && p.z >= D / 2 - m - 0.6 && p.z <= D / 2 + CORR_D - m;
+    return inCorr;
+  }
+
+  // 3인칭 카메라.
+  // ★ 처음엔 y만 클램프하고 x·z를 놔뒀다. 시점을 돌리면 카메라가 **벽을 통과해** 밖으로
+  //   나가서 검은 공간에서 방을 들여다보게 됐다(실사용 확인).
+  //   x·z를 잘라 가두면 카메라가 플레이어 안으로 파고든다. 그래서 자르는 게 아니라
+  //   **시선표적에서 카메라 쪽으로 나아가다 벽에 닿는 지점에서 멈춘다** — 바깥 카메라가
+  //   건물에 raycast를 쏘는 것과 같은 해법이고, 상자 방이라 훨씬 싸게 된다.
   updateCamera(camera, input, dt) {
     this.camYaw += input.consumeYaw();
     const pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
     const dist = Math.max(3.2, Math.min(6.5, input.camDist));
     const dir = _dir.set(Math.sin(this.camYaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(this.camYaw) * Math.cos(pitch));
     const target = _tgt.copy(this.position).setY(1.25);
-    const desired = _des.copy(target).addScaledVector(dir, dist);
-    // 천장·바닥을 뚫지 않게
-    desired.y = Math.max(0.7, Math.min(this.b.H - 0.5, desired.y));
+
+    // 벽에 닿기 직전까지만 물러난다. 16단이면 방 크기(16u) 기준 1u 간격이라 충분하다.
+    const STEPS = 16;
+    let t = 1;
+    for (let i = 1; i <= STEPS; i++) {
+      const k = i / STEPS;
+      _probe.copy(target).addScaledVector(dir, dist * k);
+      if (!this._inside(_probe)) { t = (i - 1) / STEPS; break; }
+    }
+    const camDist = Math.max(1.4, dist * t);      // 너무 붙으면 캐릭터 안이 보인다
+    const desired = _des.copy(target).addScaledVector(dir, camDist);
+
     if (!this._camPlaced) { camera.position.copy(desired); this._camPlaced = true; }
     else camera.position.lerp(desired, smoothK(0.0009, dt));
     camera.up.set(0, 1, 0);
@@ -108,3 +134,4 @@ export class RoomActor {
 const _Y = new THREE.Vector3(0, 1, 0);
 const _fwd = new THREE.Vector3(), _right = new THREE.Vector3(), _move = new THREE.Vector3();
 const _dir = new THREE.Vector3(), _tgt = new THREE.Vector3(), _des = new THREE.Vector3();
+const _probe = new THREE.Vector3();
