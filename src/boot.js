@@ -17,6 +17,7 @@ import { Sky } from './render/Sky.js';
 import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
 import { buildGrassCarpet } from './world/GrassCarpet.js';
+import { pickShrineSpots, buildShrines } from './world/Shrine.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -37,11 +38,34 @@ engine._inited = true;
 // 지면 산포 — 나무·바위·덤불·풀. 화면을 채우는 것은 빛이 아니라 밀도다.
 // 봉우리에 세워 뒀던 주황 원뿔 표식은 뺐다. 이제 식생이 그 역할을 한다 —
 // 나무가 없는 능선과 바위뿐인 고지대가 곧 "저기는 다르다"는 신호가 된다.
-const scatter = buildScatter(engine.scene, planet, { samples: 160000, seed: 91 });
+// 사당 자리를 **먼저** 잡는다. 산포물이 사당 안에서 자라면 즉시 고장으로 읽히므로
+// 배치 순서가 곧 정답이다 — 나중에 지우는 것보다 처음부터 안 심는 게 싸고 확실하다.
+const shrineSpots = pickShrineSpots(planet, PEAKS, { count: 6 });
+const SHRINE_CLEAR = 5.6 / R;                     // 기단(3.4u) + 여유
+const nearShrine = (dir) => shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR);
+
+const scatter = buildScatter(engine.scene, planet, {
+  samples: 160000, seed: 91, exclude: nearShrine,
+});
 
 // 잔디 카펫 — 지면을 덮는 한 장. 풀을 개수로 흩뿌리는 대신 바닥이 통째로 흐물거린다.
 // 산포물과 같은 바이옴 판정을 쓰므로 둘이 어긋날 수 없다.
 const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt });
+
+// 사당 — 이 세계에서 유일하게 각진 것. 빛기둥이 능선 너머에서도 "저기 뭔가 있다"를 만든다.
+const shrines = buildShrines(engine.scene, planet, shrineSpots);
+// 시작 위치를 가장 가까운 사당 쪽으로 돌려 세운다 — 첫 화면에 목표가 보여야 한다.
+(function faceNearestShrine() {
+  const n = shrines.nearest(player.position);
+  if (!n.shrine) return;
+  const up = player.position.clone().normalize();
+  const to = n.shrine.pos.clone().sub(player.position);
+  to.addScaledVector(up, -to.dot(up));
+  if (to.lengthSq() < 1e-9) return;
+  player.heading.copy(to.normalize());
+  player.syncMesh();
+  engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+})();
 
 let _windT = 0;
 // 발밑 접지 자국 — 잔디가 눌린 것처럼 보이는 어두운 원반.
@@ -62,6 +86,7 @@ function step(dt) {
   // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
   // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
   scatter.resolve(player.position, 0.32);
+  shrines.resolve(player.position, 0.32);
   // 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은 카펫(0.15u 위)이다.
   // 그 차이만큼 시각적으로 올려 세운다. 안 그러면 발이 정확히 카펫 두께만큼 잠긴다.
   _cUp.copy(player.position).normalize();
@@ -79,12 +104,12 @@ function step(dt) {
 
 const loop = new Loop(step, () => engine.render());
 
-const game = { step, planet, player, engine, input, loop, sky, scatter, carpet, contact };
+const game = { step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact };
 window.game = game;
-installDebug({ planet, player, engine, input, step, sky, scatter, carpet, PEAKS });
+installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS });
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';
 loop.start();
 console.log(`[boot] 재설계 v2 — 봉우리 ${PEAKS.length} · 지형면 ${planet.mesh.geometry.attributes.position.count / 3}`
-  + ` · 산포 ${scatter.meshes.length}메시 · __dbg/__selftest`);
+  + ` · 산포 ${scatter.meshes.length}메시 · 사당 ${shrines.shrines.length} · __dbg/__selftest`);

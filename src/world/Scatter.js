@@ -47,15 +47,16 @@ export function biomeAt(h, s, z) {
 //   수관 반경 1.5u짜리 나무가 서로 닿는 밀도다(실사용에서 벽이 됐다).
 //   숲으로 읽히면서 걸어 다닐 수 있는 간격은 15~20u²당 한 그루다.
 const DENSITY = {
-// ★ grass는 이제 인스턴스가 아니다. 잔디는 GrassCarpet이 지면 한 장으로 덮는다.
-//   여기 남은 grass는 카펫 **위에 얹는 억새 몇 포기**다 — 밀도를 확 낮춰 악센트로만 쓴다.
-//   잔디를 개수로 세는 순간 그건 잔디가 아니라 지면에 꽂아 놓은 물건이 된다.
-  forest: { grass: 0.030, tree: 0.026, rock: 0.010, bush: 0.070 },
-  meadow: { grass: 0.055, tree: 0,     rock: 0.008, bush: 0.030 },   // 나무 없음 — 시야 확보
-  basin:  { grass: 0.070, tree: 0.004, rock: 0.006, bush: 0.090 },
-  slope:  { grass: 0,     tree: 0.006, rock: 0.130, bush: 0.070 },
-  alpine: { grass: 0,     tree: 0,     rock: 0.190, bush: 0.030 },
-  bare:   { grass: 0,     tree: 0,     rock: 0,     bush: 0 },
+// ★★ 인스턴스 풀은 **완전히 없앴다.** 잔디는 GrassCarpet이 지면 한 장으로 덮는다.
+//   카펫을 깐 뒤에도 억새 몇 포기를 악센트로 남겼는데, 그게 카펫 위에 꽂힌 파편으로 보여
+//   맵을 지저분하게 만들었다(실사용 지적). 잔디를 두 방식으로 동시에 표현하면 안 된다.
+//   질감이 더 필요하면 카펫 자신의 색·굴곡으로 넣는다. 물건을 더 꽂지 않는다.
+  forest: { tree: 0.026, rock: 0.010, bush: 0.070 },
+  meadow: { tree: 0,     rock: 0.008, bush: 0.030 },   // 나무 없음 — 시야 확보
+  basin:  { tree: 0.004, rock: 0.006, bush: 0.090 },
+  slope:  { tree: 0.006, rock: 0.130, bush: 0.070 },
+  alpine: { tree: 0,     rock: 0.190, bush: 0.030 },
+  bare:   { tree: 0,     rock: 0,     bush: 0 },
 };
 
 const PALETTE = {
@@ -64,7 +65,6 @@ const PALETTE = {
   canopyDry: [0x8a9450, 0x9aa05c],
   rock:      [0x8a8b90, 0x7a7b82, 0x9a9aa0],
   bush:      [0x5a7f42, 0x66894a, 0x4e7038],
-  grass:     [0x7fa055, 0x8caa5e, 0x74964d],
 };
 
 // ── 지오메트리 ──────────────────────────────────────────────────────────────
@@ -129,43 +129,6 @@ function bushGeo() {
     parts.push(g);
   }
   return mergeGeos(parts);
-}
-
-// 풀 다발 — 잎 4장을 벌려 심는다. 한 점에서 세우면 원경에서 점이 된다(v1 실측).
-function grassGeo() {
-  const pos = [], nor = [], idx = [];
-  const blades = [
-    { yaw: 0.0, h: 0.58, w: 0.075, bend: 0.20, ox: 0.02, oz: 0.00 },
-    { yaw: 2.1, h: 0.46, w: 0.070, bend: 0.24, ox: 0.16, oz: 0.06 },
-    { yaw: 4.2, h: 0.38, w: 0.066, bend: 0.16, ox: -0.11, oz: 0.14 },
-    { yaw: 1.1, h: 0.50, w: 0.070, bend: 0.22, ox: -0.14, oz: -0.10 },
-  ];
-  const SEG = 2;
-  for (const b of blades) {
-    const base = pos.length / 3;
-    const cy = Math.cos(b.yaw), sy = Math.sin(b.yaw);
-    for (let i = 0; i <= SEG; i++) {
-      const t = i / SEG, y = b.h * t;
-      // 끝을 뾰족하게 만들지 않는다 — 폭 0이면 바늘이 되고 수만 개면 가시밭이 된다(v1 실측).
-      const hw = b.w * (0.32 + 0.68 * Math.pow(1 - t, 0.55));
-      const off = b.bend * t * t;
-      for (const sg of [-1, 1]) {
-        const lx = sg * hw + off;
-        pos.push(b.ox + lx * cy, y, b.oz + lx * sy);
-        // 법선을 위로 몰아 준다. 얇은 판의 진짜 법선을 쓰면 잎마다 명암이 튀어 얼룩덜룩해진다.
-        nor.push(0.2 * cy, 0.96, 0.2 * sy);
-      }
-    }
-    for (let i = 0; i < SEG; i++) {
-      const a = base + i * 2;
-      idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
-  g.setIndex(idx);
-  return g;
 }
 
 // 인덱스 없는 지오메트리 여러 개를 하나로. BufferGeometryUtils를 끌어오지 않으려고 직접 한다.
@@ -233,7 +196,6 @@ export function buildScatter(scene, planet, opts = {}) {
     canopyB: mergeGeos(treeB.filter(p => p.kind === 'canopy').map(p => p.geo)),
     rockA: rockGeo(3), rockB: rockGeo(11),
     bush: bushGeo(),
-    grass: grassGeo(),
   };
 
   // ★ toonShared를 쓰면 안 된다. 캐시 키가 색+옵션이라 0xffffff를 세 번 부르면
@@ -246,17 +208,14 @@ export function buildScatter(scene, planet, opts = {}) {
     canopy: toon(0xffffff),
     rock:   toon(0xffffff),
     bush:   toon(0xffffff),
-    grass:  toon(0xffffff, { side: THREE.DoubleSide, rim: 0 }),   // 얇은 잎에 림 금지
   };
-  mats.grass.userData.outlineParameters = { visible: false };   // 얇은 잎에 외곽선은 지저분하다
   mats.bush.userData.outlineParameters = { visible: false };
-  injectWind(mats.grass, 1.0, uTime);
   injectWind(mats.canopy, 0.16, uTime);   // 수관도 흔들려야 한다. 풀만 흔들리면 나무가 말뚝이 된다
   injectWind(mats.bush, 0.35, uTime);
 
   // 셀별 수집통
   const cellCount = LAT_BANDS * LON_SECTORS;
-  const kinds = ['trunk', 'canopyA', 'canopyB', 'rockA', 'rockB', 'bush', 'grass'];
+  const kinds = ['trunk', 'canopyA', 'canopyB', 'rockA', 'rockB', 'bush'];
   const bins = [];
   for (let c = 0; c < cellCount; c++) {
     const b = {}; for (const k of kinds) b[k] = [];
@@ -270,11 +229,14 @@ export function buildScatter(scene, planet, opts = {}) {
     return bi * LON_SECTORS + si;
   };
 
+  // 사당 자리에는 아무것도 심지 않는다. 건물 안에서 나무가 자라면 즉시 고장으로 읽힌다.
+  const exclude = opts.exclude || (() => false);
+
   const dir = new THREE.Vector3(), up = new THREE.Vector3(), pos = new THREE.Vector3();
   const q = new THREE.Quaternion(), m = new THREE.Matrix4(), scl = new THREE.Vector3();
   const col = new THREE.Color();
   const Y = new THREE.Vector3(0, 1, 0);
-  const counts = { tree: 0, rock: 0, bush: 0, grass: 0 };
+  const counts = { tree: 0, rock: 0, bush: 0 };
   // ── 충돌체 ──────────────────────────────────────────────────────────────
   // 나무 줄기와 바위만 막는다. 덤불·억새는 통과시킨다 — 작은 것에 걸리면
   // 걷는 게 답답해지고, 아이는 "왜 여기서 막히지"를 이해하지 못한다.
@@ -299,6 +261,7 @@ export function buildScatter(scene, planet, opts = {}) {
   for (let i = 0; i < samples; i++) {
     const z = rnd() * 2 - 1, th = rnd() * Math.PI * 2, r = Math.sqrt(1 - z * z);
     dir.set(r * Math.cos(th), z, r * Math.sin(th));
+    if (exclude(dir)) continue;
     const h = planet.heightAt(dir);
     const s = planet.slopeDegAt(dir);
     const d = DENSITY[biomeAt(h, s, zoneAt(dir))];
@@ -324,10 +287,6 @@ export function buildScatter(scene, planet, opts = {}) {
       place(cell, 'bush', 0.6 + rnd() * 0.8, 0.15,
         col.set(PALETTE.bush[Math.floor(rnd() * PALETTE.bush.length)]).multiplyScalar(0.88 + rnd() * 0.24));
       counts.bush++;
-    } else if (roll < d.grass) {
-      place(cell, 'grass', 0.85 + rnd() * 0.55, 0.10,
-        col.set(PALETTE.grass[Math.floor(rnd() * PALETTE.grass.length)]).multiplyScalar(0.85 + rnd() * 0.3));
-      counts.grass++;
     }
   }
 
@@ -337,8 +296,7 @@ export function buildScatter(scene, planet, opts = {}) {
   const geoOf = (k) => geos[k];
   const matOf = (k) => k === 'trunk' ? mats.trunk
     : k.startsWith('canopy') ? mats.canopy
-    : k.startsWith('rock') ? mats.rock
-    : k === 'bush' ? mats.bush : mats.grass;
+    : k.startsWith('rock') ? mats.rock : mats.bush;
 
   for (let c = 0; c < cellCount; c++) {
     for (const k of kinds) {
@@ -359,7 +317,7 @@ export function buildScatter(scene, planet, opts = {}) {
     }
   }
 
-  console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush} · 억새 ${counts.grass}`
+  console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush}`
     + ` · 메시 ${meshes.length}개 · ~${Math.round(tris / 1000)}k삼각형 · 충돌체 ${colliders.length}`);
 
   // 카펫이 "여기 풀이 자라는가"를 물을 때 쓴다. 바이옴 판정을 그대로 재사용하므로
