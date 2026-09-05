@@ -13,6 +13,26 @@ import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
 import { GROUND } from '../data/lighting.js';
 
+// 고도와 경사로 지면 색을 고른다.
+// ★ 지도(ui/MapPage.js)가 이 함수를 그대로 쓴다. 지도용 색을 따로 적으면
+//   지형을 손볼 때마다 두 곳이 어긋나고, 아이 눈에는 "지도가 틀렸다"로 보인다.
+const _gLow = new THREE.Color(GROUND.grassLow);
+const _gHigh = new THREE.Color(GROUND.grassHigh);
+const _rock = new THREE.Color(GROUND.rock);
+const _rockD = new THREE.Color(GROUND.rockDark);
+const _peak = new THREE.Color(GROUND.peak);
+const _sand = new THREE.Color(GROUND.sand);
+
+export function terrainColor(h, slopeDeg, out) {
+  // 고도 t: 분지 바닥(−3) → 최고봉(15)
+  const t = Math.min(1, Math.max(0, (h + 3) / 18));
+  if (slopeDeg > 34) out.copy(slopeDeg > 46 ? _rockD : _rock);      // 급경사는 노출암
+  else if (t < 0.10) out.copy(_sand).lerp(_gLow, t / 0.10);          // 저지대 마른 흙 → 풀
+  else if (t > 0.72) out.copy(_gHigh).lerp(_peak, (t - 0.72) / 0.28); // 정상부는 밝게
+  else out.copy(_gLow).lerp(_gHigh, (t - 0.10) / 0.62);
+  return out;
+}
+
 export const SCALE = 2;
 export const R = 34 * SCALE;                 // 68u. 둘레 427u
 export const GRAIN_AMP = 0.8;                // 표면 잔결 — 이 값이 2u를 넘으면 실루엣을 오염시킨다
@@ -196,13 +216,6 @@ export class Planet {
     }
 
     // 2) 면마다 색 — 고도와 경사 두 축으로 고른다
-    const gLow = new THREE.Color(GROUND.grassLow);
-    const gHigh = new THREE.Color(GROUND.grassHigh);
-    const rock = new THREE.Color(GROUND.rock);
-    const rockD = new THREE.Color(GROUND.rockDark);
-    const peak = new THREE.Color(GROUND.peak);
-    const sand = new THREE.Color(GROUND.sand);
-
     for (let f = 0; f < n; f += 3) {
       a.set(pos.getX(f), pos.getY(f), pos.getZ(f));
       b.set(pos.getX(f + 1), pos.getY(f + 1), pos.getZ(f + 1));
@@ -214,18 +227,7 @@ export class Planet {
       const up = _t4.copy(a).add(b).add(c).normalize();
       const slope = Math.acos(Math.min(1, Math.max(-1, Math.abs(nx.dot(up))))) * 180 / Math.PI;
 
-      // 고도 t: 분지 바닥(-3) → 최고봉(15)
-      const t = Math.min(1, Math.max(0, (hAvg + 3) / 18));
-
-      if (slope > 34) {
-        col.copy(slope > 46 ? rockD : rock);            // 급경사는 노출암
-      } else if (t < 0.10) {
-        col.copy(sand).lerp(gLow, t / 0.10);            // 저지대 마른 흙 → 풀
-      } else if (t > 0.72) {
-        col.copy(gHigh).lerp(peak, (t - 0.72) / 0.28);  // 정상부는 밝게 — 멀리서 봉우리를 표시한다
-      } else {
-        col.copy(gLow).lerp(gHigh, (t - 0.10) / 0.62);
-      }
+      terrainColor(hAvg, slope, col);
 
       // 면마다 아주 살짝 흔든다. 완전히 같은 색이 넓게 이어지면 로우폴리가 저해상도로 보인다.
       const j = 0.965 + ((f * 2654435761) % 1000) / 1000 * 0.07;

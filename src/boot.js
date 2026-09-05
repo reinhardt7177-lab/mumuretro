@@ -21,6 +21,7 @@ import { pickShrineSpots, buildShrines } from './world/Shrine.js';
 import { SHRINES, ENTRY_Z, EXIT_Z } from './shrine/layouts.js';
 import { buildRoom } from './shrine/Room.js';
 import { RoomActor } from './shrine/RoomActor.js';
+import { buildMapPage } from './ui/MapPage.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -257,6 +258,7 @@ function stepPlanet(dt, intent) {
   // ★ 예전엔 그냥 'E — 사당에 들어가기'였다. 사당 여섯이 서로 다른데 이름이
   //   어디에도 안 나와서, 가장 가까운 곳만 반복해 들어가면 "다 똑같다"로 읽힌다.
   //   무엇이 있는 곳인지 들어가기 전에 말해 준다.
+  mapPage.update();
   const canEnter = near.shrine && near.distU < shrines.ENTER_R;
   if (canEnter) {
     const sp = SHRINES[shrines.shrines.indexOf(near.shrine) % SHRINES.length];
@@ -267,11 +269,15 @@ function stepPlanet(dt, intent) {
   if (canEnter && intent.action) enterShrine(near.shrine);
 }
 
+// 지도 — 처음엔 온통 검고, 걸어간 자리만 밝아진다. 길을 알려주는 게 아니라
+// 다녀온 것을 기록한다(M으로 연다).
+const mapPage = buildMapPage(planet, player, shrines, SHRINES);
+
 const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES,
+  roomActor, planetScene, roomFor, SHRINES, mapPage,
   get room() { return room; },
   get cleared() { return cleared; },
   get mode() { return mode; },
