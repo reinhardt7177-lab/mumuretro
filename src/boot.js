@@ -262,12 +262,23 @@ function stepPlanet(dt, intent) {
   //   어디에도 안 나와서, 가장 가까운 곳만 반복해 들어가면 "다 똑같다"로 읽힌다.
   //   무엇이 있는 곳인지 들어가기 전에 말해 준다.
   mapPage.update();
-  const canEnter = near.shrine && near.distU < shrines.ENTER_R;
-  if (canEnter) {
+  const atDoor = near.shrine && near.distU < shrines.ENTER_R;
+  // ★ layouts에 locked: 5라고 적어 놓고 **아무도 확인하지 않았다.**
+  //   마지막 사당은 앞선 다섯의 구슬이 열쇠라는 게 그 방의 전제인데,
+  //   처음부터 곧장 들어갈 수 있었다. 적어 둔 규칙은 지켜져야 규칙이다.
+  let canEnter = atDoor;
+  if (atDoor) {
     const sp = SHRINES[shrines.shrines.indexOf(near.shrine) % SHRINES.length];
-    setPrompt(near.shrine.cleared
-      ? `E — ${sp.name} · 이미 깬 곳이에요`
-      : `E — ${sp.name}에 들어가기 (${sp.unit})`);
+    const need = sp.locked || 0;
+    const have = shrines.clearedCount();
+    if (need && have < need) {
+      canEnter = false;
+      setPrompt(`🔒 ${sp.name} — 구슬 ${need}개가 필요해요 (${have}/${need})`);
+    } else if (near.shrine.cleared) {
+      setPrompt(`E — ${sp.name} · 이미 깬 곳이에요`);
+    } else {
+      setPrompt(`E — ${sp.name}에 들어가기 (${sp.unit})`);
+    }
   } else setPrompt(null);
   if (canEnter && intent.action) enterShrine(near.shrine);
 }

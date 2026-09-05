@@ -143,5 +143,3 @@ export const SHRINES = [
     final: 'grand',
   },
 ];
-
-export const shrineSpec = (i) => SHRINES[i % SHRINES.length];

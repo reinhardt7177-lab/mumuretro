@@ -38,7 +38,6 @@ const GRAINS = [
   { size: 0.19, mm: 3, color: 0xa8823f, name: '중간 알갱이' },
   { size: 0.11, mm: 0.6, color: 0x8a6b34, name: '고운 모래' },
 ];
-const ANSWER_SIEVE = 1;            // 굵은 것만 남기려면 중간 체
 
 export class SieveGate {
   constructor(scene, seg, opts = {}) {
