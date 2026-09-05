@@ -90,7 +90,12 @@ export const SHRINE = {
 export const LAB = {
   wood: 0x6b4f36, woodDark: 0x4a3625, woodLite: 0x8a6a4a,
   plaster: 0xb9ae99, iron: 0x3d4247, brass: 0xc79a4e,
+  brassDim: 0x8a6a30,
   paper: 0xe7dfc8,
+  // 전송실만 석조다. 나무로 지은 생활·작업 구역과 색이 갈려야 아치를 지나는 순간
+  // "다른 데로 왔다"가 읽힌다 — 같은 집인데 여기만 남이 지은 것 같아야 한다.
+  stone: 0x76726a, stoneDark: 0x4e4b45, stoneLite: 0x928d82,
+  chalk: 0xd8d2c0,
   glow: 0x7fd8ff,                  // 포탈. 이 별의 청록과 다른 **차가운 파랑**이다
   glowDim: 0x2b4d63,
   bg: 0x141110, amb: [0x93815f, 0x2f2620, 0.95], lamp: 1.0,

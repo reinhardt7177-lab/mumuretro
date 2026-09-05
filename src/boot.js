@@ -273,6 +273,9 @@ function stepLab(dt, intent) {
   if (noteT > 0) { noteT -= dt; prompt = noteMsg; }
   setPrompt(prompt);
 
+  // 계단 앞에 처음 서면 왜 안 올라가는지 한 번 말한다. play가 id로 한 번만 건다.
+  if (lab.nearStairs(roomActor.position)) dialogue.play('op-stairs', ...OPENING.stairs);
+
   if (!intent.action || dialogue.active) return;
   const did = lab.interact(roomActor.position);
   if (did === 'parcel') {

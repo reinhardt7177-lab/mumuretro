@@ -415,8 +415,55 @@ export function installDebug(ctx) {
     //     추론은 틀린 것을 잡고 맞는 것을 놓친다. 그래서 **재는 쪽으로 바꿨다** —
     //     카메라를 실제로 세워 보고 그 점이 물건 안에 있는지 본다. G와 같은 자리를
     //     쓰므로 값이 거의 안 든다.
+    // ── I 만질 것에 **걸어서** 닿는가 ──────────────────────────────────────
+    // ★ 콘솔을 원 하나(r 2.7)로 막았더니 밀려나는 거리가 손 닿는 거리(1.3u)보다
+    //   멀어져서 다이얼을 영영 못 만졌다. 오프닝이 통째로 못 깨는 상태였는데
+    //   **검사가 다이얼 좌표로 순간이동해서** 만지는 바람에 안 걸렸다.
+    //   F가 "걸어서(텔레포트 말고) 지나가는가"를 재는 것과 같은 이유다 —
+    //   닿는지는 걸어 봐야 안다. 장애물을 하나 놓을 때마다 되살아난다.
+    let reachOK = true;
+    const reachBad = [];
+    if (ctx.lab) {
+      const lab = ctx.lab;
+      const savedR = ra.rects, savedO = ra.obstacles, savedP = ra.position.clone();
+      ra.rects = lab.rects; ra.obstacles = lab.obstacles;
+      // 만져야 하는 것 전부 — 다이얼 셋과 포탈 자리
+      // ★ 목록은 Lab이 가진다. 검사가 목록을 따로 적으면 물건을 하나 옮길 때마다
+      //   검사만 옛날 자리를 재게 되고, 그건 검사가 아니라 거짓말이다.
+      const targets = lab.reachables;
+      for (const t of targets) {
+        // 여덟 방향에서 다가가 본다. 한 방향이라도 닿으면 된다.
+        let best = Infinity;
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          ra.setAt(t.x + Math.sin(a) * 5.0, t.z + Math.cos(a) * 5.0, -1);
+          for (let i = 0; i < 400; i++) {
+            const p = ra.position;
+            const dx = t.x - p.x, dz = t.z - p.z;
+            const L = Math.hypot(dx, dz);
+            if (L < 0.05) break;
+            // 목표 쪽으로 곧장 민다(카메라 기준 이동이므로 yaw를 맞춘다)
+            ra.camYaw = Math.atan2(-dx, -dz);
+            ra.update(1 / 60, { x: 0, y: 1, run: false, jump: false }, engine.camera);
+          }
+          const p = ra.position;
+          best = Math.min(best, Math.hypot(t.x - p.x, t.z - p.z));
+        }
+        // 손 닿는 거리는 물건마다 다르다. 여백 0.15u는 걸음이 딱 떨어지지 않는 몫.
+        if (best > t.r - 0.15) {
+          reachOK = false;
+          reachBad.push(`${t.name}=${best.toFixed(2)}u(닿는거리 ${t.r})`);
+        }
+      }
+      ra.rects = savedR; ra.obstacles = savedO;
+      ra.setAt(savedP.x, savedP.z, -1); ra._camPlaced = false;
+      log.push('I 연구실에서 걸어서 닿기'
+        + (reachOK ? ' 전부' : ` 못 닿음 ${reachBad.join(' ')}`)
+        + ` -> ${reachOK ? 'PASS' : 'FAIL'}`);
+    }
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK;
+      && walkOK && camOK && hangOK && reachOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
