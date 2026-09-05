@@ -96,7 +96,7 @@ let mode = 'planet';                 // 'planet' | 'room'
 let activeShrine = null;
 let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
-let failMsg = null, failT = 0;       // 실패 안내(3초)
+let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름)
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
 
 const promptEl = document.getElementById('prompt');
@@ -109,7 +109,7 @@ function setPrompt(text) {
 // 실패 — 방 처음으로. 사당 처음이 아니다.
 // 레이저에서 몇 번 죽고 사당 입구로 쫓겨나면 아이는 그만둔다.
 function failTo(seg, msg) {
-  failMsg = msg; failT = 1.6;
+  noteMsg = `💫 ${msg}`; noteT = 1.6;
   roomActor.setAt(0, seg.z1 - 1.4, -1);
 }
 const segOf = (id) => room.dungeon.rectOf(id);
@@ -132,6 +132,9 @@ function enterShrine(shrine) {
   room.scene.add(player.mesh);
   roomActor.setAt(0, ENTRY_Z, -1);
   engine.setScene(room.scene);
+  // 들어서면 어디에 왔는지 3초간 알린다. 사당마다 다른 곳이라는 게 첫 정보여야 한다.
+  noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit}`;
+  noteT = 3.0;
   setPrompt(null);
 }
 
@@ -189,7 +192,7 @@ function stepRoom(dt, intent) {
     if (inSeg && r.fail) {
       // 스스로 자리를 옮기는 관문(타일은 갇혀 있어 되돌릴 곳이 없다)은 그대로 둔다.
       // 나머지는 방 처음으로 보낸다 — 사당 처음이 아니다.
-      if (r.stay) { failMsg = r.fail; failT = 1.6; }
+      if (r.stay) { noteMsg = `💫 ${r.fail}`; noteT = 1.6; }
       else failTo(segOf(g.room), r.fail);
     }
     if (!g.solved && g.gate.solvedBy(roomActor)) {
@@ -208,8 +211,8 @@ function stepRoom(dt, intent) {
     prompt = prize.prompt(roomActor.position) || final.prompt(roomActor.position) || prompt;
   }
 
-  // 실패 안내가 떠 있으면 그게 우선이다
-  if (failT > 0) { failT -= dt; prompt = '💫 ' + failMsg; }
+  // 알림이 떠 있으면 그게 우선이다
+  if (noteT > 0) { noteT -= dt; prompt = noteMsg; }
   const atExit = roomActor.position.z > EXIT_Z - 0.9;
   if (atExit) prompt = 'E — 사당 밖으로';
   setPrompt(prompt);
@@ -219,7 +222,7 @@ function stepRoom(dt, intent) {
     if (seg && seg.id === 'shrine') {
       if (prize.interact(roomActor.position)) {
         cleared = true;
-        failMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; failT = 2.6;
+        noteMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; noteT = 2.6;
       } else if (final.interact) final.interact(roomActor.position);
     } else {
       // 손으로 만지는 관문은 자기 방 안에서만 반응한다
@@ -251,8 +254,16 @@ function stepPlanet(dt, intent) {
 
   // 사당 진입 — 기단 가까이 오면 프롬프트, E로 들어간다.
   const near = shrines.nearest(player.position);
+  // ★ 예전엔 그냥 'E — 사당에 들어가기'였다. 사당 여섯이 서로 다른데 이름이
+  //   어디에도 안 나와서, 가장 가까운 곳만 반복해 들어가면 "다 똑같다"로 읽힌다.
+  //   무엇이 있는 곳인지 들어가기 전에 말해 준다.
   const canEnter = near.shrine && near.distU < shrines.ENTER_R;
-  setPrompt(canEnter ? 'E — 사당에 들어가기' : null);
+  if (canEnter) {
+    const sp = SHRINES[shrines.shrines.indexOf(near.shrine) % SHRINES.length];
+    setPrompt(near.shrine.cleared
+      ? `E — ${sp.name} · 이미 깬 곳이에요`
+      : `E — ${sp.name}에 들어가기 (${sp.unit})`);
+  } else setPrompt(null);
   if (canEnter && intent.action) enterShrine(near.shrine);
 }
 

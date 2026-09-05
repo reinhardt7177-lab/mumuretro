@@ -195,11 +195,34 @@ function buildStructure(theme, form) {
   beamMat.userData.outlineParameters = { visible: false };
   const beam = new THREE.Mesh(beamGeo, beamMat);
   beam.position.y = beamY + BEAM_H / 2;
+  // ★ 기둥만 세우면 멀리서 **땅에 꽂힌 막대기**로 보인다("이게 뭐죠?").
+  //   빛은 닿은 자리를 물들여야 빛으로 읽힌다. 밑동에 웅덩이를 깔고,
+  //   기둥 아래쪽을 한 겹 더 겹쳐 두꺼워 보이게 한다.
+  const poolMat = new THREE.MeshBasicMaterial({
+    color: theme.glow, transparent: true, opacity: 0.32, depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  poolMat.userData.outlineParameters = { visible: false };
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(4.2, 20), poolMat);
+  pool.rotation.x = -Math.PI / 2;
+  pool.position.y = 0.06;
+  pool.renderOrder = 2;
+  g.add(pool);
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: theme.glow, transparent: true, opacity: 0.16, depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  haloMat.userData.outlineParameters = { visible: false };
+  const halo = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.6, 14, 9, 1, true), haloMat);
+  halo.position.y = beamY + 4;
+  halo.renderOrder = 2;
+  halo.frustumCulled = false;
+  g.add(halo);
   beam.renderOrder = 2;
   beam.frustumCulled = false;     // 기둥이 화면 밖으로 나가도 밑동은 보여야 한다
   g.add(beam);
 
-  return { group: g, beam, beamGeo, glow };
+  return { group: g, beam, beamGeo, glow, poolMat, haloMat };
 }
 
 // 빛기둥 색칠 — 세울 때와 깼을 때 두 번 쓴다. 아래는 진하고 위로 갈수록 옅다.
@@ -226,7 +249,7 @@ export function buildShrines(scene, planet, spots, themes) {
     const i = shrines.length;
     const theme = themes[i % themes.length];
     const form = FORMS[i % FORMS.length];
-    const { group, beamGeo, glow } = buildStructure(theme, form);
+    const { group, beamGeo, glow, poolMat, haloMat } = buildStructure(theme, form);
     const fr = planet.frameAt(planet.surfaceAt(sp.dir), 0);
     group.position.copy(fr.position);
     group.quaternion.copy(fr.quaternion);
@@ -237,7 +260,7 @@ export function buildShrines(scene, planet, spots, themes) {
     const shrine = {
       dir: sp.dir.clone(), pos: fr.position.clone(), group, facing,
       slope: sp.slope, peak: sp.peak, entered: false,
-      cleared: false, beamGeo, glow, theme, form,
+      cleared: false, beamGeo, glow, poolMat, haloMat, theme, form,
     };
     shrines.push(shrine);
     // 기단을 막는다. 입구 앞은 비워야 하므로 반경을 기단보다 조금 작게 잡는다 —
@@ -287,6 +310,8 @@ export function buildShrines(scene, planet, spots, themes) {
     if (!shrine || shrine.cleared) return false;
     shrine.cleared = true;
     shrine.glow.color.set(SHRINE.gold);
+    shrine.poolMat.color.set(SHRINE.gold);
+    shrine.haloMat.color.set(SHRINE.gold);
     paintBeam(shrine.beamGeo, SHRINE.gold, SHRINE.goldDim);
     return true;
   };

@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 
-const ENTRY_Z_TEST = 10.2;   // Dungeon.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
+const ENTRY_Z_TEST = 9.2;    // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
 
 export function installDebug(ctx) {
   const { planet, player, engine, input, step, sky, scatter, carpet, PEAKS } = ctx;
