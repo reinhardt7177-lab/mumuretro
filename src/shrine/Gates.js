@@ -271,6 +271,17 @@ export class TileGate {
   }
 
   solvedBy() { return this.cleared; }
+
+  // reset()은 한 판 안에서의 실패다(시계만 되돌린다).
+  // restart()는 **다음 사당**을 위한 완전 초기화 — 잠금과 장벽까지 처음으로.
+  restart() {
+    this.cleared = false;
+    this.locked = false;
+    this.fall = 0;
+    this.barrier.visible = false;
+    if (this.entryRect) this.entryRect.open = true;
+    this.reset();
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════

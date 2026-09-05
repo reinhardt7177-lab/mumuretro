@@ -122,16 +122,7 @@ function buildStructure() {
   // ── 빛기둥 ────────────────────────────────────────────────────────────────
   // 위로 갈수록 사라진다. 끝이 딱 잘리면 '기둥'이 아니라 '막대'로 보인다.
   const beamGeo = new THREE.CylinderGeometry(0.62, 1.05, BEAM_H, 7, 1, true);
-  const bpos = beamGeo.attributes.position;
-  const bcol = new Float32Array(bpos.count * 3);
-  const c0 = new THREE.Color(SHRINE.glow), c1 = new THREE.Color(SHRINE.glowDim);
-  const tmp = new THREE.Color();
-  for (let i = 0; i < bpos.count; i++) {
-    const t = (bpos.getY(i) + BEAM_H / 2) / BEAM_H;      // 0 아래 → 1 위
-    tmp.copy(c0).lerp(c1, t);
-    bcol[i * 3] = tmp.r; bcol[i * 3 + 1] = tmp.g; bcol[i * 3 + 2] = tmp.b;
-  }
-  beamGeo.setAttribute('color', new THREE.BufferAttribute(bcol, 3));
+  paintBeam(beamGeo, SHRINE.glow, SHRINE.glowDim);
   const beamMat = new THREE.ShaderMaterial({
     vertexColors: true, transparent: true, depthWrite: false,
     side: THREE.DoubleSide, fog: false,
@@ -158,7 +149,22 @@ function buildStructure() {
   beam.frustumCulled = false;     // 기둥이 화면 밖으로 나가도 밑동은 보여야 한다
   g.add(beam);
 
-  return { group: g, beam };
+  return { group: g, beam, beamGeo, glow };
+}
+
+// 빛기둥 색칠 — 세울 때와 깼을 때 두 번 쓴다. 아래는 진하고 위로 갈수록 옅다.
+function paintBeam(geo, hex0, hex1) {
+  const pos = geo.attributes.position;
+  const has = !!geo.attributes.color;
+  const col = has ? geo.attributes.color.array : new Float32Array(pos.count * 3);
+  const c0 = new THREE.Color(hex0), c1 = new THREE.Color(hex1), tmp = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const t = (pos.getY(i) + BEAM_H / 2) / BEAM_H;      // 0 아래 → 1 위
+    tmp.copy(c0).lerp(c1, t);
+    col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;
+  }
+  if (has) geo.attributes.color.needsUpdate = true;
+  else geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 }
 
 export function buildShrines(scene, planet, spots) {
@@ -167,7 +173,7 @@ export function buildShrines(scene, planet, spots) {
   const colliders = [];
 
   for (const sp of spots) {
-    const { group } = buildStructure();
+    const { group, beamGeo, glow } = buildStructure();
     const fr = planet.frameAt(planet.surfaceAt(sp.dir), 0);
     group.position.copy(fr.position);
     group.quaternion.copy(fr.quaternion);
@@ -178,6 +184,7 @@ export function buildShrines(scene, planet, spots) {
     const shrine = {
       dir: sp.dir.clone(), pos: fr.position.clone(), group, facing,
       slope: sp.slope, peak: sp.peak, entered: false,
+      cleared: false, beamGeo, glow,
     };
     shrines.push(shrine);
     // 기단을 막는다. 입구 앞은 비워야 하므로 반경을 기단보다 조금 작게 잡는다 —
@@ -220,7 +227,20 @@ export function buildShrines(scene, planet, spots) {
   console.log(`[shrine] 사당 ${shrines.length}곳 · 기단 반경 ${BASE_R}u · 빛기둥 ${BEAM_H}u`
     + ` · 최대 경사 ${Math.max(...shrines.map(s => s.slope)).toFixed(1)}°`);
 
-  return { shrines, colliders, resolve, nearest, BASE_R, ENTER_R: BASE_R + 2.0 };
+  // 깬 사당은 **밖에서** 표가 난다. 이게 없으면 사당 2호로 걸어갈 이유가 없다 —
+  // 저울을 풀어도 세계는 아무 반응이 없었고 나와 보면 아까와 똑같았다.
+  // 지도를 안 쓰기로 했으니, 언덕에 올라 빛기둥 색을 세는 게 곧 지도다.
+  const markCleared = (shrine) => {
+    if (!shrine || shrine.cleared) return false;
+    shrine.cleared = true;
+    shrine.glow.color.set(SHRINE.gold);
+    paintBeam(shrine.beamGeo, SHRINE.gold, SHRINE.goldDim);
+    return true;
+  };
+  const clearedCount = () => shrines.filter(s => s.cleared).length;
+
+  return { shrines, colliders, resolve, nearest, markCleared, clearedCount,
+           BASE_R, ENTER_R: BASE_R + 2.0 };
 }
 
 const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);

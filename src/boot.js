@@ -22,6 +22,7 @@ import { buildDungeon, LAYOUT, ENTRY_Z, EXIT_Z } from './shrine/Dungeon.js';
 import { TileGate, LaserGate, PlateGate } from './shrine/Gates.js';
 import { RoomActor } from './shrine/RoomActor.js';
 import { BalanceScale } from './shrine/Scale.js';
+import { Prize } from './shrine/Prize.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -92,9 +93,13 @@ const gates = [
 const shrineSeg = segOf('shrine');
 const scale = new BalanceScale(roomScene, {
   origin: new THREE.Vector3(0, 0, shrineSeg.z0 + 7.5),
-  onBalance: () => { cleared = true; setPrompt('✨ 지혜의 구슬을 얻었어요 — E로 나가기'); },
+  // 수평이 된 순간 보상이 **내려온다**. 여기서 끝내지 않는다 —
+  // 걸어가서 줍는 것까지가 사당을 깬 것이다.
+  onBalance: () => { prize.reveal(); },
 });
 roomActor.obstacles = [{ x: 0, z: shrineSeg.z0 + 7.5 - 2.4, r: 1.9 }];
+// 저울과 입구 사이. 수평이 되면 여기로 내려오므로 아이가 반드시 한 발짝 걸어야 한다.
+const prize = new Prize(roomScene, new THREE.Vector3(0, 0, shrineSeg.z0 + 7.5 + 2.8));
 
 let mode = 'planet';                 // 'planet' | 'room'
 let activeShrine = null;
@@ -116,7 +121,22 @@ function failTo(seg, msg) {
   roomActor.setAt(0, seg.z1 - 1.4, -1);
 }
 
+// 사당 여섯 곳이 내부 씬 하나를 함께 쓴다. 들어갈 때마다 처음으로 되돌리지 않으면
+// 첫 사당을 깬 뒤로는 문이 다 열린 채 저울도 이미 수평인 방에 들어가게 된다.
+function resetShrineRun() {
+  for (const g of gates) {
+    g.solved = false;
+    if (g.gate.restart) g.gate.restart();
+    else if (g.gate.reset) g.gate.reset();
+  }
+  dungeon.resetDoors();
+  scale.reset();
+  prize.reset();
+  cleared = false;
+}
+
 function enterShrine(shrine) {
+  resetShrineRun();
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
   activeShrine = shrine;
@@ -130,6 +150,8 @@ function enterShrine(shrine) {
 }
 
 function exitShrine() {
+  // 구슬을 들고 나왔으면 그 사당의 빛기둥이 금색이 된다. 이게 유일한 지도다.
+  if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
   roomScene.remove(player.mesh);
   engine.setScene(planetScene);
@@ -191,7 +213,11 @@ function stepRoom(dt, intent) {
   }
 
   scale.update(dt, roomActor, roomScene);
-  if (seg && seg.id === 'shrine') prompt = scale.prompt(roomActor.position) || prompt;
+  prize.update(dt);
+  if (seg && seg.id === 'shrine') {
+    // 구슬이 나와 있으면 그게 최우선이다 — 방에서 가장 밝은 곳이 곧 다음 할 일이다.
+    prompt = prize.prompt(roomActor.position) || scale.prompt(roomActor.position) || prompt;
+  }
 
   // 실패 안내가 떠 있으면 그게 우선이다
   if (failT > 0) { failT -= dt; prompt = '💫 ' + failMsg; }
@@ -201,7 +227,12 @@ function stepRoom(dt, intent) {
 
   if (intent.action) {
     if (atExit) { exitShrine(); return; }
-    if (seg && seg.id === 'shrine') scale.interact(roomActor.position);
+    if (seg && seg.id === 'shrine') {
+      if (prize.interact(roomActor.position)) {
+        cleared = true;
+        failMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; failT = 2.6;
+      } else scale.interact(roomActor.position);
+    }
     else if (seg && seg.id === 'r3') gates[2].gate.interact(roomActor.position);
   }
 }
@@ -237,7 +268,7 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  dungeon, roomScene, roomActor, scale, gates, planetScene,
+  dungeon, roomScene, roomActor, scale, gates, prize, planetScene,
   get cleared() { return cleared; },
   get mode() { return mode; },
   enterShrine, exitShrine,

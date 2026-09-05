@@ -111,7 +111,7 @@ export function buildDungeon(scene) {
       // 문틀 — 발광 띠. 어디가 다음 문인지 멀리서도 보인다.
       box(s.w + 0.4, 0.16, 0.2, gm, 0, oh + 0.08, s.from - 0.05);
       for (const sd of [-1, 1]) box(0.16, oh, 0.2, gm, sd * (s.w / 2 + 0.2), oh / 2, s.from - 0.05);
-      doors[s.door] = { mesh, rect: rects[rects.length - 1], opened: false, glow: gm };
+      doors[s.door] = { mesh, rect: rects[rects.length - 1], opened: false, glow: gm, color: s.glow };
     }
   }
 
@@ -139,11 +139,23 @@ export function buildDungeon(scene) {
     return true;
   };
 
+  // 사당 여섯 곳이 이 내부 하나를 함께 쓴다. 다음 사당에 들어갈 때 문을 도로 닫지
+  // 않으면 첫 사당을 깬 뒤로는 모든 사당이 열린 채로 시작한다 — 보상이 무의미해진다.
+  const resetDoors = () => {
+    for (const id in doors) {
+      const d = doors[id];
+      d.opened = false;
+      d.mesh.visible = true;
+      d.rect.open = false;
+      d.glow.color.set(d.color);
+    }
+  };
+
   // 이 z가 어느 구간인가. 부활 지점과 프롬프트에 쓴다.
   const segmentAt = (z) => {
     for (const r of rects) if (z <= r.z1 && z >= r.z0) return r;
     return null;
   };
 
-  return { rects, doors, openDoor, segmentAt, lights, LAYOUT };
+  return { rects, doors, openDoor, resetDoors, segmentAt, lights, LAYOUT };
 }
