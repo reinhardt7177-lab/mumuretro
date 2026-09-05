@@ -54,8 +54,8 @@ export class FreezeGate {
       parts.push(r);
       if (k < 2) parts.push(mk(zs[k * 2 + 2], bz[1], true));  // 디딤섬
       // 버티는 시간도 판마다 흔든다. 갈수록 짧아지는 건 그대로다.
-      return { rect: r, z0: bz[1], z1: bz[0], phase: 'water', t: 0,
-        solid: [range(4.4, 5.6), range(3.7, 4.7), range(3.0, 3.9)][k] };
+      const solid = [range(4.4, 5.6), range(3.7, 4.7), range(3.0, 3.9)][k];
+      return { rect: r, z0: bz[1], z1: bz[0], phase: 'water', t: 0, solid, base: solid };
     });
     parts.push(mk(seg.z0, zs[5], true));                      // 출구 발판
     dun.rects.splice(i0, 1, ...parts);
@@ -145,6 +145,9 @@ export class FreezeGate {
     return true;
   }
 
+  // 얼음이 더 빨리 녹는다. 같은 세 줄이지만 갈수록 급해진다.
+  setTier(t) { for (const b of this.bands) b.solid = b.base * (1 - t * 0.055); }
+
   solvedBy(actor) { return actor.position.z < this.zOut; }
   restart() {
     for (const b of this.bands) { b.phase = 'water'; b.t = 0; b.rect.open = false; b.mat.opacity = 0; }
@@ -208,7 +211,7 @@ export class SlideGate {
     actor.slip = on ? 1 : 0;                    // 이 방 안에서만 미끄럽다
     if (!on) return {};
     for (const h of this.holes) {
-      if (Math.hypot(p.x - h.x, p.z - h.z) < h.r * 0.72) {
+      if (Math.hypot(p.x - h.x, p.z - h.z) < h.r * 0.72 * (this.grow || 1)) {
         actor.slip = 0;
         return { fail: '구멍에 빠졌어요 — 미리 속도를 줄여요' };
       }
@@ -221,6 +224,9 @@ export class SlideGate {
     if (pos.z >= this.zIn) return '🧊 여기부터 미끄러워요 — 미리 멈춰야 해요';
     return '🧊 미끄러워요! 구멍을 피해요';
   }
+
+  // 구멍이 넓어진다. 미리 줄이지 않으면 빠진다.
+  setTier(t) { this.grow = 1 + t * 0.055; }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
   restart() {}

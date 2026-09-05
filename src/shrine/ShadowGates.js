@@ -52,6 +52,7 @@ export class ShadeGate {
     this.expose = 0;
     this.a = 0;
     this.speed = 0.42;
+    this.exposeMax = EXPOSE;
 
     const g = new THREE.Group();
     scene.add(g);
@@ -128,9 +129,9 @@ export class ShadeGate {
     const inRoom = p.z < this.safeIn && p.z > this.safeOut;
     const safe = !inRoom || this.inShadow(p.x, p.z, L);
     this.expose = safe ? Math.max(0, this.expose - dt * 2.2) : this.expose + dt;
-    this.eyeMat.opacity = Math.min(1, this.expose / EXPOSE) * 0.95;
+    this.eyeMat.opacity = Math.min(1, this.expose / this.exposeMax) * 0.95;
 
-    if (this.expose >= EXPOSE) {
+    if (this.expose >= this.exposeMax) {
       this.expose = 0;
       this.eyeMat.opacity = 0;
       return { fail: '빛에 들켰어요 — 그림자 안으로' };
@@ -143,6 +144,9 @@ export class ShadeGate {
     if (pos.z >= this.safeIn) return '🕯 그림자 안으로만 — 빛에 서면 들켜요';
     return this.expose > 0.1 ? '⚠ 들키는 중! 그림자로!' : '🕯 그림자를 따라가요';
   }
+
+  // 등불이 빨라지고 들키기까지의 여유가 짧아진다.
+  setTier(t) { this.speed = 0.42 * (1 + t * 0.12); this.exposeMax = EXPOSE - t * 0.055; }
 
   solvedBy(actor) { return actor.position.z < this.safeOut; }
   reset() { this.expose = 0; this.eyeMat.opacity = 0; }
@@ -411,7 +415,7 @@ export class SilhouetteGate {
     const s = this._size();
     this.shadow.scale.set(s, s, 1);
     if (this.solved) return;
-    const hit = Math.abs(s - this.holeW) < this.holeW * 0.09;
+    const hit = Math.abs(s - this.holeW) < this.holeW * (this.tol || 0.09);
     this.holeMat.opacity = hit ? 0.95 : 0.5;
     if (!hit) return;
     // 맞으면 손을 놓는다. 안 놓으면 물체를 든 채 다음 방까지 끌고 가고,
@@ -452,6 +456,9 @@ export class SilhouetteGate {
     if (this.held) return `${n} · ${gap} (E로 놓기)`;
     return this._near(pos) ? `E — 물체 밀기 (${n})` : `🔦 ${n} · ${gap}`;
   }
+
+  // 맞다고 인정하는 폭이 좁아진다. 눈대중이 아니라 눈금이 필요해진다.
+  setTier(t) { this.tol = 0.09 - t * 0.008; }
 
   solvedBy() { return this.solved; }
   reset() {}

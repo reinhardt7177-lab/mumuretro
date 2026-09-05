@@ -89,7 +89,7 @@ export class ShaftGate {
     const inRoom = p.z < this.zIn && p.z > this.zOut;
     if (inRoom) {
       this.t += dt;
-      if (this.t >= SPAWN) { this.t = 0; this._spawn(); }
+      if (this.t >= (this.spawn || SPAWN)) { this.t = 0; this._spawn(); }
     }
     let hit = false;
     for (const r of this.rocks) {
@@ -97,8 +97,9 @@ export class ShaftGate {
       r.t += dt;
       if (r.state === 'tell') {
         // 그림자가 커진다 = 바위가 가까워진다
-        r.shadow.scale.setScalar(0.4 + 0.6 * (r.t / TELL));
-        if (r.t >= TELL) {
+        const tl = this.tell || TELL;
+        r.shadow.scale.setScalar(0.4 + 0.6 * (r.t / tl));
+        if (r.t >= tl) {
           r.state = 'fall'; r.t = 0;
           r.mesh.visible = true;
           r.mesh.position.set(r.x, this.h, r.z);
@@ -121,9 +122,16 @@ export class ShaftGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    const soon = this.rocks.some((r) => r.state === 'tell' && r.t > TELL * 0.5);
+    const soon = this.rocks.some((r) => r.state === 'tell' && r.t > (this.tell || TELL) * 0.5);
     if (pos.z >= this.zIn) return '🪨 바닥에 그림자가 뜨면 그 자리로 바위가 떨어져요';
     return soon ? '⚠ 그림자를 피해요!' : '🪨 앞으로 — 그림자를 보면서';
+  }
+
+  // 낙석이 잦아지고 그림자 예고가 짧아진다. 다만 0.7초 밑으로는 안 내린다 —
+  // 예고가 반응 한계보다 짧으면 그건 어려운 게 아니라 부당한 것이다.
+  setTier(t) {
+    this.spawn = SPAWN * (1 - t * 0.07);
+    this.tell = Math.max(0.7, TELL - t * 0.05);
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }

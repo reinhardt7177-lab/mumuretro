@@ -120,6 +120,12 @@ const segOf = (id) => room.dungeon.rectOf(id);
 function enterShrine(shrine) {
   room = roomFor(shrine);
   lastSeg = null;
+  // 깬 사당 수가 곧 난이도다. 방을 짓는 시점이 아니라 **들어갈 때마다** 매긴다 —
+  // 방은 한 번 짓고 캐시하므로 짓는 시점에 매기면 첫 방문의 난이도로 굳는다.
+  // 여섯을 다 깨면 clearedCount가 6이 되는데, 그대로 쓰면 별 문자열이
+  // repeat(-1)로 터진다. 단계는 0~5로 묶는다.
+  const tier = Math.min(5, shrines.clearedCount());
+  room.applyTier(tier);
   // 이미 깬 사당은 그대로 둔다 — 지나온 곳을 다시 잠그지 않는다.
   // 아직 못 깬 사당만 처음으로 되돌린다(중간에 나갔다 온 경우).
   if (!shrine.cleared) room.restart();
@@ -137,8 +143,8 @@ function enterShrine(shrine) {
   roomActor.setAt(0, ENTRY_Z, -1);
   engine.setScene(room.scene);
   // 들어서면 어디에 왔는지 3초간 알린다. 사당마다 다른 곳이라는 게 첫 정보여야 한다.
-  noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit}`;
-  noteT = 3.0;
+  noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 난이도 ${'★'.repeat(tier + 1)}${'☆'.repeat(5 - tier)} (${tier + 1}/6)`;
+  noteT = 3.4;
   setPrompt(null);
 }
 

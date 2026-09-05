@@ -133,6 +133,13 @@ export function buildRoom(spec) {
     spec, scene, dungeon, gates, final, prize, goals,
     obstacles: final.obstacles || [],
     shrineSeg,
+    // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
+    // 어느 순서로 돌든 점점 어려워지고, 같은 사당을 다시 와도 그동안 실력이
+    // 붙었으면 그만큼 올라와 있다. 몸으로 푸는 관문만 반응한다.
+    applyTier(t) {
+      for (const g of gates) if (g.gate.setTier) g.gate.setTier(t);
+      if (final.setTier) final.setTier(t);
+    },
     // 같은 사당을 다시 도전할 때. 다른 사당으로 갈 때는 부를 일이 없다 — 씬이 다르다.
     restart() {
       // ★ restart만 부르고 있었다. PlateGate처럼 reset만 가진 관문은 되돌아가지 않아

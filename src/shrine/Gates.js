@@ -36,6 +36,11 @@ const T_START = 3.0;      // 문이 닫히고 전부 검정. 이 동안 시계�
 const T_READY = 1.0;      // 검정. 다음 라운드 준비
 const T_JUDGE = 0.9;      // 빨강이 가라앉고 판정이 난다
 const SURVIVE = 20;       // 이만큼 발판 위에서 버티면 열린다
+// ★ 난이도는 **사당 번호가 아니라 지금까지 깬 개수**로 오른다(tier 0~5).
+//   아이가 어느 순서로 돌든 점점 어려워져야 하고, 같은 사당을 다시 와도
+//   그동안 실력이 붙었으면 그만큼 올라와 있어야 한다.
+//   tier를 쓰는 건 몸으로 푸는 관문뿐이다 — 생각해서 푸는 방을 재촉하면
+//   그건 어려워지는 게 아니라 조급해지는 것이다.
 const ROPE_Y = 0.55;      // 줄 높이. 점프 최고점 0.9u라 여유를 두고 넘긴다
 const ROPE_FROM = 3;      // 이 라운드부터 줄이 돈다
 
@@ -57,7 +62,9 @@ export class TileGate {
     this.matIdle = [glowMat(0x39434f), glowMat(0x232a33)];
 
     this.phase = 'ready'; this.t = T_READY; this.round = 0;
-    this.left = SURVIVE; this.cleared = false; this.locked = false;
+    this.survive = SURVIVE;
+    this.showBase = 2.6;
+    this.left = this.survive; this.cleared = false; this.locked = false;
     this.fall = 0;                       // >0이면 떨어지는 중
     this.safe = new Set();
 
@@ -218,7 +225,7 @@ export class TileGate {
         this._roll();
         this.phase = 'show';
         // 보여 주는 시간이 곧 난이도다. 2.6초에서 1.2초까지 줄어든다.
-        this.t = Math.max(1.2, 2.6 - this.round * 0.16);
+        this.t = Math.max(1.0, this.showBase - this.round * 0.16);
         this._paint('show');
       } else if (this.phase === 'show') {
         this.phase = 'judge'; this.t = T_JUDGE;
@@ -265,10 +272,17 @@ export class TileGate {
 
   // 실패해도 방에서 쫓아내지 않는다. 시계만 되돌린다.
   reset() {
-    this.left = SURVIVE; this.round = 0;
+    this.left = this.survive; this.round = 0;
     this.phase = 'ready'; this.t = T_READY;
     this.ropeA = 0; this.rope.visible = false;
     this._paint('idle');
+  }
+
+  // 깬 사당이 늘수록 오래 버텨야 하고, 색을 보여 주는 시간이 짧아진다.
+  setTier(t) {
+    this.survive = SURVIVE + t * 2.5;
+    this.showBase = 2.6 - t * 0.13;
+    if (!this.locked) this.left = this.survive;
   }
 
   solvedBy() { return this.cleared; }
@@ -335,10 +349,12 @@ export class LaserGate {
         d.position.set(seg.x1 - 0.35, 2.9, mid - 0.3 + k * 0.3);
         g.add(d);
       }
-      return { ...sp, i, mesh: m, mid, amp, z0, z1, t: i * 1.1 };
+      return { ...sp, base: sp.speed, i, mesh: m, mid, amp, z0, z1, t: i * 1.1 };
     });
     this.zOut = zBot;
   }
+
+  setTier(t) { for (const b of this.beams) b.speed = b.base * (1 + t * 0.11); }
 
   update(dt, actor) {
     const p = actor.position;
@@ -389,24 +405,32 @@ const PLATE_WEIGHTS = [1, 2, 3, 4, 5];
 //   뽑은 뒤 반드시 풀리는지 전수로 확인한다 — 못 풀 판을 한 번이라도 내주면
 //   아이는 게임이 고장났다고 생각한다.
 const PW = [1, 2, 3, 4, 5];
-// 상자를 두 판에 나눠 담아 (a, b)를 만들 수 있나. 3^5=243가지를 전수로 본다.
-function plateOK(a, b) {
+// ★ 처음엔 무작위로 (a,b)를 뽑고 풀리는지 검사해 다시 뽑는 식이었다.
+//   난이도가 오르면 목표 합이 상자 총합(15)을 넘어서 **뽑을 수 있는 값이
+//   아예 없어졌고**, 그러면 재시도 한도에 걸려 못 푸는 주문을 그대로 내놨다.
+//   그래서 뽑기 전에 **풀리는 짝을 전부 구해 놓고 그 안에서만 고른다.**
+//   "못 풀 판은 한 판도 내주지 않는다"를 검사가 아니라 구조로 보장한다.
+const SOLVABLE = (() => {
+  const set = new Set();
   for (let m = 0; m < 243; m++) {
     let k = m, A = 0, B = 0;
     for (let i = 0; i < 5; i++) { const t = k % 3; k = (k / 3) | 0;
       if (t === 0) A += PW[i]; else if (t === 1) B += PW[i]; }
-    if (A === a && B === b) return true;
+    if (A >= 2 && B >= 2) set.add(A + ',' + B);
   }
-  return false;
-}
-// 주문 셋 — 합이 갈수록 커지게 뽑는다. 마지막엔 상자를 거의 다 써야 한다.
-function makeRounds() {
-  const band = [[6, 9], [10, 12], [13, 15]];     // 라운드별 두 판 합의 범위
-  return band.map(([lo, hi]) => until(() => {
-    const tot = lo + randInt(hi - lo + 1);
-    const a = 2 + randInt(tot - 3);
-    return [a, tot - a];
-  }, ([a, b]) => a >= 2 && b >= 2 && plateOK(a, b)));
+  return [...set].map((s) => s.split(',').map(Number));
+})();
+
+// 주문 셋 — 합이 갈수록 커진다. 난이도가 올라도 마지막 밴드는 15를 못 넘으므로
+// 앞 두 밴드만 밀어 올리고, 서로 겹치지 않게 위를 눌러 둔다.
+function makeRounds(tier = 0) {
+  const t = Math.max(0, Math.min(5, tier));
+  const bands = [[6 + t * 0.8, 9 + t * 0.6], [10 + t * 0.5, 12 + t * 0.4], [13, 15]];
+  return bands.map(([lo, hi]) => {
+    const in_ = SOLVABLE.filter(([a, b]) => a + b >= lo && a + b <= Math.min(15, hi));
+    const pool = in_.length ? in_ : SOLVABLE;
+    return pool[randInt(pool.length)];
+  });
 }
 const pboxSize = (w) => 0.44 + w * 0.06;
 
@@ -429,6 +453,7 @@ export class PlateGate {
 
     // 압력판 둘. 필요 무게를 점으로 새긴다 — 숫자는 3D에서 각도에 따라 안 읽힌다.
     this.round = 0;
+    this.tier = 0;
     this.rounds = makeRounds();
     this.plates = [];
     for (const [i, spec] of [[0, { need: this.rounds[0][0], x: -3.2 }],
@@ -607,11 +632,15 @@ export class PlateGate {
     return {};
   }
 
+  // 깬 사당이 늘수록 주문 숫자가 커진다 — 상자를 더 많이 조합해야 한다.
+  // 시간을 죄지 않는다. 생각하는 방을 재촉하면 조급해질 뿐 어려워지지 않는다.
+  setTier(t) { this.tier = t; }
+
   solvedBy() { return this.round >= this.rounds.length; }
 
   reset() {
     this.round = 0;
-    this.rounds = makeRounds();          // 다시 도전하면 주문도 새로 뽑는다
+    this.rounds = makeRounds(this.tier);   // 다시 도전하면 주문도 새로 뽑는다
     for (const q of this.pips) q.material.color.set(0x3a3020);
     for (const p of this.plates) { p.boxes.length = 0; }
     this.plates.forEach((p, i) => {

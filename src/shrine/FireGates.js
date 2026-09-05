@@ -32,6 +32,8 @@ export class QuakeGate {
     const th = opts.theme;
     this.phase = 'calm'; this.t = 0;
     this.calm = range(3.2, 4.8);      // 고요한 시간도 판마다 다르다
+    this.calmBase = this.calm;
+    this.main = MAIN;
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
@@ -95,7 +97,7 @@ export class QuakeGate {
         this.phase = 'calm'; this.t = 0; this.warnMat.opacity = 0;
         return { fail: '지진에 휩쓸렸어요 — 예진이 오면 기둥으로' };
       }
-      if (this.t >= MAIN) { this.phase = 'calm'; this.t = 0; }
+      if (this.t >= this.main) { this.phase = 'calm'; this.t = 0; }
     }
     for (const q of this.pillars) {
       q.ring.material.color.set(this.phase === 'calm' ? 0x9c2f1c : 0xffd27a);
@@ -109,6 +111,9 @@ export class QuakeGate {
     if (this.phase === 'fore') return '⚠ 예진이에요! 기둥 곁으로!';
     return this._safe(pos) ? '🪨 기둥을 붙잡았어요' : '⚠ 흔들려요! 기둥으로!';
   }
+
+  // 고요가 짧아지고 본진이 길어진다. 기둥 사이를 뛸 시간이 줄어든다.
+  setTier(t) { this.calm = this.calmBase * (1 - t * 0.07); this.main = MAIN * (1 + t * 0.06); }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
   restart() { this.phase = 'calm'; this.t = 0; this.warnMat.opacity = 0; }
@@ -183,10 +188,11 @@ export class HexLavaGate {
     }
     for (const t of this.tiles) {
       if (t.state === 'sinking') {
+        const sk = this.sink || SINK_T;
         t.t += dt;
-        t.mesh.position.y = t.baseY - (t.t / SINK_T) * 0.55;
+        t.mesh.position.y = t.baseY - (t.t / sk) * 0.55;
         t.mesh.material = this.lavaMat;
-        if (t.t >= SINK_T) { t.state = 'lava'; t.mesh.visible = false; }
+        if (t.t >= sk) { t.state = 'lava'; t.mesh.visible = false; }
       }
     }
     if (inRoom && (!here || here.state === 'lava')) {
@@ -200,6 +206,9 @@ export class HexLavaGate {
     if (pos.z >= this.zIn) return '🔥 밟고 지나온 칸은 가라앉아요 — 길을 미리 정해요';
     return '🔥 되돌아갈 수 없어요!';
   }
+
+  // 밟은 칸이 더 빨리 가라앉는다.
+  setTier(t) { this.sink = SINK_T * (1 - t * 0.06); }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
   restart() {
@@ -254,7 +263,7 @@ export class GeyserGate {
       jet.position.set(x, 2.5, z);
       jet.visible = false;
       g.add(jet);
-      this.vents.push({ x, z, per, t: ph, ring, ringMat, jet, r: 1.7 });
+      this.vents.push({ x, z, per, base: per, t: ph, ring, ringMat, jet, r: 1.7 });
     }
   }
 
@@ -265,7 +274,7 @@ export class GeyserGate {
     for (const v of this.vents) {
       v.t += dt;
       if (v.t >= v.per) v.t -= v.per;
-      const erupting = v.t < ERUPT;
+      const erupting = v.t < (this.erupt || ERUPT);
       v.jet.visible = erupting;
       const left = erupting ? 0 : (v.per - v.t);
       v.ringMat.color.set(erupting ? 0xe8664a : (left < 1.2 ? 0xf0a860 : 0x9c2f1c));
@@ -281,9 +290,15 @@ export class GeyserGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    const soon = this.vents.filter((v) => v.per - v.t < 1.2 && v.t >= ERUPT).length;
+    const soon = this.vents.filter((v) => v.per - v.t < 1.2 && v.t >= (this.erupt || ERUPT)).length;
     if (pos.z >= this.zIn) return '💨 고리가 차오르면 뿜어요 — 주기가 셋 다 달라요';
     return soon ? '💨 곧 뿜어요!' : '💨 지금이에요 — 건너요';
+  }
+
+  // 주기가 짧아지고 뿜는 시간이 길어진다 — 잠잠한 틈이 줄어든다.
+  setTier(t) {
+    for (const v of this.vents) v.per = v.base * (1 - t * 0.05);
+    this.erupt = ERUPT * (1 + t * 0.06);
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
