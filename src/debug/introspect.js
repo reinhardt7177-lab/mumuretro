@@ -473,8 +473,32 @@ export function installDebug(ctx) {
         + ` -> ${reachOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── J 표면에 세운 것이 하늘을 보는가 ──────────────────────────────────
+    // ★ planet.frameAt이 makeBasis(e, up, n)으로 기저를 만들었는데 e × up = −n이라
+    //   **왼손 기저**였다. 행렬식이 −1이면 그건 회전이 아니라 반사고,
+    //   setFromRotationMatrix에 넣으면 엉뚱한 회전이 나온다. 그래서 사당 여섯이
+    //   46°~110°씩 기울어 서 있었고 내림판은 아예 옆으로 누워 있었다.
+    //   숫자로 재면 한 줄인데 눈으로는 "행성이 둥그니까 그런가 보다"로 넘어간다.
+    let uprightOK = true;
+    const tilt = [];
+    {
+      const q = new THREE.Quaternion(), y = new THREE.Vector3(), up = new THREE.Vector3();
+      const chk = (name, grp, dir) => {
+        grp.getWorldQuaternion(q);
+        y.set(0, 1, 0).applyQuaternion(q);
+        up.copy(dir).normalize();
+        const deg = y.angleTo(up) * 180 / Math.PI;
+        if (deg > 1) { uprightOK = false; tilt.push(`${name}=${deg.toFixed(1)}°`); }
+      };
+      if (ctx.shrines) ctx.shrines.shrines.forEach((sh, i) => chk(`사당${i}`, sh.group, sh.dir));
+      if (ctx.landing) chk('내림판', ctx.landing.group, ctx.landing.dir);
+      log.push('J 지면 구조물이 하늘을 봄'
+        + (uprightOK ? ' 전부(<1°)' : ` 기울어짐 ${tilt.join(' ')}`)
+        + ` -> ${uprightOK ? 'PASS' : 'FAIL'}`);
+    }
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK && reachOK;
+      && walkOK && camOK && hangOK && reachOK && uprightOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

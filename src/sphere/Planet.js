@@ -185,7 +185,15 @@ export class Planet {
     const ref = Math.abs(up.y) > 0.99 ? _X : _Y;
     const e = _t2.crossVectors(ref, up).normalize();
     const n = _t3.crossVectors(up, e).normalize();
-    const m = new THREE.Matrix4().makeBasis(e, up, n);
+    // ★ makeBasis(x, y, z)는 **오른손 기저**를 받는다(x × y = z).
+    //   여기 e·up·n은 e = ref × up, n = up × e인데, e × up = −n이다.
+    //   즉 (e, up, n)은 왼손 기저이고 행렬식이 −1 — 회전이 아니라 **반사**다.
+    //   setFromRotationMatrix에 반사 행렬을 넣으면 엉뚱한 회전이 나온다.
+    //   실제로 이걸로 세운 사당 여섯이 46°~110°씩 기울어 서 있었고, 내림판은
+    //   아예 옆으로 누워 있었다(실사용 스크린샷에서 확인).
+    //   z축을 e × up으로 잡으면 행렬식이 +1이 되고 로컬 +Y가 정확히 위를 본다.
+    const zAx = new THREE.Vector3().crossVectors(e, up).normalize();
+    const m = new THREE.Matrix4().makeBasis(e, up, zAx);
     const q = new THREE.Quaternion().setFromRotationMatrix(m);
     q.multiply(new THREE.Quaternion().setFromAxisAngle(_Y, rotDeg * DEG));
     return { position: this.surfaceAt(up), quaternion: q };

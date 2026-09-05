@@ -28,6 +28,7 @@ import { buildNotebook } from './ui/Notebook.js';
 import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
+import { buildFlash } from './ui/Flash.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -56,7 +57,12 @@ const SHRINE_CLEAR = 5.6 / R;                     // 기단(3.4u) + 여유
 // 내림판도 같은 규칙이다. 포탈에서 내렸는데 나무 한 그루가 판을 뚫고 서 있으면
 // 그건 첫 화면부터 고장으로 읽힌다 — 나중에 지우는 것보다 처음부터 안 심는 게 싸다.
 const landingDir = player.position.clone().normalize();
-const LANDING_CLEAR = 4.2 / R;
+// ★ 처음엔 4.2u였다. 판 위에는 나무가 없었지만 **카메라가 6.5u 뒤에 선다** —
+//   내려서는 첫 화면이 침엽수 **안쪽**이었다(실사용 확인). 이 별에서 처음 보는
+//   장면인데 초록 삼각형 한 장이 화면을 덮고 있었다.
+//   판 반경 + 카메라 거리 + 나무 반경만큼은 비워야 한다. 겸사겸사 멀리서도
+//   "저기가 내 자리"로 읽히는 **빈터**가 된다.
+const LANDING_CLEAR = 12.0 / R;
 const nearShrine = (dir) => dir.angleTo(landingDir) < LANDING_CLEAR
   || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR);
 
@@ -316,6 +322,10 @@ function landOnPlanet() {
   engine._camPlaced = false;
   mapPage.setHas(true); refreshHint();
   setPrompt(null);
+  // 삼 년을 붙든 장치가 처음 작동한 순간이다. 예전엔 씬만 갈아 끼웠다 —
+  // 화면에서는 아무 일도 안 일어났다. 한 번뿐인 장면은 한 번뿐이게 보여야 한다.
+  flash.play('#e8f6ff', 720);
+  landing.arrive();
   dialogue.play('op-arrive', ...OPENING.arrive);
 }
 
@@ -355,6 +365,7 @@ function returnToLab() {
   roomActor.setAt(lab.CIRCLE.x, lab.CIRCLE.z + 2.6, 1);   // 포탈에서 방을 보고 선다
   engine.setScene(lab.scene);
   setPrompt(null);
+  flash.play('#e8f6ff', 560);
   dialogue.play('op-home', ...OPENING.home);
 }
 
@@ -521,6 +532,7 @@ touch.onShow(refreshHint);
 refreshHint();
 
 // 지하 연구실과, 별 위의 같은 자리. 이 둘이 포탈의 양 끝이다.
+const flash = buildFlash();
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
@@ -541,7 +553,7 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook,
+  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash,
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
   get cleared() { return cleared; },
@@ -550,7 +562,7 @@ const game = {
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
-  roomActor, roomFor, withPlanetMode, lab });
+  roomActor, roomFor, withPlanetMode, lab, landing });
 
 // ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────
 // 아이를 낯선 행성 위에 아무 말 없이 떨어뜨리지 않는다(Lab.js 머리말).
