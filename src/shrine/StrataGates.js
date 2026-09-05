@@ -77,6 +77,17 @@ export class StrataOrderGate {
       return { ...f, mesh: m, home: m.position.clone(), x, z, slot: null };
     });
     this.solved = false;
+    this.aim = 0;                                    // 지금 겨냥한 층(0이 맨 아래)
+    this._paintAim();
+  }
+
+  // 겨냥한 층을 밝혀 준다. 어디에 꽂힐지 안 보이면 고르는 게 아니라 찍는 것이다.
+  _paintAim() {
+    for (let i = 0; i < this.slots.length; i++) {
+      const s = this.slots[i];
+      s.holeMat.color.set(s.got ? (s.got.age === s.age ? 0xffd27a : 0xe0736b)
+        : (i === this.aim ? 0xd9c9ff : 0x6b52a0));
+    }
   }
 
   _near(pos) {
@@ -94,15 +105,19 @@ export class StrataOrderGate {
     return best;
   }
 
-  // 벽 앞에 서면 어느 칸을 만질지는 **손에 든 화석이 정한다.**
-  // 높이로 고르게 하면 점프를 시켜야 하고, 그건 이 방이 가르치려는 것과 무관하다.
-  _slotFor(f) { return this.slots.find((s) => s.age === f.age); }
+  // ★ 예전엔 손에 든 화석이 갈 칸을 **코드가 정했다**(s.age === f.age).
+  //   그래서 아이는 틀릴 수가 없었다 — 맨 위 칸 앞에서 삼엽충을 꽂아도
+  //   맨 아래로 들어갔다. 단원의 핵심을 가르치는 방이 오답을 허용하지 않으면
+  //   그건 문제가 아니라 버튼이다.
+  //   이제 **어느 층에 꽂을지는 아이가 고른다.** 벽 앞에서 E를 누를 때마다
+  //   겨냥한 층이 한 칸씩 올라가고(맨 위 다음은 맨 아래로 돈다), 겨냥한 층에 꽂힌다.
+  //   높이로 고르게 하면 점프를 시켜야 하는데, 그건 이 방이 가르치려는 것과 무관하다.
+  _slotFor() { return this.slots[this.aim]; }
+  _aimNext() { this.aim = (this.aim + 1) % this.slots.length; }
 
   _check() {
     this.solved = this.fossils.every((f) => f.slot && f.slot.age === f.age);
-    for (const s of this.slots) {
-      s.holeMat.color.set(s.got ? (s.got.age === s.age ? 0xffd27a : 0xe0736b) : 0x6b52a0);
-    }
+    this._paintAim();
   }
 
   update(dt, actor) {
@@ -117,19 +132,21 @@ export class StrataOrderGate {
   prompt(pos) {
     if (this.solved) return null;
     const n = this._near(pos);
+    const lv = this.aim + 1;
     if (this.held) {
       if (n && n.kind === 'slot') {
-        const s = this._slotFor(this.held);
-        return s.got ? '이미 찬 칸이에요' : `E — ${this.held.name}을 ${5 - s.age}번째 층에 꽂기`;
+        const s = this._slotFor();
+        return s.got ? `${lv}층은 이미 찼어요 — E로 다음 층 겨냥`
+          : `E — ${this.held.name}을 아래서 ${lv}층에 꽂기`;
       }
       return `${this.held.name}을 들었어요 — 지층 벽으로`;
     }
-    if (n && n.kind === 'fossil') return `E — ${n.f.name} 들기 (오래된 정도 ${n.f.age})`;
+    if (n && n.kind === 'fossil') return `E — ${n.f.name} 들기`;
     if (n && n.kind === 'slot') {
       const filled = this.slots.filter((s) => s.got).length;
-      return filled ? `E — 되빼기 (${filled}/4 꽂힘)` : '🦴 아래일수록 오래된 것이에요';
+      return filled ? `E — ${lv}층에서 되빼기 (${filled}/4 꽂힘)` : `E — 겨냥 바꾸기 (지금 ${lv}층)`;
     }
-    return '🦴 화석을 지층 벽에 꽂아요 — 아래일수록 오래된 것';
+    return '🦴 아래일수록 오래된 것이에요';
   }
 
   interact(pos) {
@@ -137,8 +154,8 @@ export class StrataOrderGate {
     if (!n) return false;
     if (this.held) {
       if (n.kind !== 'slot') return false;
-      const s = this._slotFor(this.held);
-      if (s.got) return false;
+      const s = this._slotFor();
+      if (s.got) { this._aimNext(); this._paintAim(); return true; }   // 찬 칸이면 겨냥만 옮긴다
       s.got = this.held;
       this.held.slot = s;
       this.held.mesh.position.set(s.x, s.y, s.z - 0.2);
@@ -147,20 +164,24 @@ export class StrataOrderGate {
       return true;
     }
     if (n.kind === 'fossil') { this.held = n.f; return true; }
-    // 벽에서 되빼기 — 가장 위에 꽂힌 것부터
-    const filled = this.slots.filter((s) => s.got);
-    if (!filled.length) return false;
-    const s = filled[filled.length - 1];
-    this.held = s.got;
-    s.got.slot = null;
-    s.got = null;
-    this._check();
+    // 빈손으로 벽 앞: 겨냥한 층에 꽂힌 게 있으면 빼고, 없으면 겨냥을 옮긴다
+    const s = this._slotFor();
+    if (s.got) {
+      this.held = s.got;
+      s.got.slot = null;
+      s.got = null;
+      this._check();
+      return true;
+    }
+    this._aimNext();
+    this._paintAim();
     return true;
   }
 
   solvedBy() { return this.solved; }
   restart() {
     this.held = null;
+    this.aim = 0;
     for (const s of this.slots) s.got = null;
     for (const f of this.fossils) { f.slot = null; f.mesh.position.copy(f.home); }
     this._check();

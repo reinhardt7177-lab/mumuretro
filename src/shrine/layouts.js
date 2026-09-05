@@ -27,7 +27,8 @@ function spine({ rooms, corridor = 4, entryTo, w: cw = 3, ch = 3.2 }) {
   const out = [{ id: 'entry', kind: 'corridor', w: cw, from: 11.4, to: entryTo, h: ch, open: true }];
   let z = entryTo;
   rooms.forEach((r, i) => {
-    out.push({ id: r.id, kind: 'room', name: r.name, w: r.w, from: z, to: z - r.len, h: r.h, gate: r.gate });
+    out.push({ id: r.id, kind: 'room', name: r.name, w: r.w, from: z, to: z - r.len, h: r.h,
+      gate: r.gate, goal: r.goal });
     z -= r.len;
     const last = i === rooms.length - 1;
     const cl = last ? corridor : (r.corridor || corridor);
@@ -48,10 +49,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '빛 타일', w: 10, len: 14, h: 5.5, gate: 'tile' },
-        { id: 'r2', name: '레이저 회랑', w: 8, len: 16, h: 5.5, gate: 'laser' },
-        { id: 'r3', name: '무게 압력판', w: 12, len: 10, h: 5.5, gate: 'plate' },
-        { id: 'shrine', name: '신전', w: 18, len: 16, h: 9 },
+        { id: 'r1', name: '빛 타일', w: 10, len: 14, h: 5.5, gate: 'tile',
+            goal: '초록 발판만 밟고 20초를 버텨요. 빨강은 가라앉아요.' },
+        { id: 'r2', name: '레이저 회랑', w: 8, len: 16, h: 5.5, gate: 'laser',
+            goal: '줄이 다가오면 Space로 뛰어넘어요.' },
+        { id: 'r3', name: '무게 압력판', w: 12, len: 10, h: 5.5, gate: 'plate',
+            goal: '왼쪽 판에 5, 오른쪽 판에 3을 만들어요.' },
+        { id: 'shrine', name: '신전', w: 18, len: 16, h: 9,
+            goal: '왼쪽 3kg이 2칸에 있어요. 오른쪽으로 수평을 맞춰요.' },
       ],
     }),
     final: 'scale',
@@ -67,10 +72,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 5.0, corridor: 6, ch: 3.4,
       rooms: [
-        { id: 'r1', name: '그림자 밟기', w: 9, len: 16, h: 6.0, gate: 'shade' },
-        { id: 'r2', name: '거울 세 장', w: 9, len: 14, h: 6.0, gate: 'mirror' },
-        { id: 'r3', name: '그림자 크기', w: 9, len: 12, h: 6.0, gate: 'silhouette' },
-        { id: 'shrine', name: '신전', w: 16, len: 16, h: 8 },
+        { id: 'r1', name: '그림자 밟기', w: 9, len: 16, h: 6.0, gate: 'shade',
+            goal: '빛에 닿으면 들켜요. 기둥 그림자만 밟고 건너요.' },
+        { id: 'r2', name: '거울 세 장', w: 9, len: 14, h: 6.0, gate: 'mirror',
+            goal: '거울을 돌려 빛을 표적에 꽂아요. 앞 거울부터.' },
+        { id: 'r3', name: '그림자 크기', w: 9, len: 12, h: 6.0, gate: 'silhouette',
+            goal: '물체를 밀어 그림자를 구멍 크기에 맞춰요.' },
+        { id: 'shrine', name: '신전', w: 16, len: 16, h: 8,
+            goal: '손잡이 둘로 신의 그림자를 바닥 자리에 얹어요.' },
       ],
     }),
     final: 'mirrorGod',
@@ -84,10 +93,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 5.0, gate: 'sieve' },
-        { id: 'r2', name: '자석 발판', w: 12, len: 12, h: 5.0, gate: 'magnet' },
-        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 5.0, gate: 'evaporate' },
-        { id: 'shrine', name: '신전', w: 16, len: 16, h: 6.5 },
+        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 5.0, gate: 'sieve',
+            goal: '주문한 알갱이만 남기는 체를 골라 틀에 끼워요.' },
+        { id: 'r2', name: '자석 발판', w: 12, len: 12, h: 5.0, gate: 'magnet',
+            goal: '자석을 대 보고 붙는 것과 안 붙는 것을 나눠 담아요.' },
+        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 5.0, gate: 'evaporate',
+            goal: '소금만 남겨요. 자석·거름망·화로를 어떤 순서로?' },
+        { id: 'shrine', name: '신전', w: 16, len: 16, h: 6.5,
+            goal: '섞인 것마다 알맞은 도구를 짝지어요.' },
       ],
     }),
     final: 'siftGod',
@@ -100,10 +113,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '얼려서 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze' },
-        { id: 'r2', name: '미끄러운 바닥', w: 10, len: 14, h: 7.0, gate: 'slide' },
-        { id: 'r3', name: '수증기 승강기', w: 10, len: 12, h: 7.0, gate: 'steam' },
-        { id: 'shrine', name: '신전', w: 18, len: 18, h: 10 },
+        { id: 'r1', name: '얼려서 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze',
+            goal: '물은 못 건너요. 얼려서 건너되 녹기 전에.' },
+        { id: 'r2', name: '미끄러운 바닥', w: 10, len: 14, h: 7.0, gate: 'slide',
+            goal: '얼음 위에선 안 멈춰요. 미리 줄이고 구멍을 피해요.' },
+        { id: 'r3', name: '수증기 승강기', w: 10, len: 12, h: 7.0, gate: 'steam',
+            goal: '온도를 바꿔 밸브 셋이 원하는 모습을 채워요.' },
+        { id: 'shrine', name: '신전', w: 18, len: 18, h: 10,
+            goal: '신이 표지와 같은 모습일 때 제단을 눌러요. 세 번.' },
       ],
     }),
     final: 'waterGod',
@@ -116,10 +133,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '예진', w: 11, len: 15, h: 6.5, gate: 'quake' },
-        { id: 'r2', name: '용암 육각형', w: 9, len: 12, h: 6.5, gate: 'hexlava' },
-        { id: 'r3', name: '간헐천', w: 13, len: 14, h: 6.5, gate: 'geyser' },
-        { id: 'shrine', name: '신전', w: 18, len: 18, h: 9 },
+        { id: 'r1', name: '예진', w: 11, len: 15, h: 6.5, gate: 'quake',
+            goal: '예진이 오면 기둥 곁으로. 본진에 기둥 밖이면 휩쓸려요.' },
+        { id: 'r2', name: '용암 육각형', w: 9, len: 12, h: 6.5, gate: 'hexlava',
+            goal: '밟은 칸은 가라앉아요. 갈 길을 미리 정해요.' },
+        { id: 'r3', name: '간헐천', w: 13, len: 14, h: 6.5, gate: 'geyser',
+            goal: '고리가 차오르면 뿜어요. 주기가 셋 다 달라요.' },
+        { id: 'shrine', name: '신전', w: 18, len: 18, h: 9,
+            goal: '수로를 돌려 신에서 배수구까지 용암 길을 이어요.' },
       ],
     }),
     final: 'fireGod',
@@ -134,10 +155,14 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0, corridor: 6,
       rooms: [
-        { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder' },
-        { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft' },
-        { id: 'r3', name: '다섯 색의 문', w: 12, len: 14, h: 6.0, gate: 'fiveDoors' },
-        { id: 'shrine', name: '신전', w: 20, len: 22, h: 20 },
+        { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder',
+            goal: '화석을 지층에 꽂아요. 아래일수록 오래된 것이에요.' },
+        { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft',
+            goal: '바닥에 그림자가 뜨면 그 자리로 바위가 떨어져요.' },
+        { id: 'r3', name: '다섯 색의 문', w: 12, len: 14, h: 6.0, gate: 'fiveDoors',
+            goal: '표지가 가리키는 사당의 색으로 손잡이를 맞춰요.' },
+        { id: 'shrine', name: '신전', w: 20, len: 22, h: 20,
+            goal: '구슬 다섯을 제단에 바쳐요.' },
       ],
     }),
     final: 'grand',

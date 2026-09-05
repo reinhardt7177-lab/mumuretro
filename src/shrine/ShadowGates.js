@@ -321,6 +321,10 @@ export class MirrorGate {
 // ══════════════════════════════════════════════════════════════════════════
 // 관문 3 — 그림자 크기
 //
+// ★ 처음엔 구멍이 하나였다. 물체를 한 번 밀면 끝이라 E 두 번짜리 방이었다.
+//   **구멍이 세 번 바뀐다.** 큰 구멍 → 작은 구멍 → 중간 구멍 순서라
+//   "가까이 = 크게"를 한 번 알아낸 뒤에도 세 번을 다시 써야 한다.
+//
 // 문에 구멍이 뚫려 있고, 물체의 그림자를 그 구멍에 꼭 맞춰야 한다.
 // 등불에 **가까이** 놓으면 그림자가 커지고 멀리 놓으면 작아진다 —
 // 4-2 단원에서 아이가 가장 자주 틀리는 지점이라 이 방 하나를 통째로 준다.
@@ -362,14 +366,25 @@ export class SilhouetteGate {
 
     // 맞춰야 할 구멍 — **답을 먼저 정하고** 거기서 구멍 크기를 역산한다.
     // 크기를 손으로 찍으면 풀 수 없는 값이 나온다.
-    this.answerZ = this.lampZ - 6.4;
+    // 답을 먼저 정하고 구멍 크기를 역산한다. 세 번 다.
+    this.answers = [this.lampZ - 6.4, this.lampZ - 3.2, this.lampZ - 8.6];
+    this.round = 0;
     const D = this.lampZ - this.wallZ;
-    this.holeW = this.objSize * D / (this.lampZ - this.answerZ);
+    this._holeAt = (z) => this.objSize * D / (this.lampZ - z);
+    this.holeW = this._holeAt(this.answers[0]);
 
     this.holeMat = glowMat(th.glow, { transparent: true, opacity: 0.5, side: THREE.DoubleSide });
-    this.hole = new THREE.Mesh(new THREE.PlaneGeometry(this.holeW, this.holeW), this.holeMat);
+    this.hole = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.holeMat);
+    this.hole.scale.set(this.holeW, this.holeW, 1);
     this.hole.position.set(cx, 1.5, this.wallZ + 0.06);
     g.add(this.hole);
+    // 몇 번 남았는지 — 세 번이라는 걸 처음부터 알려 준다
+    this.pips = [0, 1, 2].map((i) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.08), glowMat(0x3a3730));
+      m.position.set(cx - 0.2 + i * 0.2, 2.9, this.wallZ + 0.1);
+      g.add(m);
+      return m;
+    });
 
     // 그림자 — 벽에 맺힌다. 크기가 실시간으로 바뀐다.
     this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), flatMat(0x000000, 0.82));
@@ -386,11 +401,19 @@ export class SilhouetteGate {
   _resize() {
     const s = this._size();
     this.shadow.scale.set(s, s, 1);
-    this.solved = Math.abs(s - this.holeW) < this.holeW * 0.09;
-    this.holeMat.opacity = this.solved ? 0.95 : 0.5;
+    if (this.solved) return;
+    const hit = Math.abs(s - this.holeW) < this.holeW * 0.09;
+    this.holeMat.opacity = hit ? 0.95 : 0.5;
+    if (!hit) return;
     // 맞으면 손을 놓는다. 안 놓으면 물체를 든 채 다음 방까지 끌고 가고,
     // 그 순간 그림자가 어긋나 방금 푼 것이 다시 안 풀린 것처럼 보인다.
-    if (this.solved) this.held = false;
+    this.held = false;
+    this.pips[this.round].material.color.set(0xffd27a);
+    this.round++;
+    if (this.round >= this.answers.length) { this.solved = true; return; }
+    this.holeW = this._holeAt(this.answers[this.round]);
+    this.hole.scale.set(this.holeW, this.holeW, 1);
+    this.holeMat.opacity = 0.5;
   }
 
   update(dt, actor) {
@@ -414,16 +437,22 @@ export class SilhouetteGate {
 
   prompt(pos) {
     if (this.solved) return null;
+    const n = `${this.round + 1}/3`;
     const gap = this._size() > this.holeW
       ? '그림자가 커요 — 등불에서 멀리' : '그림자가 작아요 — 등불 가까이';
-    if (this.held) return `${gap} (E로 놓기)`;
-    return this._near(pos) ? 'E — 물체 밀기' : `🔦 ${gap}`;
+    if (this.held) return `${n} · ${gap} (E로 놓기)`;
+    return this._near(pos) ? `E — 물체 밀기 (${n})` : `🔦 ${n} · ${gap}`;
   }
 
   solvedBy() { return this.solved; }
   reset() {}
   restart() {
     this.held = false;
+    this.solved = false;
+    this.round = 0;
+    for (const p of this.pips) p.material.color.set(0x3a3730);
+    this.holeW = this._holeAt(this.answers[0]);
+    this.hole.scale.set(this.holeW, this.holeW, 1);
     this.objZ = this.homeZ;
     this.obj.position.z = this.objZ;
     this._resize();

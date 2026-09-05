@@ -98,7 +98,8 @@ let mode = 'planet';                 // 'planet' | 'room'
 let activeShrine = null;
 let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
-let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름)
+let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표)
+let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
 
 const promptEl = document.getElementById('prompt');
@@ -118,6 +119,7 @@ const segOf = (id) => room.dungeon.rectOf(id);
 
 function enterShrine(shrine) {
   room = roomFor(shrine);
+  lastSeg = null;
   // 이미 깬 사당은 그대로 둔다 — 지나온 곳을 다시 잠그지 않는다.
   // 아직 못 깬 사당만 처음으로 되돌린다(중간에 나갔다 온 경우).
   if (!shrine.cleared) room.restart();
@@ -187,6 +189,14 @@ function stepRoom(dt, intent) {
   const { dungeon, gates, final, prize } = room;
   const seg = dungeon.segmentAt(roomActor.position.z);
   let prompt = null;
+
+  // 새 방에 들어서면 목표를 한 번 알린다. 놓칠 수 없게 —
+  // 벽의 판은 언제든 다시 읽을 수 있지만, 처음 한 번은 눈앞에 띄워야 한다.
+  if (seg && seg.id !== lastSeg) {
+    lastSeg = seg.id;
+    const goal = room.goals[seg.id];
+    if (goal) { noteMsg = `📜 ${seg.name} — ${goal}`; noteT = 3.6; }
+  }
 
   // 관문 — 자기 구간에 있을 때만 돈다. 레이저는 방 밖에서도 움직여야 자연스럽지만
   // 판정은 방 안에서만 한다(통로에서 맞으면 부당하다).

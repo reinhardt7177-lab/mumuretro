@@ -25,6 +25,7 @@ import { StrataOrderGate, ShaftGate, FiveDoorsGate, GrandGod } from './StrataGat
 import { BalanceScale } from './Scale.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
+import { addSignboard } from './Signboard.js';
 
 const GATES = {
   tile: TileGate, laser: LaserGate, plate: PlateGate,          // 01 균형
@@ -114,12 +115,21 @@ export function buildRoom(spec) {
     });
   }
 
+  // 목표 판 — 방마다 "여기서 무엇을 해내야 하는가"를 벽에 건다.
+  // 프롬프트는 가까이 갔을 때 무엇을 누를지만 알려 준다. 그건 조작 안내지 목표가 아니다.
+  const goals = {};
+  for (const r of spec.rooms) {
+    if (!r.goal) continue;
+    goals[r.id] = r.goal;
+    addSignboard(scene, dungeon.rectOf(r.id), r.name, r.goal, spec.theme.glow);
+  }
+
   const shrineSeg = dungeon.rectOf('shrine');
   const final = makeFinal(spec.final, scene, shrineSeg, spec.theme);
   const prize = new Prize(scene, final.prizePos);
 
   return {
-    spec, scene, dungeon, gates, final, prize,
+    spec, scene, dungeon, gates, final, prize, goals,
     obstacles: final.obstacles || [],
     shrineSeg,
     // 같은 사당을 다시 도전할 때. 다른 사당으로 갈 때는 부를 일이 없다 — 씬이 다르다.

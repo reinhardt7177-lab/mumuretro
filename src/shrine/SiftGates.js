@@ -22,11 +22,15 @@ const PULL_R = 1.8;                // 자석이 닿는 거리. 옆 물건까지 
 // ══════════════════════════════════════════════════════════════════════════
 // 관문 1 — 체 고르기
 //
-// 굵은 알갱이·중간·모래가 섞인 더미. 구멍이 다른 체 셋 중 하나를 틀에 끼운다.
-//   구멍 큰 체  → 다 빠져 버린다
-//   구멍 작은 체 → 하나도 안 빠진다
-//   중간 체      → 굵은 것만 남는다  ← 정답
-// 틀에 끼우면 **바로 결과가 보인다.** 설명 없이 세 번 해 보면 규칙을 안다.
+// ★ 처음엔 한 번 고르면 끝이었다. E 두 번이면 방이 끝났고, 세 개 중 하나를
+//   찍어도 3분의 1로 맞았다. 실사용에서 들은 그대로다 —
+//   "이렇게 하나의 기믹이 원터치 또는 단 한 번이면 누가 하고 싶겠나."
+//   **주문이 세 번 온다.** 남겨야 할 것이 매번 달라지므로 찍어서는 못 넘긴다.
+//     1) 굵은 것만 남겨라        → 구멍 중간 체
+//     2) 굵은 것과 중간을 남겨라  → 구멍 작은 체
+//     3) 하나도 남기지 마라       → 구멍 큰 체
+//   세 주문이 체 셋을 정확히 한 번씩 쓰게 되어 있어, 다 풀고 나면
+//   "구멍이 클수록 많이 빠진다"가 손에 남는다.
 // ══════════════════════════════════════════════════════════════════════════
 const SIEVES = [
   { hole: 'big', label: '구멍 큰 체', mm: 8 },
@@ -38,6 +42,12 @@ const GRAINS = [
   { size: 0.19, mm: 3, color: 0xa8823f, name: '중간 알갱이' },
   { size: 0.11, mm: 0.6, color: 0x8a6b34, name: '고운 모래' },
 ];
+// 주문 셋. keep = 위 접시에 남아야 할 알갱이 종류
+const ORDERS = [
+  { keep: [0], say: '굵은 알갱이만 남겨요' },
+  { keep: [0, 1], say: '굵은 것과 중간을 남겨요' },
+  { keep: [], say: '하나도 남기지 말아요' },
+];
 
 export class SieveGate {
   constructor(scene, seg, opts = {}) {
@@ -45,6 +55,8 @@ export class SieveGate {
     const th = opts.theme;
     this.held = null;
     this.fitted = -1;
+    this.round = 0;             // 지금 주문
+    this.solved = false;
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
@@ -66,6 +78,26 @@ export class SieveGate {
     const slot = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 0.1), this.slotMat);
     slot.position.set(this.frame.x, 1.72, this.frame.z - 1.5);
     g.add(slot);
+
+    // 주문판 — 남겨야 할 알갱이를 그 알갱이 색 점으로 보여 준다.
+    // 글씨 없이 "무엇을 남길 것인가"가 읽혀야 아이가 체를 고를 수 있다.
+    const boardMat = toon(th.stoneDark);
+    const board = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 0.16), boardMat);
+    board.position.set(this.frame.x, 3.1, this.frame.z - 1.7);
+    g.add(board);
+    this.orderDots = GRAINS.map((gr, i) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 0.1), glowMat(gr.color));
+      m.position.set(this.frame.x - 0.8 + i * 0.8, 3.1, this.frame.z - 1.79);
+      g.add(m);
+      return m;
+    });
+    // 라운드 표시 — 세 번이라는 걸 처음부터 알려 준다
+    this.pips = [0, 1, 2].map((i) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.1), glowMat(0x4a3a22));
+      m.position.set(this.frame.x + 1.55, 3.35 - i * 0.28, this.frame.z - 1.79);
+      g.add(m);
+      return m;
+    });
 
     // 위 접시 · 아래 접시 — 알갱이가 이 둘로 갈린다. 갈리는 게 보여야 한다.
     this.above = new THREE.Group(); this.above.position.set(this.frame.x, 1.75, this.frame.z);
@@ -118,10 +150,31 @@ export class SieveGate {
       const parent = stays ? this.above : this.below;
       if (gm.mesh.parent !== parent) parent.add(gm.mesh);
     }
-    // 정답 = 위 접시에 굵은 것만 남았다
+    this._paintOrder();
+    if (this.solved || this.fitted < 0) {
+      this.slotMat.color.set(this.solved ? 0xffd27a : 0x9c6f2c);
+      return;
+    }
+    // 이번 주문대로 갈렸는가
     const up = new Set(this.grainMesh.filter((m) => m.mesh.parent === this.above).map((m) => m.gi));
-    this.solved = up.size === 1 && up.has(0);
-    this.slotMat.color.set(this.solved ? 0xffd27a : 0x9c6f2c);
+    const want = ORDERS[this.round].keep;
+    const ok = up.size === want.length && want.every((i) => up.has(i));
+    this.slotMat.color.set(ok ? 0xffd27a : 0x9c6f2c);
+    if (!ok) return;
+    // 맞았다 — 체를 도로 내주고 다음 주문으로. 같은 체로 다음도 되면 배우는 게 없다.
+    this.pips[this.round].material.color.set(0xffd27a);
+    this.round++;
+    if (this.round >= ORDERS.length) { this.solved = true; return; }
+    const s = this.sieves[this.fitted];
+    this.fitted = -1;
+    s.grp.position.copy(s.home);
+    this._apply();
+  }
+
+  _paintOrder() {
+    if (this.solved) { for (const d of this.orderDots) d.material.color.set(0xffd27a); return; }
+    const want = ORDERS[this.round].keep;
+    this.orderDots.forEach((d, i) => d.material.color.set(want.includes(i) ? GRAINS[i].color : 0x2a2018));
   }
 
   _nearSieve(pos) {
@@ -146,14 +199,15 @@ export class SieveGate {
 
   prompt(pos) {
     if (this.solved) return null;
+    const say = `주문 ${this.round + 1}/3 · ${ORDERS[this.round].say}`;
     if (this.held) {
       return this._atFrame(pos)
-        ? `E — ${this.held.spec.label} 끼우기` : `${this.held.spec.label}를 들었어요 — 틀로`;
+        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${this.held.spec.label}를 들었어요 — 틀로`;
     }
-    if (this._atFrame(pos) && this.fitted >= 0) return 'E — 체 빼기 (다른 체로 해 봐요)';
+    if (this._atFrame(pos) && this.fitted >= 0) return `E — 체 빼기 · ${say}`;
     const s = this._nearSieve(pos);
-    if (s) return `E — ${s.spec.label} 들기`;
-    return '🧺 굵은 알갱이만 남기는 체를 골라요';
+    if (s) return `E — ${s.spec.label} 들기 · ${say}`;
+    return `🧺 ${say}`;
   }
 
   interact(pos) {
@@ -183,6 +237,8 @@ export class SieveGate {
   solvedBy() { return this.solved; }
   restart() {
     this.held = null; this.fitted = -1;
+    this.round = 0; this.solved = false;
+    for (const p of this.pips) p.material.color.set(0x4a3a22);
     for (const s of this.sieves) { s.grp.position.copy(s.home); s.grp.rotation.y = 0; }
     this._apply();
   }
@@ -359,16 +415,20 @@ export class MagnetGate {
 // ══════════════════════════════════════════════════════════════════════════
 // 관문 3 — 거름과 증발
 //
-// 소금·모래·물이 섞인 물통 하나. **순서**가 있다.
-//   거름망 먼저 → 모래가 걸러진다 → 화로 → 물이 날아가고 소금이 남는다  ← 정답
-//   화로 먼저   → 모래와 소금이 함께 굳는다 → 물을 다시 부어 처음부터
+// ★ 처음엔 도구가 둘이라 순서가 두 가지뿐이었고, 반은 찍어도 맞았다.
+//   **도구가 셋이다.** 쇠가루·모래·소금이 물에 섞여 있고, 순서는 여섯 가지 중 하나뿐이다.
+//     자석으로 쇠가루 → 거름망으로 모래 → 화로로 물 날리기 → 소금  ← 정답
+//   알갱이 크기로 못 거르는 것(쇠), 체로 거르는 것(모래), 녹아 있는 것(소금) —
+//   셋을 다른 방법으로 갈라야 한다는 게 이 방이 가르치는 전부다.
 // 순서를 틀려도 벌은 없다. 물을 다시 부으면 된다 — 실험은 다시 하는 것이다.
 // ══════════════════════════════════════════════════════════════════════════
 export class EvaporateGate {
   constructor(scene, seg, opts = {}) {
     this.seg = seg;
     const th = opts.theme;
-    this.state = 'mixed';           // mixed → filtered → salt | lump
+    // mixed → demag(쇠 제거) → filtered(모래 제거) → salt
+    // 순서를 어기고 화로에 올리면 lump. 물을 부으면 처음으로.
+    this.state = 'mixed';
     this.held = false;
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
@@ -399,21 +459,28 @@ export class EvaporateGate {
       g.add(grp);
       return { x, z, mat: top.material };
     };
-    this.filter = station(cx - 3.6, seg.z0 + 3.4, 0x79c0e8, 1.1);
-    this.burner = station(cx + 3.6, seg.z0 + 3.4, 0xe8664a, 1.0);
-    this.tap = station(cx, seg.z1 - 2.6, 0x9ab4c2, 0.8);
+    this.magnet = station(cx - 4.4, seg.z0 + 3.4, 0xe0736b, 1.2);
+    this.filter = station(cx, seg.z0 + 3.4, 0x79c0e8, 1.1);
+    this.burner = station(cx + 4.4, seg.z0 + 3.4, 0xe8a04a, 1.0);
+    this.tap = station(cx - 3.2, seg.z1 - 2.6, 0x9ab4c2, 0.8);
 
     this._paint();
   }
 
   _paint() {
-    const c = { mixed: 0x8a7a52, filtered: 0x9fb6c4, salt: 0xf0ece0, lump: 0x5d5347 }[this.state];
+    const c = { mixed: 0x6b5f45, demag: 0x8a7a52, filtered: 0x9fb6c4,
+      salt: 0xf0ece0, lump: 0x5d5347 }[this.state];
     this.fluidMat.color.set(c);
     this.fluid.scale.y = this.state === 'salt' || this.state === 'lump' ? 0.5 : 1;
+    const done = { mixed: 0, demag: 1, filtered: 2, salt: 3, lump: 0 }[this.state];
+    this.magnet.mat.color.set(done >= 1 ? 0xffd27a : 0xe0736b);
+    this.filter.mat.color.set(done >= 2 ? 0xffd27a : 0x79c0e8);
+    this.burner.mat.color.set(done >= 3 ? 0xffd27a : 0xe8a04a);
   }
 
   _near(pos) {
     const d = (s) => Math.hypot(pos.x - s.x, pos.z - s.z);
+    if (d(this.magnet) < REACH) return 'magnet';
     if (d(this.filter) < REACH) return 'filter';
     if (d(this.burner) < REACH) return 'burner';
     if (d(this.tap) < REACH) return 'tap';
@@ -438,12 +505,14 @@ export class EvaporateGate {
       return this._atPot(pos) ? 'E — 물통 들기' : '🫙 물통을 들고 거름망·화로로';
     }
     const n = this._near(pos);
-    if (n === 'filter') return 'E — 거름망에 붓기';
-    if (n === 'burner') return 'E — 화로에 올리기';
+    if (n === 'magnet') return 'E — 자석 대기 (쇠가루)';
+    if (n === 'filter') return 'E — 거름망에 붓기 (알갱이)';
+    if (n === 'burner') return 'E — 화로에 올리기 (물 날리기)';
     if (n === 'tap') return this.state === 'lump' ? 'E — 물 붓고 처음부터' : 'E — 내려놓기';
-    const what = { mixed: '소금·모래·물이 섞여 있어요', filtered: '모래는 걸렀어요 — 이제 물을 날려요',
-      lump: '모래까지 굳었어요 — 물을 부어 처음부터' }[this.state];
-    return `${what}`;
+    return { mixed: '쇠가루·모래·소금이 물에 섞여 있어요 (1/3)',
+      demag: '쇠가루는 뺐어요 — 다음은 알갱이 (2/3)',
+      filtered: '모래도 걸렀어요 — 이제 물을 날려요 (3/3)',
+      lump: '순서가 어긋나 굳었어요 — 물을 부어 처음부터' }[this.state];
   }
 
   interact(pos) {
@@ -454,14 +523,20 @@ export class EvaporateGate {
       return true;
     }
     const n = this._near(pos);
+    if (n === 'magnet') {
+      // 자석 — 쇠가루만 끌려 나온다. 알갱이 크기와 상관없다.
+      if (this.state === 'mixed') this.state = 'demag';
+      this._paint();
+      return true;
+    }
     if (n === 'filter') {
-      // 거름망 — 알갱이(모래)만 걸린다. 녹아 있는 소금은 물과 함께 빠져나간다.
-      if (this.state === 'mixed') this.state = 'filtered';
+      // 거름망 — 알갱이(모래)만 걸린다. 쇠가루가 남아 있으면 함께 걸려 못 쓴다.
+      if (this.state === 'demag') this.state = 'filtered';
       this._paint();
       return true;
     }
     if (n === 'burner') {
-      // 화로 — 물이 날아간다. 모래가 아직 있으면 소금과 함께 굳어 버린다.
+      // 화로 — 물이 날아간다. 아직 안 걸러 낸 게 있으면 소금과 함께 굳어 버린다.
       this.state = this.state === 'filtered' ? 'salt' : 'lump';
       this._paint();
       if (this.state === 'salt') { this.held = false; this.pot.position.copy(this.potHome); }
