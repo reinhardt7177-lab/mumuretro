@@ -95,9 +95,10 @@ export function buildDungeon(scene, rooms, theme) {
     for (let k = 1; k < cnt; k++) {
       const z = s.from - (len2 * k) / cnt;
       box(s.w, 0.26, 0.30, dark, 0, s.h - 0.13, z);
-      // 짧은 받침 — 벽에서 들보로 이어지는 삼각 버팀. 이게 있어야 얹힌 것으로 보인다
+      // 짧은 받침 — 벽에서 들보로 이어지는 버팀. 이게 있어야 얹힌 것으로 보인다.
+      // 천장에서 0.35u 아래로는 못 내려온다 — 거기부터가 카메라 자리다(Lab.CAM_CLEAR).
       for (const sd of [-1, 1]) {
-        box(0.9, 0.2, 0.22, dark, sd * (s.w / 2 - 0.45), s.h - 0.42, z);
+        box(0.9, 0.10, 0.22, dark, sd * (s.w / 2 - 0.45), s.h - 0.28, z);
       }
     }
   }

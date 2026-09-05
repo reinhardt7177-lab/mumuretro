@@ -31,6 +31,10 @@ if (PORTAL_CODE[2] !== PORTAL_CODE[0] + PORTAL_CODE[1]) {
 // RoomActor에서 각도를 낮추게 고쳤고, 여기서도 한 자락 준다.
 const HALF_W = 7.5, Z_FAR = -13, Z_NEAR = 13, CEIL = 4.8;
 const T = 0.5;                                     // 벽 두께
+// 천장에 다는 것이 내려올 수 있는 한계. RoomActor._inAny가 카메라를 h − 0.35까지만
+// 올려 보내므로, 그보다 위에 있는 것은 카메라와 절대 만나지 않는다.
+// 이 숫자를 키우려면 RoomActor 쪽도 같이 봐야 한다 — 둘은 같은 약속이다.
+const CAM_CLEAR = 0.35;
 
 export const LAB_ENTRY_Z = 7.6;                    // 침상 앞. 여기서 눈을 뜬다
 const PARCEL = { x: 0, z: -1.4 };
@@ -221,12 +225,21 @@ export function buildLab() {
   //   어두운 건 분위기지만, 자기 캐릭터가 안 보이는 건 그냥 안 보이는 것이다.
   //   갓등을 셋으로 나눠 건다 — 22u짜리 방에 등 하나는 애초에 말이 안 됐다.
   scene.add(new THREE.HemisphereLight(LAB.amb[0], LAB.amb[1], LAB.amb[2]));
+  // ★ 처음엔 진짜로 **매달았다**(줄 0.62u + 갓 0.38u). 그런데 갓이 방 한가운데
+  //   x=0에, 하필 카메라 순항 높이(4.37u)에 걸렸다. 침상에서 소포까지 걸어가면
+  //   반드시 갓 **안**을 통과했고, 화면이 통째로 갓 안쪽 색으로 덮였다.
+  //   카메라는 벽만 보고 소품은 안 본다 — 그건 그것대로 맞다(소품마다 카메라를
+  //   밀면 어렵게 얻은 거리를 소품이 다시 뺏는다). 대신 **규칙을 반대로 건다**:
+  //   천장에 다는 것은 CAM_CLEAR 아래로 내려오지 않는다. 카메라가 갈 수 있는
+  //   최고 높이가 h − 0.35(RoomActor._inAny)이므로 그 위에만 있으면 만날 일이 없다.
   const hang = (z, power) => {
-    box(0.05, 0.62, 0.05, iron, 0, CEIL - 0.31, z);
-    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.38, 10), toon(0x2f3438));
-    hood.position.set(0, CEIL - 0.66, z); hood.rotation.x = Math.PI; scene.add(hood);
+    const hood = new THREE.Mesh(new THREE.ConeGeometry(0.52, CAM_CLEAR - 0.05, 10),
+      toon(0x2f3438));
+    hood.position.set(0, CEIL - (CAM_CLEAR - 0.05) / 2 - 0.02, z);
+    hood.rotation.x = Math.PI; scene.add(hood);
+    box(0.4, 0.05, 0.4, basic(0xffe9c4), 0, CEIL - CAM_CLEAR + 0.06, z);   // 전구갓 안쪽
     const bulb = new THREE.PointLight(0xffe3b4, power * LAB.lamp, 16, 1.5);
-    bulb.position.set(0, CEIL - 0.82, z); scene.add(bulb);
+    bulb.position.set(0, CEIL - CAM_CLEAR - 0.02, z); scene.add(bulb);
     return bulb;
   };
   hang(9.6, 11);                       // 침상 쪽 — 눈을 뜨는 자리

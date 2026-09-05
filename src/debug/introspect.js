@@ -334,14 +334,28 @@ export function installDebug(ctx) {
     //   전부 희망의 38%였다.
     //   이건 방을 하나 붙일 때마다 되살아나는 종류라 눈으로 볼 게 아니라 잰다.
     //   기준은 **희망 거리의 85%**. 카메라가 각도를 낮춰서라도 물러나야 한다.
-    let camOK = true;
-    const camBad = [];
+    let camOK = true, hangOK = true;
+    const camBad = [], hangBad = [];
+    const _v3 = new THREE.Vector3();
     if (ctx.roomFor && ctx.shrines && ra) {
       const want = Math.max(3.2, Math.min(6.5, input.camDist));
       const savedR = ra.rects, savedO = ra.obstacles, savedP = ra.position.clone();
-      const scan = (rects, label) => {
+      const _bb = new THREE.Box3();
+      const solidsOf = (scn) => {
+        const out = [];
+        scn.traverse((o) => {
+          if (!o.isMesh || !o.material || o.material.transparent) return;
+          if (o.material.visible === false || !o.visible) return;
+          for (let p = o.parent; p; p = p.parent) if (p === player.mesh) return;
+          out.push({ box: new THREE.Box3().setFromObject(o), o });
+        });
+        return out;
+      };
+      const scan = (rects, label, scn) => {
         ra.rects = rects; ra.obstacles = [];
         const outerZ = Math.max(...rects.map((r) => r.z1));
+        // 벽·바닥·천장 슬래브는 카메라가 그 안에 있으면 그것도 버그다 — 다 넣는다.
+        const solids = scn ? solidsOf(scn) : [];
         for (const r of rects) {
           // 칸 가운데와 앞뒤 1/4 지점 — 가운데만 재면 이음매 근처를 놓친다
           for (const f of [0.25, 0.5, 0.75]) {
@@ -361,23 +375,48 @@ export function installDebug(ctx) {
               camOK = false;
               camBad.push(`${label}/${r.id}@${f}=${d.toFixed(1)}`);
             }
+            // H — 세운 카메라가 물건 **안**인가. 추론이 아니라 그 점을 직접 본다.
+            const cp = engine.camera.position;
+            for (const sd of solids) {
+              if (!sd.box.containsPoint(cp)) continue;
+              hangOK = false;
+              const sz = sd.box.getSize(_v3);
+              hangBad.push(`${label}/${r.id}@${f}`
+                + `[${sz.x.toFixed(1)}x${sz.y.toFixed(1)}x${sz.z.toFixed(1)}]`);
+              break;
+            }
           }
         }
       };
-      if (ctx.lab) scan(ctx.lab.rects, '연구실');
+      if (ctx.lab) scan(ctx.lab.rects, '연구실', ctx.lab.scene);
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
-        scan(rm.dungeon.rects, rm.spec.id);
+        scan(rm.dungeon.rects, rm.spec.id, rm.scene);
       }
       ra.rects = savedR; ra.obstacles = savedO;
       ra.setAt(savedP.x, savedP.z, -1); ra._camPlaced = false;
       log.push(`G 카메라 후퇴 >=${(want * 0.85).toFixed(1)}u`
         + (camOK ? ' 전 구간' : ` 실패 ${camBad.length}곳=${camBad.slice(0, 6).join(' ')}`)
         + ` -> ${camOK ? 'PASS' : 'FAIL'}`);
+      log.push('H 카메라가 물건 밖'
+        + (hangOK ? ' 전 구간' : ` 파묻힘 ${hangBad.length}=${hangBad.slice(0, 4).join(' ')}`)
+        + ` -> ${hangOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── H 카메라가 물건 속으로 들어가지 않는가 ──────────────────────────────
+    // ★ 연구실 갓등을 진짜로 매달았더니 방 한가운데 x=0, 하필 카메라 순항 높이
+    //   4.37u에 걸렸다. 침상에서 소포까지 걸어가면 **반드시 갓 안을 통과**했고
+    //   화면이 통째로 갓 안쪽 색으로 덮였다. 카메라는 벽만 보고 소품은 안 본다 —
+    //   그건 그것대로 맞다(소품마다 카메라를 밀면 소품이 거리를 도로 뺏는다).
+    //   그래서 규칙을 반대로 건다: **천장에 다는 것은 카메라 자리로 안 내려온다.**
+    //
+    //   ★ 처음엔 이걸 기하로 **추론**하려 했다 — "천장에 닿는데 아래로 내려오면
+    //     걸린 것". 그러자 바닥부터 천장까지 선 기둥과 벽에 붙은 문까지 다 걸렸다.
+    //     추론은 틀린 것을 잡고 맞는 것을 놓친다. 그래서 **재는 쪽으로 바꿨다** —
+    //     카메라를 실제로 세워 보고 그 점이 물건 안에 있는지 본다. G와 같은 자리를
+    //     쓰므로 값이 거의 안 든다.
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK;
+      && walkOK && camOK && hangOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
