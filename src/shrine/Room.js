@@ -18,6 +18,8 @@ import * as THREE from 'three';
 import { buildDungeon } from './Dungeon.js';
 import { TileGate, LaserGate, PlateGate } from './Gates.js';
 import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.js';
+import { SieveGate, MagnetGate, EvaporateGate, SiftGod } from './SiftGates.js';
+import { FreezeGate, SlideGate, SteamGate, WaterGod } from './WaterGates.js';
 import { BalanceScale } from './Scale.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
@@ -25,7 +27,11 @@ import { toon } from '../render/Toon.js';
 const GATES = {
   tile: TileGate, laser: LaserGate, plate: PlateGate,          // 01 균형
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
+  sieve: SieveGate, magnet: MagnetGate, evaporate: EvaporateGate,    // 03 분리
+  freeze: FreezeGate, slide: SlideGate, steam: SteamGate,            // 04 물
 };
+
+const FINALS = { mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterGod };
 
 // 아직 안 만든 관문 — 방을 막지 않고 지나가게 둔다.
 // ★ 여기서 예외를 던지면 사당 하나를 만드는 동안 나머지 다섯이 통째로 죽는다.
@@ -74,7 +80,8 @@ function makeFinal(kind, scene, seg, theme) {
     s.prizePos = new THREE.Vector3(0, 0, oz + 2.8);
     return s;
   }
-  if (kind === 'mirrorGod') return new MirrorGod(scene, seg, theme);
+  const Cls = FINALS[kind];
+  if (Cls) return new Cls(scene, seg, theme);
   return new TodoGod(scene, seg, theme, kind);
 }
 
@@ -89,8 +96,10 @@ export function buildRoom(spec) {
     const Cls = GATES[r.gate] || TodoGate;
     gates.push({
       room: r.id, solved: false,
+      // dungeon을 넘기는 이유: 얼음 발판처럼 **걸을 수 있는 영역 자체를 만드는**
+      // 관문이 있다. 물 위는 못 걷고, 얼면 걸을 수 있어야 한다.
       gate: new Cls(scene, dungeon.rectOf(r.id), {
-        theme: spec.theme, kind: r.gate, entryRect: dungeon.rectOf('entry'),
+        theme: spec.theme, kind: r.gate, dungeon, entryRect: dungeon.rectOf('entry'),
       }),
     });
   }

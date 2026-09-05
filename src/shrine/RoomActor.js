@@ -34,11 +34,17 @@ export class RoomActor {
     this._camPlaced = false;
     // 방 안 장애물(석상 등). 원기둥 하나면 충분하다 — 실내엔 몇 개 없다.
     this.obstacles = [];
+    // 얼음 바닥 — 0이면 보통 바닥, 1이면 완전히 미끄럽다. 관문이 켜고 끈다.
+    // 관성을 액터에 두는 이유: 미끄러짐은 "방의 성질"이 아니라 **걷기의 성질**이다.
+    // 관문이 매 프레임 위치를 보정하는 식으로 만들면 카메라가 한 프레임씩 튄다.
+    this.slip = 0;
+    this.vel = new THREE.Vector2(0, 0);
   }
 
   setAt(x, z, headingZ = -1) {
     this.position.set(x, 0, z);
     this.vy = 0; this.grounded = true;
+    if (this.vel) this.vel.set(0, 0);
     this.heading.set(0, 0, headingZ).normalize();
     this.camYaw = Math.atan2(-this.heading.x, -this.heading.z);
     this._camPlaced = false;
@@ -93,9 +99,24 @@ export class RoomActor {
     this.moving = _move.lengthSq() > 1e-6;
     this.running = !!intent.run && this.moving;
 
-    if (this.moving) {
+    const sp = this.running ? RUN : SPEED;
+    if (this.slip > 0) {
+      // 얼음 — 미는 힘은 약하고 멈추는 힘은 더 약하다. 그래서 미리 감속해야 한다.
+      const accel = 9.0 * (1 - this.slip * 0.72);
+      const drag = 1 - Math.min(1, dt * (7.5 - this.slip * 7.0));
+      if (this.moving) { this.vel.x += _move.x * accel * dt; this.vel.y += _move.z * accel * dt; }
+      this.vel.multiplyScalar(drag);
+      const v = this.vel.length();
+      if (v > sp) this.vel.multiplyScalar(sp / v);
+      if (v > 0.02) {
+        this._move(this.position, this.vel.x * dt, this.vel.y * dt);
+        this._pushOut(this.position);
+        _move.set(this.vel.x, 0, this.vel.y).normalize();
+        this.moving = true;                 // 미끄러지는 중엔 손을 떼도 걷는 자세다
+      }
+    } else if (this.moving) {
+      this.vel.set(0, 0);
       _move.normalize();
-      const sp = this.running ? RUN : SPEED;
       this._move(this.position, _move.x * sp * dt, _move.z * sp * dt);
       this._pushOut(this.position);
       // 진행 방향으로 부드럽게 돈다

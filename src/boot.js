@@ -119,6 +119,7 @@ function enterShrine(shrine) {
   if (!shrine.cleared) room.restart();
   roomActor.rects = room.dungeon.rects;
   roomActor.obstacles = room.obstacles;
+  roomActor.slip = 0;                  // 얼음 방에서 나가다 만 상태가 다음 사당에 묻지 않게
   cleared = shrine.cleared;
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
