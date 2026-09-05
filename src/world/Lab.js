@@ -482,14 +482,27 @@ export function buildLab() {
           return '삼 년째 붙들고 있는 장치. …아직 갈 자리를 모른다';
         return null;
       }
-      // ★ 수첩을 얻었으면 **읽는 것이 다음 할 일**이다. 내용을 대사로 요약해
-      //   주는 대신, 펴 보라고만 한다 — 읽는 건 아이가 한다.
-      if (!st.read) return '📓 N — 수첩을 펴 보자';
       if (st.open && atPortal(pos)) return 'E — 저 별로 내려가기';
       const d = nearDial(pos);
-      if (d) return `E — ${d.i + 1}번째 다이얼 돌리기 (지금 ${d.value})`;
+      // ★ 자리를 맞춘 뒤에는 다이얼을 잠근다. 안 잠그면 아이가 아무 숫자로
+      //   돌려 놔도 포탈이 그대로 서 있어서, **저 세 숫자가 자리라는 말이
+      //   거짓말이 된다.** 대신 어디로 가면 되는지 말해 준다.
+      if (d) {
+        if (st.open) return '자리는 맞췄다 — 단 앞으로 가면 된다';
+        // ★ 수첩을 안 읽었으면 다이얼은 안 돈다(interact가 막는다). 그런데
+        //   프롬프트는 "돌리기"라고 하고 있었다 — **누르면 아무 일도 안 일어나는
+        //   약속**이다. 프롬프트가 거짓말을 하면 그 뒤로는 아무것도 안 믿는다.
+        if (!st.read) return '📓 수첩부터 펴 보자';
+        return `E — ${d.i + 1}번째 다이얼 돌리기 (지금 ${d.value})`;
+      }
+      // ★ 여기 "📓 N — 수첩을 펴 보자"를 **맨 위에** 걸어 놨었다. 그러면 방의
+      //   95%(310칸 중 295칸)에서 같은 문구가 뜬다. 늘 떠 있는 안내는 안내가
+      //   아니라 벽지이고, 아트 바이블 「상시 표시는 다섯뿐」과도 정면으로 부딪힌다.
+      //   말해야 할 곳은 두 군데뿐이다 — 방금 연 소포 앞과, 맞춰야 할 콘솔 앞.
       if (!st.open && near(pos, 0, CONSOLE_Z, 3.4))
-        return '수첩 뒷장의 자리 세 개를 다이얼에 맞춘다';
+        return st.read ? '수첩 뒷장의 자리 세 개를 다이얼에 맞춘다'
+          : '📓 수첩부터 펴 보자';
+      if (!st.read && atParcel(pos)) return '📓 수첩을 펴 보자';
       return null;
     },
 
@@ -517,7 +530,7 @@ export function buildLab() {
       }
       if (st.open && atPortal(pos)) return 'go';
       const d = nearDial(pos);
-      if (d && st.read) {
+      if (d && st.read && !st.open) {
         d.value = (d.value + 1) % 10;
         paintDial(d);
         if (!st.open && dials.every((x, i) => x.value === PORTAL_CODE[i])) {

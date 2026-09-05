@@ -291,6 +291,10 @@ function stepLab(dt, intent) {
   if (did === 'parcel') {
     notebook.setHas(true); refreshHint();
     dialogue.play('op-parcel', ...OPENING.parcel);
+    // 프롬프트로 상주시키면 방의 95%에서 같은 문구가 뜬다(감사에서 확인).
+    // 한 번, 잠깐 알리고 사라진다.
+    // 키 이름은 아래 안내줄이 갖는다 — 터치 기기엔 N이 없고 📓 버튼이 있다.
+    noteMsg = `📓 ${touch.visible ? '' : 'N — '}수첩을 펴 보자`; noteT = 4.5;
   } else if (did === 'solved') {
     dialogue.play('op-solved', ...OPENING.solved);
   } else if (did === 'go') {
