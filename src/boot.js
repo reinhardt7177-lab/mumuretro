@@ -110,6 +110,7 @@ let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
 let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표)
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
+let sawNote = false;                 // 수첩을 한 번이라도 펴 봤나(오프닝)
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
 
 // 화면 아래 조작 안내 — **가진 것만 적는다.**
@@ -275,6 +276,15 @@ function stepLab(dt, intent) {
 
   // 계단 앞에 처음 서면 왜 안 올라가는지 한 번 말한다. play가 id로 한 번만 건다.
   if (lab.nearStairs(roomActor.position)) dialogue.play('op-stairs', ...OPENING.stairs);
+
+  // ★ 수첩 내용을 대사로 요약해 주지 않는다. **직접 펴 본 뒤에** 감상만 붙인다 —
+  //   읽는 건 아이가 한다. 수첩이 열려 있는 동안은 대사창이 그 아래 깔리므로
+  //   (수첩 z 40, 대사창 z 35) 닫은 다음에 건다.
+  if (notebook.has && notebook.isOpen) sawNote = true;
+  if (sawNote && !notebook.isOpen && !lab.state.read) {
+    lab.markRead();
+    dialogue.play('op-read', ...OPENING.read);
+  }
 
   if (!intent.action || dialogue.active) return;
   const did = lab.interact(roomActor.position);

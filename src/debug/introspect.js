@@ -433,7 +433,7 @@ export function installDebug(ctx) {
       const targets = lab.reachables;
       for (const t of targets) {
         // 여덟 방향에서 다가가 본다. 한 방향이라도 닿으면 된다.
-        let best = Infinity;
+        let best = Infinity, bx = 0, bz = 0;
         for (let k = 0; k < 8; k++) {
           const a = (k / 8) * Math.PI * 2;
           ra.setAt(t.x + Math.sin(a) * 5.0, t.z + Math.cos(a) * 5.0, -1);
@@ -447,12 +447,23 @@ export function installDebug(ctx) {
             ra.update(1 / 60, { x: 0, y: 1, run: false, jump: false }, engine.camera);
           }
           const p = ra.position;
-          best = Math.min(best, Math.hypot(t.x - p.x, t.z - p.z));
+          const l = Math.hypot(t.x - p.x, t.z - p.z);
+          if (l < best) { best = l; bx = p.x; bz = p.z; }
         }
         // 손 닿는 거리는 물건마다 다르다. 여백 0.15u는 걸음이 딱 떨어지지 않는 몫.
         if (best > t.r - 0.15) {
           reachOK = false;
           reachBad.push(`${t.name}=${best.toFixed(2)}u(닿는거리 ${t.r})`);
+          continue;
+        }
+        // ★ 닿는 것만으로는 모자란다. **그것이 잡히는지**까지 봐야 한다.
+        //   다이얼 셋이 겹쳐 있던 시절, 2번 앞에 서면 1번이 돌았다.
+        //   닿기만 재는 검사는 그걸 전부 통과시킨다.
+        ra.setAt(bx, bz, -1);
+        const got = lab.pickAt(ra.position);
+        if (got !== t.name) {
+          reachOK = false;
+          reachBad.push(`${t.name}자리에서 ${got || '아무것도'} 잡힘`);
         }
       }
       ra.rects = savedR; ra.obstacles = savedO;

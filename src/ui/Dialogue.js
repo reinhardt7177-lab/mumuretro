@@ -29,6 +29,11 @@ const CSS = `
 #dlg .next{margin-left:auto;color:#cfe0e3;animation:dlgb 1.1s ease-in-out infinite}
 @keyframes dlgb{0%,100%{opacity:.35}50%{opacity:1}}
 @media (max-width:640px){#dlg{bottom:150px}#dlg .line{font-size:15.5px}}
+/* 낮고 넓은 창(가로로 붙여 놓은 미리보기 패널 등)에서는 대사창이 화면의 4분의 1을
+   차지하면서 캐릭터를 통째로 가린다. 높이가 좁으면 낮게, 작게. */
+@media (max-height:520px){#dlg{bottom:52px}#dlg .box{padding:10px 14px 9px}
+  #dlg .line{font-size:15px;line-height:1.5}#dlg .who{margin-bottom:3px}
+  #dlg .foot{margin-top:6px}}
 @media (prefers-reduced-motion:reduce){#dlg .next{animation:none;opacity:.8}}`;
 
 export function buildDialogue(input) {
