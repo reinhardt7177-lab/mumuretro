@@ -29,13 +29,14 @@ const CSS = `
   border-color:rgba(111,227,210,.72);background:rgba(20,46,46,.72)}
 #tcAct[hidden]{display:none}
 #tcJump{width:60px;height:60px;font-size:12px}
-#tcMap{width:46px;height:46px;font-size:18px;
-  position:fixed;right:calc(14px + env(safe-area-inset-right));
-  top:calc(14px + env(safe-area-inset-top))}
+#tcMap,#tcNote{width:46px;height:46px;font-size:18px;position:fixed;
+  right:calc(14px + env(safe-area-inset-right))}
+#tcMap{top:calc(14px + env(safe-area-inset-top))}
+#tcNote{top:calc(68px + env(safe-area-inset-top))}
 @media (max-height:520px){#tcAct{width:64px;height:64px;font-size:13px}
   #tcJump{width:52px;height:52px}}`;
 
-export function buildTouchControls(input, mapPage) {
+export function buildTouchControls(input, mapPage, notebook) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -44,6 +45,7 @@ export function buildTouchControls(input, mapPage) {
   el.id = 'touchUI';
   el.innerHTML = `
     <button id="tcMap" aria-label="지도">🗺</button>
+    <button id="tcNote" aria-label="탐사 수첩">📓</button>
     <button id="tcJump" aria-label="점프">점프</button>
     <button id="tcAct" aria-label="상호작용" hidden>E</button>`;
   document.body.appendChild(el);
@@ -51,6 +53,7 @@ export function buildTouchControls(input, mapPage) {
   const bAct = el.querySelector('#tcAct');
   const bJump = el.querySelector('#tcJump');
   const bMap = el.querySelector('#tcMap');
+  const bNote = el.querySelector('#tcNote');
 
   // 버튼을 누른 손가락이 시점 드래그로도 새지 않게 막는다.
   const tap = (btn, down, up) => {
@@ -68,6 +71,7 @@ export function buildTouchControls(input, mapPage) {
   tap(bJump, () => { input.requestJump(); input.setHoldJump(true); },
     () => input.setHoldJump(false));
   tap(bMap, () => mapPage.setOpen(!mapPage.isOpen));
+  tap(bNote, () => { const n = notebook(); if (n) n.setOpen(!n.isOpen); });
 
   // ── 언제 보이는가 ────────────────────────────────────────────────────
   let on = false;
@@ -76,7 +80,7 @@ export function buildTouchControls(input, mapPage) {
     on = true;
     el.classList.add('on');
     const hint = document.getElementById('hint');
-    if (hint) hint.textContent = '왼쪽 절반 이동 · 오른쪽 절반 시점 · 버튼으로 E·점프·지도';
+    if (hint) hint.textContent = '왼쪽 절반 이동 · 오른쪽 절반 시점 · 버튼으로 E·점프·지도·수첩';
   };
   if (matchMedia('(pointer: coarse)').matches) show();
   addEventListener('touchstart', show, { once: true, passive: true });
@@ -96,7 +100,10 @@ export function buildTouchControls(input, mapPage) {
   sync();
 
   // 지도가 열려 있으면 버튼은 가린다(지도 자체가 탭하면 닫힌다)
-  const hideWhileMap = () => { el.style.visibility = mapPage.isOpen ? 'hidden' : ''; };
+  const hideWhileMap = () => {
+    const n = notebook();
+    el.style.visibility = (mapPage.isOpen || (n && n.isOpen)) ? 'hidden' : '';
+  };
 
   return {
     update: hideWhileMap,

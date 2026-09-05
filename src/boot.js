@@ -23,6 +23,9 @@ import { buildRoom } from './shrine/Room.js';
 import { RoomActor } from './shrine/RoomActor.js';
 import { buildMapPage } from './ui/MapPage.js';
 import { buildTouchControls } from './ui/TouchControls.js';
+import { buildDialogue } from './ui/Dialogue.js';
+import { buildNotebook } from './ui/Notebook.js';
+import { KEEPERS, ENDING, nextHint } from './shrine/dialogue.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -149,7 +152,7 @@ function enterShrine(shrine) {
 }
 
 function exitShrine() {
-  // 구슬을 들고 나왔으면 그 사당의 빛기둥이 금색이 된다. 이게 유일한 지도다.
+  // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
   if (room) room.scene.remove(player.mesh);
@@ -163,6 +166,32 @@ function exitShrine() {
   engine._camPlaced = false;
   activeShrine = null;
   setPrompt(null);
+}
+
+// 구슬을 주운 순간 — 지킴이가 말하고, 수첩 한 줄이 채워지고, 다음 갈 곳이 나온다.
+// 마지막 사당이면 여기서 이야기가 끝난다.
+function onOrb() {
+  const id = room.spec.id;
+  const k = KEEPERS[id];
+  const last = shrines.clearedCount() >= shrines.shrines.length;  // 이미 이번 것까지 세어져 있다
+  dialogue.play(`orb-${id}`, k.who, k.orb, () => {
+    notebook.draw();
+    if (!last) {
+      // 아직 남았으면 다음 갈 곳을 한마디. 이름도 방향도 대지 않는다.
+      const b = beckonNearest(savedPlanet.pos);
+      if (b) dialogue.play(`next-${id}`, k.who, b);
+      else noteMsg = '✨ 수첩 한 줄이 채워졌어요 — 밖으로 나가요', noteT = 2.6;
+    } else {
+      // 여섯째 — 반전과 엔딩. 세 뭉치를 이어 붙인다.
+      const chain = (i) => {
+        if (i >= ENDING.length) { noteMsg = '✨ 수첩을 다 채웠어요'; noteT = 3.0; return; }
+        const [eid, who, lines] = ENDING[i];
+        dialogue.play(eid, who, lines, () => chain(i + 1));
+      };
+      chain(0);
+    }
+  });
+  if (!dialogue.active) { noteMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; noteT = 2.6; }
 }
 
 let _windT = 0;
@@ -183,6 +212,12 @@ function step(dt) {
   // 사당 안에서도 E 버튼이 필요하다. 바깥 갱신에만 걸면 실내에서 안 돈다.
   touch.update();
   const intent = input.poll();
+  // 대사창이 열려 있으면 E는 **여기서** 대사창으로 간다. 키보드든 터치 버튼이든
+  // 같은 신호를 쓰므로 한쪽만 되는 일이 없다.
+  // ★ 쓴 신호는 반드시 지운다. 마지막 줄을 넘기면 대사가 닫히는데, 지우지 않으면
+  //   같은 E가 아래로 흘러 상호작용까지 한다 — 그게 바로 피하려던
+  //   "넘기려다 뭘 집었다"다.
+  if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
   if (mode === 'room') { stepRoom(dt, intent); return; }
   stepPlanet(dt, intent);
 }
@@ -201,6 +236,10 @@ function stepRoom(dt, intent) {
   if (seg && seg.id !== lastSeg) {
     lastSeg = seg.id;
     const goal = room.goals[seg.id];
+    if (seg.id === 'shrine') {
+      const k = KEEPERS[room.spec.id];
+      dialogue.play(`arrive-${room.spec.id}`, k.who, k.arrive);
+    }
     if (goal) { noteMsg = `📜 ${seg.name} — ${goal}`; noteT = 3.6; }
   }
 
@@ -247,12 +286,19 @@ function stepRoom(dt, intent) {
   if (atExit) prompt = 'E — 사당 밖으로';
   setPrompt(prompt);
 
-  if (intent.action) {
+  // 대사창이 열려 있으면 E는 대사창 것이다. 넘기려다 뭘 집으면
+  // 그건 조작을 뺏는 것보다 나쁘다.
+  if (intent.action && !dialogue.active) {
     if (atExit) { exitShrine(); return; }
     if (seg && seg.id === 'shrine') {
       if (prize.interact(roomActor.position)) {
         cleared = true;
-        noteMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; noteT = 2.6;
+        // ★ 여기서 바로 기록한다. 나갈 때 기록하면 두 군데가 어긋난다 —
+        //   지킴이는 "수첩에 적어 두고"라고 말하는데 그 자리에서 수첩을 열면
+        //   아직 비어 있고, 다음 갈 곳을 알려주는 beckonNearest는 **지금 서 있는
+        //   이 사당**을 가장 가깝다고 짚는다. 둘 다 "아직 안 깬 것"으로 보기 때문이다.
+        shrines.markCleared(activeShrine);
+        onOrb();
       } else if (final.interact) final.interact(roomActor.position);
     } else {
       // 손으로 만지는 관문은 자기 방 안에서만 반응한다
@@ -300,13 +346,17 @@ function stepPlanet(dt, intent) {
     if (need && have < need) {
       canEnter = false;
       setPrompt(`🔒 ${sp.name} — 구슬 ${need}개가 필요해요 (${have}/${need})`);
+    } else if (!near.shrine.cleared && !dialogue.hasSeen(`enter-${sp.id}`)) {
+      // 지킴이의 첫마디. 들어가기 전에 한 번만.
+      dialogue.play(`enter-${sp.id}`, KEEPERS[sp.id].who, KEEPERS[sp.id].enter);
+      setPrompt(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     } else if (near.shrine.cleared) {
       setPrompt(`E — ${sp.name} · 이미 깬 곳이에요`);
     } else {
       setPrompt(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     }
   } else setPrompt(null);
-  if (canEnter && intent.action) enterShrine(near.shrine);
+  if (canEnter && intent.action && !dialogue.active) enterShrine(near.shrine);
 }
 
 // 지도 — 처음엔 온통 검고, 걸어간 자리만 밝아진다. 길을 알려주는 게 아니라
@@ -314,13 +364,30 @@ function stepPlanet(dt, intent) {
 const mapPage = buildMapPage(planet, player, shrines, SHRINES);
 // 터치 조작 — 터치 기기에서만 나타난다. 이게 없으면 모바일에서는 걷기만 되고
 // 사당에 들어갈 수조차 없다(점검에서 확인).
-const touch = buildTouchControls(input, mapPage);
+// notebook은 아래에서 만들어지므로 게터로 넘긴다 — 순서를 바꾸면 mapPage가 꼬인다.
+const touch = buildTouchControls(input, mapPage, () => notebook);
+// 대사창과 탐사 수첩. 사당이 왜 있는지를 이 둘이 말한다.
+const dialogue = buildDialogue(input);
+const notebook = buildNotebook(shrines, SHRINES);
+
+// 가장 가까운 **안 깬** 사당이 어떤 곳인지 한마디로. 이름도 방향도 대지 않는다 —
+// 화살표를 띄우면 이 게임은 문제가 아니라 심부름이 된다.
+function beckonNearest(from) {
+  let best = null, bd = Infinity;
+  const up = from.clone().normalize();
+  shrines.shrines.forEach((s, i) => {
+    if (s.cleared) return;
+    const d = up.angleTo(s.dir);
+    if (d < bd) { bd = d; best = SHRINES[i % SHRINES.length]; }
+  });
+  return best ? nextHint(KEEPERS[best.id].beckon) : null;
+}
 
 const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES, mapPage, touch,
+  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook,
   get room() { return room; },
   get cleared() { return cleared; },
   get mode() { return mode; },

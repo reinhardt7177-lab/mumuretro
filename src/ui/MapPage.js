@@ -16,6 +16,7 @@
 //   · 밝히기는 **칸 단위**다. 부드럽게 번지게 할 수도 있지만, 이 게임은
 //     로우폴리라 각진 편이 오히려 결에 맞는다.
 import * as THREE from 'three';
+import { registerOverlay, soloOpen } from './overlay.js';
 import { terrainColor } from '../sphere/Planet.js';
 import { SHRINE } from '../data/lighting.js';
 
@@ -216,7 +217,9 @@ export function buildMapPage(planet, player, shrines, specs) {
     elExplored.textContent = `${Math.round(seenCount / (GX * GY) * 100)}%`;
   };
 
+  const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
   const setOpen = (v) => {
+    if (v) soloOpen(me);            // 전면 화면은 하나만 — overlay.js
     open = v;
     el.classList.toggle('show', v);
     if (v) draw();
