@@ -291,40 +291,50 @@ export class TileGate {
 // 학습 없음. 순수하게 몸이다 — 이 방이 리듬을 만든다.
 // ══════════════════════════════════════════════════════════════════════════
 export class LaserGate {
-  constructor(scene, seg) {
+  constructor(scene, seg, opts = {}) {
     this.seg = seg;
     const w = seg.x1 - seg.x0;
-    this.beams = [];
     const g = new THREE.Group();
     scene.add(g);
+    this.group = g;
 
-    // ★ 처음엔 줄이 **좌우로** 미끄러졌고, 판정 폭도 방보다 좁았다. 그래서 벽에
-    //   붙어 옆으로 걸어가면 한 번도 안 뛰고 통과됐다("레이저에서 점프 기믹 없음").
-    //   고치는 법: 줄이 방을 **꽉 가로지르고**, 복도를 따라 앞뒤로 쓸고 온다.
-    //   옆으로 피할 데가 없으니 남는 답은 몸뿐이다.
+    // ★ 세 번 고쳤다. 처음엔 줄이 좌우로 미끄러져 벽에 붙어 걸으면 한 번도 안 뛰고
+    //   통과됐다. 방을 꽉 가로지르게 고쳤더니 넷은 벽이라 "너무 어려움"이었다.
+    //   하나만 남겼더니 이번엔 점프 한 번이면 끝나는 방이 됐다.
     //
-    // ★ 그다음엔 넷을 깔았다가 "너무 어려움"을 들었다(실사용 확인). 방을 꽉 막는
-    //   줄은 하나만 있어도 복도 전체를 지배한다 — 넷이면 벽이지 기믹이 아니다.
-    //   **딱 하나.** 낮게(0.75) 깔려 천천히 복도를 왕복하고, 뛰어넘으면 끝이다.
-    //   이 방이 가르치는 건 "타이밍을 보고 뛴다" 하나뿐이고, 그거면 충분하다.
-    const zA = seg.z0 + 2.5, zB = seg.z1 - 2.5;
-    this.zMid = (zA + zB) / 2;
-    this.zAmp = (zB - zA) / 2;
-    const spec = [{ y: 0.75, speed: 0.26, phase: 0.0 }];
-    for (const sp of spec) {
+    //   답은 개수가 아니라 **구획**이었다. 복도를 셋으로 나누고 줄을 하나씩 넣는다.
+    //   구획 사이에는 줄이 안 들어오는 쉼터가 있어, 한 번에 셋을 상대하지 않는다.
+    //   대신 갈수록 빨라지고, 가운데 줄은 **높다** — 여기서 뛰면 맞는다.
+    //   "무조건 뛰기"가 답이 아니라야 아이가 줄을 보게 된다.
+    const zTop = seg.z1 - 1.6, zBot = seg.z0 + 1.6;
+    const span = (zTop - zBot) / 3;
+    const spec = [
+      { y: 0.75, speed: 0.30, jump: true },    // 낮다 — 뛰어넘는다
+      { y: 2.20, speed: 0.40, jump: false },   // 높다 — 뛰면 맞는다
+      { y: 0.75, speed: 0.52, jump: true },    // 낮고 빠르다
+    ];
+    this.beams = spec.map((sp, i) => {
+      const z1 = zTop - i * span, z0 = z1 - span;
+      const mid = (z0 + z1) / 2, amp = (z1 - z0) / 2 - 0.6;
       const mat = glowMat(0xe0736b, { transparent: true, opacity: 0.85 });
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, w, 6), mat);
-      m.rotation.z = Math.PI / 2;                 // 눕혀서 방을 가로지른다
-      m.position.set(0, sp.y, this.zMid);
+      m.rotation.z = Math.PI / 2;              // 눕혀서 방을 가로지른다
+      m.position.set(0, sp.y, mid);
       g.add(m);
-      // 낮은 줄 아래에 그림자 띠 — 바닥 어디로 오는지 미리 보인다. 없으면 반응이 불가능하다.
-      const hint = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.5),
-        glowMat(0x8a4a44, { transparent: true, opacity: 0.55 }));
-      hint.position.set(0, 0.03, this.zMid);
+      // 바닥 띠 — 이 구획이 어디까지인지, 낮은 줄인지 높은 줄인지 색으로 알린다
+      const hint = new THREE.Mesh(new THREE.BoxGeometry(w, 0.04, span - 0.2),
+        glowMat(sp.jump ? 0x8a4a44 : 0x3a4a5a, { transparent: true, opacity: 0.5 }));
+      hint.position.set(0, 0.03, mid);
       g.add(hint);
-      this.beams.push({ ...sp, mesh: m, hint, t: sp.phase });
-    }
-    this.group = g;
+      // 몇 번째 구획인지 벽에 점으로
+      for (let k = 0; k <= i; k++) {
+        const d = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.06), mat);
+        d.position.set(seg.x1 - 0.35, 2.9, mid - 0.3 + k * 0.3);
+        g.add(d);
+      }
+      return { ...sp, i, mesh: m, mid, amp, z0, z1, t: i * 1.1 };
+    });
+    this.zOut = zBot;
   }
 
   update(dt, actor) {
@@ -332,29 +342,29 @@ export class LaserGate {
     let hit = null;
     for (const b of this.beams) {
       b.t += dt * b.speed * Math.PI;
-      // 복도를 따라 왕복. sin이라 끝에서 느려져 넘을 틈이 생긴다.
-      const z = this.zMid + Math.sin(b.t) * this.zAmp;
+      const z = b.mid + Math.sin(b.t) * b.amp;
       b.mesh.position.z = z;
-      b.hint.position.z = z;
       // 방을 꽉 채우므로 x는 안 본다. 발끝(y)과 머리(y+1.5) 사이에 걸리면 맞은 것.
       if (Math.abs(p.z - z) < 0.45 && b.y > p.y + 0.15 && b.y < p.y + 1.5) {
-        hit = '줄에 닿았어요 — 올 때 뛰어넘어요';
+        hit = b.jump ? '낮은 줄이에요 — Space로 뛰어넘어요' : '높은 줄이에요 — 뛰지 말고 지나가요';
       }
     }
     return hit ? { fail: hit } : {};
   }
 
-  // ★ 이 방에는 prompt가 아예 없었다. 관문을 다시 쓰면서 통째로 빠뜨렸고,
-  //   전수 조사에서 방의 95%가 아무 말도 안 하는 걸로 잡혔다.
-  //   아이가 들어서면 움직이는 줄 하나만 있고 설명이 없다.
+  _zone(z) { return this.beams.find((b) => z <= b.z1 && z >= b.z0); }
+
   prompt(pos) {
-    if (pos.z < this.seg.z0 + 1.2) return null;
-    const b = this.beams[0];
-    const near = b && Math.abs(pos.z - b.mesh.position.z) < 3.0;
-    return near ? '🔴 지금이에요 — Space로 뛰어넘어요' : '🔴 줄이 올 때 뛰어넘어요 (Space)';
+    if (pos.z < this.zOut) return null;
+    const b = this._zone(pos.z);
+    if (!b) return '🔴 구획 셋 — 낮은 줄은 뛰고, 높은 줄은 뛰지 말아요';
+    const near = Math.abs(pos.z - b.mesh.position.z) < 3.0;
+    const what = b.jump ? '낮은 줄 — Space로 뛰어넘어요' : '높은 줄 — 뛰지 말고 지나가요';
+    return `🔴 ${b.i + 1}/3 · ${near ? '지금이에요! ' : ''}${what}`;
   }
 
-  solvedBy(actor) { return actor.position.z < this.seg.z0 + 1.2; }
+  solvedBy(actor) { return actor.position.z < this.zOut; }
+  restart() { this.beams.forEach((b, i) => { b.t = i * 1.1; }); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
