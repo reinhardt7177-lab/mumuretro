@@ -26,7 +26,7 @@ import { StrataOrderGate } from './StrataOrder.js';
 import { BalanceScale } from './Scale.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
-import { addSignboard } from './Signboard.js';
+import { addBoard } from './Signboard.js';
 
 const GATES = {
   tile: TileGate, laser: LaserGate, plate: PlateGate,          // 01 균형
@@ -116,13 +116,22 @@ export function buildRoom(spec) {
     });
   }
 
-  // 목표 판 — 방마다 "여기서 무엇을 해내야 하는가"를 벽에 건다.
-  // 프롬프트는 가까이 갔을 때 무엇을 누를지만 알려 준다. 그건 조작 안내지 목표가 아니다.
+  // 왼쪽 벽에 목표, 오른쪽 벽에 힌트.
+  // 프롬프트는 가까이 갔을 때 무엇을 누를지만 알려 준다 — 그건 조작 안내지 목표가 아니다.
+  //
+  // 힌트 판은 꺼진 채로 걸린다. 헤맨 시간이 쌓여야 켜지고 더 헤매면 한 단계 더 밝아진다.
+  // **답은 주지 않는다** — 어디를 봐야 하는지만 말한다. 답을 주면 그 순간
+  // 이 방은 문제가 아니라 버튼이 된다.
   const goals = {};
+  const hints = {};
   for (const r of spec.rooms) {
     if (!r.goal) continue;
+    const seg = dungeon.rectOf(r.id);
     goals[r.id] = r.goal;
-    addSignboard(scene, dungeon.rectOf(r.id), r.name, r.goal, spec.theme.glow);
+    addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
+    if (!r.hints) continue;
+    const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있어요', spec.theme.glow, true);
+    hints[r.id] = { board, texts: r.hints, level: 0, t: 0 };
   }
 
   const shrineSeg = dungeon.rectOf('shrine');
@@ -130,7 +139,20 @@ export function buildRoom(spec) {
   const prize = new Prize(scene, final.prizePos);
 
   return {
-    spec, scene, dungeon, gates, final, prize, goals,
+    spec, scene, dungeon, gates, final, prize, goals, hints,
+    // 헤맨 시간이 쌓이면 힌트가 한 단계씩 켜진다. 실패는 시간을 크게 밀어 준다 —
+    // 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르게 대접해야 한다.
+    // 켜졌으면 그 문구를 돌려준다(배너로 한 번 알리려고).
+    nudge(id, dt) {
+      const h = hints[id];
+      if (!h || h.level >= h.texts.length) return null;
+      h.t += dt;
+      const need = h.level === 0 ? 45 : 90;
+      if (h.t < need) return null;
+      h.board.set(`힌트 ${h.level + 1}`, h.texts[h.level], false);
+      h.level++;
+      return h.texts[h.level - 1];
+    },
     obstacles: final.obstacles || [],
     shrineSeg,
     // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
@@ -149,6 +171,13 @@ export function buildRoom(spec) {
         g.solved = false;
         if (g.gate.restart) g.gate.restart();
         else if (g.gate.reset) g.gate.reset();
+      }
+      // 힌트도 처음으로. 한 번 본 힌트가 다음 판까지 켜져 있으면
+      // 그 방은 두 번째부터 문제가 아니다.
+      for (const id in hints) {
+        const h = hints[id];
+        h.level = 0; h.t = 0;
+        h.board.set('힌트', '아직 잠겨 있어요', true);
       }
       dungeon.resetDoors();
       if (final.restart) final.restart();

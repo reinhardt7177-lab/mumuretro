@@ -209,6 +209,12 @@ function stepRoom(dt, intent) {
   for (const g of gates) {
     const inSeg = seg && seg.id === g.room;
     const r = g.gate.update(dt, roomActor) || {};
+    // 헤맨 시간 — 자기 방에 있고 아직 못 풀었으면 쌓인다.
+    // 실패는 8초어치로 친다. 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르다.
+    if (inSeg && !g.solved) {
+      const got = room.nudge(g.room, dt + (r.fail ? 8 : 0));
+      if (got) { noteMsg = `💡 힌트가 켜졌어요 — 오른쪽 벽`; noteT = 2.6; }
+    }
     if (inSeg && r.fail) {
       // 스스로 자리를 옮기는 관문(타일은 갇혀 있어 되돌릴 곳이 없다)은 그대로 둔다.
       // 나머지는 방 처음으로 보낸다 — 사당 처음이 아니다.
@@ -224,6 +230,10 @@ function stepRoom(dt, intent) {
 
   // 신전 — 사당마다 다른 물건이 서 있다(저울·거울의 신…). 계약은 관문과 같다.
   final.update(dt, roomActor, room.scene);
+  if (seg && seg.id === 'shrine' && !final.solvedBy(roomActor)) {
+    const got = room.nudge('shrine', dt);
+    if (got) { noteMsg = '💡 힌트가 켜졌어요 — 오른쪽 벽'; noteT = 2.6; }
+  }
   if (final.solvedBy(roomActor)) prize.reveal();
   prize.update(dt);
   if (seg && seg.id === 'shrine') {
