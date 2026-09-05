@@ -301,6 +301,10 @@ export class BalanceScale {
     this._updateTilt(true);
   }
 
+  // 관문과 같은 계약을 지킨다 — 신전도 결국 "풀렸나"를 묻는 물건이다(Room.js).
+  solvedBy() { return this.balanced; }
+  restart() { this.reset(); }
+
   _returnToShelf(stock, mesh) {
     if (!stock) return;
     stock.parent.add(mesh);

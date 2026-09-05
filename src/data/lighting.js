@@ -71,6 +71,56 @@ export const SHRINE = {
   goldDim:   0xc9913f,
 };
 
+// ── 사당 테마 여섯 벌 ──────────────────────────────────────────────────────
+// 사당마다 과학 4학년 한 단원을 맡고, 그 단원의 물질에서 색과 빛을 그대로 가져온다.
+// 억지로 여섯을 만든 게 아니라 단원이 원래 여섯이고 서로 다른 것을 다루기 때문에
+// 분위기가 저절로 갈린다.
+//
+// ★ 색을 여기 몰아 두는 이유는 아트 바이블 §6 그대로다 — 코드에 색을 적기 시작하면
+//   "이 방을 좀 더 어둡게"가 파일 여섯 군데를 고치는 일이 된다.
+//
+// amb  [하늘색, 땅색, 세기]   실내 환경광
+// lamp 방 포인트라이트 배율. 그림자 사당은 0.3 — 조명을 끄는 것이 분위기를
+//      뒤집는 가장 싼 방법이고, 그래야 관문 자체가 유일한 광원이 된다.
+export const SHRINE_THEMES = {
+  // 01 물체의 무게 — 따뜻한 돌, 청록 발광. 조용한 기준점.
+  balance: {
+    stone: 0x8c8578, stoneDark: 0x6b6559, stoneLite: 0xa9a294,
+    glow: 0x6fe3d2, glowDim: 0x3fa89b,
+    bg: 0x0b1216, amb: [0x5d7a86, 0x2a2620, 0.50], lamp: 1.0,
+  },
+  // 02 그림자와 거울 — 거의 완전한 어둠. 뼈처럼 흰 빛 하나.
+  shadow: {
+    stone: 0x3f3d38, stoneDark: 0x232220, stoneLite: 0x55524a,
+    glow: 0xe9e3cd, glowDim: 0x8b8571,
+    bg: 0x03050a, amb: [0x1c2430, 0x060608, 0.12], lamp: 0.30,
+  },
+  // 03 혼합물의 분리 — 모래와 황토. 먼지 낀 작업장.
+  sift: {
+    stone: 0xa08a63, stoneDark: 0x6f5d3f, stoneLite: 0xc2ab7e,
+    glow: 0xe0a955, glowDim: 0x9c6f2c,
+    bg: 0x120e08, amb: [0x8a7550, 0x2a2016, 0.55], lamp: 1.0,
+  },
+  // 04 물의 상태 변화 — 푸른 얼음, 반투명.
+  water: {
+    stone: 0x6f8a99, stoneDark: 0x445a68, stoneLite: 0x9ab4c2,
+    glow: 0x79c0e8, glowDim: 0x3d7ea8,
+    bg: 0x061018, amb: [0x4a7d99, 0x14202a, 0.60], lamp: 1.0,
+  },
+  // 05 화산과 지진 — 붉음. 여섯 중 가장 밝고 가장 시끄럽다.
+  fire: {
+    stone: 0x6b4a42, stoneDark: 0x402924, stoneLite: 0x8f665a,
+    glow: 0xe8664a, glowDim: 0x9c2f1c,
+    bg: 0x140705, amb: [0x8a3a24, 0x1a0c08, 0.50], lamp: 1.10,
+  },
+  // 06 지층과 화석 — 지하 깊은 곳. 자수정빛.
+  strata: {
+    stone: 0x6a5f72, stoneDark: 0x3f3748, stoneLite: 0x8b7f97,
+    glow: 0xab94df, glowDim: 0x6b52a0,
+    bg: 0x0a0710, amb: [0x453a5e, 0x0e0a14, 0.45], lamp: 0.90,
+  },
+};
+
 // ── 지형 색 (§"정점 색") ────────────────────────────────────────────────────
 // 텍스처를 쓰지 않는다. 정점마다 색을 달리해서 면이 적어도 색 정보가 풍부하게 만든다.
 // 고도와 경사 두 축으로 고른다 — 낮고 완만하면 풀, 높고 가파르면 바위.

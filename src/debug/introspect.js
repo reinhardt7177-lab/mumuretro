@@ -288,24 +288,35 @@ export function installDebug(ctx) {
     //   맞닿기만 하고 겹치지 않는 이음매마다 폭 1.0u의 **못 걷는 띠**가 생겨
     //   아이가 첫 방에도 못 들어갔다. 텔레포트로 하는 검증은 이걸 절대 못 잡는다.
     //   방을 하나 더 붙이는 순간 되살아나는 종류라 상시 검사로 박아 둔다.
-    let walkOK = true, reached = '(없음)';
-    const rooms = ctx.dungeon, ra = ctx.roomActor;
-    if (rooms && ra) {
-      const saved = rooms.rects.map((r) => r.open);
-      rooms.rects.forEach((r) => { r.open = true; });        // 문을 전부 연 상태로 통로만 본다
-      const savedPos = ra.position.clone();
-      ra.setAt(0, ENTRY_Z_TEST, -1);
-      const last = rooms.rects[rooms.rects.length - 1];
-      for (let i = 0; i < 4000; i++) {
-        ra.update(1 / 60, { x: 0, y: 1, run: true, jump: false }, engine.camera);
-        if (ra.position.z < last.z1) break;
+    let walkOK = true;
+    // 사당마다 내부가 다르므로 **여섯을 다 걸어 본다.** 사당을 하나 붙일 때마다
+    // 이음매가 새로 생기고, 이음매는 이 프로젝트에서 가장 자주 깨진 자리다.
+    const ra = ctx.roomActor;
+    if (ctx.roomFor && ctx.shrines && ra) {
+      const savedRects = ra.rects, savedObs = ra.obstacles, savedPos = ra.position.clone();
+      const hits = [];
+      for (const sh of ctx.shrines.shrines) {
+        const rm = ctx.roomFor(sh);
+        const rects = rm.dungeon.rects;
+        const open = rects.map((r) => r.open);
+        rects.forEach((r) => { r.open = true; });    // 문을 전부 연 상태로 통로만 본다
+        ra.rects = rects;
+        ra.obstacles = [];                           // 신전의 석상에 걸려 멈추면 통로 문제가 아니다
+        ra.setAt(0, ENTRY_Z_TEST, -1);
+        const last = rects[rects.length - 1];
+        for (let i = 0; i < 9000; i++) {
+          ra.update(1 / 60, { x: 0, y: 1, run: true, jump: false }, engine.camera);
+          if (ra.position.z < last.z1) break;
+        }
+        const seg = rm.dungeon.segmentAt(ra.position.z);
+        const id = seg ? seg.id : '(밖)';
+        if (id !== last.id) { walkOK = false; hits.push(`${rm.spec.id}:${id}@${ra.position.z.toFixed(1)}`); }
+        rects.forEach((r, i) => { r.open = open[i]; });
       }
-      const seg = rooms.segmentAt(ra.position.z);
-      reached = seg ? seg.id : '(밖)';
-      walkOK = reached === last.id;
-      log.push(`F 사당 관통 도달=${reached} z=${ra.position.z.toFixed(1)} -> ${walkOK ? 'PASS' : 'FAIL'}`);
-      rooms.rects.forEach((r, i) => { r.open = saved[i]; });
+      ra.rects = savedRects; ra.obstacles = savedObs;
       ra.setAt(savedPos.x, savedPos.z, -1);
+      log.push(`F 사당 관통 ${ctx.shrines.shrines.length}곳`
+        + (walkOK ? ' 전부' : ` 실패=${hits.join(' ')}`) + ` -> ${walkOK ? 'PASS' : 'FAIL'}`);
     }
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK && walkOK;
