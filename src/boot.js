@@ -22,6 +22,7 @@ import { SHRINES, ENTRY_Z, EXIT_Z } from './shrine/layouts.js';
 import { buildRoom } from './shrine/Room.js';
 import { RoomActor } from './shrine/RoomActor.js';
 import { buildMapPage } from './ui/MapPage.js';
+import { buildTouchControls } from './ui/TouchControls.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -171,6 +172,8 @@ const _cUp = new THREE.Vector3();
 const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
 
 function step(dt) {
+  // 사당 안에서도 E 버튼이 필요하다. 바깥 갱신에만 걸면 실내에서 안 돈다.
+  touch.update();
   const intent = input.poll();
   if (mode === 'room') { stepRoom(dt, intent); return; }
   stepPlanet(dt, intent);
@@ -272,12 +275,15 @@ function stepPlanet(dt, intent) {
 // 지도 — 처음엔 온통 검고, 걸어간 자리만 밝아진다. 길을 알려주는 게 아니라
 // 다녀온 것을 기록한다(M으로 연다).
 const mapPage = buildMapPage(planet, player, shrines, SHRINES);
+// 터치 조작 — 터치 기기에서만 나타난다. 이게 없으면 모바일에서는 걷기만 되고
+// 사당에 들어갈 수조차 없다(점검에서 확인).
+const touch = buildTouchControls(input, mapPage);
 
 const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES, mapPage,
+  roomActor, planetScene, roomFor, SHRINES, mapPage, touch,
   get room() { return room; },
   get cleared() { return cleared; },
   get mode() { return mode; },

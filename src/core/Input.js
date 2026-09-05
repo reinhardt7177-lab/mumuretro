@@ -88,6 +88,9 @@ export class Input {
 
   // 모바일 점프 버튼 등 외부 트리거용.
   requestJump() { this._jump = true; }
+  // 터치 버튼용. 키보드의 E와 같은 자리로 들어간다 —
+  // 조작 경로를 둘로 나누면 한쪽만 고쳐지는 일이 반드시 생긴다.
+  requestAction() { this._action = true; }
   setHoldJump(on) { this._holdJump = !!on; }
 
   poll() {
