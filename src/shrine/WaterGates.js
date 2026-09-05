@@ -8,6 +8,7 @@
 //   보이는 얼음과 밟히는 얼음이 어긋나고, 그건 이 프로젝트에서 이미 겪은 실수다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle, range, randInt } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -52,8 +53,9 @@ export class FreezeGate {
       const r = mk(bz[1], bz[0], false);
       parts.push(r);
       if (k < 2) parts.push(mk(zs[k * 2 + 2], bz[1], true));  // 디딤섬
+      // 버티는 시간도 판마다 흔든다. 갈수록 짧아지는 건 그대로다.
       return { rect: r, z0: bz[1], z1: bz[0], phase: 'water', t: 0,
-        solid: [5.0, 4.2, 3.4][k] };
+        solid: [range(4.4, 5.6), range(3.7, 4.7), range(3.0, 3.9)][k] };
     });
     parts.push(mk(seg.z0, zs[5], true));                      // 출구 발판
     dun.rects.splice(i0, 1, ...parts);
@@ -178,8 +180,15 @@ export class SlideGate {
     g.add(floor);
 
     // 구멍 넷 — 지그재그로 놓아 한 방향으로 쭉 밀 수 없게 한다
+    // 구멍 자리를 판마다 뽑는다. 좌우를 번갈아 두어 한 방향으로 쭉 밀 수 없게 한다.
     this.holes = [];
-    for (const [dx, dz, r] of [[-2.2, -1.5, 1.5], [2.4, -4.5, 1.6], [-2.6, -7.5, 1.5], [1.8, -10.5, 1.4]]) {
+    let side = randInt(2) ? 1 : -1;
+    const spots = [0, 1, 2, 3].map((k) => {
+      side = -side;
+      const v = [side * range(1.6, 2.8), -(1.4 + k * 3.0 + range(-0.4, 0.4)), range(1.35, 1.7)];
+      return v;
+    });
+    for (const [dx, dz, r] of spots) {
       const x = cx + dx, z = this.zIn + dz;
       const m = new THREE.Mesh(new THREE.CircleGeometry(r, 16), glowMat(0x0a2130));
       m.rotation.x = -Math.PI / 2;
@@ -264,9 +273,9 @@ export class SteamGate {
     kn.position.set(this.lever.x, 1.6, this.lever.z); g.add(kn);
 
     // 밸브 셋 — 각자 다른 모습을 요구한다
-    this.valves = [
-      { want: 'steam', x: cx - 3.4 }, { want: 'ice', x: cx }, { want: 'water', x: cx + 3.4 },
-    ].map((v) => {
+    // 어느 밸브가 무엇을 원하는지 판마다 섞는다.
+    this.valves = shuffle(['steam', 'ice', 'water'])
+      .map((want, i) => ({ want, x: cx - 3.4 + i * 3.4 })).map((v) => {
       const z = seg.z0 + 2.2;
       const mat = glowMat(TEMPS.find((t) => t.state === v.want).color,
         { transparent: true, opacity: 0.45 });
@@ -346,7 +355,7 @@ export class WaterGod {
     this.REACH = 2.8;
     this.t = 0; this.si = 0;
     this.got = 0;
-    this.want = 2;              // 처음 문제: 수증기
+    this.want = randInt(TEMPS.length);      // 처음 문제도 판마다 다르다
     this.flash = 0;
     const cx = (seg.x0 + seg.x1) / 2;
     this.gz = seg.z0 + (seg.z1 - seg.z0) * 0.30;
@@ -436,7 +445,7 @@ export class WaterGod {
 
   solvedBy() { return this.got >= NEED; }
   restart() {
-    this.got = 0; this.want = 2; this.si = 0; this.t = 0; this.flash = 0;
+    this.got = 0; this.want = randInt(TEMPS.length); this.si = 0; this.t = 0; this.flash = 0;
     this.signMat.color.set(TEMPS[this.want].color);
     for (const p of this.pips) p.material.color.set(0x3a4a52);
   }

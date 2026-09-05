@@ -11,6 +11,7 @@
 //   그 그림자로 판정한다 — 보이는 것이 곧 규칙이어야 아이가 배울 수 있다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle, range, randInt, pick } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -182,16 +183,20 @@ export class MirrorGate {
     //     M2에서 45° → (0,−1)
     //     M3에서 135° → (1,0) → 표적
     //   세 각이 전부 45°의 배수라 반드시 풀리고, 순서를 지켜야만 이어진다.
+    // 판마다 L자가 꺾이는 쪽과 다리 길이가 달라진다 —
+    // 자리가 고정이면 두 번째 판부터는 각도를 외운 대로 돌린다.
+    // 어느 쪽으로 꺾든 정답은 45°의 배수다(왼쪽 45·45·135 / 오른쪽 135·135·45).
+    const sgn = pick([-1, 1]);
+    const d1 = range(2.6, 3.6), dx = range(2.8, 3.6), d2 = range(8.0, 10.5);
     this.src = { x: cx, z: seg.z1 - 0.4 };
-    this.target = { x: cx + 3.4, z: seg.z1 - 9.0 };
-    this.answer = [1, 1, 3];                       // 45° · 45° · 135°
+    this.target = { x: cx - sgn * range(3.0, 3.8), z: seg.z1 - d2 };
 
     const post = toon(th.stoneLite);
     this.mirrors = [];
     for (const pl of [
-      { x: cx, z: seg.z1 - 3.0 },
-      { x: cx - 3.2, z: seg.z1 - 3.0 },
-      { x: cx - 3.2, z: seg.z1 - 9.0 },
+      { x: cx, z: seg.z1 - d1 },
+      { x: cx + sgn * dx, z: seg.z1 - d1 },
+      { x: cx + sgn * dx, z: seg.z1 - d2 },
     ]) {
       const grp = new THREE.Group();
       grp.position.set(pl.x, 0, pl.z);
@@ -367,7 +372,11 @@ export class SilhouetteGate {
     // 맞춰야 할 구멍 — **답을 먼저 정하고** 거기서 구멍 크기를 역산한다.
     // 크기를 손으로 찍으면 풀 수 없는 값이 나온다.
     // 답을 먼저 정하고 구멍 크기를 역산한다. 세 번 다.
-    this.answers = [this.lampZ - 6.4, this.lampZ - 3.2, this.lampZ - 8.6];
+    // 답 셋을 판마다 뽑고 순서도 섞는다. 크게·작게가 번갈아 나오도록
+    // 가까운 것 하나, 먼 것 하나, 중간 하나를 각각 범위에서 뽑는다.
+    this.answers = shuffle([
+      this.lampZ - range(2.8, 3.8), this.lampZ - range(5.6, 7.0),
+      this.lampZ - range(8.0, 9.2)]);
     this.round = 0;
     const D = this.lampZ - this.wallZ;
     this._holeAt = (z) => this.objSize * D / (this.lampZ - z);
@@ -450,6 +459,7 @@ export class SilhouetteGate {
     this.held = false;
     this.solved = false;
     this.round = 0;
+    this.answers = shuffle(this.answers);       // 다시 도전하면 순서도 새로
     for (const p of this.pips) p.material.color.set(0x3a3730);
     this.holeW = this._holeAt(this.answers[0]);
     this.hole.scale.set(this.holeW, this.holeW, 1);
@@ -470,7 +480,7 @@ export class SilhouetteGate {
 // ══════════════════════════════════════════════════════════════════════════
 const ANGLES = 8;
 const HEIGHTS = [2.6, 4.4, 6.6];          // 낮을수록 그림자가 길다
-const ANSWER = { a: 5, h: 1 };
+// 정답은 판마다 뽑는다(생성자에서). 고정이면 손잡이를 세는 것으로 풀린다.
 const SH_BASE = 26;                       // 그림자 길이 = SH_BASE / 등불 높이
 
 export class MirrorGod {
@@ -479,6 +489,8 @@ export class MirrorGod {
     this.REACH = 2.6;
     this.ai = 0; this.hi = 0;
     this.solved = false;
+    // 처음 자리(0,0)가 곧 정답이면 아무것도 안 해도 풀린다 — 그걸 피해 뽑는다.
+    this.answer = { a: 1 + randInt(ANGLES - 1), h: randInt(HEIGHTS.length) };
     const cx = (seg.x0 + seg.x1) / 2;
     this.gx = cx;
     this.gz = seg.z0 + (seg.z1 - seg.z0) * 0.30;      // 신은 안쪽에 선다
@@ -548,7 +560,7 @@ export class MirrorGod {
   _len(i) { return SH_BASE / HEIGHTS[i]; }
 
   _placeMark() {
-    const d = this._dir(ANSWER.a), L = this._len(ANSWER.h);
+    const d = this._dir(this.answer.a), L = this._len(this.answer.h);
     this.mark.scale.set(1, L, 1);
     this.mark.position.set(this.gx + d.x * L / 2, 0.015, this.gz + d.z * L / 2);
     this.mark.rotation.z = -Math.atan2(d.x, d.z);
@@ -563,7 +575,7 @@ export class MirrorGod {
     this.shadow.scale.set(1, L, 1);
     this.shadow.position.set(this.gx + d.x * L / 2, 0.03, this.gz + d.z * L / 2);
     this.shadow.rotation.z = -Math.atan2(d.x, d.z);
-    this.solved = this.ai === ANSWER.a && this.hi === ANSWER.h;
+    this.solved = this.ai === this.answer.a && this.hi === this.answer.h;
     this.markMat.color.set(this.solved ? 0xffd27a : 0x8b8571);
     this.markMat.opacity = this.solved ? 0.95 : 0.55;
   }

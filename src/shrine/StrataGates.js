@@ -4,6 +4,7 @@
 // 그리고 이 사당은 앞선 다섯을 **기억해 냈는지** 묻는다 — 다시 가르치지 않는다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle, randInt } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -149,8 +150,9 @@ export class FiveDoorsGate {
     this.group = g;
     const dark = toon(th.stoneDark), lite = toon(th.stoneLite);
 
-    // 표지의 순서는 섞어 둔다. 왼쪽부터 1·2·3·4·5면 색을 몰라도 위치로 풀린다.
-    const order = [2, 0, 4, 1, 3];
+    // 표지의 순서는 섞는다. 왼쪽부터 1·2·3·4·5면 색을 몰라도 위치로 풀린다.
+    // 고정 배열이면 한 번 풀고 외우면 끝이라 판마다 다시 뽑는다.
+    const order = shuffle([0, 1, 2, 3, 4]);
     this.levers = order.map((si, i) => {
       const x = cx - 4.4 + i * 2.2, z = seg.z0 + 3.0;
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.0, 0.34), dark);
@@ -298,7 +300,7 @@ export class GrandGod {
     });
 
     // ── 구슬 다섯 — 입구 쪽 선반 ───────────────────────────────────────
-    this.orbs = SHRINE_COLORS.map((s, i) => {
+    this.orbs = shuffle(SHRINE_COLORS).map((s, i) => {
       const x = cx - 4.4 + i * 2.2, z = seg.z1 - 3.0;
       const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), glowMat(s.c));
       m.position.set(x, 1.0, z);

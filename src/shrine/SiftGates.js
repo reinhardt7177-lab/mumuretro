@@ -9,6 +9,7 @@
 //   쓰인다. 방마다 조작을 새로 가르치면 배울 내용이 조작에 먹힌다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -57,6 +58,8 @@ export class SieveGate {
     this.fitted = -1;
     this.round = 0;             // 지금 주문
     this.solved = false;
+    // 주문 순서를 섞는다. 늘 "굵은 것만"으로 시작하면 첫 수는 외워진다.
+    this.orders = shuffle(ORDERS);
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
@@ -117,7 +120,9 @@ export class SieveGate {
 
     // 체 셋 — 선반에 나란히. 구멍 크기가 눈에 보이게 살을 다르게 뚫는다.
     this.sieves = [];
-    SIEVES.forEach((sv, i) => {
+    // 체가 놓인 자리도 섞는다. 자리가 고정이면 "왼쪽 것"으로 외워진다.
+    shuffle(SIEVES.map((sv, i) => i)).forEach((si, i) => {
+      const sv = SIEVES[si];
       const x = cx - 3.4 + i * 3.4, z = seg.z1 - 3.0;
       const grp = new THREE.Group();
       grp.position.set(x, 1.0, z);
@@ -135,7 +140,7 @@ export class SieveGate {
         }
       }
       g.add(grp);
-      this.sieves.push({ i, x, z, home: new THREE.Vector3(x, 1.0, z), grp, spec: sv });
+      this.sieves.push({ i: si, x, z, home: new THREE.Vector3(x, 1.0, z), grp, spec: sv });
     });
 
     this._apply();
@@ -143,7 +148,7 @@ export class SieveGate {
 
   // 지금 끼운 체로 무엇이 남고 무엇이 빠지는가. 알갱이가 체 구멍보다 크면 남는다.
   _apply() {
-    const sv = this.fitted >= 0 ? SIEVES[this.fitted] : null;
+    const sv = this.fitted >= 0 ? this.sieves[this.fitted].spec : null;
     for (const gm of this.grainMesh) {
       const gr = GRAINS[gm.gi];
       const stays = !sv || gr.mm > sv.mm;
@@ -157,14 +162,14 @@ export class SieveGate {
     }
     // 이번 주문대로 갈렸는가
     const up = new Set(this.grainMesh.filter((m) => m.mesh.parent === this.above).map((m) => m.gi));
-    const want = ORDERS[this.round].keep;
+    const want = this.orders[this.round].keep;
     const ok = up.size === want.length && want.every((i) => up.has(i));
     this.slotMat.color.set(ok ? 0xffd27a : 0x9c6f2c);
     if (!ok) return;
     // 맞았다 — 체를 도로 내주고 다음 주문으로. 같은 체로 다음도 되면 배우는 게 없다.
     this.pips[this.round].material.color.set(0xffd27a);
     this.round++;
-    if (this.round >= ORDERS.length) { this.solved = true; return; }
+    if (this.round >= this.orders.length) { this.solved = true; return; }
     const s = this.sieves[this.fitted];
     this.fitted = -1;
     s.grp.position.copy(s.home);
@@ -173,7 +178,7 @@ export class SieveGate {
 
   _paintOrder() {
     if (this.solved) { for (const d of this.orderDots) d.material.color.set(0xffd27a); return; }
-    const want = ORDERS[this.round].keep;
+    const want = this.orders[this.round].keep;
     this.orderDots.forEach((d, i) => d.material.color.set(want.includes(i) ? GRAINS[i].color : 0x2a2018));
   }
 
@@ -199,7 +204,7 @@ export class SieveGate {
 
   prompt(pos) {
     if (this.solved) return null;
-    const say = `주문 ${this.round + 1}/3 · ${ORDERS[this.round].say}`;
+    const say = `주문 ${this.round + 1}/3 · ${this.orders[this.round].say}`;
     if (this.held) {
       return this._atFrame(pos)
         ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${this.held.spec.label}를 들었어요 — 틀로`;
@@ -214,7 +219,7 @@ export class SieveGate {
     if (this.held) {
       if (!this._atFrame(pos)) return false;
       if (this.fitted >= 0) return false;                    // 먼저 빼야 한다
-      this.fitted = this.held.i;
+      this.fitted = this.sieves.indexOf(this.held);
       this.held.grp.position.set(this.frame.x, 1.75, this.frame.z);
       this.held.grp.rotation.y = 0;
       this.held = null;
@@ -238,6 +243,7 @@ export class SieveGate {
   restart() {
     this.held = null; this.fitted = -1;
     this.round = 0; this.solved = false;
+    this.orders = shuffle(ORDERS);       // 다시 도전하면 주문 순서도 새로
     for (const p of this.pips) p.material.color.set(0x4a3a22);
     for (const s of this.sieves) { s.grp.position.copy(s.home); s.grp.rotation.y = 0; }
     this._apply();
@@ -293,9 +299,12 @@ export class EvaporateGate {
       g.add(grp);
       return { x, z, mat: top.material };
     };
-    this.magnet = station(cx - 4.4, seg.z0 + 3.4, 0xe0736b, 1.2);
-    this.filter = station(cx, seg.z0 + 3.4, 0x79c0e8, 1.1);
-    this.burner = station(cx + 4.4, seg.z0 + 3.4, 0xe8a04a, 1.0);
+    // 도구가 놓인 자리를 섞는다. 순서는 물리가 정하지만, 자리까지 고정이면
+    // "왼쪽→가운데→오른쪽"이라는 몸의 기억으로 풀린다.
+    const xs = shuffle([cx - 4.4, cx, cx + 4.4]);
+    this.magnet = station(xs[0], seg.z0 + 3.4, 0xe0736b, 1.2);
+    this.filter = station(xs[1], seg.z0 + 3.4, 0x79c0e8, 1.1);
+    this.burner = station(xs[2], seg.z0 + 3.4, 0xe8a04a, 1.0);
     this.tap = station(cx - 3.2, seg.z1 - 2.6, 0x9ab4c2, 0.8);
 
     this._paint();
@@ -432,7 +441,9 @@ export class SiftGod {
     disc.position.set(cx, 5.5, this.gz); g.add(disc);
 
     // 섞인 것 셋 — 신 앞에 나란히
-    this.mixes = PAIRS.map((p, i) => {
+    // 섞인 것과 도구의 자리를 판마다 섞는다. 짝은 물리가 정하지만
+    // 자리까지 고정이면 "왼쪽은 왼쪽"으로 외워진다.
+    this.mixes = shuffle(PAIRS).map((p, i) => {
       const x = cx - 4.0 + i * 4.0, z = this.gz + 3.6;
       const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.85, 1.0, 8), dark);
       ped.position.set(x, 0.5, z); g.add(ped);
@@ -447,7 +458,8 @@ export class SiftGod {
       { id: 'sieve', name: '체', c: 0xc9a06a },
       { id: 'magnet', name: '자석', c: 0xe0736b },
       { id: 'burner', name: '화로', c: 0xe8a04a },
-    ].map((t, i) => {
+    ];
+    this.tools = shuffle(this.tools).map((t, i) => {
       const x = cx - 4.0 + i * 4.0, z = this.gz + 7.4;
       const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.44, 0), glowMat(t.c));
       m.position.set(x, 1.0, z);

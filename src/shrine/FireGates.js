@@ -7,6 +7,7 @@
 //   관찰해서 예측한다. 예진 없이 흔들리면 그건 지진이 아니라 주사위다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle, range, randInt } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -30,6 +31,7 @@ export class QuakeGate {
     this.seg = seg;
     const th = opts.theme;
     this.phase = 'calm'; this.t = 0;
+    this.calm = range(3.2, 4.8);      // 고요한 시간도 판마다 다르다
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
@@ -41,7 +43,11 @@ export class QuakeGate {
     // 붙잡을 기둥 — 길을 따라 띄엄띄엄. 간격이 곧 난이도다.
     const lite = toon(th.stoneLite);
     this.pillars = [];
-    for (const [dx, dz] of [[-2.4, -2.0], [2.6, -5.4], [-2.0, -8.8], [2.2, -11.6]]) {
+    // 기둥 자리를 판마다 뽑는다. 좌우를 번갈아 두어 한 줄로 달릴 수 없게 한다.
+    let sd = randInt(2) ? 1 : -1;
+    const spots = [0, 1, 2, 3].map((k) => { sd = -sd;
+      return [sd * range(1.8, 2.8), -(1.8 + k * 3.2 + range(-0.5, 0.5))]; });
+    for (const [dx, dz] of spots) {
       const x = cx + dx, z = this.zIn + dz;
       const m = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, seg.h, 6), lite);
       m.position.set(x, seg.h / 2, z);
@@ -76,7 +82,7 @@ export class QuakeGate {
 
     if (this.phase === 'calm') {
       this.warnMat.opacity = 0;
-      if (this.t >= CALM) { this.phase = 'fore'; this.t = 0; }
+      if (this.t >= this.calm) { this.phase = 'fore'; this.t = 0; }
     } else if (this.phase === 'fore') {
       // 예진 — 작게 흔들리고 경고등이 켜진다. 이때 기둥으로 뛰어야 한다.
       actor.shake = Math.max(actor.shake, 0.06);
@@ -99,7 +105,7 @@ export class QuakeGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (this.phase === 'calm') return `🌋 고요… ${Math.max(1, Math.ceil(CALM - this.t))} — 기둥 위치를 봐 둬요`;
+    if (this.phase === 'calm') return `🌋 고요… ${Math.max(1, Math.ceil(this.calm - this.t))} — 기둥 위치를 봐 둬요`;
     if (this.phase === 'fore') return '⚠ 예진이에요! 기둥 곁으로!';
     return this._safe(pos) ? '🪨 기둥을 붙잡았어요' : '⚠ 흔들려요! 기둥으로!';
   }
@@ -228,7 +234,10 @@ export class GeyserGate {
     this.zOut = seg.z0 + 2.2;
 
     this.vents = [];
-    const spec = [[-3.4, -3.0, 4.0, 0.0], [0.6, -6.4, 6.0, 2.1], [-1.8, -9.8, 9.0, 4.4]];
+    // 자리도 주기도 판마다. 주기가 서로 어긋나야 '다 잠잠한 순간'이 짧다.
+    const per = shuffle([range(3.6, 4.6), range(5.4, 6.6), range(8.0, 9.6)]);
+    const spec = [0, 1, 2].map((k) => [range(-3.6, 3.6), -(2.6 + k * 3.4 + range(-0.4, 0.4)),
+      per[k], range(0, per[k])]);
     for (const [dx, dz, per, ph] of spec) {
       const x = cx + dx, z = this.zIn + dz;
       const hole = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.7, 0.2, 10), toon(th.stoneDark));
@@ -278,7 +287,7 @@ export class GeyserGate {
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
-  restart() { this.vents.forEach((v, i) => { v.t = [0, 2.1, 4.4][i]; }); }
+  restart() { for (const v of this.vents) v.t = Math.random() * v.per; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -342,7 +351,10 @@ export class FireGod {
       };
       for (const d of p.open) grp.add(arm(d));
       g.add(grp);
-      return { ...p, x, z, rot: 0, grp };
+      // 시작 회전을 판마다 뽑는다. 0에서 시작하면 몇 번 눌렀는지가 곧 답이 된다.
+      const rot = randInt(4);
+      grp.rotation.y = rot * Math.PI / 2;
+      return { ...p, x, z, rot, grp };
     });
 
     // 흐르는 용암 — 이어진 데까지만 보인다

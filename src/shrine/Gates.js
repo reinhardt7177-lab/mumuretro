@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { SHRINE } from '../data/lighting.js';
+import { shuffle, range, randInt, until } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -308,11 +309,13 @@ export class LaserGate {
     //   "무조건 뛰기"가 답이 아니라야 아이가 줄을 보게 된다.
     const zTop = seg.z1 - 1.6, zBot = seg.z0 + 1.6;
     const span = (zTop - zBot) / 3;
-    const spec = [
-      { y: 0.75, speed: 0.30, jump: true },    // 낮다 — 뛰어넘는다
-      { y: 2.20, speed: 0.40, jump: false },   // 높다 — 뛰면 맞는다
-      { y: 0.75, speed: 0.52, jump: true },    // 낮고 빠르다
-    ];
+    // 판마다 **높은 줄이 어느 구획인지** 달라진다. 속도도 흔든다.
+    // 자리가 고정이면 두 번째 판부터는 보지 않고 몸이 기억한 대로 뛴다.
+    const hi = randInt(3);
+    const spd = [range(0.26, 0.34), range(0.36, 0.46), range(0.48, 0.58)];
+    const spec = [0, 1, 2].map((i) => (i === hi
+      ? { y: 2.20, speed: spd[i], jump: false }     // 높다 — 뛰면 맞는다
+      : { y: 0.75, speed: spd[i], jump: true }));   // 낮다 — 뛰어넘는다
     this.beams = spec.map((sp, i) => {
       const z1 = zTop - i * span, z0 = z1 - span;
       const mid = (z0 + z1) / 2, amp = (z1 - z0) / 2 - 0.6;
@@ -382,8 +385,29 @@ const PLATE_WEIGHTS = [1, 2, 3, 4, 5];
 // ★ 처음엔 한 판(5와 3)으로 끝이었다. 한 번 맞히면 방이 끝나 E 네 번짜리였다.
 //   주문이 세 번 온다. 셋 다 상자 다섯으로 풀리지만 조합이 매번 다르고,
 //   숫자가 커질수록 상자를 더 많이 써야 한다(전수 확인: 정답 3·2·3가지).
-//     (5,3) → {5},{3}     (7,4) → {2,5},{4}     (6,9) → {1,5},{2,3,4}
-const ROUNDS = [[5, 3], [7, 4], [6, 9]];
+//   그리고 숫자는 **판마다 다시 뽑는다.** 고정이면 두 번째부터는 외운 대로 올린다.
+//   뽑은 뒤 반드시 풀리는지 전수로 확인한다 — 못 풀 판을 한 번이라도 내주면
+//   아이는 게임이 고장났다고 생각한다.
+const PW = [1, 2, 3, 4, 5];
+// 상자를 두 판에 나눠 담아 (a, b)를 만들 수 있나. 3^5=243가지를 전수로 본다.
+function plateOK(a, b) {
+  for (let m = 0; m < 243; m++) {
+    let k = m, A = 0, B = 0;
+    for (let i = 0; i < 5; i++) { const t = k % 3; k = (k / 3) | 0;
+      if (t === 0) A += PW[i]; else if (t === 1) B += PW[i]; }
+    if (A === a && B === b) return true;
+  }
+  return false;
+}
+// 주문 셋 — 합이 갈수록 커지게 뽑는다. 마지막엔 상자를 거의 다 써야 한다.
+function makeRounds() {
+  const band = [[6, 9], [10, 12], [13, 15]];     // 라운드별 두 판 합의 범위
+  return band.map(([lo, hi]) => until(() => {
+    const tot = lo + randInt(hi - lo + 1);
+    const a = 2 + randInt(tot - 3);
+    return [a, tot - a];
+  }, ([a, b]) => a >= 2 && b >= 2 && plateOK(a, b)));
+}
 const pboxSize = (w) => 0.44 + w * 0.06;
 
 export class PlateGate {
@@ -405,9 +429,10 @@ export class PlateGate {
 
     // 압력판 둘. 필요 무게를 점으로 새긴다 — 숫자는 3D에서 각도에 따라 안 읽힌다.
     this.round = 0;
+    this.rounds = makeRounds();
     this.plates = [];
-    for (const [i, spec] of [[0, { need: ROUNDS[0][0], x: -3.2 }],
-      [1, { need: ROUNDS[0][1], x: 3.2 }]]) {
+    for (const [i, spec] of [[0, { need: this.rounds[0][0], x: -3.2 }],
+      [1, { need: this.rounds[0][1], x: 3.2 }]]) {
       const pg = new THREE.Group();
       pg.position.set(spec.x, 0, cz - 1.6);
       g.add(pg);
@@ -539,17 +564,17 @@ export class PlateGate {
       // 넘친 판은 붉게. 모자란 것과 넘친 것이 같은 색이면 어느 쪽으로 갈지 알 수 없다.
       p.ringMat.color.set(s === p.need ? 0xffd27a : (s > p.need ? 0xe0736b : SHRINE.glow));
     }
-    if (this.round >= ROUNDS.length) return;
+    if (this.round >= this.rounds.length) return;
     if (!this.plates.every((p) => this._sum(p) === p.need)) return;
     // 한 주문을 맞췄다 — 상자를 돌려주고 다음 주문으로. 숫자가 커지니 다시 짜야 한다.
     this.pips[this.round].material.color.set(0xffd27a);
     this.round++;
-    if (this.round >= ROUNDS.length) return;
+    if (this.round >= this.rounds.length) return;
     for (const p of this.plates) p.boxes.length = 0;
     for (const it of this.stock) { it.taken = false; it.mesh.position.copy(it.home); }
     this.held = null;
     this.plates.forEach((p, i) => {
-      p.need = ROUNDS[this.round][i];
+      p.need = this.rounds[this.round][i];
       p.dots.forEach((d, k) => { d.visible = k < p.need; });
       p.ringMat.color.set(SHRINE.glow);
     });
@@ -582,14 +607,15 @@ export class PlateGate {
     return {};
   }
 
-  solvedBy() { return this.round >= ROUNDS.length; }
+  solvedBy() { return this.round >= this.rounds.length; }
 
   reset() {
     this.round = 0;
+    this.rounds = makeRounds();          // 다시 도전하면 주문도 새로 뽑는다
     for (const q of this.pips) q.material.color.set(0x3a3020);
     for (const p of this.plates) { p.boxes.length = 0; }
     this.plates.forEach((p, i) => {
-      p.need = ROUNDS[0][i];
+      p.need = this.rounds[0][i];
       p.dots.forEach((d, k) => { d.visible = k < p.need; });
     });
     for (const it of this.stock) { it.taken = false; it.mesh.position.copy(it.home); }

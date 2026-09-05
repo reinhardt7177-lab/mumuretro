@@ -14,6 +14,7 @@
 //   1라운드와 2라운드에서 서로 다른 통으로 가는 유일한 물건이고, 3라운드의 핵심이다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { shuffle } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -45,6 +46,9 @@ export class MagnetGate {
     this.held = null;
     this.round = 0;
     this.solved = false;
+    // 기준 순서를 섞되 **셋째는 늘 두 성질을 함께 보는 것**으로 둔다.
+    // 어려운 것을 먼저 내면 앞의 둘이 그 답을 알려 주는 힌트가 되어 버린다.
+    this.crits = [...shuffle(CRITERIA.slice(0, 2)), CRITERIA[2]];
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
@@ -94,7 +98,8 @@ export class MagnetGate {
 
     // 물건 여섯 — 전부 같은 회색 덩어리다. 겉으로는 구별이 안 된다.
     const same = toon(0x9a938a);
-    this.items = ITEMS.map((it, i) => {
+    // 물건 자리도 섞는다. 자리가 고정이면 "왼쪽 셋이 쇠"로 외워진다.
+    this.items = shuffle(ITEMS).map((it, i) => {
       const x = cx - 5.5 + i * 2.2, z = seg.z1 - 3.0;
       const m = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.62), same);
       m.position.set(x, 0.31, z);
@@ -114,7 +119,7 @@ export class MagnetGate {
     this._paint();
   }
 
-  get crit() { return CRITERIA[Math.min(this.round, CRITERIA.length - 1)]; }
+  get crit() { return this.crits[Math.min(this.round, this.crits.length - 1)]; }
 
   _paint() {
     this.bins[0].ringMat.color.set(0x6fe3d2);
@@ -144,7 +149,7 @@ export class MagnetGate {
   _nextRound() {
     this.pips[this.round].material.color.set(0xffd27a);
     this.round++;
-    if (this.round >= CRITERIA.length) { this.solved = true; return; }
+    if (this.round >= this.crits.length) { this.solved = true; return; }
     for (const b of this.bins) b.got.length = 0;
     for (const it of this.items) {
       it.bin = null;
@@ -254,6 +259,7 @@ export class MagnetGate {
     this.held = null;
     this.round = 0;
     this.solved = false;
+    this.crits = [...shuffle(CRITERIA.slice(0, 2)), CRITERIA[2]];
     this.testItem = null;
     this.testMesh.visible = false;
     for (const p of this.pips) p.material.color.set(0x3a3020);
