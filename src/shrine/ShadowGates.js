@@ -388,6 +388,9 @@ export class SilhouetteGate {
     this.shadow.scale.set(s, s, 1);
     this.solved = Math.abs(s - this.holeW) < this.holeW * 0.09;
     this.holeMat.opacity = this.solved ? 0.95 : 0.5;
+    // 맞으면 손을 놓는다. 안 놓으면 물체를 든 채 다음 방까지 끌고 가고,
+    // 그 순간 그림자가 어긋나 방금 푼 것이 다시 안 풀린 것처럼 보인다.
+    if (this.solved) this.held = false;
   }
 
   update(dt, actor) {

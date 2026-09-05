@@ -57,7 +57,9 @@ const scatter = buildScatter(engine.scene, planet, {
 const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt });
 
 // 사당 — 이 세계에서 유일하게 각진 것. 빛기둥이 능선 너머에서도 "저기 뭔가 있다"를 만든다.
-const shrines = buildShrines(engine.scene, planet, shrineSpots);
+// 겉모습도 사당마다 다르다. 능선 너머에서는 색과 윤곽만 남으므로
+// 그 둘이 같으면 여섯 사당은 아이에게 한 곳이다.
+const shrines = buildShrines(engine.scene, planet, shrineSpots, SHRINES.map((s) => s.theme));
 // 시작 위치를 가장 가까운 사당 쪽으로 돌려 세운다 — 첫 화면에 목표가 보여야 한다.
 (function faceNearestShrine() {
   const n = shrines.nearest(player.position);

@@ -65,7 +65,10 @@ class TodoGod {
   }
   update() { return {}; }
   _near(p) { return Math.hypot(p.x - this.x, p.z - this.z) < 2.8; }
-  prompt(p) { return this.solved ? null : (this._near(p) ? `E — 제단 (🚧 ${this.kind})` : null); }
+  prompt(p) {
+    if (this.solved) return null;
+    return this._near(p) ? `E — 제단 (🚧 ${this.kind})` : `🚧 ${this.kind} — 제단으로 가면 구슬이 나와요`;
+  }
   interact(p) { if (!this._near(p)) return false; this.solved = true; return true; }
   solvedBy() { return this.solved; }
   restart() { this.solved = false; }
@@ -114,7 +117,14 @@ export function buildRoom(spec) {
     shrineSeg,
     // 같은 사당을 다시 도전할 때. 다른 사당으로 갈 때는 부를 일이 없다 — 씬이 다르다.
     restart() {
-      for (const g of gates) { g.solved = false; if (g.gate.restart) g.gate.restart(); }
+      // ★ restart만 부르고 있었다. PlateGate처럼 reset만 가진 관문은 되돌아가지 않아
+      //   같은 사당을 다시 들어가면 압력판이 이미 풀려 있었다(전수 조사에서 잡힘).
+      //   둘 중 있는 것을 부른다 — 계약에 없는 이름을 강요하지 않는다.
+      for (const g of gates) {
+        g.solved = false;
+        if (g.gate.restart) g.gate.restart();
+        else if (g.gate.reset) g.gate.reset();
+      }
       dungeon.resetDoors();
       if (final.restart) final.restart();
       if (final.reset) final.reset();

@@ -344,6 +344,16 @@ export class LaserGate {
     return hit ? { fail: hit } : {};
   }
 
+  // ★ 이 방에는 prompt가 아예 없었다. 관문을 다시 쓰면서 통째로 빠뜨렸고,
+  //   전수 조사에서 방의 95%가 아무 말도 안 하는 걸로 잡혔다.
+  //   아이가 들어서면 움직이는 줄 하나만 있고 설명이 없다.
+  prompt(pos) {
+    if (pos.z < this.seg.z0 + 1.2) return null;
+    const b = this.beams[0];
+    const near = b && Math.abs(pos.z - b.mesh.position.z) < 3.0;
+    return near ? '🔴 지금이에요 — Space로 뛰어넘어요' : '🔴 줄이 올 때 뛰어넘어요 (Space)';
+  }
+
   solvedBy(actor) { return actor.position.z < this.seg.z0 + 1.2; }
 }
 
@@ -460,7 +470,8 @@ export class PlateGate {
     const p = this._sum(n.plate), need = n.plate.need;
     if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
     if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무거워요' : stuck}`;
-    return null;
+    // 빈 판 앞에 빈손으로 선 자리. 흔한 상태인데 여기서 침묵하고 있었다(전수 조사).
+    return `이 판은 ${need}이 필요해요 — 상자를 가져와요`;
   }
 
   interact(pos) {

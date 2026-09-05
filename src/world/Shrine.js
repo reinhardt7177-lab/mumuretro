@@ -73,13 +73,27 @@ export function pickShrineSpots(planet, peaks, opts = {}) {
 }
 
 // ── 구조물 ──────────────────────────────────────────────────────────────────
-function buildStructure() {
+// 사당마다 다른 실루엣. 능선 너머에서는 색과 **윤곽**만 남는다 —
+// 그 둘이 같으면 여섯 사당은 아이에게 한 곳이다.
+//   sides  본체 기둥의 면 수. 4면은 각지고 8면은 둥글다
+//   spire  꼭대기 모양. 멀리서 가장 먼저 읽히므로 여기를 제일 크게 가른다
+//   ratio  본체 위/아래 반지름 비. 1보다 크면 위가 넓어 버섯처럼 보인다
+const FORMS = [
+  { sides: 4, spire: 'cone', ratio: 0.80, h: 4.3 },   // 01 균형 — 곧은 사각탑
+  { sides: 6, spire: 'ring', ratio: 0.62, h: 5.0 },   // 02 그림자 — 높고 좁다, 꼭대기에 고리
+  { sides: 8, spire: 'dome', ratio: 1.18, h: 3.4 },   // 03 분리 — 낮고 위가 넓다(체)
+  { sides: 6, spire: 'spike', ratio: 0.90, h: 4.6 },  // 04 물 — 뾰족한 결정 셋
+  { sides: 5, spire: 'stack', ratio: 0.72, h: 4.0 },  // 05 화산 — 층층이 쌓인 분화구
+  { sides: 8, spire: 'twin', ratio: 0.86, h: 5.4 },   // 06 지층 — 가장 높다. 쌍기둥
+];
+
+function buildStructure(theme, form) {
   const g = new THREE.Group();
-  const stone = toon(SHRINE.stone);
-  const dark = toon(SHRINE.stoneDark);
-  const lite = toon(SHRINE.stoneLite);
+  const stone = toon(theme.stone);
+  const dark = toon(theme.stoneDark);
+  const lite = toon(theme.stoneLite);
   // 발광면은 조명을 받으면 안 된다 — 받는 순간 그늘진 쪽이 어두워져 '빛'으로 안 읽힌다.
-  const glow = new THREE.MeshBasicMaterial({ color: SHRINE.glow });
+  const glow = new THREE.MeshBasicMaterial({ color: theme.glow });
   glow.userData.outlineParameters = { visible: false };
 
   const put = (mesh, x, y, z) => { mesh.position.set(x, y, z); mesh.castShadow = true; mesh.receiveShadow = true; g.add(mesh); return mesh; };
@@ -91,9 +105,11 @@ function buildStructure() {
   put(box(BASE_R * 1.48, 0.40, BASE_R * 1.48, lite), 0, 1.07, 0);
 
   // 본체 — 위로 갈수록 좁아지는 사다리꼴. 정확한 직육면체보다 이쪽이 '지어진 것'으로 보인다.
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(2.05, 2.55, 4.3, 4), stone);
-  body.rotation.y = Math.PI / 4;      // 4각 기둥의 면을 정면으로
-  put(body, 0, 3.42, 0);
+  const bh = form.h;
+  const body = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.55 * form.ratio, 2.55, bh, form.sides), stone);
+  body.rotation.y = Math.PI / form.sides;   // 면을 정면으로
+  put(body, 0, 1.27 + bh / 2, 0);
 
   // 입구 — 어두운 구멍. 안쪽을 발광시키지 않는다. 검은 구멍이라야 "들어가는 곳"이 된다.
   const doorDepth = 0.55;
@@ -104,14 +120,48 @@ function buildStructure() {
   for (const s of [-1, 1]) put(box(0.14, DOOR_H + 0.14, 0.16, glow), s * (DOOR_W / 2 + 0.17), 1.27 + DOOR_H / 2, 2.42);
 
   // 지붕 판 + 첨탑
-  put(box(BASE_R * 1.62, 0.34, BASE_R * 1.62, dark), 0, 5.74, 0);
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.9, 4), lite);
-  spire.rotation.y = Math.PI / 4;
-  put(spire, 0, 6.86, 0);
+  const roofY = 1.27 + bh + 0.17;
+  put(box(BASE_R * 1.62, 0.34, BASE_R * 1.62, dark), 0, roofY, 0);
+  let topY = roofY + 0.17;
+  if (form.spire === 'cone') {
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.85, 1.9, 4), lite);
+    sp.rotation.y = Math.PI / 4;
+    put(sp, 0, topY + 0.95, 0);
+    topY += 1.9;
+  } else if (form.spire === 'ring') {
+    put(new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.5, 6), lite), 0, topY + 0.75, 0);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.05, 0.14, 6, 14), glow);
+    ring.rotation.x = Math.PI / 2;
+    put(ring, 0, topY + 1.7, 0);
+    topY += 2.1;
+  } else if (form.spire === 'dome') {
+    put(new THREE.Mesh(new THREE.SphereGeometry(1.5, 10, 5, 0, Math.PI * 2, 0, Math.PI / 2), lite),
+      0, topY, 0);
+    topY += 1.5;
+  } else if (form.spire === 'spike') {
+    for (const [dx, dz, hh] of [[0, 0, 2.6], [-0.8, 0.5, 1.5], [0.75, -0.4, 1.8]]) {
+      put(new THREE.Mesh(new THREE.ConeGeometry(0.42, hh, 5), lite), dx, topY + hh / 2, dz);
+    }
+    topY += 2.6;
+  } else if (form.spire === 'stack') {
+    for (let k = 0; k < 3; k++) {
+      put(new THREE.Mesh(new THREE.CylinderGeometry(1.35 - k * 0.36, 1.6 - k * 0.36, 0.6, 6), lite),
+        0, topY + 0.3 + k * 0.6, 0);
+    }
+    topY += 1.8;
+    put(new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.3, 6), glow), 0, topY, 0);
+  } else {                                       // twin — 쌍기둥
+    for (const sx of [-1, 1]) {
+      put(new THREE.Mesh(new THREE.BoxGeometry(0.55, 3.0, 0.55), lite), sx * 0.95, topY + 1.5, 0);
+    }
+    put(box(2.8, 0.3, 0.7, glow), 0, topY + 3.1, 0);
+    topY += 3.2;
+  }
   // 꼭대기 보석 — 빛기둥의 뿌리
   const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), glow);
   orb.userData.outlineParameters = { visible: false };
-  put(orb, 0, 8.05, 0);
+  put(orb, 0, topY + 0.7, 0);
+  const beamY = topY + 0.7;
 
   // 옆면 발광 띠 — 본체가 통짜 돌덩이로 보이지 않게 가른다.
   for (const s of [-1, 1]) {
@@ -122,7 +172,7 @@ function buildStructure() {
   // ── 빛기둥 ────────────────────────────────────────────────────────────────
   // 위로 갈수록 사라진다. 끝이 딱 잘리면 '기둥'이 아니라 '막대'로 보인다.
   const beamGeo = new THREE.CylinderGeometry(0.62, 1.05, BEAM_H, 7, 1, true);
-  paintBeam(beamGeo, SHRINE.glow, SHRINE.glowDim);
+  paintBeam(beamGeo, theme.glow, theme.glowDim);
   const beamMat = new THREE.ShaderMaterial({
     vertexColors: true, transparent: true, depthWrite: false,
     side: THREE.DoubleSide, fog: false,
@@ -144,7 +194,7 @@ function buildStructure() {
   });
   beamMat.userData.outlineParameters = { visible: false };
   const beam = new THREE.Mesh(beamGeo, beamMat);
-  beam.position.y = 8.0 + BEAM_H / 2;
+  beam.position.y = beamY + BEAM_H / 2;
   beam.renderOrder = 2;
   beam.frustumCulled = false;     // 기둥이 화면 밖으로 나가도 밑동은 보여야 한다
   g.add(beam);
@@ -167,13 +217,16 @@ function paintBeam(geo, hex0, hex1) {
   else geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 }
 
-export function buildShrines(scene, planet, spots) {
+export function buildShrines(scene, planet, spots, themes) {
   const R = planet.R;
   const shrines = [];
   const colliders = [];
 
   for (const sp of spots) {
-    const { group, beamGeo, glow } = buildStructure();
+    const i = shrines.length;
+    const theme = themes[i % themes.length];
+    const form = FORMS[i % FORMS.length];
+    const { group, beamGeo, glow } = buildStructure(theme, form);
     const fr = planet.frameAt(planet.surfaceAt(sp.dir), 0);
     group.position.copy(fr.position);
     group.quaternion.copy(fr.quaternion);
@@ -184,7 +237,7 @@ export function buildShrines(scene, planet, spots) {
     const shrine = {
       dir: sp.dir.clone(), pos: fr.position.clone(), group, facing,
       slope: sp.slope, peak: sp.peak, entered: false,
-      cleared: false, beamGeo, glow,
+      cleared: false, beamGeo, glow, theme, form,
     };
     shrines.push(shrine);
     // 기단을 막는다. 입구 앞은 비워야 하므로 반경을 기단보다 조금 작게 잡는다 —
