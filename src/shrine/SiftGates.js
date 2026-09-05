@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { shuffle } from '../util/rand.js';
+import { josa } from '../util/josa.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -207,7 +208,7 @@ export class SieveGate {
     const say = `주문 ${this.round + 1}/3 · ${this.orders[this.round].say}`;
     if (this.held) {
       return this._atFrame(pos)
-        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${this.held.spec.label}를 들었어요 — 틀로`;
+        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${josa(this.held.spec.label, '를')} 들었어요 — 틀로`;
     }
     if (this._atFrame(pos) && this.fitted >= 0) return `E — 체 빼기 · ${say}`;
     const s = this._nearSieve(pos);
@@ -507,7 +508,7 @@ export class SiftGod {
     const n = this._near(pos);
     if (this.held) {
       if (n && n.kind === 'mix') return `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
-      return `${this.held.name}를 들었어요 — 섞인 것에 가져가요`;
+      return `${josa(this.held.name, '를')} 들었어요 — 섞인 것에 가져가요`;
     }
     if (n && n.kind === 'tool') return `E — ${n.tool.name} 들기`;
     if (n && n.kind === 'mix') {

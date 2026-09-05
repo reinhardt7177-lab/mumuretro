@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt } from '../util/rand.js';
+import { josa } from '../util/josa.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -327,7 +328,7 @@ export class SteamGate {
     if (n && n.kind === 'valve') {
       const want = TEMPS.find((x) => x.state === n.valve.want).name;
       if (n.valve.filled) return `${want} 밸브는 채웠어요`;
-      return t.state === n.valve.want ? `E — ${want} 넣기` : `이 밸브는 ${want}를 원해요 (지금 ${t.name})`;
+      return t.state === n.valve.want ? `E — ${want} 넣기` : `이 밸브는 ${josa(want, '를')} 원해요 (지금 ${t.name})`;
     }
     return `🫖 지금 ${t.c}° · ${t.name} — 밸브 셋을 채워요`;
   }

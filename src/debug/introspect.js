@@ -497,8 +497,87 @@ export function installDebug(ctx) {
         + ` -> ${uprightOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── K 조사가 맞는가 ───────────────────────────────────────────────────
+    // ★ 화면에 "얼음**를** 원해요"가 떠 있었다. 이름을 문자열로 끼워 넣고 조사를
+    //   손으로 붙였기 때문이다. 이름이 하나뿐이면 안 틀리는데 이 게임은
+    //   얼음·물·수증기, 암모나이트·쇠구슬·모래처럼 **받침이 섞인 이름**을 같은
+    //   문장에 넣는다. 그러면 반드시 하나는 틀린다.
+    //   4학년이 읽는 앱에서 조사가 틀리는 건 오타가 아니라 가르치는 내용이 틀린 것이다.
+    //
+    //   을/를·과/와만 본다. 은/는·이/가는 "작은"·"높이"처럼 낱말 끝과 겹쳐
+    //   오탐이 난다 — 오탐이 나는 검사는 곧 아무도 안 보는 검사가 된다.
+    let josaOK = true;
+    const josaBad = new Set();
+    {
+      const PAIR = { '을': true, '를': false, '과': true, '와': false };
+      const bat = (ch) => {
+        const c = ch.charCodeAt(0);
+        if (c < 0xac00 || c > 0xd7a3) return null;
+        return (c - 0xac00) % 28 !== 0;
+      };
+      const scan = (t) => {
+        if (typeof t !== 'string' || !t) return;
+        for (let k = 1; k < t.length; k++) {
+          const pj = t[k];
+          if (!(pj in PAIR)) continue;
+          const b = bat(t[k - 1]);
+          if (b !== null && b !== PAIR[pj]) { josaOK = false; josaBad.add(t); }
+        }
+      };
+      const deep = (v, d = 0) => {
+        if (d > 4) return;
+        if (typeof v === 'string') scan(v);
+        else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1));
+        else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1));
+      };
+      const P = { x: 0, y: 0, z: 0 };
+      if (ctx.roomFor && ctx.shrines) {
+        for (const sh of ctx.shrines.shrines) {
+          const rm = ctx.roomFor(sh);
+          deep(rm.goals); deep(rm.hints);
+          // 프롬프트는 상태에 따라 바뀐다 — 자리를 훑어 나오는 것을 전부 본다.
+          // step()은 안 돈다(알림이 끼면 그건 다른 검사거리다).
+          for (const r of rm.dungeon.rects) {
+            for (let x = r.x0 + 0.9; x <= r.x1 - 0.9; x += 1.8) {
+              for (let z = r.z0 + 0.9; z <= r.z1 - 0.9; z += 1.8) {
+                P.x = x; P.z = z;
+                const seg = rm.dungeon.segmentAt(z);
+                for (const gt of rm.gates) {
+                  if (seg && seg.id === gt.room && gt.gate.prompt) scan(gt.gate.prompt(P));
+                }
+                if (seg && seg.id === 'shrine') {
+                  scan(rm.prize.prompt(P)); scan(rm.final.prompt(P));
+                }
+              }
+            }
+          }
+        }
+      }
+      if (ctx.dialogue) deep(ctx.dialogue);
+      if (ctx.lab) {
+        const st = ctx.lab.state, keep = { ...st };
+        for (const set of [{ hasNote: false, read: false, open: false },
+          { hasNote: true, read: false, open: false },
+          { hasNote: true, read: true, open: false },
+          { hasNote: true, read: true, open: true }]) {
+          Object.assign(st, set);
+          for (const r of ctx.lab.rects) {
+            for (let x = r.x0 + 0.9; x <= r.x1 - 0.9; x += 1.4) {
+              for (let z = r.z0 + 0.9; z <= r.z1 - 0.9; z += 1.4) {
+                P.x = x; P.z = z; scan(ctx.lab.prompt(P));
+              }
+            }
+          }
+        }
+        Object.assign(st, keep);
+      }
+      log.push('K 조사(을/를·과/와)'
+        + (josaOK ? ' 전부' : ` 틀림 ${josaBad.size}=${[...josaBad].slice(0, 3).join(' | ')}`)
+        + ` -> ${josaOK ? 'PASS' : 'FAIL'}`);
+    }
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK && reachOK && uprightOK;
+      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

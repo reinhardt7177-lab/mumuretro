@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { SHRINE } from '../data/lighting.js';
 import { shuffle, range, randInt, until } from '../util/rand.js';
+import { josa } from '../util/josa.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -366,7 +367,7 @@ export class LaserGate {
       b.mesh.position.z = z;
       // 방을 꽉 채우므로 x는 안 본다. 발끝(y)과 머리(y+1.5) 사이에 걸리면 맞은 것.
       if (Math.abs(p.z - z) < 0.45 && b.y > p.y + 0.15 && b.y < p.y + 1.5) {
-        hit = b.jump ? '낮은 줄이에요 — Space로 뛰어넘어요' : '높은 줄이에요 — 뛰지 말고 지나가요';
+        hit = b.jump ? '낮은 줄이에요 — 뛰어넘어요' : '높은 줄이에요 — 뛰지 말고 지나가요';
       }
     }
     return hit ? { fail: hit } : {};
@@ -379,7 +380,7 @@ export class LaserGate {
     const b = this._zone(pos.z);
     if (!b) return '🔴 구획 셋 — 낮은 줄은 뛰고, 높은 줄은 뛰지 말아요';
     const near = Math.abs(pos.z - b.mesh.position.z) < 3.0;
-    const what = b.jump ? '낮은 줄 — Space로 뛰어넘어요' : '높은 줄 — 뛰지 말고 지나가요';
+    const what = b.jump ? '낮은 줄 — 뛰어넘어요' : '높은 줄 — 뛰지 말고 지나가요';
     return `🔴 ${b.i + 1}/3 · ${near ? '지금이에요! ' : ''}${what}`;
   }
 
@@ -545,14 +546,14 @@ export class PlateGate {
     if (!n) {
       if (this.held) return `${this.held.w}kg 상자를 들고 있어요 — 판 가까이 가서 E`;
       return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)'
-        : `📦 ${say} · ${this.plates[0].need}과 ${this.plates[1].need}을 만들어요`;
+        : `📦 ${say} · ${josa(this.plates[0].need, '과')} ${josa(this.plates[1].need, '을')} 만들어요`;
     }
     if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있어요 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
     const p = this._sum(n.plate), need = n.plate.need;
     if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
     if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무거워요' : stuck}`;
     // 빈 판 앞에 빈손으로 선 자리. 흔한 상태인데 여기서 침묵하고 있었다(전수 조사).
-    return `이 판은 ${need}이 필요해요 — 상자를 가져와요`;
+    return `이 판은 ${josa(need, '이')} 필요해요 — 상자를 가져와요`;
   }
 
   interact(pos) {

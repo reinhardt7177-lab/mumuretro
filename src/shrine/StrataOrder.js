@@ -17,6 +17,7 @@
 // 서 있는 곳이 곧 선택이라 누르는 순서를 따로 배울 게 없다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { josa } from '../util/josa.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -175,7 +176,7 @@ export class StrataOrderGate {
     if (this.solved) return null;
     const m = this._mark(pos);
     if (this.held) {
-      if (!m) return `${this.held.name}을 들었어요 — 꽂을 층의 표석 위로`;
+      if (!m) return `${josa(this.held.name, '을')} 들었어요 — 꽂을 층의 표석 위로`;
       return m.slot.got ? `${m.slot.level + 1}층은 이미 찼어요` : `E — ${m.slot.level + 1}층에 꽂기`;
     }
     if (m && m.slot.got) return `E — ${m.slot.level + 1}층에서 되빼기`;
