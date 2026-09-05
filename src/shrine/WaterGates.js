@@ -32,90 +32,121 @@ export class FreezeGate {
     this.seg = seg;
     const th = opts.theme;
     const dun = opts.dungeon;
-    this.phase = 'water';       // water → freezing → ice → thawing
-    this.t = 0;
     const cx = (seg.x0 + seg.x1) / 2;
     const g = new THREE.Group();
     scene.add(g);
     this.group = g;
-
-    // 방을 셋으로 가른다. 가운데는 물이라 얼기 전에는 못 걷는다.
-    // ★ 방 사각형 하나를 셋으로 바꾸는 것이지 새로 더하는 게 아니다 —
-    //   원래 사각형을 남겨 두면 물 위를 그냥 걸어간다.
-    this.zIn = seg.z1 - 4.0;
-    this.zOut = seg.z0 + 4.0;
-    const i = dun.rects.indexOf(seg);
-    const mk = (z0, z1, open) => ({ ...seg, z0, z1, open });
-    this.entry = mk(this.zIn, seg.z1, true);
-    this.ice = mk(this.zOut, this.zIn, false);
-    this.exit = mk(seg.z0, this.zOut, true);
-    dun.rects.splice(i, 1, this.entry, this.ice, this.exit);
     this.dun = dun;
 
-    // 물 — 얼면 위에 얼음판이 덮인다
-    const water = new THREE.Mesh(new THREE.BoxGeometry(seg.x1 - seg.x0 - 0.2, 0.1, this.zIn - this.zOut),
-      glowMat(0x1d4f6b, { transparent: true, opacity: 0.85 }));
-    water.position.set(cx, 0.05, (this.zIn + this.zOut) / 2);
-    g.add(water);
+    // 물 세 줄, 사이에 디딤섬 둘. 한 줄을 얼려 건너고, 섬에서 다음 줄을 언다.
+    // 얼음이 버티는 시간은 줄마다 짧아진다 — 같은 동작이지만 갈수록 급해진다.
+    const W = seg.x1 - seg.x0 - 0.2;
+    const zs = [seg.z1 - 3.0, 0.0, -1.2, -4.2, -5.4, -8.4];   // 입구끝, A끝, 섬1끝, B끝, 섬2끝, C끝
+    const bandZ = [[zs[0], zs[1]], [zs[2], zs[3]], [zs[4], zs[5]]];
 
-    this.iceMat = glowMat(0xbfe4f5, { transparent: true, opacity: 0.0 });
-    this.iceMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(seg.x1 - seg.x0 - 0.2, 0.22, this.zIn - this.zOut), this.iceMat);
-    this.iceMesh.position.set(cx, 0.11, (this.zIn + this.zOut) / 2);
-    g.add(this.iceMesh);
+    // 원래 방 사각형 하나를 여러 개로 바꾼다. 남겨 두면 물 위를 그냥 걸어간다.
+    const i0 = dun.rects.indexOf(seg);
+    const mk = (z0, z1, open) => ({ ...seg, z0, z1, open });
+    const parts = [mk(zs[0], seg.z1, true)];                  // 입구 발판
+    this.bands = bandZ.map((bz, k) => {
+      const r = mk(bz[1], bz[0], false);
+      parts.push(r);
+      if (k < 2) parts.push(mk(zs[k * 2 + 2], bz[1], true));  // 디딤섬
+      return { rect: r, z0: bz[1], z1: bz[0], phase: 'water', t: 0,
+        solid: [5.0, 4.2, 3.4][k] };
+    });
+    parts.push(mk(seg.z0, zs[5], true));                      // 출구 발판
+    dun.rects.splice(i0, 1, ...parts);
+    this.zOut = zs[5];
 
-    // 온도 손잡이 — 입구 쪽. 여기서 얼리고 뛰어 건넌다.
-    this.lever = { x: cx - 3.2, z: seg.z1 - 2.0 };
-    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 1.4, 6), toon(th.stoneDark));
-    st.position.set(this.lever.x, 0.7, this.lever.z); g.add(st);
-    this.knobMat = glowMat(th.glow);
-    this.knob = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), this.knobMat);
-    this.knob.position.set(this.lever.x, 1.6, this.lever.z); g.add(this.knob);
+    const waterMat = glowMat(0x1d4f6b, { transparent: true, opacity: 0.85 });
+    this.bands.forEach((b, k) => {
+      const len = b.z1 - b.z0, cz = (b.z0 + b.z1) / 2;
+      const w = new THREE.Mesh(new THREE.BoxGeometry(W, 0.1, len), waterMat);
+      w.position.set(cx, 0.05, cz);
+      g.add(w);
+      b.mat = glowMat(0xbfe4f5, { transparent: true, opacity: 0 });
+      b.mesh = new THREE.Mesh(new THREE.BoxGeometry(W, 0.22, len), b.mat);
+      b.mesh.position.set(cx, 0.11, cz);
+      g.add(b.mesh);
+
+      // 손잡이 — 그 줄 바로 앞 발판에 하나씩
+      const lz = b.z1 + 0.6;
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 1.4, 6), toon(th.stoneDark));
+      st.position.set(cx - 3.0, 0.7, lz);
+      g.add(st);
+      b.knobMat = glowMat(th.glow);
+      const kn = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), b.knobMat);
+      kn.position.set(cx - 3.0, 1.6, lz);
+      g.add(kn);
+      b.lever = { x: cx - 3.0, z: lz };
+      // 몇 번째 줄인지 점으로
+      for (let d = 0; d <= k; d++) {
+        const dot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.06), b.knobMat);
+        dot.position.set(cx - 3.0 - 0.2 + d * 0.2, 2.15, lz);
+        g.add(dot);
+      }
+    });
   }
 
-  _setIce(on, alpha) {
-    this.ice.open = on;
-    this.iceMat.opacity = alpha;
-  }
+  _bandAt(z) { return this.bands.find((b) => z < b.z1 && z > b.z0); }
 
   update(dt, actor) {
     const p = actor.position;
-    this.t += dt;
-    if (this.phase === 'freezing') {
-      this._setIce(false, Math.min(0.9, this.t / FREEZE_T * 0.9));
-      if (this.t >= FREEZE_T) { this.phase = 'ice'; this.t = 0; this._setIce(true, 0.9); }
-    } else if (this.phase === 'ice') {
-      const left = SOLID_T - this.t;
-      // 녹기 직전엔 깜빡인다. 예고 없이 빠지면 아이는 규칙이 아니라 운으로 읽는다.
-      this.iceMat.opacity = left < THAW_WARN ? 0.4 + 0.5 * Math.abs(Math.sin(this.t * 9)) : 0.9;
-      if (this.t >= SOLID_T) {
-        this.phase = 'water'; this.t = 0; this._setIce(false, 0);
-        // 얼음 위에 서 있었다면 물에 빠진다
-        if (p.z < this.zIn && p.z > this.zOut) return { fail: '얼음이 녹아 물에 빠졌어요' };
+    let fail = null;
+    for (const b of this.bands) {
+      if (b.phase === 'freezing') {
+        b.t += dt;
+        b.mat.opacity = Math.min(0.9, b.t / FREEZE_T * 0.9);
+        if (b.t >= FREEZE_T) { b.phase = 'ice'; b.t = 0; b.rect.open = true; b.mat.opacity = 0.9; }
+      } else if (b.phase === 'ice') {
+        b.t += dt;
+        const left = b.solid - b.t;
+        // 녹기 직전엔 깜빡인다. 예고 없이 빠지면 규칙이 아니라 운으로 읽힌다.
+        b.mat.opacity = left < THAW_WARN ? 0.4 + 0.5 * Math.abs(Math.sin(b.t * 9)) : 0.9;
+        if (b.t >= b.solid) {
+          b.phase = 'water'; b.t = 0; b.rect.open = false; b.mat.opacity = 0;
+          if (p.z < b.z1 && p.z > b.z0) fail = '얼음이 녹아 물에 빠졌어요';
+        }
       }
+      b.knobMat.color.set(b.phase === 'water' ? 0x79c0e8 : 0xbfe4f5);
     }
-    this.knobMat.color.set(this.phase === 'water' ? 0x79c0e8 : 0xbfe4f5);
-    return {};
+    return fail ? { fail } : {};
   }
 
-  _atLever(pos) { return Math.hypot(pos.x - this.lever.x, pos.z - this.lever.z) < REACH; }
+  _atLever(pos) {
+    for (const b of this.bands) {
+      if (Math.hypot(pos.x - b.lever.x, pos.z - b.lever.z) < REACH) return b;
+    }
+    return null;
+  }
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (this._atLever(pos)) return this.phase === 'water' ? 'E — 온도 내리기 (물을 얼려요)' : '얼고 있어요 — 건너요!';
-    if (this.phase === 'ice') return `❄ 얼음이 ${Math.max(1, Math.ceil(SOLID_T - this.t))}초 뒤 녹아요 — 건너요`;
-    if (this.phase === 'freezing') return '❄ 어는 중…';
-    return '🌊 물은 못 건너요 — 손잡이로 얼려요';
+    const done = this.bands.filter((b) => pos.z < b.z0).length;
+    const n = `${Math.min(3, done + 1)}/3`;
+    const b = this._atLever(pos);
+    if (b) {
+      if (b.phase === 'water') return `E — 온도 내리기 (${n}번째 줄을 얼려요)`;
+      if (b.phase === 'freezing') return '❄ 어는 중…';
+      return `❄ ${Math.max(1, Math.ceil(b.solid - b.t))}초 뒤 녹아요 — 건너요!`;
+    }
+    const on = this._bandAt(pos.z);
+    if (on && on.phase === 'ice') return `❄ ${Math.max(1, Math.ceil(on.solid - on.t))}초! 건너요`;
+    return `🌊 물은 못 건너요 — 손잡이로 얼려요 (${n})`;
   }
 
   interact(pos) {
-    if (!this._atLever(pos) || this.phase !== 'water') return false;
-    this.phase = 'freezing'; this.t = 0;
+    const b = this._atLever(pos);
+    if (!b || b.phase !== 'water') return false;
+    b.phase = 'freezing'; b.t = 0;
     return true;
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
-  restart() { this.phase = 'water'; this.t = 0; this._setIce(false, 0); }
+  restart() {
+    for (const b of this.bands) { b.phase = 'water'; b.t = 0; b.rect.open = false; b.mat.opacity = 0; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════

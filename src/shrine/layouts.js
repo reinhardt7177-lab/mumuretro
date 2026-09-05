@@ -54,7 +54,7 @@ export const SHRINES = [
         { id: 'r2', name: '레이저 회랑', w: 8, len: 16, h: 5.5, gate: 'laser',
             goal: '줄이 다가오면 Space로 뛰어넘어요.' },
         { id: 'r3', name: '무게 압력판', w: 12, len: 10, h: 5.5, gate: 'plate',
-            goal: '왼쪽 판에 5, 오른쪽 판에 3을 만들어요.' },
+            goal: '두 판이 주문한 무게를 만들어요. 주문은 세 번 바뀌어요.' },
         { id: 'shrine', name: '신전', w: 18, len: 16, h: 9,
             goal: '왼쪽 3kg이 2칸에 있어요. 오른쪽으로 수평을 맞춰요.' },
       ],
@@ -114,7 +114,7 @@ export const SHRINES = [
       entryTo: 6.0,
       rooms: [
         { id: 'r1', name: '얼려서 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze',
-            goal: '물은 못 건너요. 얼려서 건너되 녹기 전에.' },
+            goal: '물 세 줄. 줄마다 얼려서 건너요 — 갈수록 빨리 녹아요.' },
         { id: 'r2', name: '미끄러운 바닥', w: 10, len: 14, h: 7.0, gate: 'slide',
             goal: '얼음 위에선 안 멈춰요. 미리 줄이고 구멍을 피해요.' },
         { id: 'r3', name: '수증기 승강기', w: 10, len: 12, h: 7.0, gate: 'steam',
@@ -156,7 +156,7 @@ export const SHRINES = [
       entryTo: 6.0, corridor: 6,
       rooms: [
         { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder',
-            goal: '화석을 지층에 꽂아요. 아래일수록 오래된 것이에요.' },
+            goal: '시추 코어를 읽고, 같은 순서로 벽에 꽂아요.' },
         { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft',
             goal: '바닥에 그림자가 뜨면 그 자리로 바위가 떨어져요.' },
         { id: 'r3', name: '다섯 색의 문', w: 12, len: 14, h: 6.0, gate: 'fiveDoors',

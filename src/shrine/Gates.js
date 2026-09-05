@@ -369,6 +369,11 @@ export class LaserGate {
 //   아이 눈에는 "한 판은 금색인데 문이 안 열린다"로만 보인다(실사용 확인).
 //   5를 더해 길을 여러 갈래로 열고, 막혔을 때는 막혔다고 말해 준다.
 const PLATE_WEIGHTS = [1, 2, 3, 4, 5];
+// ★ 처음엔 한 판(5와 3)으로 끝이었다. 한 번 맞히면 방이 끝나 E 네 번짜리였다.
+//   주문이 세 번 온다. 셋 다 상자 다섯으로 풀리지만 조합이 매번 다르고,
+//   숫자가 커질수록 상자를 더 많이 써야 한다(전수 확인: 정답 3·2·3가지).
+//     (5,3) → {5},{3}     (7,4) → {2,5},{4}     (6,9) → {1,5},{2,3,4}
+const ROUNDS = [[5, 3], [7, 4], [6, 9]];
 const pboxSize = (w) => 0.44 + w * 0.06;
 
 export class PlateGate {
@@ -389,8 +394,10 @@ export class PlateGate {
     const dark = toon(SHRINE.stoneDark), lite = toon(SHRINE.stoneLite);
 
     // 압력판 둘. 필요 무게를 점으로 새긴다 — 숫자는 3D에서 각도에 따라 안 읽힌다.
+    this.round = 0;
     this.plates = [];
-    for (const [i, spec] of [[0, { need: 5, x: -3.2 }], [1, { need: 3, x: 3.2 }]]) {
+    for (const [i, spec] of [[0, { need: ROUNDS[0][0], x: -3.2 }],
+      [1, { need: ROUNDS[0][1], x: 3.2 }]]) {
       const pg = new THREE.Group();
       pg.position.set(spec.x, 0, cz - 1.6);
       g.add(pg);
@@ -404,14 +411,25 @@ export class PlateGate {
         e.position.set(dx, 0.13, dz);
         pg.add(e);
       }
-      // 필요 무게 점
-      for (let k = 0; k < spec.need; k++) {
+      // 필요 무게 점 — 주문마다 개수가 바뀌므로 최대치를 만들어 두고 켜고 끈다
+      const dots = [];
+      for (let k = 0; k < 9; k++) {
         const d = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.05, 0.13), ringMat);
-        d.position.set((k % 3 - 1) * 0.28, 0.16, Math.floor(k / 3) * 0.28 - 0.14);
+        d.position.set((k % 3 - 1) * 0.28, 0.16, Math.floor(k / 3) * 0.28 - 0.28);
+        d.visible = k < spec.need;
         pg.add(d);
+        dots.push(d);
       }
-      this.plates.push({ need: spec.need, x: spec.x, z: cz - 1.6, boxes: [], ringMat, group: pg });
+      this.plates.push({ need: spec.need, x: spec.x, z: cz - 1.6, boxes: [], ringMat, group: pg, dots });
     }
+
+    // 라운드 표시 — 세 번이라는 걸 처음부터 알려 준다
+    this.pips = [0, 1, 2].map((k) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.1), glowMat(0x3a3020));
+      m.position.set((seg.x0 + seg.x1) / 2 - 0.24 + k * 0.24, 2.6, cz - 2.6);
+      g.add(m);
+      return m;
+    });
 
     // 상자 — 바닥에 흩어 둔다. 선반을 또 만들지 않는다(신전에 이미 있다).
     this.stock = [];
@@ -459,12 +477,14 @@ export class PlateGate {
   prompt(pos) {
     if (this.solvedBy()) return null;
     // 막다른 길에 들어섰으면 그 사실부터 말한다. 아이가 스스로 알아낼 수 없는 종류다.
+    const say = `주문 ${Math.min(3, this.round + 1)}/3`;
     const stuck = !this._canFinish() ? ' — 지금은 못 맞춰요, 되가져와요' : '';
     const n = this._nearest(pos);
     // 손에 뭘 들었는지, 어디로 가야 하는지 항상 말해 준다. 방 안에서 침묵하지 않는다.
     if (!n) {
       if (this.held) return `${this.held.w}kg 상자를 들고 있어요 — 판 가까이 가서 E`;
-      return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)' : '상자나 판 가까이 가면 E로 집어요';
+      return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)'
+        : `📦 ${say} · ${this.plates[0].need}과 ${this.plates[1].need}을 만들어요`;
     }
     if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있어요 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
     const p = this._sum(n.plate), need = n.plate.need;
@@ -509,6 +529,20 @@ export class PlateGate {
       // 넘친 판은 붉게. 모자란 것과 넘친 것이 같은 색이면 어느 쪽으로 갈지 알 수 없다.
       p.ringMat.color.set(s === p.need ? 0xffd27a : (s > p.need ? 0xe0736b : SHRINE.glow));
     }
+    if (this.round >= ROUNDS.length) return;
+    if (!this.plates.every((p) => this._sum(p) === p.need)) return;
+    // 한 주문을 맞췄다 — 상자를 돌려주고 다음 주문으로. 숫자가 커지니 다시 짜야 한다.
+    this.pips[this.round].material.color.set(0xffd27a);
+    this.round++;
+    if (this.round >= ROUNDS.length) return;
+    for (const p of this.plates) p.boxes.length = 0;
+    for (const it of this.stock) { it.taken = false; it.mesh.position.copy(it.home); }
+    this.held = null;
+    this.plates.forEach((p, i) => {
+      p.need = ROUNDS[this.round][i];
+      p.dots.forEach((d, k) => { d.visible = k < p.need; });
+      p.ringMat.color.set(SHRINE.glow);
+    });
   }
 
   // 지금 놓인 상태에서 **남은 상자만으로** 두 판을 다 채울 수 있나.
@@ -538,14 +572,17 @@ export class PlateGate {
     return {};
   }
 
-  solvedBy() { return this.plates.every(p => this._sum(p) === p.need); }
+  solvedBy() { return this.round >= ROUNDS.length; }
 
   reset() {
+    this.round = 0;
+    for (const q of this.pips) q.material.color.set(0x3a3020);
     for (const p of this.plates) { p.boxes.length = 0; }
-    for (const it of this.stock) {
-      it.taken = false;
-      it.mesh.position.copy(it.home);
-    }
+    this.plates.forEach((p, i) => {
+      p.need = ROUNDS[0][i];
+      p.dots.forEach((d, k) => { d.visible = k < p.need; });
+    });
+    for (const it of this.stock) { it.taken = false; it.mesh.position.copy(it.home); }
     this.held = null;
     this._refresh();
   }

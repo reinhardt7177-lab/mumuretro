@@ -21,7 +21,8 @@ import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.
 import { SieveGate, MagnetGate, EvaporateGate, SiftGod } from './SiftGates.js';
 import { FreezeGate, SlideGate, SteamGate, WaterGod } from './WaterGates.js';
 import { QuakeGate, HexLavaGate, GeyserGate, FireGod } from './FireGates.js';
-import { StrataOrderGate, ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
+import { ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
+import { StrataOrderGate } from './StrataOrder.js';
 import { BalanceScale } from './Scale.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
