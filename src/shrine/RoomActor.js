@@ -177,12 +177,50 @@ export class RoomActor {
   //   x·z를 잘라 가두면 카메라가 플레이어 안으로 파고든다. 그래서 자르는 게 아니라
   //   **시선표적에서 카메라 쪽으로 나아가다 벽에 닿는 지점에서 멈춘다** — 바깥 카메라가
   //   건물에 raycast를 쏘는 것과 같은 해법이고, 상자 방이라 훨씬 싸게 된다.
+  // 여기 서 있을 때 천장이 얼마나 낮은가 — 카메라가 물러날 방향 쪽을 본다.
+  // 뒤로 갈수록 천장이 달라지므로(복도로 물러나는 경우) **가장 낮은 것**을 쓴다.
+  _ceilBehind(target, dirX, dirZ, dist) {
+    let lo = Infinity;
+    for (let i = 0; i <= 6; i++) {
+      const k = (i / 6) * dist;
+      const x = target.x + dirX * k, z = target.z + dirZ * k;
+      let best = 0;
+      for (const r of this.rects) {
+        if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && r.h > best) best = r.h;
+      }
+      if (best > 0 && best < lo) lo = best;
+      if (best === 0) break;                      // 밖이면 더 볼 것 없다
+    }
+    return lo === Infinity ? 0 : lo;
+  }
+
   updateCamera(camera, input, dt) {
     this.camYaw += input.consumeYaw();
-    const pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
+    let pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
     const dist = Math.max(3.2, Math.min(6.5, input.camDist));
-    const dir = _dir.set(Math.sin(this.camYaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(this.camYaw) * Math.cos(pitch));
     const target = _tgt.copy(this.position).setY(this.position.y + 1.25);
+
+    // ★ 천장이 낮으면 **거리를 줄이지 말고 각도를 낮춘다.**
+    //
+    //   예전엔 뒤로 물러나다 천장에 걸리면 그냥 거리를 잘랐다. 그래서 낮은 데서는
+    //   카메라가 뒤통수에 달라붙었다. 재 보니 55칸 중 19칸이 그랬고, 하필 **사당
+    //   입구 복도 여섯 곳 전부**가 희망 거리의 38%밖에 못 냈다 — 사당에 들어서는
+    //   첫 장면이 가장 눌려 있었던 것이다. 실사용에서 들은 "높이가 낮아서 답답하다"가
+    //   이거였다. 복도 폭 3u는 캐릭터 폭의 4.8배라 좁은 적이 없었고, 천장 3.2u도
+    //   실척으로 3.8m다. 좁은 게 아니라 **카메라가 천장 위에 서고 싶어 했다**
+    //   (희망 높이 1.25 + 6.5·sin28.6° = 4.37u).
+    //
+    //   각도를 낮추면 카메라가 낮게, 그러나 **멀리** 선다. 복도가 길어 보이고
+    //   앞이 뚫린다. 각도를 최저까지 낮춰도 안 될 때만 그때 거리를 줄인다.
+    const hx = Math.sin(this.camYaw), hz = Math.cos(this.camYaw);
+    const ceil = this._ceilBehind(target, hx, hz, dist);
+    if (ceil > 0) {
+      const room = ceil - CEIL_PAD - (target.y - this.position.y);
+      const maxSin = Math.max(0, room) / dist;
+      if (maxSin < Math.sin(pitch)) pitch = Math.max(0.12, Math.asin(Math.min(1, maxSin)));
+    }
+
+    const dir = _dir.set(hx * Math.cos(pitch), Math.sin(pitch), hz * Math.cos(pitch));
 
     // 벽에 닿기 직전까지만 물러난다. 16단이면 방 크기(16u) 기준 1u 간격이라 충분하다.
     const STEPS = 16;
@@ -209,6 +247,10 @@ export class RoomActor {
     camera.lookAt(target);
   }
 }
+
+// _inAny가 천장에서 잘라내는 여백과 **같아야 한다.** 다르면 각도를 낮춰 놓고도
+// 탐침이 또 걸려서 결국 거리가 줄어든다 — 고친 줄 알았는데 안 고쳐지는 종류다.
+const CEIL_PAD = 0.35;
 
 const _Y = new THREE.Vector3(0, 1, 0);
 const _fwd = new THREE.Vector3(), _right = new THREE.Vector3(), _move = new THREE.Vector3();

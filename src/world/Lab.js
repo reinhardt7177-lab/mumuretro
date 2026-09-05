@@ -26,10 +26,13 @@ if (PORTAL_CODE[2] !== PORTAL_CODE[0] + PORTAL_CODE[1]) {
   throw new Error('PORTAL_CODE: 셋째 자리는 앞의 두 자리의 합이어야 한다(수첩이 그렇게 적혀 있다)');
 }
 
-const HALF_W = 7, Z_FAR = -11, Z_NEAR = 11, CEIL = 3.6;
+// 지하실이지만 **첫 방**이다. 천장 3.6u에서는 카메라가 4.06u밖에 못 물러나
+// 뒤통수에 붙었다(희망 6.5u). 실척으로 4.2m였으니 좁았던 게 아니라 카메라 문제다 —
+// RoomActor에서 각도를 낮추게 고쳤고, 여기서도 한 자락 준다.
+const HALF_W = 7.5, Z_FAR = -13, Z_NEAR = 13, CEIL = 4.8;
 const T = 0.5;                                     // 벽 두께
 
-export const LAB_ENTRY_Z = 8.6;                    // 침상 앞. 여기서 눈을 뜬다
+export const LAB_ENTRY_Z = 7.6;                    // 침상 앞. 여기서 눈을 뜬다
 const PARCEL = { x: 0, z: -1.4 };
 const CONSOLE_Z = -6.6;                            // 다이얼 콘솔
 const CIRCLE_Z = -9.0;                             // 분필 원 · 포탈
@@ -79,17 +82,17 @@ export function buildLab() {
   box(W, CEIL, T, plaster, 0, CEIL / 2, Z_FAR - T / 2);
   box(W, CEIL, T, plaster, 0, CEIL / 2, Z_NEAR + T / 2);
   // 마루 널 — 통짜 판이면 넓이가 안 읽힌다(던전 바닥 눈금과 같은 이유)
-  for (let k = 1; k < 11; k++) box(W - 0.4, 0.03, 0.06, wood, 0, 0.005, Z_FAR + (len * k) / 11);
+  for (let k = 1; k < 13; k++) box(W - 0.4, 0.03, 0.06, wood, 0, 0.005, Z_FAR + (len * k) / 13);
   // 천장 들보 — 여기가 **지하**라는 걸 말하는 건 낮은 천장과 이 들보다
-  for (let k = 0; k < 5; k++) box(W, 0.22, 0.26, woodD, 0, CEIL - 0.12, Z_FAR + 2.4 + k * 4.2);
+  for (let k = 0; k < 7; k++) box(W, 0.22, 0.26, woodD, 0, CEIL - 0.12, Z_FAR + 2.0 + k * 4.0);
 
   // ── 침상 — 여기서 눈을 뜬다 ──────────────────────────────────────────────
-  box(2.0, 0.42, 3.0, wood, -4.6, 0.21, 8.8);
-  box(1.8, 0.22, 2.8, basic(0x5d6b74), -4.6, 0.52, 8.8);
-  box(1.5, 0.16, 0.6, paper, -4.6, 0.62, 7.7);                // 베개
+  box(2.0, 0.42, 3.0, wood, -5.0, 0.21, 10.2);
+  box(1.8, 0.22, 2.8, basic(0x5d6b74), -5.0, 0.52, 10.2);
+  box(1.5, 0.16, 0.6, paper, -5.0, 0.62, 9.1);                // 베개
 
   // ── 책상 — 밤을 샌 흔적 ──────────────────────────────────────────────────
-  const desk = new THREE.Group(); desk.position.set(-4.4, 0, 2.6); scene.add(desk);
+  const desk = new THREE.Group(); desk.position.set(-4.8, 0, 3.4); scene.add(desk);
   box(3.2, 0.16, 1.6, wood, 0, 1.02, 0, desk);
   for (const dd of [[-1.4, -0.6], [1.4, -0.6], [-1.4, 0.6], [1.4, 0.6]])
     box(0.14, 1.02, 0.14, woodD, dd[0], 0.51, dd[1], desk);
@@ -99,15 +102,15 @@ export function buildLab() {
   const shade = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.3, 8), brass);
   shade.position.set(1.2, 1.68, 0.4); shade.rotation.x = Math.PI; desk.add(shade);
   const deskLamp = new THREE.PointLight(0xffd9a0, 7 * LAB.lamp, 9, 1.8);
-  deskLamp.position.set(-3.2, 1.7, 2.6); scene.add(deskLamp);
+  deskLamp.position.set(-3.6, 1.7, 3.4); scene.add(deskLamp);
 
   // ── 선반 — 빈 표본 병들. 아직 아무것도 안 담겨 있다(채집이 올 자리) ──────
   for (let s = 0; s < 2; s++) {
-    box(2.6, 0.12, 0.7, wood, 5.4, 1.5 + s * 0.95, 2.6);
+    box(2.6, 0.12, 0.7, wood, 5.8, 1.5 + s * 0.95, 3.4);
     for (let k = 0; k < 4; k++) {
       const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.34, 7),
         basic(0x8fb8bd, 0.55));
-      jar.position.set(4.4 + k * 0.62, 1.73 + s * 0.95, 2.6);
+      jar.position.set(4.8 + k * 0.62, 1.73 + s * 0.95, 3.4);
       scene.add(jar);
     }
   }
@@ -197,7 +200,7 @@ export function buildLab() {
     bulb.position.set(0, CEIL - 0.82, z); scene.add(bulb);
     return bulb;
   };
-  hang(7.4, 11);                       // 침상 쪽 — 눈을 뜨는 자리
+  hang(9.6, 11);                       // 침상 쪽 — 눈을 뜨는 자리
   // 소포 위 등이 가장 밝다. 방에서 가장 밝은 곳이 곧 다음 할 일이다(설계도 §4).
   hang(PARCEL.z, 17);
   hang(CONSOLE_Z + 0.6, 12);           // 콘솔 — 소포를 연 뒤의 다음 자리
@@ -207,9 +210,9 @@ export function buildLab() {
   const rects = [{ id: 'lab', kind: 'room', x0: -HALF_W, x1: HALF_W,
     z0: Z_FAR, z1: Z_NEAR, h: CEIL, open: true }];
   const obstacles = [
-    { x: -4.6, z: 8.8, r: 1.9 },                     // 침상
-    { x: -4.4, z: 2.6, r: 2.0 },                     // 책상
-    { x: 5.4, z: 2.6, r: 1.7 },                      // 선반
+    { x: -5.0, z: 10.2, r: 1.9 },                    // 침상
+    { x: -4.8, z: 3.4, r: 2.0 },                     // 책상
+    { x: 5.8, z: 3.4, r: 1.7 },                      // 선반
     { x: PARCEL.x, z: PARCEL.z, r: 1.5 },            // 작업대
     { x: 0, z: CONSOLE_Z, r: 2.3 },                  // 콘솔
   ];

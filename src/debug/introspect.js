@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 
-const ENTRY_Z_TEST = 9.2;    // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
+const ENTRY_Z_TEST = 10.0;   // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
 
 export function installDebug(ctx) {
   const { planet, player, engine, input, step, sky, scatter, carpet, PEAKS } = ctx;
@@ -326,7 +326,58 @@ export function installDebug(ctx) {
         + (walkOK ? ' 전부' : ` 실패=${hits.join(' ')}`) + ` -> ${walkOK ? 'PASS' : 'FAIL'}`);
     }
 
-    const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK && walkOK;
+    // ── G 어느 칸에 서도 카메라가 물러날 수 있는가 ─────────────────────────
+    // ★ 실사용에서 들은 말: "집이나 사당이나 공간감이 너무 협소하다, 특히 높이가
+    //   낮아 답답하다." 재 보니 방이 좁은 게 아니라 **카메라가 천장 위에 서고
+    //   싶어 했다** — 시선표적 1.25u + 6.5u·sin28.6° = 4.37u인데 복도 천장이
+    //   3.2u였다. 55칸 중 19칸에서 카메라가 못 물러났고, 사당 입구 여섯 곳은
+    //   전부 희망의 38%였다.
+    //   이건 방을 하나 붙일 때마다 되살아나는 종류라 눈으로 볼 게 아니라 잰다.
+    //   기준은 **희망 거리의 85%**. 카메라가 각도를 낮춰서라도 물러나야 한다.
+    let camOK = true;
+    const camBad = [];
+    if (ctx.roomFor && ctx.shrines && ra) {
+      const want = Math.max(3.2, Math.min(6.5, input.camDist));
+      const savedR = ra.rects, savedO = ra.obstacles, savedP = ra.position.clone();
+      const scan = (rects, label) => {
+        ra.rects = rects; ra.obstacles = [];
+        const outerZ = Math.max(...rects.map((r) => r.z1));
+        for (const r of rects) {
+          // 칸 가운데와 앞뒤 1/4 지점 — 가운데만 재면 이음매 근처를 놓친다
+          for (const f of [0.25, 0.5, 0.75]) {
+            const z = r.z0 + (r.z1 - r.z0) * f;
+            // 바깥 벽에서 6.5u 안쪽까지만 잰다. 카메라는 건물 밖으로 못 물러난다 —
+            // 그건 고칠 수 있는 문제가 아니라 **모든 유한한 방이 가진 가장자리**다.
+            // 대신 입구 통로를 카메라보다 길게 잡아 시작 지점이 그 가장자리에
+            // 안 걸리게 했다(layouts.ENTRY_Z).
+            if (z > outerZ - want) continue;
+            ra.setAt((r.x0 + r.x1) / 2, z, -1);
+            ra._camPlaced = false;
+            ra.updateCamera(engine.camera, input, 1 / 60);
+            const d = Math.hypot(engine.camera.position.x - ra.position.x,
+              engine.camera.position.y - (ra.position.y + 1.25),
+              engine.camera.position.z - ra.position.z);
+            if (d < want * 0.85) {
+              camOK = false;
+              camBad.push(`${label}/${r.id}@${f}=${d.toFixed(1)}`);
+            }
+          }
+        }
+      };
+      if (ctx.lab) scan(ctx.lab.rects, '연구실');
+      for (const sh of ctx.shrines.shrines) {
+        const rm = ctx.roomFor(sh);
+        scan(rm.dungeon.rects, rm.spec.id);
+      }
+      ra.rects = savedR; ra.obstacles = savedO;
+      ra.setAt(savedP.x, savedP.z, -1); ra._camPlaced = false;
+      log.push(`G 카메라 후퇴 >=${(want * 0.85).toFixed(1)}u`
+        + (camOK ? ' 전 구간' : ` 실패 ${camBad.length}곳=${camBad.slice(0, 6).join(' ')}`)
+        + ` -> ${camOK ? 'PASS' : 'FAIL'}`);
+    }
+
+    const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
+      && walkOK && camOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

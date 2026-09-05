@@ -514,7 +514,7 @@ const game = {
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
-  roomActor, roomFor, withPlanetMode });
+  roomActor, roomFor, withPlanetMode, lab });
 
 // ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────
 // 아이를 낯선 행성 위에 아무 말 없이 떨어뜨리지 않는다(Lab.js 머리말).

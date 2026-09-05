@@ -9,7 +9,10 @@
 // 규칙
 //   · z가 작아질수록 안쪽이다. from > to.
 //   · 치수는 전부 플레이어 키 1.5u에서 유도한다(설계도 §1).
-//   · 모든 사당의 입구 통로는 z=11.4에서 시작한다 — ENTRY_Z/EXIT_Z를 공유하기 위해서다.
+//   · 모든 사당의 입구 통로는 z=18.0에서 시작한다 — ENTRY_Z/EXIT_Z를 공유하기 위해서다.
+//     ★ 예전엔 11.4였다. 그러면 ENTRY_Z(9.2)에서 카메라가 뒤로 2.2u밖에 못 간다 —
+//       원하는 건 6.5u다. 사당에 **들어서는 첫 프레임**에 카메라가 뒤통수에 붙어
+//       있었고, 그게 여섯 사당 전부의 첫인상이었다. 입구는 카메라보다 길어야 한다.
 //   · gate가 붙은 방은 그 관문을 풀어야 **다음 통로**가 열린다(door로 잇는다).
 //   · 단원은 과학 4학년 여섯 단원을 하나씩 맡는다. 억지로 여섯을 만든 게 아니라
 //     단원이 원래 여섯이고 서로 다른 물질을 다루기 때문에 분위기가 저절로 갈린다.
@@ -18,13 +21,22 @@ import { SHRINE_THEMES as T } from '../data/lighting.js';
 // ★ 시작 지점이 10.2였고 나가기 판정이 z > 10.1이었다. 들어서는 순간 이미
 //   출구 위라 사당 이름이 "E — 사당 밖으로"에 가려졌고, 반가워서 E를 누르면
 //   곧바로 도로 나가졌다. 한 걸음 안쪽에서 시작한다.
-export const ENTRY_Z = 9.2;      // 시작 지점(입구 통로 안쪽)
-export const EXIT_Z = 11.0;      // 이보다 뒤로 가면 밖으로 나간다
+export const ENTRY_Z = 10.0;     // 시작 지점. 뒤로 8u가 남아 카메라가 제자리에 선다
+export const EXIT_Z = 17.2;      // 이보다 뒤로 가면 밖으로 나간다(입구 통로 끝)
 
 // 방 셋 + 신전 하나를 잇는 공통 뼈대. 길이와 폭만 사당마다 다르게 준다.
 // 이걸 손으로 여덟 줄씩 여섯 번 적으면 오타가 나고, 무엇보다 "어디가 다른지"가 안 보인다.
-function spine({ rooms, corridor = 4, entryTo, w: cw = 3, ch = 3.2 }) {
-  const out = [{ id: 'entry', kind: 'corridor', w: cw, from: 11.4, to: entryTo, h: ch, open: true }];
+// ★ 복도 치수는 **카메라가 정한다.**
+//   3인칭 카메라는 시선표적(발밑+1.25u)에서 6.5u 뒤로, 28.6° 위로 물러나려 한다 —
+//   희망 높이 4.37u. 옛 복도는 3.0w · 3.2h였고, 그러면 카메라가 설 수 있는 최고
+//   높이가 2.85u라 **한 번도** 원하는 자리에 못 섰다. 재 보니 55칸 중 19칸이
+//   그랬고 사당 입구 여섯 곳은 전부 희망의 38%였다. "높이가 낮아 답답하다"의 정체.
+//   RoomActor가 낮은 천장에서 각도를 낮추도록 고쳤지만(그게 근본), 매번 각도가
+//   깎이는 복도라면 그건 복도 치수가 틀린 것이다. 둘 다 고친다.
+//   입구는 더 크다 — 사당에 **들어서는 첫 장면**이라 여기서 눌리면 그게 첫인상이다.
+function spine({ rooms, corridor = 4, entryTo, w: cw = 4.2, ch = 4.2 }) {
+  const out = [{ id: 'entry', kind: 'corridor', w: Math.max(cw, 5.0), from: 18.0, to: entryTo,
+    h: Math.max(ch, 4.8), open: true }];
   let z = entryTo;
   rooms.forEach((r, i) => {
     out.push({ id: r.id, kind: 'room', name: r.name, w: r.w, from: z, to: z - r.len, h: r.h,
@@ -74,7 +86,7 @@ export const SHRINES = [
   {
     id: 'shadow', name: '그림자의 사당', unit: '그림자와 거울', theme: T.shadow,
     rooms: spine({
-      entryTo: 5.0, corridor: 6, ch: 3.4,
+      entryTo: 5.0, corridor: 6, ch: 4.4,
       rooms: [
         { id: 'r1', name: '그림자 밟기', w: 9, len: 16, h: 6.0, gate: 'shade',
             goal: '빛에 닿으면 들켜요. 기둥 그림자만 밟고 건너요.',
@@ -101,13 +113,13 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 5.0, gate: 'sieve',
+        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 6.0, gate: 'sieve',
             goal: '주문한 알갱이만 남기는 체를 골라 틀에 끼워요.',
             hints: ['구멍이 클수록 많이 빠져요.', '남길 알갱이보다 조금 작은 구멍을 고르세요.'] },
-        { id: 'r2', name: '성질로 나누기', w: 12, len: 12, h: 5.0, gate: 'magnet',
+        { id: 'r2', name: '성질로 나누기', w: 12, len: 12, h: 6.0, gate: 'magnet',
             goal: '기준이 세 번 바뀌어요. 대 보고 담가 보고 나눠 담아요.',
             hints: ['겉모습은 다 같아요. 대 보고 담가 봐야 알아요.', '기준이 바뀌면 같은 물건도 다른 통으로 가요.'] },
-        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 5.0, gate: 'evaporate',
+        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 6.0, gate: 'evaporate',
             goal: '소금만 남겨요. 자석·거름망·화로를 어떤 순서로?',
             hints: ['쇠는 자석으로, 알갱이는 체로, 녹은 것은 끓여서.', '물이 없어지면 아무것도 못 걸러요. 물이 있을 때 먼저.'] },
         { id: 'shrine', name: '신전', w: 16, len: 16, h: 6.5,

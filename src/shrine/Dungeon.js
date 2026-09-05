@@ -83,13 +83,20 @@ export function buildDungeon(scene, rooms, theme) {
     // 벽 발광 띠
     for (const sd of [-1, 1]) box(0.12, 0.12, len - 1.0, gm, sd * (hw - 0.06), 0.9, cz);
 
-    // 조명 — 실내는 손으로 놓는다. 방마다 은은한 포인트 하나.
-    // lamp 배율이 곧 사당의 밝기다. 그림자 사당은 0.3이라 이 불이 거의 안 보인다.
-    const pl = new THREE.PointLight(gcol, (s.kind === 'room' ? 7 : 3) * theme.lamp,
-      Math.max(10, len * 0.9), 1.7);
-    pl.position.set(0, s.h - 1.0, cz);
-    scene.add(pl);
-    lights.push(pl);
+    // 조명 — 실내는 손으로 놓는다. lamp 배율이 곧 사당의 밝기다.
+    // 그림자 사당은 0.3이라 이 불이 거의 안 보인다.
+    //
+    // ★ 예전엔 구간마다 **한 개**였다. 입구 통로를 카메라 길이만큼 늘리자(5.4u→12u)
+    //   같은 불 하나가 그 길이를 감당하지 못해 사당에 들어서는 첫 화면이 캐릭터도
+    //   안 보이는 검은 굴이 됐다. 길이에 맞춰 나눠 단다 — 6u에 하나꼴.
+    const n = Math.max(1, Math.round(len / 6));
+    for (let k = 0; k < n; k++) {
+      const pl = new THREE.PointLight(gcol, (s.kind === 'room' ? 7 : 4.5) * theme.lamp,
+        Math.max(10, (len / n) * 1.7), 1.7);
+      pl.position.set(0, s.h - 1.0, s.from - (len * (k + 0.5)) / n);
+      scene.add(pl);
+      lights.push(pl);
+    }
 
     rects.push({
       id: s.id, kind: s.kind, x0: -hw, x1: hw,

@@ -62,7 +62,9 @@ export class Engine {
 
     // far: 가시 지오메트리는 전부 구 표면 위 → 지평선 림까지 √(L²−R²) 정도면 충분. R*3이면 넉넉.
     // near를 0.1→0.3으로 올려 깊이 정밀도 확보(카메라 최소 거리는 2.5로 클램프됨).
-    this.camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.3, planetR * 3);
+    // 시야각 — 3인칭 표준은 60~75다. 55는 실내에서 좁게 느껴진다는 실사용 지적이
+    // 있었고, 폴리곤 하나 안 늘리고 넓힐 수 있는 유일한 손잡이가 이것이다.
+    this.camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.3, planetR * 3);
 
     // ── 조명 (§2) ───────────────────────────────────────────────────────
     // 규칙 하나: 빛은 따뜻하게, 그림자는 차갑게. 그림자는 "빛이 없는 곳"이 아니라
