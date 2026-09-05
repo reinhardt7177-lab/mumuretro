@@ -82,6 +82,20 @@ export const SHRINE = {
 // amb  [하늘색, 땅색, 세기]   실내 환경광
 // lamp 방 포인트라이트 배율. 그림자 사당은 0.3 — 조명을 끄는 것이 분위기를
 //      뒤집는 가장 싼 방법이고, 그래야 관문 자체가 유일한 광원이 된다.
+// 지하 연구실 — 주인공의 집. **여기만 사당이 아니다.**
+//
+// 사당 여섯은 전부 돌이다(§SHRINE_THEMES). 연구실은 나무와 놋쇠여야 한다 —
+// 아이가 포탈을 타고 내려서는 순간 "다른 데로 왔다"가 색만으로 읽혀야 하고,
+// 돌아왔을 때 "집에 왔다"도 색만으로 읽혀야 한다.
+export const LAB = {
+  wood: 0x6b4f36, woodDark: 0x4a3625, woodLite: 0x8a6a4a,
+  plaster: 0xb9ae99, iron: 0x3d4247, brass: 0xc79a4e,
+  paper: 0xe7dfc8,
+  glow: 0x7fd8ff,                  // 포탈. 이 별의 청록과 다른 **차가운 파랑**이다
+  glowDim: 0x2b4d63,
+  bg: 0x141110, amb: [0x93815f, 0x2f2620, 0.95], lamp: 1.0,
+};
+
 export const SHRINE_THEMES = {
   // 01 물체의 무게 — 따뜻한 돌, 청록 발광. 조용한 기준점.
   balance: {

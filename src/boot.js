@@ -25,7 +25,9 @@ import { buildMapPage } from './ui/MapPage.js';
 import { buildTouchControls } from './ui/TouchControls.js';
 import { buildDialogue } from './ui/Dialogue.js';
 import { buildNotebook } from './ui/Notebook.js';
-import { KEEPERS, ENDING, nextHint } from './shrine/dialogue.js';
+import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
+import { buildLab } from './world/Lab.js';
+import { buildLanding } from './world/Landing.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -51,7 +53,12 @@ engine._inited = true;
 // 배치 순서가 곧 정답이다 — 나중에 지우는 것보다 처음부터 안 심는 게 싸고 확실하다.
 const shrineSpots = pickShrineSpots(planet, PEAKS, { count: 6 });
 const SHRINE_CLEAR = 5.6 / R;                     // 기단(3.4u) + 여유
-const nearShrine = (dir) => shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR);
+// 내림판도 같은 규칙이다. 포탈에서 내렸는데 나무 한 그루가 판을 뚫고 서 있으면
+// 그건 첫 화면부터 고장으로 읽힌다 — 나중에 지우는 것보다 처음부터 안 심는 게 싸다.
+const landingDir = player.position.clone().normalize();
+const LANDING_CLEAR = 4.2 / R;
+const nearShrine = (dir) => dir.angleTo(landingDir) < LANDING_CLEAR
+  || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR);
 
 const scatter = buildScatter(engine.scene, planet, {
   samples: 160000, seed: 91, exclude: nearShrine,
@@ -97,13 +104,28 @@ function roomFor(shrine) {
   return rooms.get(key);
 }
 
-let mode = 'planet';                 // 'planet' | 'room'
+let mode = 'lab';                    // 'lab' | 'planet' | 'room'
 let activeShrine = null;
 let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
 let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표)
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
+
+// 화면 아래 조작 안내 — **가진 것만 적는다.**
+// 소포를 열기 전부터 "N 수첩"이라고 적혀 있으면, 눌러도 아무 일이 없는 키를
+// 게임이 먼저 알려 준 셈이 된다. 오프닝에서 소포를 열 이유도 그만큼 흐려진다.
+const hintEl = document.getElementById('hint');
+function refreshHint() {
+  if (!hintEl) return;
+  const base = touch.visible
+    ? '왼쪽 절반 이동 · 오른쪽 절반 시점 · 버튼으로 E·점프'
+    : 'WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · Shift 달리기 · Space 점프 · E 상호작용';
+  const extra = [];
+  if (mapPage.has) extra.push(touch.visible ? '🗺 지도' : 'M 지도');
+  if (notebook.has) extra.push(touch.visible ? '📓 수첩' : 'N 수첩');
+  hintEl.textContent = base + (extra.length ? ' · ' + extra.join(' · ') : '');
+}
 
 const promptEl = document.getElementById('prompt');
 function setPrompt(text) {
@@ -218,8 +240,89 @@ function step(dt) {
   //   같은 E가 아래로 흘러 상호작용까지 한다 — 그게 바로 피하려던
   //   "넘기려다 뭘 집었다"다.
   if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
+  if (mode === 'lab') { stepLab(dt, intent); return; }
   if (mode === 'room') { stepRoom(dt, intent); return; }
   stepPlanet(dt, intent);
+}
+
+// ── 지하 연구실 ──────────────────────────────────────────────────────────────
+// 사당 실내와 같은 걸음(RoomActor)을 쓴다. 여긴 관문이 없고 만질 것이 셋뿐이다 —
+// 소포 · 다이얼 셋 · 포탈. 그 셋이 곧 걷기·E·N 연습이다.
+function stepLab(dt, intent) {
+  roomActor.update(dt, intent, engine.camera);
+  roomActor.updateCamera(engine.camera, input, dt);
+  lab.update(dt);
+
+  let prompt = lab.prompt(roomActor.position);
+  if (noteT > 0) { noteT -= dt; prompt = noteMsg; }
+  setPrompt(prompt);
+
+  if (!intent.action || dialogue.active) return;
+  const did = lab.interact(roomActor.position);
+  if (did === 'parcel') {
+    notebook.setHas(true); refreshHint();
+    dialogue.play('op-parcel', ...OPENING.parcel);
+  } else if (did === 'solved') {
+    dialogue.play('op-solved', ...OPENING.solved);
+  } else if (did === 'go') {
+    landOnPlanet();
+  }
+}
+
+// 연구실 → 별. 첫 번째만 대사가 붙고, 그 뒤로는 그냥 오간다.
+function landOnPlanet() {
+  mode = 'planet';
+  lab.scene.remove(player.mesh);
+  engine.setScene(planetScene);
+  engine.scene.add(player.mesh);
+  contact.visible = true;
+  player.position.copy(landing.pos);
+  planet.projectToSurface(player.position);
+  player._initFrame(); player.syncMesh();
+  engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+  engine._camPlaced = false;
+  mapPage.setHas(true); refreshHint();
+  setPrompt(null);
+  dialogue.play('op-arrive', ...OPENING.arrive);
+}
+
+// ★ 검사용 — A·B·C·E는 **행성 위에서만** 뜻이 있다.
+//   __selftest의 runStraight는 step()을 부르는데, step()은 이제 mode를 보고
+//   갈린다. 연구실에서 부르면 stepLab으로 가서 플레이어가 한 발짝도 안 움직이고,
+//   그러면 "표면 밀착 편차 0.00e+0 · 대원 복귀 0.00"이 찍힌다.
+//   **통과가 아니라 아무것도 안 잰 것이다.** 아무것도 안 재고 초록불이 켜지는
+//   검사는 없는 것보다 나쁘다 — 진짜로 깨졌을 때도 초록불이니까.
+function withPlanetMode(fn) {
+  if (mode === 'planet') return fn();
+  const was = mode, wasParent = player.mesh.parent;
+  const pos = player.position.clone(), head = player.heading.clone();
+  if (wasParent) wasParent.remove(player.mesh);
+  planetScene.add(player.mesh);
+  engine.setScene(planetScene);
+  mode = 'planet';
+  try { return fn(); } finally {
+    mode = was;
+    planetScene.remove(player.mesh);
+    if (wasParent) wasParent.add(player.mesh);
+    engine.setScene(was === 'lab' ? lab.scene : (room ? room.scene : planetScene));
+    player.position.copy(pos); player.heading.copy(head);
+    player._initFrame(); player.syncMesh();
+  }
+}
+
+// 별 → 연구실. 베이스캠프로 돌아간다.
+function returnToLab() {
+  mode = 'lab';
+  engine.scene.remove(player.mesh);
+  contact.visible = false;
+  lab.scene.add(player.mesh);
+  roomActor.rects = lab.rects;
+  roomActor.obstacles = lab.obstacles;
+  roomActor.slip = 0;
+  roomActor.setAt(lab.CIRCLE.x, lab.CIRCLE.z + 2.6, 1);   // 포탈에서 방을 보고 선다
+  engine.setScene(lab.scene);
+  setPrompt(null);
+  dialogue.play('op-home', ...OPENING.home);
 }
 
 // 실내 — 관문 셋을 지나 신전으로. 통로 끝을 넘어서면 밖으로 나간다.
@@ -334,6 +437,14 @@ function stepPlanet(dt, intent) {
   //   어디에도 안 나와서, 가장 가까운 곳만 반복해 들어가면 "다 똑같다"로 읽힌다.
   //   무엇이 있는 곳인지 들어가기 전에 말해 준다.
   mapPage.update();
+  landing.update(dt);
+  // 내림판 — 사당보다 먼저 본다. 판 위에 사당이 겹칠 일은 없지만(사당 자리를 먼저 잡고
+  // 그 밖에 스폰한다) 겹치면 **돌아갈 길이 막히는 쪽**이 더 나쁘다.
+  if (landing.near(player.position)) {
+    setPrompt('E — 연구실로 돌아가기');
+    if (intent.action && !dialogue.active) returnToLab();
+    return;
+  }
   const atDoor = near.shrine && near.distU < shrines.ENTER_R;
   // ★ layouts에 locked: 5라고 적어 놓고 **아무도 확인하지 않았다.**
   //   마지막 사당은 앞선 다섯의 구슬이 열쇠라는 게 그 방의 전제인데,
@@ -370,6 +481,13 @@ const touch = buildTouchControls(input, mapPage, () => notebook);
 const dialogue = buildDialogue(input);
 const notebook = buildNotebook(shrines, SHRINES);
 
+touch.onShow(refreshHint);
+refreshHint();
+
+// 지하 연구실과, 별 위의 같은 자리. 이 둘이 포탈의 양 끝이다.
+const lab = buildLab();
+const landing = buildLanding(planetScene, planet, landingDir);
+
 // 가장 가까운 **안 깬** 사당이 어떤 곳인지 한마디로. 이름도 방향도 대지 않는다 —
 // 화살표를 띄우면 이 게임은 문제가 아니라 심부름이 된다.
 function beckonNearest(from) {
@@ -389,13 +507,25 @@ const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook,
   get room() { return room; },
+  lab, landing, landOnPlanet, returnToLab,
   get cleared() { return cleared; },
   get mode() { return mode; },
   enterShrine, exitShrine,
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
-  roomActor, roomFor });
+  roomActor, roomFor, withPlanetMode });
+
+// ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────
+// 아이를 낯선 행성 위에 아무 말 없이 떨어뜨리지 않는다(Lab.js 머리말).
+engine.scene.remove(player.mesh);
+contact.visible = false;
+lab.scene.add(player.mesh);
+roomActor.rects = lab.rects;
+roomActor.obstacles = lab.obstacles;
+roomActor.setAt(0, lab.ENTRY_Z, -1);
+engine.setScene(lab.scene);
+dialogue.play('op-wake', ...OPENING.wake);
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';

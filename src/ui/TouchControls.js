@@ -29,6 +29,7 @@ const CSS = `
   border-color:rgba(111,227,210,.72);background:rgba(20,46,46,.72)}
 #tcAct[hidden]{display:none}
 #tcJump{width:60px;height:60px;font-size:12px}
+#tcMap[hidden],#tcNote[hidden]{display:none}
 #tcMap,#tcNote{width:46px;height:46px;font-size:18px;position:fixed;
   right:calc(14px + env(safe-area-inset-right))}
 #tcMap{top:calc(14px + env(safe-area-inset-top))}
@@ -75,12 +76,14 @@ export function buildTouchControls(input, mapPage, notebook) {
 
   // ── 언제 보이는가 ────────────────────────────────────────────────────
   let on = false;
+  let onShow = null;
+  // ★ 여기서 #hint를 직접 쓰지 않는다. 안내에 "N 수첩"을 적을지 말지는
+  //   **수첩을 가졌는지**에 달렸고, 그건 이 파일이 알 일이 아니다.
   const show = () => {
     if (on) return;
     on = true;
     el.classList.add('on');
-    const hint = document.getElementById('hint');
-    if (hint) hint.textContent = '왼쪽 절반 이동 · 오른쪽 절반 시점 · 버튼으로 E·점프·지도·수첩';
+    if (onShow) onShow();
   };
   if (matchMedia('(pointer: coarse)').matches) show();
   addEventListener('touchstart', show, { once: true, passive: true });
@@ -103,11 +106,16 @@ export function buildTouchControls(input, mapPage, notebook) {
   const hideWhileMap = () => {
     const n = notebook();
     el.style.visibility = (mapPage.isOpen || (n && n.isOpen)) ? 'hidden' : '';
+    // ★ 눌러도 아무 일 없는 버튼이 가장 나쁘다. 오프닝에서는 수첩도 지도도
+    //   아직 손에 없다 — 그 동안은 버튼 자체가 없어야 한다.
+    bMap.hidden = !mapPage.has;
+    bNote.hidden = !(n && n.has);
   };
 
   return {
     update: hideWhileMap,
     get visible() { return on; },
+    onShow(fn) { onShow = fn; if (on) fn(); },
     show,                       // 검증용
     get actionVisible() { return !bAct.hidden; },
   };

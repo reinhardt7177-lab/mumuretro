@@ -230,7 +230,14 @@ export function installDebug(ctx) {
     return { maxDev, nan, end: player.position.clone() };
   }
 
-  window.__selftest = function () {
+  // ★ 행성 검사는 **반드시 행성 모드에서** 돈다. runStraight가 step()을 부르는데
+  //   step()은 이제 mode로 갈린다 — 연구실에서 부르면 stepLab으로 가서 플레이어가
+  //   한 발짝도 안 움직이고, 그런데도 "밀착 편차 0.00e+0 · 대원 복귀 0.00"이 찍힌다.
+  //   아무것도 안 재고 켜지는 초록불은 없느니만 못하다.
+  const onPlanet = ctx.withPlanetMode || ((fn) => fn());
+  window.__selftest = () => onPlanet(_selftest);
+
+  function _selftest() {
     const log = [], Rp = planet.R;
     // ★ A·B는 **구면 보행 코어**를 재는 테스트다. 충돌이 켜져 있으면 직진 중 나무에
     // 밀려나 "대원 한 바퀴 → 제자리 복귀"가 성립하지 않는다(충돌을 넣자마자 깨졌다).
@@ -329,5 +336,5 @@ export function installDebug(ctx) {
     // sun.position이 옮기기 전 플레이어 기준으로 남아 조명 계측이 엉뚱하게 나온다.
     step(1 / 60);
     return ok;
-  };
+  }
 }

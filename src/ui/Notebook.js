@@ -8,6 +8,7 @@
 // 질문은 남이 쓴 것이고 답은 내가 쓴 것이라는 게 글씨만 봐도 읽혀야 한다.
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
+import { PORTAL_CODE } from '../world/Lab.js';
 
 const CSS = `
 #nb{position:fixed;inset:0;z-index:40;display:none;place-items:center;
@@ -37,6 +38,14 @@ const CSS = `
 #nb .ft{padding:14px 24px 18px;display:flex;gap:16px;align-items:center;
   font-size:12px;color:#7d878c;border-top:1px solid #dfe1da}
 #nb .ft .close{margin-left:auto}
+#nb .coord{padding:15px 24px;border-top:1px dashed #d8dad2;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#nb .coord .lab{font-size:12px;color:#7d878c;letter-spacing:.06em}
+#nb .coord .num{font-family:"Nanum Pen Script","Gowun Batang",cursive;
+  font-size:34px;color:#2f5490;letter-spacing:.16em;line-height:1}
+#nb .coord .num i{font-style:normal;color:#a9a294;letter-spacing:0}
+#nb .coord .why{font-family:"Nanum Pen Script","Gowun Batang",cursive;
+  font-size:19px;color:#2f5490;flex:1;min-width:220px}
 #nb .memo{padding:16px 24px;font-family:"Nanum Pen Script","Gowun Batang",cursive;
   font-size:21px;line-height:1.5;color:#2f5490;border-top:1px dashed #d8dad2}
 @media (max-width:640px){#nb .q{font-size:20px}#nb .a{font-size:13.5px}}`;
@@ -55,6 +64,11 @@ export function buildNotebook(shrines, specs) {
   el.innerHTML = `<div class="page">
     <div class="hd"><span class="t">${NOTE_TITLE}</span><span class="n" id="nbN"></span></div>
     <div id="nbRows"></div>
+    <div class="coord">
+      <span class="lab">별의 자리</span>
+      <span class="num">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i>▓</i></span>
+      <span class="why">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</span>
+    </div>
     <div class="memo" id="nbMemo"></div>
     <div class="ft"><span>앞사람의 글씨는 파란색이에요</span>
       <span class="close">N — 닫기</span></div>
@@ -64,7 +78,7 @@ export function buildNotebook(shrines, specs) {
   const elN = el.querySelector('#nbN');
   const elMemo = el.querySelector('#nbMemo');
 
-  let open = false;
+  let open = false, has = false;
   // 앞사람 글씨는 **화자를 가르는 장치**다. 처음 열 때 받아오면 그 한 번은
   // 폴백 글꼴로 그려졌다가 바뀐다 — 가르는 장치가 첫 장면에서만 안 듣는다.
   if (document.fonts && document.fonts.load) {
@@ -92,6 +106,9 @@ export function buildNotebook(shrines, specs) {
 
   const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
   const setOpen = (v) => {
+    // ★ 소포를 열기 전에는 수첩이 **없다.** 없는 걸 N으로 펼 수 있으면
+    //   오프닝에서 소포를 열 이유가 사라진다.
+    if (v && !has) return;
     if (v) soloOpen(me);            // 전면 화면은 하나만 — overlay.js
     open = v; el.classList.toggle('show', v); if (v) draw();
   };
@@ -102,5 +119,10 @@ export function buildNotebook(shrines, specs) {
   });
   el.addEventListener('click', (e) => { if (e.target === el) setOpen(false); });
 
-  return { setOpen, get isOpen() { return open; }, draw };
+  return {
+    setOpen, draw,
+    get isOpen() { return open; },
+    get has() { return has; },
+    setHas(v) { has = v; if (!v && open) setOpen(false); },
+  };
 }

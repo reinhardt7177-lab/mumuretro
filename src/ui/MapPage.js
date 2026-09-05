@@ -157,7 +157,7 @@ export function buildMapPage(planet, player, shrines, specs) {
   const vctx = view.getContext('2d');
   const elShrine = el.querySelector('#mp-shrine');
   const elExplored = el.querySelector('#mp-explored');
-  let open = false;
+  let open = false, has = false;   // 별에 내려서기 전에는 이 별의 지도가 없다
 
   const mark = (dir, draw) => {
     const { lat, lon } = latLonOf(dir);
@@ -219,6 +219,7 @@ export function buildMapPage(planet, player, shrines, specs) {
 
   const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
   const setOpen = (v) => {
+    if (v && !has) return;          // 가 보지도 않은 별의 지도를 들고 있을 수는 없다
     if (v) soloOpen(me);            // 전면 화면은 하나만 — overlay.js
     open = v;
     el.classList.toggle('show', v);
@@ -245,6 +246,8 @@ export function buildMapPage(planet, player, shrines, specs) {
       if (open) draw();
     },
     get isOpen() { return open; },
+    get has() { return has; },
+    setHas(v) { has = v; if (!v && open) setOpen(false); },
     setOpen,
     // 검증용
     stats: () => ({ seen: seenCount, total: GX * GY,
