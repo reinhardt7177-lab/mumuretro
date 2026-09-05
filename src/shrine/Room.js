@@ -20,6 +20,8 @@ import { TileGate, LaserGate, PlateGate } from './Gates.js';
 import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.js';
 import { SieveGate, MagnetGate, EvaporateGate, SiftGod } from './SiftGates.js';
 import { FreezeGate, SlideGate, SteamGate, WaterGod } from './WaterGates.js';
+import { QuakeGate, HexLavaGate, GeyserGate, FireGod } from './FireGates.js';
+import { StrataOrderGate, ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
 import { BalanceScale } from './Scale.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
@@ -29,9 +31,14 @@ const GATES = {
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
   sieve: SieveGate, magnet: MagnetGate, evaporate: EvaporateGate,    // 03 분리
   freeze: FreezeGate, slide: SlideGate, steam: SteamGate,            // 04 물
+  quake: QuakeGate, hexlava: HexLavaGate, geyser: GeyserGate,        // 05 화산
+  strataOrder: StrataOrderGate, shaft: ShaftGate, fiveDoors: FiveDoorsGate,  // 06 지층
 };
 
-const FINALS = { mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterGod };
+const FINALS = {
+  mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterGod,
+  fireGod: FireGod, grand: GrandGod,
+};
 
 // 아직 안 만든 관문 — 방을 막지 않고 지나가게 둔다.
 // ★ 여기서 예외를 던지면 사당 하나를 만드는 동안 나머지 다섯이 통째로 죽는다.

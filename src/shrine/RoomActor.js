@@ -39,6 +39,10 @@ export class RoomActor {
     // 관문이 매 프레임 위치를 보정하는 식으로 만들면 카메라가 한 프레임씩 튄다.
     this.slip = 0;
     this.vel = new THREE.Vector2(0, 0);
+    // 화면 흔들림 — 화산 사당의 지진. 관문이 매 프레임 값을 써 넣고 여기서 감쇠시킨다.
+    // ★ 흔들림은 장식이 아니라 **신호**다. 큰 진동 전에 작은 예진이 먼저 오고,
+    //   그걸 알아채는 아이는 안 죽는다. 그래서 세기를 관문이 정확히 통제해야 한다.
+    this.shake = 0;
   }
 
   setAt(x, z, headingZ = -1) {
@@ -193,6 +197,14 @@ export class RoomActor {
 
     if (!this._camPlaced) { camera.position.copy(desired); this._camPlaced = true; }
     else camera.position.lerp(desired, smoothK(0.0009, dt));
+
+    if (this.shake > 0.001) {
+      const a = this.shake;
+      camera.position.x += (Math.random() - 0.5) * a;
+      camera.position.y += (Math.random() - 0.5) * a * 0.7;
+      camera.position.z += (Math.random() - 0.5) * a;
+      this.shake = Math.max(0, this.shake - dt * 2.4);
+    }
     camera.up.set(0, 1, 0);
     camera.lookAt(target);
   }
