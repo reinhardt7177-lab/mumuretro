@@ -138,7 +138,32 @@ export function buildRoom(spec) {
   const final = makeFinal(spec.final, scene, shrineSeg, spec.theme);
   const prize = new Prize(scene, final.prizePos);
 
+  // ── 가림막 — 카메라와 나 사이에 낀 판은 흐려진다 ─────────────────────────
+  // ★ 카메라가 낮은 천장에서 각도를 낮춰 제대로 물러나게 되자, 예전엔 갈 수
+  //   없던 자리까지 가게 됐다 — 닫힌 문과 타일방 가림막 **너머**다. 그러면
+  //   화면 아래 절반이 초록 반투명 판으로 덮이고 그 뒤로 내 캐릭터가 비친다.
+  //   카메라를 다시 가두면 어렵게 얻은 거리를 도로 잃으므로, 가두는 대신
+  //   **낀 판을 흐린다.** 판은 전부 Z에 수직이라 "사이에 있나"는 곱셈 한 번이다.
+  const veils = [];
+  scene.traverse((o) => {
+    if (o.isMesh && o.userData.veil && o.material && o.material.transparent) {
+      veils.push({ mesh: o, base: o.material.opacity, cur: o.material.opacity });
+    }
+  });
+  const fadeVeils = (camZ, actorZ, dt) => {
+    for (const v of veils) {
+      if (!v.mesh.visible) continue;
+      const pz = v.mesh.position.z;
+      const between = (camZ - pz) * (pz - actorZ) > 0;
+      const want = between ? v.base * 0.10 : v.base;
+      // 툭 꺼지면 그것대로 눈에 띈다. 지나가면서 스르르 사라져야 한다.
+      v.cur += (want - v.cur) * Math.min(1, dt * 9);
+      v.mesh.material.opacity = v.cur;
+    }
+  };
+
   return {
+    fadeVeils, veils,
     spec, scene, dungeon, gates, final, prize, goals, hints,
     // 헤맨 시간이 쌓이면 힌트가 한 단계씩 켜진다. 실패는 시간을 크게 밀어 준다 —
     // 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르게 대접해야 한다.

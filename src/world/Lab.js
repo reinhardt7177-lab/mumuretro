@@ -134,6 +134,35 @@ export function buildLab() {
   box(0.58, 0.02, 0.8, paper, 0, 0.115, 0, noteG);
   box(0.1, 0.13, 0.86, basic(0x2f5490), -0.3, 0.055, 0, noteG);   // 파란 등 — 앞사람 색
 
+  // ── 위로 난 계단 ─────────────────────────────────────────────────────────
+  // ★ 천장을 3.6u에서 4.8u로 올렸는데, 올린 자리에 아무것도 없으면 그건 넓어진 게
+  //   아니라 **빈 것**이다. 그래서 그 높이를 쓰는 것을 하나 둔다 — 위층으로 난 계단.
+  //   덤으로 이 방이 **지하실**이라는 전제를 말로 하지 않고 보여 준다. 문틈으로
+  //   새는 낮빛은 이 방에서 유일하게 차가운 흰빛이다. 저 위에 바깥이 있다는 뜻이고,
+  //   주인공이 여기서 밤을 새웠다는 첫 대사와 붙는다.
+  //   올라갈 수는 없다. 이 이야기가 가는 방향은 위가 아니라 저 별이다.
+  const stairX = 5.6, stairW = 2.6;
+  const RISE = 0.22, RUN = 0.36, N_STEP = 12;
+  for (let k = 0; k < N_STEP; k++) {
+    box(stairW, RISE, RUN + 0.02, wood, stairX, RISE / 2 + k * RISE, 6.2 + k * RUN);
+    box(stairW, k * RISE + RISE, 0.06, woodD, stairX, (k * RISE + RISE) / 2, 6.2 + k * RUN - RUN / 2);
+  }
+  const LAND_Y = N_STEP * RISE;                                 // 2.64
+  box(stairW, 0.2, 2.4, wood, stairX, LAND_Y - 0.1, 11.8);
+  // 난간 — 계단이 계단으로 읽히려면 옆이 있어야 한다
+  for (let k = 0; k <= N_STEP; k += 4) {
+    const z = 6.2 + k * RUN, y = k * RISE;
+    box(0.1, 0.95, 0.1, woodD, stairX - stairW / 2 + 0.08, y + 0.48, z);
+  }
+  box(0.1, 0.1, N_STEP * RUN + 2.6, woodD, stairX - stairW / 2 + 0.08,
+    LAND_Y * 0.5 + 0.95, 6.2 + (N_STEP * RUN) / 2 + 1.0).rotation.x = -Math.atan2(LAND_Y, N_STEP * RUN);
+  // 위층 문 — 닫혀 있다. 문틈으로 낮빛이 샌다
+  box(1.5, 2.2, 0.14, woodD, stairX, LAND_Y + 1.1, 12.86);
+  const slit = basic(0xfff4dc, 0.9);
+  box(1.34, 0.05, 0.06, slit, stairX, LAND_Y + 0.03, 12.78);
+  const day = new THREE.PointLight(0xfff0d6, 3.2 * LAB.lamp, 7, 2.0);
+  day.position.set(stairX, LAND_Y + 0.3, 12.4); scene.add(day);
+
   // ── 좌표 장치 ────────────────────────────────────────────────────────────
   // 분필 원 — **눈금이 있다.** 주문이 아니라 자다.
   const chalk = basic(0xd8d2c0, 0.85);
@@ -215,6 +244,7 @@ export function buildLab() {
     { x: 5.8, z: 3.4, r: 1.7 },                      // 선반
     { x: PARCEL.x, z: PARCEL.z, r: 1.5 },            // 작업대
     { x: 0, z: CONSOLE_Z, r: 2.3 },                  // 콘솔
+    { x: 5.6, z: 8.6, r: 2.4 },                      // 계단 — 올라갈 수는 없다
   ];
 
   // ── 상태 ─────────────────────────────────────────────────────────────────

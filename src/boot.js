@@ -216,6 +216,20 @@ function onOrb() {
   if (!dialogue.active) { noteMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; noteT = 2.6; }
 }
 
+// 실내 받침등 — 주인공이 실루엣이 되지 않을 만큼만.
+//
+// ★ 아트 바이블 §2는 **고정 조명**이다. 따라다니는 불은 그 예외고, 예외인 이유를
+//   적어 둔다. 사당은 어두운 게 의도다(그림자 사당은 lamp 0.3이라 거의 깜깜하다).
+//   그런데 어두운 것과 **내 캐릭터가 안 보이는 것**은 다른 문제다. 렌더 타깃에서
+//   재 보니 사당 안 캐릭터가 화면 밝기 55/255였다 — 옷 색도 모자 색도 안 읽힌다.
+//   그래서 방을 밝히지 않고 **캐릭터만** 받친다: 사거리 4.2u, 감쇠 2.0이라
+//   1u만 벗어나도 없는 것과 같고 바닥에 빛웅덩이가 생기지 않는다.
+//   메시의 로컬 −Z가 뒤쪽이고 카메라는 늘 뒤에 있으므로, 보이는 면이 밝아진다.
+const fill = new THREE.PointLight(0xffe9cf, 0, 4.2, 2.0);
+fill.position.set(0, 1.7, -1.3);
+player.mesh.add(fill);
+const FILL_ROOM = 2.8, FILL_LAB = 1.8;   // 연구실은 갓등 셋이 이미 밝다
+
 let _windT = 0;
 // 발밑 접지 자국 — 잔디가 눌린 것처럼 보이는 어두운 원반.
 // 그림자만으로는 캐릭터가 지면에 "닿아" 있는 느낌이 약하다. 이 원반 하나가 그걸 만든다.
@@ -240,6 +254,8 @@ function step(dt) {
   //   같은 E가 아래로 흘러 상호작용까지 한다 — 그게 바로 피하려던
   //   "넘기려다 뭘 집었다"다.
   if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
+  // 밖에서는 해가 있다. 받침등은 실내에서만 켠다.
+  fill.intensity = mode === 'planet' ? 0 : (mode === 'lab' ? FILL_LAB : FILL_ROOM);
   if (mode === 'lab') { stepLab(dt, intent); return; }
   if (mode === 'room') { stepRoom(dt, intent); return; }
   stepPlanet(dt, intent);
@@ -329,6 +345,9 @@ function returnToLab() {
 function stepRoom(dt, intent) {
   roomActor.update(dt, intent, engine.camera);
   roomActor.updateCamera(engine.camera, input, dt);
+
+  // 카메라와 나 사이에 낀 판(닫힌 문·가림막)은 흐린다. 카메라를 가두는 대신이다.
+  if (room.fadeVeils) room.fadeVeils(engine.camera.position.z, roomActor.position.z, dt);
 
   const { dungeon, gates, final, prize } = room;
   const seg = dungeon.segmentAt(roomActor.position.z);

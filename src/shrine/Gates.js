@@ -90,6 +90,7 @@ export class TileGate {
     this.barrier = new THREE.Mesh(new THREE.BoxGeometry(seg.x1 - seg.x0, 3.4, 0.22), bm);
     this.barrier.position.set(0, 1.7, seg.z1 - 0.15);
     this.barrier.visible = false;
+    this.barrier.userData.veil = true;   // 카메라가 뒤로 물러나면 이 판 너머에 선다
     scene.add(this.barrier);
 
     // 색 표지 — 지금 어느 색이 안전한지 알리는 판. 마리오 파티의 깃발 역할.
