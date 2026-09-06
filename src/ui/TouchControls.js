@@ -29,13 +29,27 @@ const CSS = `
   border-color:rgba(111,227,210,.72);background:rgba(20,46,46,.72)}
 #tcAct[hidden]{display:none}
 #tcJump{width:60px;height:60px;font-size:12px}
-#tcMap[hidden],#tcNote[hidden]{display:none}
-#tcMap,#tcNote{width:46px;height:46px;font-size:18px;position:fixed;
+#tcMap[hidden],#tcNote[hidden],#tcFull[hidden]{display:none}
+#tcMap,#tcNote,#tcFull{width:46px;height:46px;font-size:18px;position:fixed;
   right:calc(14px + env(safe-area-inset-right))}
 #tcMap{top:calc(14px + env(safe-area-inset-top))}
 #tcNote{top:calc(68px + env(safe-area-inset-top))}
+#tcFull{top:calc(122px + env(safe-area-inset-top))}
 @media (max-height:520px){#tcAct{width:64px;height:64px;font-size:13px}
-  #tcJump{width:52px;height:52px}}`;
+  #tcJump{width:52px;height:52px}}
+/* 태블릿 — 폰 크기 버튼을 10인치 화면에 그대로 두면 손가락이 아니라 눈이 먼저
+   찾아야 한다. 손가락이 닿는 기기이면서 화면이 넓으면 키운다. */
+@media (any-pointer:coarse) and (min-width:820px) and (min-height:620px){
+  #touchUI{gap:16px;right:calc(24px + env(safe-area-inset-right));
+    bottom:calc(28px + env(safe-area-inset-bottom))}
+  #tcAct{width:100px;height:100px;font-size:19px}
+  #tcJump{width:76px;height:76px;font-size:14px}
+  #tcMap,#tcNote,#tcFull{width:58px;height:58px;font-size:22px;
+    right:calc(24px + env(safe-area-inset-right))}
+  #tcMap{top:calc(20px + env(safe-area-inset-top))}
+  #tcNote{top:calc(86px + env(safe-area-inset-top))}
+  #tcFull{top:calc(152px + env(safe-area-inset-top))}
+}`;
 
 export function buildTouchControls(input, mapPage, notebook) {
   const style = document.createElement('style');
@@ -45,6 +59,7 @@ export function buildTouchControls(input, mapPage, notebook) {
   const el = document.createElement('div');
   el.id = 'touchUI';
   el.innerHTML = `
+    <button id="tcFull" aria-label="전체 화면" hidden>⛶</button>
     <button id="tcMap" aria-label="지도">🗺</button>
     <button id="tcNote" aria-label="탐사 수첩">📓</button>
     <button id="tcJump" aria-label="점프">점프</button>
@@ -54,6 +69,7 @@ export function buildTouchControls(input, mapPage, notebook) {
   const bAct = el.querySelector('#tcAct');
   const bJump = el.querySelector('#tcJump');
   const bMap = el.querySelector('#tcMap');
+  const bFull = el.querySelector('#tcFull');
   const bNote = el.querySelector('#tcNote');
 
   // 버튼을 누른 손가락이 시점 드래그로도 새지 않게 막는다.
@@ -76,6 +92,29 @@ export function buildTouchControls(input, mapPage, notebook) {
     else { n.go('star'); n.setOpen(true); } } });
   tap(bNote, () => { const n = notebook(); if (n) n.setOpen(!n.isOpen); });
 
+  // ── 전체 화면 ────────────────────────────────────────────────────────
+  // ★ 카카오톡 안에서 열면 위아래 주소창·탐색바가 화면의 3분의 1을 먹는다.
+  //   그 상태에서 수첩을 펴면 남는 자리가 거의 없다(실제로 물음 여섯 중 넷이
+  //   잘려 나갔다). 브라우저를 바꾸라고 할 수는 없으니 화면을 되찾는 길을 준다.
+  //   지원하지 않는 브라우저에서는 **버튼 자체를 안 만든다** — 눌러도 아무 일도
+  //   안 일어나는 버튼은 없느니만 못하다.
+  const root = document.documentElement;
+  const canFull = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  const inFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const syncFull = () => { bFull.textContent = inFull() ? '⤡' : '⛶'; };
+  if (canFull) {
+    bFull.hidden = false;
+    tap(bFull, () => {
+      try {
+        if (inFull()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        else (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+      } catch (e) { /* 막아 둔 브라우저도 있다 — 조용히 넘어간다 */ }
+    });
+    addEventListener('fullscreenchange', syncFull);
+    addEventListener('webkitfullscreenchange', syncFull);
+    syncFull();
+  }
+
   // ── 언제 보이는가 ────────────────────────────────────────────────────
   let on = false;
   let onShow = null;
@@ -87,7 +126,16 @@ export function buildTouchControls(input, mapPage, notebook) {
     el.classList.add('on');
     if (onShow) onShow();
   };
-  if (matchMedia('(pointer: coarse)').matches) show();
+  // ★ 예전엔 `(pointer: coarse)` 하나만 봤다. 그건 **주 포인터**가 손가락일 때만
+  //   참이다 — 아이패드·갤탭은 걸리지만, 트랙패드가 달린 크롬북이나 서피스 같은
+  //   투인원 태블릿은 주 포인터가 마우스라 걸리지 않았다.
+  //   그런 기기에서는 **화면을 한 번 만지기 전까지 E 버튼이 아예 없었고**,
+  //   E 버튼이 없으면 사당에 들어갈 수가 없다. 만져 봐야 나타나는 버튼은
+  //   "만지면 되는 줄 몰랐던 아이"에게는 없는 버튼이다.
+  //   그래서 **손가락이 붙어 있기만 하면** 켠다(any-pointer). 키보드는 그대로 산다.
+  const touchable = (navigator.maxTouchPoints || 0) > 0
+    && matchMedia('(any-pointer: coarse)').matches;
+  if (touchable || matchMedia('(pointer: coarse)').matches) show();
   addEventListener('touchstart', show, { once: true, passive: true });
 
   // ── E 버튼은 할 수 있는 일이 있을 때만 ───────────────────────────────

@@ -29,6 +29,7 @@ import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
 import { buildFlash } from './ui/Flash.js';
+import { buildTitle } from './ui/Title.js';
 import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
 import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
@@ -125,7 +126,7 @@ function roomFor(shrine) {
   return rooms.get(key);
 }
 
-let mode = 'lab';                    // 'lab' | 'planet' | 'room'
+let mode = 'title';                  // 'title' | 'lab' | 'planet' | 'room'
 let activeShrine = null;
 let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
@@ -288,9 +289,139 @@ function step(dt) {
   if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
   // 밖에서는 해가 있다. 받침등은 실내에서만 켠다.
   fill.intensity = mode === 'planet' ? 0 : (mode === 'lab' ? FILL_LAB : FILL_ROOM);
+  if (mode === 'title') { stepTitle(dt); return; }
   if (mode === 'lab') { stepLab(dt, intent); return; }
   if (mode === 'room') { stepRoom(dt, intent); return; }
   stepPlanet(dt, intent);
+}
+
+// ── 시작 화면 ────────────────────────────────────────────────────────────────
+// 표지(assets/cover.jpg)와 **같은 자리**다. 그림을 붙이는 게 아니라 거기 실제로
+// 서서 실제로 렌더한다 — 링크에서 본 것과 열었을 때가 어긋나면 안 된다.
+//
+// ★ 처음엔 주인공을 사당 둘레로 걷게 하려 했다. 그런데 원을 유지하려면 속도가
+//   **반드시 접선**이어야 하고, 그러면 사당은 늘 옆구리에 온다 — 표지의
+//   "앞을 보고 걸어간다"가 성립하지 않는다. 억지로 안쪽으로 틀면 나선으로 빨려든다.
+//   그래서 사람은 서서 사당을 보고, **카메라가 아주 느리게 숨쉰다.**
+//   풀·나무는 바람 셰이더가 흔들고 빛기둥은 제 박자로 뛴다 — 정지 화면이 아니다.
+const TITLE_AWAY_DEG = 11;             // 사당에서 이만큼 떨어져 선다(표지와 같은 값)
+let titleSpin = 0;                     // 사당 둘레 어느 쪽에 설지 — 아래에서 고른다
+let titleClear = 0;                    // 그 자리의 시야 여유(검사가 본다)
+let titleT = 0;
+const _tU = new THREE.Vector3(), _tF = new THREE.Vector3(), _tS = new THREE.Vector3();
+const _tAt = new THREE.Vector3(), _tEye = new THREE.Vector3(), _tLook = new THREE.Vector3();
+
+// ★ 처음엔 사당 둘레 아무 자리에나 세웠다. 그랬더니 세로 폰에서 카메라가 뒤로
+//   물러나는 순간 **전나무 한 그루가 화면을 통째로 막고 주인공이 사라졌다.**
+//   자리를 손으로 골라 박아 둘 수도 있지만, 지형을 손보면 조용히 다시 막힌다.
+//   그러니 **살 때마다 고른다** — 사당 둘레를 10°씩 돌며 앞뒤 시선줄이 가장
+//   비어 있는 자리를 찾는다. 검사 N이 그 여유를 잰다.
+function pickTitleSpin() {
+  const sd = shrines.shrines[0].dir.clone().normalize();
+  const ax = new THREE.Vector3().crossVectors(sd, new THREE.Vector3(0, 1, 0)).normalize();
+  const shrinePos = planet.surfaceAt(sd, new THREE.Vector3());
+  // 후보는 사당에서 13u 원 위에 있으므로, 사당에서 34u 밖의 나무는 볼 것도 없다
+  const near = [];
+  const _p = new THREE.Vector3();
+  for (const c of scatter.colliders) {
+    planet.surfaceAt(c.dir, _p);
+    if (_p.distanceTo(shrinePos) < 34) near.push({ p: _p.clone(), r: c.r });
+  }
+  const P = new THREE.Vector3(), F = new THREE.Vector3(), q = new THREE.Vector3();
+  let best = 0, bestScore = -1;
+  for (let spin = 0; spin < 360; spin += 10) {
+    const stand = sd.clone()
+      .applyAxisAngle(ax, TITLE_AWAY_DEG * Math.PI / 180)
+      .applyAxisAngle(sd, spin * Math.PI / 180).normalize();
+    planet.surfaceAt(stand, P);
+    F.copy(sd).addScaledVector(stand, -sd.dot(stand)).normalize();
+    let clear = 99;
+    for (const c of near) {
+      if (c.p.distanceTo(P) > 18) continue;
+      // 뒤(카메라가 앉을 자리)와 앞(사당까지의 시선) 둘 다 비어야 한다
+      for (let d = -10; d <= 12; d += 0.5) {
+        if (d > -2.5 && d < 2) continue;
+        q.copy(P).addScaledVector(F, d);
+        const gap = c.p.distanceTo(q) - c.r;
+        if (gap < clear) clear = gap;
+      }
+    }
+    if (clear > bestScore) { bestScore = clear; best = spin; }
+  }
+  titleSpin = best; titleClear = bestScore;
+  return { spin: best, clear: +bestScore.toFixed(2) };
+}
+
+function placeTitleActor() {
+  const sd = shrines.shrines[0].dir.clone().normalize();
+  const ax = new THREE.Vector3().crossVectors(sd, new THREE.Vector3(0, 1, 0)).normalize();
+  const stand = sd.clone().applyAxisAngle(ax, TITLE_AWAY_DEG * Math.PI / 180)
+    .applyAxisAngle(sd, titleSpin * Math.PI / 180).normalize();
+  planet.surfaceAt(stand, player.position);
+  player.up.copy(stand);
+  // 사당 쪽을 본다 — 서 있는 자리의 접평면에 투영한 방향
+  player.heading.copy(sd).addScaledVector(stand, -sd.dot(stand)).normalize();
+  player._initFrame(); player.syncMesh();
+}
+
+function stepTitle(dt) {
+  titleT += dt;
+  // 주기를 서로 어긋나게 둔다. 같은 주기로 묶으면 8초짜리 루프인 게 눈에 보인다.
+  const yaw = Math.sin(titleT * 0.090) * 0.20;
+  // ★ 이 구도는 표지(1200×630, 1.90:1)에서 잡았다. three의 fov는 **세로**라서
+  //   같은 값으로 세로로 긴 창에 띄우면 가로 화각이 확 좁아진다.
+  //   처음엔 "좁으면 뒤로 빼자"로 했는데, 세로 폰(0.46:1)에서 카메라가 11u 뒤로
+  //   물러나면서 **앞의 나무가 화면을 통째로 막고 주인공이 사라졌다.**
+  //   좁은 화면에서 둘을 다 담는 길은 뒤로 빼는 게 아니라 **세로로 세우는 것**이다 —
+  //   옆으로 벌린 값을 0으로 좁히고 카메라를 올려, 주인공 위에 사당이 오게 한다.
+  const t = Math.min(1, Math.max(0, (1.90 - engine.camera.aspect) / 1.35));
+  const dist = (3.40 + Math.sin(titleT * 0.062) * 0.55) * (1 + 0.85 * t);
+  const sideOff = -1.9 * (1 - 0.85 * t);
+  const lookSide = 1.7 * (1 - 0.85 * t);
+  const high = (1.35 + Math.sin(titleT * 0.050) * 0.18) * (1 + 0.70 * t);
+  // 카메라를 올린 만큼 겨냥은 낮춘다 — 그래야 주인공이 화면 위쪽으로 올라가고
+  // 아래에 "눌러 시작"이 앉을 자리(맨 잔디)가 남는다.
+  const lookUp = 3.2 - 0.2 * t;
+
+  _tU.copy(player.up);
+  _tF.copy(player.heading).applyAxisAngle(_tU, yaw).normalize();
+  _tS.crossVectors(_tU, _tF).normalize();
+  _tAt.copy(player.position);
+
+  // 카펫이 지형보다 0.15u 높다(stepPlanet과 같은 보정). 안 하면 발이 잠긴다.
+  _cUp.copy(player.position).normalize();
+  player.mesh.position.copy(player.position).addScaledVector(_cUp, carpet.liftAt(_cUp));
+  contact.position.copy(player.mesh.position).addScaledVector(_cUp, 0.03);
+  contact.quaternion.setFromUnitVectors(_CZ, _cUp);
+
+  _tEye.copy(_tAt).addScaledVector(_tF, -dist).addScaledVector(_tS, sideOff).addScaledVector(_tU, high);
+  _tLook.copy(_tAt).addScaledVector(_tF, 14).addScaledVector(_tS, lookSide).addScaledVector(_tU, lookUp);
+  engine.camera.position.copy(_tEye);
+  engine.camera.up.copy(_tU);
+  engine.camera.lookAt(_tLook);
+  if (engine.camera.fov !== 50) { engine.camera.fov = 50; engine.camera.updateProjectionMatrix(); }
+  // 카메라가 움직였으니 하늘·안개도 따라와야 한다
+  sky.update(player, engine.camera);
+  _windT += dt;
+  scatter.update(_windT);
+  carpet.update(_windT);
+  landing.update(dt);
+}
+
+// 시작 화면 → 지하 연구실. 여기가 실제 게임의 첫 프레임이다.
+function startFromTitle() {
+  mode = 'lab';
+  planetScene.remove(player.mesh);
+  contact.visible = false;
+  lab.scene.add(player.mesh);
+  roomActor.rects = lab.rects;
+  roomActor.obstacles = lab.obstacles;
+  roomActor.setAt(0, lab.ENTRY_Z, -1);
+  engine.setScene(lab.scene);
+  engine.camera.fov = 62; engine.camera.updateProjectionMatrix();   // 실내 화각으로 되돌린다
+  refreshHint();
+  flash.play('#e8f6ff', 560);
+  dialogue.play('op-wake', ...OPENING.wake);
 }
 
 // ── 지하 연구실 ──────────────────────────────────────────────────────────────
@@ -590,6 +721,7 @@ refreshHint();
 
 // 지하 연구실과, 별 위의 같은 자리. 이 둘이 포탈의 양 끝이다.
 const flash = buildFlash();
+const title = buildTitle(() => startFromTitle());
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
@@ -638,7 +770,8 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage,
+  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
+  titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
   get cleared() { return cleared; },
@@ -649,18 +782,18 @@ window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd,
+  titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 
-// ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────
-// 아이를 낯선 행성 위에 아무 말 없이 떨어뜨리지 않는다(Lab.js 머리말).
-engine.scene.remove(player.mesh);
-contact.visible = false;
-lab.scene.add(player.mesh);
-roomActor.rects = lab.rects;
-roomActor.obstacles = lab.obstacles;
-roomActor.setAt(0, lab.ENTRY_Z, -1);
-engine.setScene(lab.scene);
-dialogue.play('op-wake', ...OPENING.wake);
+// ── 시작 — 먼저 표지, 누르면 집 ─────────────────────────────────────────────
+// 게임은 별이 아니라 **집**에서 시작한다(Lab.js 머리말). 다만 그 앞에 한 화면이
+// 더 있다 — 링크 미리보기에서 본 그 컷이다. 같은 자리에 실제로 서서 보여 준다.
+engine.setScene(planetScene);
+planetScene.add(player.mesh);
+contact.visible = true;
+pickTitleSpin();
+placeTitleActor();
+title.show();
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';

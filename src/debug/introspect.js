@@ -877,19 +877,34 @@ export function installDebug(ctx) {
         + ` -> ${nbOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── N 시작 화면이 막혀 있지 않은가 ─────────────────────────────────────
+    // ★ 시작 화면은 사당 앞 그 자리에서 실제로 렌더한다. 그런데 세로 폰에서
+    //   카메라가 뒤로 물러나는 순간 **전나무 한 그루가 화면을 통째로 막고
+    //   주인공이 사라졌다.** 첫 화면에 사람이 안 보이면 그건 시작 화면이 아니다.
+    //   그래서 자리를 살 때마다 고르게 했고(사당 둘레 36곳 중 시선줄이 가장
+    //   빈 곳), 여기서는 그 여유가 정말 남았는지를 잰다. 지형이나 산포를 손보면
+    //   조용히 다시 막히므로 말이 아니라 검사가 지켜야 한다.
+    let tOK = true, tMsg = '';
+    if (ctx.titleInfo) {
+      const ti = ctx.titleInfo();
+      tOK = ti.clear >= 3.0;
+      tMsg = `여유 ${ti.clear.toFixed(1)}u (>=3.0) · ${ti.spin}°`;
+      log.push(`N 시작 화면 시선줄 ${tMsg} -> ${tOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLM'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMN'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~M 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~N 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && coverOK;
+      && tOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

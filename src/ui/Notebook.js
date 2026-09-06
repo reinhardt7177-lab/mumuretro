@@ -51,11 +51,27 @@ const CSS_BASE = `
 #nb .tab .dot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:99px;
   background:#c0653a;box-shadow:0 0 0 2px #f3f2ec}
 #nb .tab .dot[hidden]{display:none}
+/* ★ 닫는 길이 **N 키 하나뿐**이었다. 태블릿에는 N이 없다 —
+   실제로 아이가 수첩을 열고 못 닫았다(뒤에 깔린 터치 버튼은 z-index가 낮아
+   수첩에 덮인다). 바닥글에는 "N 닫기"라고 적혀 있었으니 화면이 거짓말을 한 것이다.
+   닫기는 **보이는 자리에** 있어야 한다. */
+#nb .x{margin-left:auto;appearance:none;border:0;cursor:pointer;background:transparent;
+  color:#7d878c;font:600 20px/1 inherit;width:40px;height:36px;border-radius:6px 6px 0 0}
+#nb .x:hover{color:#23272a;background:rgba(255,255,255,.7)}
+@media (any-pointer:coarse){#nb .x{width:52px;height:44px;font-size:23px}
+  /* 손가락으로 여는 기기에는 1~5 키가 없다. 없는 키를 탭에 적어 두지 않는다. */
+  #nb .tab .k{display:none}
+  #nb .tab{padding:8px 14px 9px}}
 
 #nb .hd{display:flex;align-items:baseline;gap:12px;padding:13px 22px 9px;flex:0 0 auto}
 #nb .hd .t{font-size:17px;font-weight:700;letter-spacing:.02em}
 #nb .hd .n{margin-left:auto;font-size:12px;color:#7d878c;font-variant-numeric:tabular-nums}
-#nb .body{flex:1 1 auto;overflow:hidden;padding:0 22px}
+/* ★ overflow:hidden이었다. 화면이 짧으면(가로로 든 폰: 92vh = 359px) 물음 여섯 중
+   **넷이 그냥 잘려 나갔다** — 없어진 줄 모르게. 잘리는 것보다는 굴러가는 게 낫다.
+   설계 목표는 여전히 "스크롤 없음"이고 검사 M이 440·540·660에서 그걸 지킨다.
+   이 스크롤은 그 아래 높이에서의 **예비**지 기본이 아니다. */
+#nb .body{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:0 22px;
+  -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #nb .ft{padding:9px 22px 12px;display:flex;gap:14px;align-items:center;flex:0 0 auto;
   font-size:11.5px;color:#7d878c;border-top:1px solid #dfe1da}
 #nb .ft .close{margin-left:auto}
@@ -169,9 +185,27 @@ const TIGHT = `
   #nb .fsaid{font-size:11.5px}
   #nb .said{font-size:13.5px;line-height:1.6}
 `;
+// 더 낮은 창(가로로 든 폰 등) — 한 단 더 접는다. 그래도 안 들어가면 굴러간다.
+const TIGHTER = `
+  #nb .tabs{padding:5px 8px 0}
+  #nb .tab{padding:5px 10px 6px;font-size:12px}
+  #nb .hd{padding:6px 16px 3px}
+  #nb .hd .t{font-size:14px}
+  #nb .body{padding:0 16px}
+  #nb .ft{padding:4px 16px 6px;font-size:10.5px}
+  #nb .qrow{padding:3px 0}
+  #nb .qq{font-size:15px;line-height:1.18}
+  #nb .qa{font-size:11.5px;line-height:1.32}
+  #nb .frow{padding:3px 0}
+  #nb .frule{font-size:13px;line-height:1.2}
+`;
 const CSS = CSS_BASE
   + `@container pg (max-height:545px){${TIGHT}}`
-  + `@media (max-height:620px){${TIGHT}}`;
+  + `@media (max-height:620px){${TIGHT}}`
+  + `@container pg (max-height:430px){${TIGHTER}}`
+  + `@media (max-height:470px){${TIGHTER}}`
+  // 낮고 넓은 창에서는 수첩이 더 넓고 더 높아도 된다 — 남는 건 가로다.
+  + `@media (max-height:520px){#nb .page{width:min(96vw,780px);height:95vh}}`;
 
 const TINT = { balance: '#1d6a5e', shadow: '#6a6650', sift: '#95610f',
   water: '#186a97', fire: '#ac3620', strata: '#63499c' };
@@ -193,18 +227,25 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
   el.id = 'nb';
   el.innerHTML = `<div class="page">
     <div class="tabs">${TABS.map((t) => `<button class="tab" data-tab="${t.id}">
-      <span class="k">${t.key}</span>${t.name}<i class="dot" hidden></i></button>`).join('')}</div>
+      <span class="k">${t.key}</span>${t.name}<i class="dot" hidden></i></button>`).join('')}
+      <button class="x" id="nbX" aria-label="수첩 닫기">✕</button></div>
     <div class="hd"><span class="t" id="nbT"></span><span class="n" id="nbN"></span></div>
     <div class="body" id="nbBody"></div>
     <div class="ft"><span class="hw" style="font-size:15px">앞사람의 글씨는 파란색</span>
       <span class="lg"><i></i>새로 적힌 것</span>
-      <span class="close">1~5 넘기기 · N 닫기</span></div>
+      <span class="close" id="nbKeys"></span></div>
   </div>`;
   document.body.appendChild(el);
   const elBody = el.querySelector('#nbBody');
   const elT = el.querySelector('#nbT');
   const elN = el.querySelector('#nbN');
   const tabBtns = [...el.querySelectorAll('.tab')];
+  // ★ 없는 키를 안내하지 않는다. 손가락으로 여는 기기에 "N 닫기"라고 적으면
+  //   그건 안내가 아니라 막다른 길이다(가진 것만 적는다).
+  const byTouch = (navigator.maxTouchPoints || 0) > 0
+    && matchMedia('(any-pointer: coarse)').matches;
+  el.querySelector('#nbKeys').textContent = byTouch ? '탭을 눌러 넘기기' : '1~5 넘기기 · N 닫기';
+  el.querySelector('#nbX').addEventListener('click', (e) => { e.stopPropagation(); setOpen(false); });
 
   let open = false, has = false, tab = 'ask', measuring = false;
   // 몇 번째로 연 것인가. 반짝임은 **한 번 여는 동안** 한 벌이어야 한다.
