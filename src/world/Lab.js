@@ -482,7 +482,14 @@ export function buildLab() {
       }
     },
 
+    // 엔딩 — 여섯째 구슬 뒤. 소포가 "열 것"에서 "부칠 것"으로 바뀐다.
+    markDone() { st.done = true; },
+    _resetEnd() { st.done = false; st.sent = false; },   // 검사용
+    get done() { return !!st.done; },
+    get sent() { return !!st.sent; },
     prompt(pos) {
+      if (st.done && !st.sent) return atParcel(pos) ? 'E — 수첩을 소포에 넣기' : '📦 작업대로 — 수첩을 부칠 차례다';
+      if (st.sent) return null;
       // ★ 계단처럼 생긴 것 앞에서 아무 말도 안 하면 그건 못 올라가는 게 아니라
       //   **고장 난 것**으로 읽힌다. 못 가게 하는 것 자체는 의도다. 의도라면 말해야 한다.
       if (near(pos, STAIR_X, STAIR_Z, 2.8)) return '🚪 위층으로 나가는 문 — 잠겨 있다';
@@ -553,6 +560,7 @@ export function buildLab() {
     // 무엇을 했는지 문자열로 돌려준다. boot이 그걸 보고 대사를 고른다 —
     // 대사를 여기서 부르면 이 파일이 대본까지 알아야 한다.
     interact(pos) {
+      if (st.done && !st.sent && atParcel(pos)) { st.sent = true; return 'send'; }
       if (!st.hasNote && atParcel(pos)) {
         st.hasNote = true; st.stage = 'note';
         lid.position.set(0.7, 0.06, 0.34); lid.rotation.z = 0.5;

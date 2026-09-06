@@ -6,6 +6,7 @@
 //   그걸 알아채는 아이는 안 죽는다. 이 사당이 가르치는 건 그거 하나다 —
 //   관찰해서 예측한다. 예진 없이 흔들리면 그건 지진이 아니라 주사위다.
 import * as THREE from 'three';
+import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt } from '../util/rand.js';
 
@@ -348,6 +349,7 @@ export class FireGod {
     }
     this.crater = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.3, 8), glowMat(0xe8664a));
     this.crater.position.set(cx, 5.2, this.gz); g.add(this.crater);
+    this.eyes = godEyes(g, cx, 2.75, this.gz + 1.62, 0.42, 0.44, 0.16);
 
     // 수로 조각 셋 — 신 앞에서 배수구까지. 길이 L자로 꺾인다.
     this.cells = PIECES.map((p) => {
@@ -433,6 +435,7 @@ export class FireGod {
   }
 
   update(dt) {
+    if (this.eyes) this.eyes.tick(dt, this.solvedBy());
     if (this.solved) return {};
     this.pt += dt;
     const len = this.phase === 'calm' ? this.CALM : this.phase === 'fore' ? this.FORE : this.MAIN;
@@ -469,7 +472,7 @@ export class FireGod {
   }
 
   solvedBy() { return this.solved; }
-  restart() {
+  restart() {if (this.eyes) this.eyes.reset(); 
     for (const c of this.cells) { c.rot = 0; c.grp.rotation.y = 0; c.grp.position.y = 0.25; }
     this.phase = 'calm'; this.pt = 0;
     this._flow();

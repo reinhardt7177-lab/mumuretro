@@ -7,6 +7,7 @@
 //   그래서 Room.js가 관문에 dungeon을 넘긴다. 발판을 메시로만 만들고 판정을 따로 두면
 //   보이는 얼음과 밟히는 얼음이 어긋나고, 그건 이 프로젝트에서 이미 겪은 실수다.
 import * as THREE from 'three';
+import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt } from '../util/rand.js';
 import { josa } from '../util/josa.js';
@@ -378,6 +379,9 @@ export class WaterGod {
     this.god = new THREE.Mesh(new THREE.OctahedronGeometry(2.1, 1), this.godMat);
     this.god.position.set(cx, 3.0, this.gz);
     g.add(this.god);
+    // ★ 처음엔 도는 몸에 붙였다 — 반은 등을 보였다. 눈은 **늘 앞을 본다.**
+    //   수정은 뒤에서 돌고 눈은 앞에 서 있는다. 눈이 곧 신이고 수정은 몸이다.
+    this.eyes = godEyes(g, cx, 3.42, this.gz + 1.95, 0.42, 0.42, 0.15);
     const halo = new THREE.Mesh(new THREE.TorusGeometry(2.6, 0.09, 6, 20), glowMat(theme.glowDim));
     halo.rotation.x = Math.PI / 2;
     halo.position.set(cx, 3.0, this.gz);
@@ -430,6 +434,7 @@ export class WaterGod {
   }
 
   update(dt) {
+    if (this.eyes) this.eyes.tick(dt, this.solvedBy());
     this.god.rotation.y += dt * 0.5;
     this.leverKnob.position.y = 1.2 + this.si * 0.35;      // 손잡이 높이가 곧 온도
     if (this.flash > 0) this.flash -= dt;
@@ -475,7 +480,7 @@ export class WaterGod {
   }
 
   solvedBy() { return this.got >= NEED; }
-  restart() {
+  restart() {if (this.eyes) this.eyes.reset(); 
     this.got = 0; this.want = randInt(TEMPS.length); this.t = 0; this.flash = 0;
     this._setTemp(0);
     this.signMat.color.set(TEMPS[this.want].color);

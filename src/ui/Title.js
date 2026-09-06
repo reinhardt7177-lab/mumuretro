@@ -58,6 +58,16 @@ const CSS = `
 /* 시작 화면 동안에는 게임 UI를 내린다 — 두 겹이 겹치면 둘 다 안 읽힌다. */
 body.titling #hint,body.titling #prompt,body.titling #touchUI{display:none!important}
 
+/* 끝 카드 — 시작 화면과 같은 옷. 같은 자리에서 시작했고 같은 자리에서 끝난다. */
+#title.end{cursor:pointer}
+/* ★ absolute + left:50%는 상자 폭을 남은 절반으로 줄인다 — 좁은 창에서 제목이 두 줄로 꺾였다.
+   내용 폭(max-content)으로 잡고 화면보다 크면 그때만 줄인다. */
+#title.end .lock{left:50%;top:38%;transform:translate(-50%,-50%);max-width:92vw;width:max-content;text-align:center}
+#title.end .t{white-space:nowrap}
+#title.end .rule{margin-left:auto;margin-right:auto}
+#title.end .fin{font-size:clamp(13px,1.8vw,22px);color:#2e4a58;margin:10px 0 0;font-weight:600}
+#title.end .go{animation:none;opacity:.92}
+
 @media (prefers-reduced-motion:reduce){#title .go{animation:none;opacity:.95}}
 @media (max-width:640px){
   #title .lock{left:7vw;top:7vh;max-width:66vw}
@@ -106,7 +116,31 @@ export function buildTitle(onStart) {
     start(); e.preventDefault();
   });
 
+  // ── 끝 카드 ──────────────────────────────────────────────────────────
+  // ★ 엔딩이 알림 한 줄로 끝나고 있었다. 끝은 끝이라고 말해야 한다.
+  //   누르면 처음으로 — 다시 시작하면 표지의 그 자리다.
+  let ending = false;
+  const endCard = () => {
+    ending = true;
+    el.classList.add('on', 'end');
+    el.querySelector('.lock').innerHTML = `
+      <h1 class="t">무무 행성</h1>
+      <div class="rule"></div>
+      <p class="s1">끝</p>
+      <p class="fin">답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.</p>`;
+    el.querySelector('.go').textContent = '화면을 눌러 처음으로';
+    document.body.classList.add('titling');
+    live = false;                         // start()가 안 먹게
+  };
+  el.addEventListener('pointerdown', (e) => {
+    if (!ending) return;
+    e.stopPropagation();
+    location.reload();
+  }, true);
+
   return {
+    endCard,
+    get isEnding() { return ending; },
     show() { live = true; el.classList.add('on'); document.body.classList.add('titling'); },
     get isOpen() { return live; },
     start,                      // 검사·디버그가 부를 수 있게

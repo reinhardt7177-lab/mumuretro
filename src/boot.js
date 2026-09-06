@@ -25,7 +25,7 @@ import { buildMapPage } from './ui/MapPage.js';
 import { buildTouchControls } from './ui/TouchControls.js';
 import { buildDialogue } from './ui/Dialogue.js';
 import { buildNotebook } from './ui/Notebook.js';
-import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
+import { KEEPERS, ENDING, ENDING_HOME, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
 import { buildKitchen } from './world/Kitchen.js';
@@ -140,6 +140,7 @@ let cleared = false;                 // 이번 사당을 깼나
 //   그 목소리가 끼어드는 순간 이 화면은 한 사람의 일지가 아니게 된다.
 //   전부 주인공의 목소리로 맞춘다.
 let noteMsg = null, noteT = 0;
+let gameDone = false;                // 여섯째 구슬 뒤 — 소포를 부칠 차례
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
 let briefWant = null;                // 띄울 방 안내(대사가 끝나기를 기다린다)
 let sawNote = false;                 // 수첩을 한 번이라도 펴 봤나(오프닝)
@@ -248,7 +249,12 @@ function onOrb() {
     } else {
       // 여섯째 — 반전과 엔딩. 세 뭉치를 이어 붙인다.
       const chain = (i) => {
-        if (i >= ENDING.length) { noteMsg = '✨ 수첩을 다 채웠다'; noteT = 3.0; return; }
+        if (i >= ENDING.length) {
+          // ★ 여기서 끝나고 있었다. "네 것도 내가 부치마"를 듣고도 부칠 장면이 없었다.
+          //   집으로 돌아가면 소포가 "부칠 것"으로 바뀐다(Lab.markDone).
+          gameDone = true; lab.markDone();
+          noteMsg = '✨ 수첩을 다 채웠다 — 집으로 가자'; noteT = 3.4; return;
+        }
         const [eid, who, lines] = ENDING[i];
         dialogue.play(eid, who, lines, () => chain(i + 1));
       };
@@ -474,6 +480,10 @@ function stepLab(dt, intent) {
     dialogue.play('op-solved', ...OPENING.solved);
   } else if (did === 'go') {
     landOnPlanet();
+  } else if (did === 'send') {
+    // 답을 뜯어내고 소포에 넣는다. 말이 끝나면 끝 카드 — 누르면 처음으로.
+    setPrompt(null);
+    dialogue.play('ending-home', ...ENDING_HOME, () => { flash.play('#e8f6ff', 900); title.endCard(); });
   }
 }
 
@@ -819,12 +829,13 @@ const game = {
   lab, landing, landOnPlanet, returnToLab,
   get cleared() { return cleared; },
   get mode() { return mode; },
+  get gameDone() { return gameDone; },
   enterShrine, exitShrine,
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
-  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen,
+  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen, title, endingHome: ENDING_HOME,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 

@@ -1141,19 +1141,45 @@ export function installDebug(ctx) {
         + (sOK ? ' 전부' : ` — ${sBad.join(' / ')}`) + ` -> ${sOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── T 엔딩이 끝까지 이어지는가 ────────────────────────────────────────
+    // ★ 엔딩이 지킴이 대사 세 뭉치 뒤 알림 한 줄로 **끝나고 있었다.** "네 것도 내가
+    //   부치마"를 듣고도 부칠 장면이 없었다. 이제 여섯째 뒤 집에 오면 소포가 부칠
+    //   것으로 바뀌고, 넣으면 주인공의 마지막 혼잣말 → 끝 카드다. 그 사슬을 잰다.
+    let eOK = true; const eBad = [];
+    if (ctx.lab && ctx.title && ctx.endingHome) {
+      const lab2 = ctx.lab;
+      const parcel = lab2.reachables && lab2.reachables.find((r) => r.name === '소포');
+      if (!parcel) { eOK = false; eBad.push('소포 자리 없음'); }
+      else {
+        lab2._resetEnd(); lab2.markDone();
+        const pr = lab2.prompt({ x: parcel.x, z: parcel.z });
+        if (!/소포에 넣기/.test(pr || '')) { eOK = false; eBad.push(`소포 앞 프롬프트 "${pr}"`); }
+        const did = lab2.interact({ x: parcel.x, z: parcel.z });
+        if (did !== 'send') { eOK = false; eBad.push(`소포 E → ${did}`); }
+        if (!lab2.sent) { eOK = false; eBad.push('부친 뒤 sent 아님'); }
+        if (lab2.prompt({ x: parcel.x, z: parcel.z })) { eOK = false; eBad.push('부친 뒤에도 프롬프트가 남음'); }
+        lab2._resetEnd();
+      }
+      if (typeof ctx.title.endCard !== 'function') { eOK = false; eBad.push('끝 카드 없음'); }
+      const lines = ctx.endingHome[1] || [];
+      if (lines.length < 2 || lines.length > 4) { eOK = false; eBad.push(`마지막 혼잣말 ${lines.length}줄`); }
+      log.push('T 엔딩 — 소포가 부칠 것으로 · 넣으면 send · 끝 카드 있음'
+        + (eOK ? ' 전부' : ` — ${eBad.join(' / ')}`) + ` -> ${eOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQRS'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRST'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~S 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~T 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && sOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

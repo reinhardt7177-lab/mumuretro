@@ -8,6 +8,7 @@
 //   손에 익은 동작이라 새로 배울 게 없고, 아이의 머리는 **무엇을 어디에** 놓을지에만
 //   쓰인다. 방마다 조작을 새로 가르치면 배울 내용이 조작에 먹힌다.
 import * as THREE from 'three';
+import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle } from '../util/rand.js';
 import { josa } from '../util/josa.js';
@@ -496,6 +497,7 @@ export class SiftGod {
     body.position.set(cx, 2.4, this.gz); body.castShadow = true; g.add(body);
     const head = new THREE.Mesh(new THREE.OctahedronGeometry(0.75, 0), stone);
     head.position.set(cx, 4.6, this.gz); g.add(head);
+    this.eyes = godEyes(g, cx, 4.62, this.gz + 0.62, 0.26, 0.34, 0.12);
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.16, 14), glowMat(theme.glow));
     disc.position.set(cx, 5.5, this.gz); g.add(disc);
 
@@ -553,6 +555,7 @@ export class SiftGod {
   }
 
   update(dt, actor) {
+    if (this.eyes) this.eyes.tick(dt, this.solvedBy());
     if (this.held) {
       this.held.mesh.position.set(actor.position.x + actor.heading.x * 0.65, 1.15,
         actor.position.z + actor.heading.z * 0.65);
@@ -600,7 +603,7 @@ export class SiftGod {
   }
 
   solvedBy() { return this.solved; }
-  restart() {
+  restart() {if (this.eyes) this.eyes.reset(); 
     this.held = null;
     for (const m of this.mixes) m.tooled = null;
     for (const t of this.tools) { t.used = false; t.mesh.position.copy(t.home); }

@@ -10,6 +10,7 @@
 //   무엇보다 **판정과 눈에 보이는 것이 어긋난다.** 그림자를 직접 바닥에 그리고
 //   그 그림자로 판정한다 — 보이는 것이 곧 규칙이어야 아이가 배울 수 있다.
 import * as THREE from 'three';
+import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt, pick } from '../util/rand.js';
 
@@ -517,6 +518,7 @@ export class MirrorGod {
     g.add(body);
     const head = new THREE.Mesh(new THREE.OctahedronGeometry(0.8, 0), stone);
     head.position.set(this.gx, 5.3, this.gz);
+    this.eyes = godEyes(g, this.gx, 5.32, this.gz + 0.66, 0.28, 0.36, 0.13);   // 풀면 뜬다(GodEyes.js)
     g.add(head);
     // 신이 든 거울 — 이 사당의 상징이다. 신 자신보다 이게 먼저 보여야 한다.
     const mir = new THREE.Mesh(new THREE.CircleGeometry(1.05, 16), glowMat(0xeef4f6));
@@ -595,7 +597,10 @@ export class MirrorGod {
     return null;
   }
 
-  update() { return {}; }
+  update(dt) {
+    if (this.eyes) this.eyes.tick(dt, this.solvedBy());
+    return {};
+  }
 
   prompt(pos) {
     if (this.solved) return null;
@@ -616,5 +621,5 @@ export class MirrorGod {
 
   solvedBy() { return this.solved; }
   reset() {}
-  restart() { this.ai = 0; this.hi = 0; this._apply(); }
+  restart() { if (this.eyes) this.eyes.reset(); this.ai = 0; this.hi = 0; this._apply(); }
 }
