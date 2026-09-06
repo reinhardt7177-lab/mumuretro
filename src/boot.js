@@ -603,10 +603,12 @@ function onForage(r) {
     notebook.draw();
     lab.fillJar(r.kind);
     // 전설은 한 번 더 짚어 준다 — 여기까지 걸어온 값이다.
-    noteMsg = lg ? `✨ ${k.label} — 앞사람이 말한 셋 중 하나다` : `📓 ${k.label} — 수첩에 적었어요`;
+    noteMsg = lg ? `✨ ${k.label} — 앞사람이 말한 셋 중 하나다`
+      : r.beast ? `📓 ${r.beast.meat} — 수첩에 적었어요`
+        : `📓 ${k.label} — 수첩에 적었어요`;
     noteT = lg ? 4.0 : 3.0;
   } else {
-    noteMsg = `🎒 ${k.label} 하나 더`; noteT = 1.8;
+    noteMsg = `🎒 ${r.beast ? r.beast.meat : k.label} 하나 더`; noteT = 1.8;
   }
 }
 

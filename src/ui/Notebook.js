@@ -9,7 +9,7 @@
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
-import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED } from '../data/forage.js';
+import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS } from '../data/forage.js';
 
 const CSS = `
 #nb{position:fixed;inset:0;z-index:40;display:none;place-items:center;
@@ -142,12 +142,23 @@ export function buildNotebook(shrines, specs, getForage) {
       : '채집';
     elFg.innerHTML = FORAGE_KINDS.map((k) => {
       const has = fg && fg.found[k.id];
-      const body = has
+      let body = has
         ? `<div class="said">${k.got}</div>`
         : `<div class="rule">${(fg && fg.RULES[k.id]) || ''}</div>`;
+      // ★ 고기는 한 가지가 아니다. 미끼가 무엇이 오는지를 정하므로 넷이다 —
+      //   어느 것을 잡아 봤는지 한 줄로 보여 준다(요리가 이걸 볼 것이다).
+      let name = k.label;
+      if (k.id === 'meat' && fg) {
+        const got = BEASTS.filter((b) => fg.caught[b.id] > 0);
+        name = `들짐승 고기 — ${got.length}/${BEASTS.length}종`;
+        body += `<div class="said" style="color:#7d878c">${
+          BEASTS.map((b) => (fg.caught[b.id] > 0
+            ? `<b style="color:${k.tint}">${b.meat}</b>` : `<span style="color:#b9c0c3">${b.name}?</span>`))
+          .join(' · ')}</div>`;
+      }
       return `<div class="row2">
         <div class="dot" style="${has ? `background:${k.tint}` : ''}"></div>
-        <div><div class="nm${has ? '' : ' todo'}">${k.label}</div>${body}</div></div>`;
+        <div><div class="nm${has ? '' : ' todo'}">${name}</div>${body}</div></div>`;
     }).join('');
     void fgOn;
 
