@@ -71,7 +71,9 @@ export function buildTouchControls(input, mapPage, notebook) {
   // 누르고 있으면 계속 뜬다 — Input이 이미 활공을 받아 준다.
   tap(bJump, () => { input.requestJump(); input.setHoldJump(true); },
     () => input.setHoldJump(false));
-  tap(bMap, () => mapPage.setOpen(!mapPage.isOpen));
+  // ★ 지도는 수첩의 한 면이 됐다. 버튼은 그 면을 연다 — 화면을 둘로 안 나눈다.
+  tap(bMap, () => { const n = notebook(); if (n) { if (n.isOpen && n.tab === 'star') n.setOpen(false);
+    else { n.go('star'); n.setOpen(true); } } });
   tap(bNote, () => { const n = notebook(); if (n) n.setOpen(!n.isOpen); });
 
   // ── 언제 보이는가 ────────────────────────────────────────────────────
@@ -105,7 +107,7 @@ export function buildTouchControls(input, mapPage, notebook) {
   // 지도가 열려 있으면 버튼은 가린다(지도 자체가 탭하면 닫힌다)
   const hideWhileMap = () => {
     const n = notebook();
-    el.style.visibility = (mapPage.isOpen || (n && n.isOpen)) ? 'hidden' : '';
+    el.style.visibility = (n && n.isOpen) ? 'hidden' : '';
     // ★ 눌러도 아무 일 없는 버튼이 가장 나쁘다. 오프닝에서는 수첩도 지도도
     //   아직 손에 없다 — 그 동안은 버튼 자체가 없어야 한다.
     bMap.hidden = !mapPage.has;

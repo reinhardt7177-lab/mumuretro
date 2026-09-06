@@ -16,7 +16,6 @@
 //   · 밝히기는 **칸 단위**다. 부드럽게 번지게 할 수도 있지만, 이 게임은
 //     로우폴리라 각진 편이 오히려 결에 맞는다.
 import * as THREE from 'three';
-import { registerOverlay, soloOpen } from './overlay.js';
 import { terrainColor } from '../sphere/Planet.js';
 import { SHRINE } from '../data/lighting.js';
 
@@ -33,7 +32,7 @@ const latLonOf = (d) => ({
 const dirOf = (lat, lon, out) => out.set(
   Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon));
 
-export function buildMapPage(planet, player, shrines, specs) {
+export function buildMapPage(planet, player, shrines, specs, getLanding) {
   const R = planet.R;
 
   // ── 바탕 그림 — 행성 전체를 한 번만 그려 둔다 ──────────────────────────
@@ -109,55 +108,18 @@ export function buildMapPage(planet, player, shrines, specs) {
     return !!seen[iy * GX + ((ix % GX) + GX) % GX];
   };
 
-  // ── 화면 ───────────────────────────────────────────────────────────────
-  const el = document.createElement('div');
-  el.id = 'mapPage';
-  el.innerHTML = `
-    <div class="mp-inner">
-      <div class="mp-head">
-        <div class="mp-title">무무 행성</div>
-        <div class="mp-stat"><b id="mp-shrine">0 / 6</b><span>사당</span></div>
-        <div class="mp-stat"><b id="mp-explored">0%</b><span>둘러본 곳</span></div>
-      </div>
-      <div class="mp-frame"><canvas id="mp-canvas" width="${CW}" height="${CH}"></canvas></div>
-      <div class="mp-foot">
-        <span class="mp-key"><i class="mp-dot mp-me"></i>나</span>
-        <span class="mp-key"><i class="mp-dot mp-todo"></i>아직 못 깬 사당</span>
-        <span class="mp-key"><i class="mp-dot mp-done"></i>깬 사당</span>
-        <span class="mp-close">M — 닫기</span>
-      </div>
-    </div>`;
-  const style = document.createElement('style');
-  style.textContent = `
-    #mapPage{position:fixed;inset:0;z-index:40;display:none;place-items:center;
-      background:rgba(6,10,12,.93);backdrop-filter:blur(3px);
-      font-family:system-ui,'Malgun Gothic',sans-serif;color:#dfe9ea}
-    #mapPage.show{display:grid}
-    .mp-inner{display:flex;flex-direction:column;gap:12px;max-width:min(92vw,860px);width:100%}
-    .mp-head{display:flex;align-items:baseline;gap:22px}
-    .mp-title{font-size:20px;letter-spacing:.04em;flex:1}
-    .mp-stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.2}
-    .mp-stat b{font-size:19px;font-variant-numeric:tabular-nums;color:${'#' + SHRINE.glow.toString(16)}}
-    .mp-stat span{font-size:11px;color:#7d8f95}
-    .mp-frame{border:1px solid #22333a;border-radius:3px;overflow:hidden;background:#05080a;
-      box-shadow:0 18px 50px -24px #000}
-    #mp-canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
-    .mp-foot{display:flex;align-items:center;gap:18px;font-size:12px;color:#8b9ba1}
-    .mp-key{display:flex;align-items:center;gap:6px}
-    .mp-dot{width:9px;height:9px;transform:rotate(45deg);display:inline-block}
-    .mp-me{background:#ffffff;border-radius:99px;transform:none}
-    .mp-todo{background:${'#' + SHRINE.glow.toString(16)}}
-    .mp-done{background:${'#' + SHRINE.gold.toString(16)}}
-    .mp-close{margin-left:auto}
-    @media (max-width:640px){.mp-title{font-size:16px}.mp-foot{gap:10px;font-size:11px}}`;
-  document.head.appendChild(style);
-  document.body.appendChild(el);
-
-  const view = el.querySelector('#mp-canvas');
+  // ── 그림판 ─────────────────────────────────────────────────────────────
+  // ★ 예전엔 여기서 전체화면 오버레이를 통째로 지었다(제 CSS·제 키·제 닫기).
+  //   그런데 지도는 **수첩의 한 면**이어야 한다 — 505px 창에 내용이 1389px이던
+  //   수첩을 다섯 면으로 접으면서, 지도도 그 다섯 중 하나로 들어왔다.
+  //   화면을 둘로 나눠 두면 M과 N이 서로 다른 책이 되고, 조작이 하나 늘고,
+  //   같은 층(z 40)에 두 장이 겹치는 문제도 계속 생긴다.
+  //   여기는 이제 **캔버스와 그리는 법만** 갖는다. 껍데기는 Notebook이 맡는다.
+  const view = document.createElement('canvas');
+  view.id = 'mp-canvas';
+  view.width = CW; view.height = CH;
   const vctx = view.getContext('2d');
-  const elShrine = el.querySelector('#mp-shrine');
-  const elExplored = el.querySelector('#mp-explored');
-  let open = false, has = false;   // 별에 내려서기 전에는 이 별의 지도가 없다
+  let has = false;   // 별에 내려서기 전에는 이 별의 지도가 없다
 
   const mark = (dir, draw) => {
     const { lat, lon } = latLonOf(dir);
@@ -196,6 +158,22 @@ export function buildMapPage(planet, player, shrines, specs) {
       });
     });
 
+    // 내림판 — 집으로 돌아가는 자리. 사당과 **다른 색**이어야 한다(집의 파랑).
+    // ★ 수첩 범례에는 있는데 지도에는 안 그리고 있었다. 범례가 없는 것을 가리키면
+    //   그건 안내가 아니라 거짓말이다.
+    const landing = getLanding && getLanding();
+    if (landing && isSeenDir(landing.dir)) {
+      mark(landing.dir, (x, y) => {
+        vctx.save();
+        vctx.translate(x, y); vctx.rotate(Math.PI / 4);
+        vctx.fillStyle = '#7fd8ff';
+        vctx.strokeStyle = 'rgba(0,0,0,.65)'; vctx.lineWidth = 2;
+        vctx.strokeRect(-6, -6, 12, 12);
+        vctx.fillRect(-6, -6, 12, 12);
+        vctx.restore();
+      });
+    }
+
     // 나 — 흰 점과 바라보는 방향
     const up = player.position.clone().normalize();
     mark(up, (x, y) => {
@@ -213,24 +191,7 @@ export function buildMapPage(planet, player, shrines, specs) {
       vctx.restore();
     });
 
-    elShrine.textContent = `${shrines.clearedCount()} / ${shrines.shrines.length}`;
-    elExplored.textContent = `${Math.round(seenCount / (GX * GY) * 100)}%`;
   };
-
-  const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
-  const setOpen = (v) => {
-    if (v && !has) return;          // 가 보지도 않은 별의 지도를 들고 있을 수는 없다
-    if (v) soloOpen(me);            // 전면 화면은 하나만 — overlay.js
-    open = v;
-    el.classList.toggle('show', v);
-    if (v) draw();
-  };
-  addEventListener('keydown', (e) => {
-    if (e.repeat) return;
-    if (e.code === 'KeyM') setOpen(!open);
-    else if (e.code === 'Escape' && open) setOpen(false);
-  });
-  el.addEventListener('click', () => setOpen(false));
 
   reveal(player.position.clone().normalize());
   lastAt.copy(player.position).normalize();
@@ -243,12 +204,12 @@ export function buildMapPage(planet, player, shrines, specs) {
       if (up.angleTo(lastAt) * R < STEP_U) return;
       lastAt.copy(up);
       reveal(up);
-      if (open) draw();
     },
-    get isOpen() { return open; },
+    canvas: view,
+    draw,
+    exploredPct: () => Math.round((seenCount / (GX * GY)) * 100),
     get has() { return has; },
-    setHas(v) { has = v; if (!v && open) setOpen(false); },
-    setOpen,
+    setHas(v) { has = v; },
     // 검증용
     stats: () => ({ seen: seenCount, total: GX * GY,
       percent: +(seenCount / (GX * GY) * 100).toFixed(1) }),

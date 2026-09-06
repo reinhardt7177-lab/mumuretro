@@ -144,9 +144,11 @@ function refreshHint() {
   const base = touch.visible
     ? '왼쪽 절반 이동 · 오른쪽 절반 시점 · 버튼으로 E·점프'
     : 'WASD/방향키 이동 · 마우스 드래그 시점 · 휠 줌 · Shift 달리기 · Space 점프 · E 상호작용';
+  // ★ 지도는 이제 수첩의 한 면이다(별). 그래서 안내도 하나로 준다 —
+  //   "M 지도 · N 수첩"이 아니라 "N 수첩(별·물음·들·편지·부엌)"이다.
   const extra = [];
+  if (notebook.has) extra.push(touch.visible ? '📓 수첩' : 'N 수첩 · 1~5 넘기기');
   if (mapPage.has) extra.push(touch.visible ? '🗺 지도' : 'M 지도');
-  if (notebook.has) extra.push(touch.visible ? '📓 수첩' : 'N 수첩');
   hintEl.textContent = base + (extra.length ? ' · ' + extra.join(' · ') : '');
 }
 
@@ -567,14 +569,14 @@ function stepPlanet(dt, intent) {
 
 // 지도 — 처음엔 온통 검고, 걸어간 자리만 밝아진다. 길을 알려주는 게 아니라
 // 다녀온 것을 기록한다(M으로 연다).
-const mapPage = buildMapPage(planet, player, shrines, SHRINES);
+const mapPage = buildMapPage(planet, player, shrines, SHRINES, () => landing);
 // 터치 조작 — 터치 기기에서만 나타난다. 이게 없으면 모바일에서는 걷기만 되고
 // 사당에 들어갈 수조차 없다(점검에서 확인).
 // notebook은 아래에서 만들어지므로 게터로 넘긴다 — 순서를 바꾸면 mapPage가 꼬인다.
 const touch = buildTouchControls(input, mapPage, () => notebook);
 // 대사창과 탐사 수첩. 사당이 왜 있는지를 이 둘이 말한다.
 const dialogue = buildDialogue(input);
-const notebook = buildNotebook(shrines, SHRINES, () => forage);
+const notebook = buildNotebook(shrines, SHRINES, () => forage, mapPage);
 
 touch.onShow(refreshHint);
 refreshHint();
@@ -638,7 +640,7 @@ const game = {
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
-  roomActor, roomFor, withPlanetMode, lab, landing, forage,
+  roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd,
   dialogue: { KEEPERS, ENDING, OPENING } });
 

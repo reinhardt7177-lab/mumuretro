@@ -1,86 +1,139 @@
-// 탐사 수첩 — 앞사람이 남긴 질문 여섯. 답은 손으로 해 봐야 채워진다.
+// 탐사 수첩 — 앞사람이 남긴 책. 다섯 면으로 접혀 있다.
 //
-// ★ 이 화면이 곧 할 일 목록이다. 무엇을 알아내야 하는지는 말해 주지만
-//   **어디로 가라고는 하지 않는다.** 지도가 다녀온 것만 기록하는 것과 같은 규칙 —
-//   화살표가 답을 알려주기 시작하면 그 순간 이 게임은 문제가 아니라 심부름이 된다.
+// ★ 왜 다시 지었나. 재 보니 **505px 창에 내용이 1389px**이었다 — 2.75화면.
+//   그리고 여기에 지도·편지·레시피를 더할 참이었으니 5화면이 된다.
+//   두루마리로는 안 된다. 이 수첩은 이 게임에서 **가장 자주 여는 것**이고,
+//   자주 여는 것일수록 "찾는 데 걸리는 시간"이 전부다.
 //
-// 앞사람 글씨만 손글씨체다. 장식이 아니라 **화자를 가르는 장치**다 —
-// 질문은 남이 쓴 것이고 답은 내가 쓴 것이라는 게 글씨만 봐도 읽혀야 한다.
+//   그래서 성공 기준을 하나로 못 박는다 — **모든 면이 스크롤 없이 한 화면에.**
+//   검사 M이 그것 하나만 잰다.
+//
+// ★ 레퍼런스 둘에서 하나씩 가져왔다.
+//   · Outer Wilds 함선 일지 — 탭마다 "여기 아직 더 있다" 점. 어디로 가라고는
+//     하지 않고 **아직 남았다는 것만** 말한다. 우리 규칙과 같다.
+//   · Return of the Obra Dinn — 확정된 사실이 손글씨에서 인쇄체로 바뀐다.
+//     우리는 이미 앞사람의 파란 손글씨가 내 글씨로 바뀌는 구조인데,
+//     그 전환을 **보이게** 만든 것이 그쪽의 공이다.
+//
+// ★ 지킴이가 구슬을 줄 때 한 말이 **어디에도 안 남고 있었다.** 대사로 지나가고
+//   끝이었다. 이 게임에서 가장 감정적인 문장들이다 — 편지 면이 그걸 붙잡는다.
+//   따로 저장하지 않는다. 깬 사당이 곧 읽을 수 있는 편지다.
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
+import { KEEPERS, ENDING, OPENING } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
-import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS } from '../data/forage.js';
+import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
+  from '../data/forage.js';
 
 const CSS = `
 #nb{position:fixed;inset:0;z-index:40;display:none;place-items:center;
   background:rgba(8,10,9,.93);backdrop-filter:blur(3px);
   font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;color:#23272a}
 #nb.show{display:grid}
-#nb .page{width:min(92vw,660px);max-height:88vh;overflow:auto;
-  background:#f3f2ec;border-radius:3px;box-shadow:0 24px 60px -28px #000;
+#nb .page{width:min(94vw,700px);height:min(88vh,660px);display:flex;flex-direction:column;
+  background:#f3f2ec;border-radius:3px;box-shadow:0 24px 60px -28px #000;overflow:hidden;
   background-image:
     linear-gradient(rgba(90,110,120,.10) 1px,transparent 1px),
     linear-gradient(90deg,rgba(90,110,120,.10) 1px,transparent 1px);
   background-size:22px 22px,22px 22px}
-#nb .hd{display:flex;align-items:baseline;gap:12px;padding:18px 24px 14px;
-  border-bottom:2px solid #23272a}
-#nb .hd .t{font-size:19px;font-weight:700;letter-spacing:.02em}
-#nb .hd .n{margin-left:auto;font-size:12px;color:#7d878c;
-  font-variant-numeric:tabular-nums}
-#nb .row{display:grid;grid-template-columns:30px 1fr;gap:0 12px;
-  padding:13px 24px;border-bottom:1px dashed #d8dad2}
-#nb .row:last-of-type{border-bottom:0}
-#nb .no{font-size:12px;color:#9aa3a7;padding-top:6px;font-variant-numeric:tabular-nums}
-#nb .q{font-family:"Nanum Pen Script","Gowun Batang","Malgun Gothic",cursive;
-  font-size:23px;line-height:1.45;color:#2f5490}
-#nb .a{font-size:14.5px;line-height:1.7;color:#3d474c;margin-top:2px}
-#nb .a.blank{color:#a6aeb2;font-style:italic}
-#nb .a b{color:#1d6a5e;font-weight:600}
-#nb .ft{padding:14px 24px 18px;display:flex;gap:16px;align-items:center;
-  font-size:12px;color:#7d878c;border-top:1px solid #dfe1da}
-#nb .ft .close{margin-left:auto}
-#nb .coord{padding:15px 24px;border-top:1px dashed #d8dad2;
-  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-#nb .coord .lab{font-size:12px;color:#7d878c;letter-spacing:.06em}
-#nb .coord .num{font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:34px;color:#2f5490;letter-spacing:.16em;line-height:1}
-#nb .coord .num i{font-style:normal;color:#a9a294;letter-spacing:0}
-#nb .coord .why{font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:19px;color:#2f5490;flex:1;min-width:220px}
-#nb .fg{padding:14px 24px;border-top:1px dashed #d8dad2}
-#nb .fg h4{margin:0 0 9px;font-size:12px;letter-spacing:.06em;color:#7d878c;font-weight:600}
-#nb .fg .row2{display:grid;grid-template-columns:14px 1fr;gap:0 10px;padding:7px 0;
-  border-bottom:1px dotted #e0e2da}
-#nb .fg .row2:last-child{border-bottom:0}
-#nb .fg .dot{width:10px;height:10px;border-radius:2px;margin-top:5px;
-  background:#cfd2c8;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-#nb .fg .nm{font-size:13.5px;font-weight:600;color:#3d474c}
-#nb .fg .nm.todo{color:#a6aeb2;font-weight:400}
-#nb .fg .rule{font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:17px;line-height:1.4;color:#2f5490;margin-top:1px}
-#nb .fg .said{font-size:12.5px;color:#5c666b;margin-top:2px}
-#nb .lg{padding:14px 24px;border-top:2px solid #23272a;background:
-  linear-gradient(180deg,rgba(180,170,140,.13),transparent 60%)}
-#nb .lg h4{margin:0 0 8px;font-size:12px;letter-spacing:.06em;color:#7d878c;font-weight:600}
-#nb .lg .sealed{font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:19px;color:#9aa3a7;line-height:1.5}
-#nb .lg .said2{font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:19px;color:#2f5490;line-height:1.5;margin-bottom:9px}
-#nb .lg .row3{display:grid;grid-template-columns:14px 1fr;gap:0 10px;padding:6px 0}
-#nb .lg .dot{width:10px;height:10px;border-radius:2px;margin-top:5px;background:#cfd2c8;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-#nb .lg .nm{font-size:13.5px;font-weight:600;color:#3d474c}
-#nb .lg .nm.todo{color:#a6aeb2;font-weight:400}
-#nb .lg .where{font-size:12.5px;color:#5c666b;margin-top:1px}
-#nb .memo{padding:16px 24px;font-family:"Nanum Pen Script","Gowun Batang",cursive;
-  font-size:21px;line-height:1.5;color:#2f5490;border-top:1px dashed #d8dad2}
-@media (max-width:640px){#nb .q{font-size:20px}#nb .a{font-size:13.5px}}`;
 
-// 사당 여섯의 색 — 채워진 답에만 쓴다.
+/* 색인 탭 — 진짜 수첩처럼 위에 붙는다 */
+#nb .tabs{display:flex;gap:3px;padding:8px 10px 0;background:rgba(35,39,42,.05);
+  border-bottom:2px solid #23272a;flex:0 0 auto}
+#nb .tab{position:relative;appearance:none;border:0;cursor:pointer;
+  padding:7px 13px 8px;border-radius:4px 4px 0 0;font:600 13px/1 inherit;
+  color:#7d878c;background:rgba(255,255,255,.35)}
+#nb .tab:hover{color:#3d474c;background:rgba(255,255,255,.7)}
+#nb .tab.on{color:#23272a;background:#f3f2ec;box-shadow:0 1px 0 0 #f3f2ec}
+#nb .tab .k{opacity:.5;font-size:11px;margin-right:4px}
+/* ★ "여기 아직 더 있다" — 어디로 가라가 아니라, 볼 게 생겼다는 것만 */
+#nb .tab .dot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:99px;
+  background:#c0653a;box-shadow:0 0 0 2px #f3f2ec}
+#nb .tab .dot[hidden]{display:none}
+
+#nb .hd{display:flex;align-items:baseline;gap:12px;padding:13px 22px 9px;flex:0 0 auto}
+#nb .hd .t{font-size:17px;font-weight:700;letter-spacing:.02em}
+#nb .hd .n{margin-left:auto;font-size:12px;color:#7d878c;font-variant-numeric:tabular-nums}
+#nb .body{flex:1 1 auto;overflow:hidden;padding:0 22px}
+#nb .ft{padding:9px 22px 12px;display:flex;gap:14px;align-items:center;flex:0 0 auto;
+  font-size:11.5px;color:#7d878c;border-top:1px solid #dfe1da}
+#nb .ft .close{margin-left:auto}
+
+/* 앞사람 글씨 — 화자를 가르는 장치다. 장식이 아니다. */
+.hw{font-family:"Nanum Pen Script","Gowun Batang","Malgun Gothic",cursive;color:#2f5490}
+
+/* ── 물음 ── */
+#nb .qrow{display:grid;grid-template-columns:26px 1fr;gap:0 10px;
+  padding:8px 0;border-bottom:1px dashed #d8dad2}
+#nb .qrow:last-child{border-bottom:0}
+#nb .qno{font-size:11px;color:#9aa3a7;padding-top:5px;font-variant-numeric:tabular-nums}
+#nb .qq{font-size:19px;line-height:1.3}
+#nb .qa{font-size:13px;line-height:1.5;color:#3d474c;margin-top:1px}
+#nb .qa.blank{color:#a6aeb2;font-style:italic;font-size:12.5px}
+#nb .qa b{font-weight:600}
+
+/* ── 들 ── */
+#nb .frow{display:grid;grid-template-columns:12px 1fr;gap:0 9px;padding:6px 0;
+  border-bottom:1px dotted #e0e2da}
+#nb .frow:last-child{border-bottom:0}
+#nb .fdot{width:10px;height:10px;border-radius:2px;margin-top:5px;background:#cfd2c8;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+#nb .fnm{font-size:13px;font-weight:600;color:#3d474c}
+#nb .fnm.todo{color:#a6aeb2;font-weight:400}
+#nb .frule{font-size:16px;line-height:1.3;margin-top:1px}
+#nb .fsaid{font-size:12px;line-height:1.45;color:#5c666b;margin-top:1px}
+#nb .beasts{font-size:11.5px;color:#8b9399;margin-top:2px}
+
+/* ── 편지 ── */
+/* ★ 편지는 쌓인다. 한 줄로 이으면 862px이 넘쳤다(소포 + 지킴이 여섯 + 마지막 장
+   + 엔딩 셋 = 열한 통). 그런데 여기는 **가장 많이 다시 읽는 면**이므로
+   "찾는 데 걸리는 시간"이 전부다 — 보낸 사람 조각을 위에 늘어놓고 하나를 편다.
+   Outer Wilds 함선 일지가 목록 → 본문인 것과 같은 이유다. */
+#nb .mail{display:flex;flex-direction:column;gap:8px;height:100%}
+#nb .chips{display:flex;flex-wrap:wrap;gap:4px;flex:0 0 auto}
+#nb .chip{appearance:none;border:1px solid #d5d8ce;cursor:pointer;border-radius:99px;
+  padding:3px 10px;font:500 11.5px/1.5 inherit;color:#6b757a;background:#fbfaf5}
+#nb .chip:hover{border-color:#b9bfb2;color:#3d474c}
+#nb .chip.on{background:#23272a;border-color:#23272a;color:#f3f2ec}
+#nb .letter{flex:1 1 auto;min-height:0;overflow:auto;padding:9px 2px 0;
+  border-top:1px dashed #d8dad2}
+#nb .who{font-size:11px;letter-spacing:.05em;color:#7d878c;margin-bottom:5px}
+#nb .said{font-size:14.5px;line-height:1.75;color:#2c3438}
+#nb .sealed{font-size:17px;line-height:1.5;color:#9aa3a7}
+
+/* ── 별(지도) ── */
+#nb .mapwrap{display:flex;flex-direction:column;gap:8px;height:100%}
+#nb .mapstats{display:flex;gap:18px;align-items:baseline;font-size:11.5px;color:#7d878c}
+#nb .mapstats b{font-size:15px;color:#3d474c;font-variant-numeric:tabular-nums}
+#nb .mapframe{flex:1 1 auto;min-height:0;border:1px solid #c9ccc2;border-radius:2px;
+  overflow:hidden;background:#0b0f11;display:grid;place-items:center}
+#nb .mapframe canvas{display:block;max-width:100%;max-height:100%;image-rendering:pixelated}
+#nb .mapkey{display:flex;gap:13px;font-size:11px;color:#8b9399;align-items:center}
+#nb .mapkey i{width:8px;height:8px;display:inline-block;transform:rotate(45deg);margin-right:4px}
+
+/* ── 부엌 ── */
+#nb .soon{display:grid;place-items:center;height:100%;text-align:center;gap:8px}
+#nb .soon .big{font-size:19px;color:#a6aeb2}
+
+@media (max-width:640px){
+  #nb .page{width:96vw;height:92vh}
+  #nb .tab{padding:6px 9px 7px;font-size:12px}
+  #nb .tab .k{display:none}
+  #nb .qq{font-size:17px}
+}`;
+
 const TINT = { balance: '#1d6a5e', shadow: '#6a6650', sift: '#95610f',
   water: '#186a97', fire: '#ac3620', strata: '#63499c' };
 
-export function buildNotebook(shrines, specs, getForage) {
+const TABS = [
+  { id: 'star', key: '1', name: '별' },
+  { id: 'ask', key: '2', name: '물음' },
+  { id: 'field', key: '3', name: '들' },
+  { id: 'mail', key: '4', name: '편지' },
+  { id: 'kitchen', key: '5', name: '부엌' },
+];
+
+export function buildNotebook(shrines, specs, getForage, mapPage) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -88,125 +141,238 @@ export function buildNotebook(shrines, specs, getForage) {
   const el = document.createElement('div');
   el.id = 'nb';
   el.innerHTML = `<div class="page">
-    <div class="hd"><span class="t">${NOTE_TITLE}</span><span class="n" id="nbN"></span></div>
-    <div id="nbRows"></div>
-    <div class="coord">
-      <span class="lab">별의 자리</span>
-      <span class="num">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i>▓</i></span>
-      <span class="why">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</span>
-    </div>
-    <div class="fg"><h4 id="nbFgN">채집</h4><div id="nbFg"></div></div>
-    <div class="lg"><h4 id="nbLgN">마지막 장</h4><div id="nbLg"></div></div>
-    <div class="memo" id="nbMemo"></div>
-    <div class="ft"><span>앞사람의 글씨는 파란색이에요</span>
-      <span class="close">N — 닫기</span></div>
+    <div class="tabs">${TABS.map((t) => `<button class="tab" data-tab="${t.id}">
+      <span class="k">${t.key}</span>${t.name}<i class="dot" hidden></i></button>`).join('')}</div>
+    <div class="hd"><span class="t" id="nbT"></span><span class="n" id="nbN"></span></div>
+    <div class="body" id="nbBody"></div>
+    <div class="ft"><span class="hw" style="font-size:15px">앞사람의 글씨는 파란색</span>
+      <span class="close">1~5 넘기기 · N 닫기</span></div>
   </div>`;
   document.body.appendChild(el);
-  const rows = el.querySelector('#nbRows');
+  const elBody = el.querySelector('#nbBody');
+  const elT = el.querySelector('#nbT');
   const elN = el.querySelector('#nbN');
-  const elMemo = el.querySelector('#nbMemo');
-  const elFg = el.querySelector('#nbFg');
-  const elFgN = el.querySelector('#nbFgN');
-  const elLg = el.querySelector('#nbLg');
-  const elLgN = el.querySelector('#nbLgN');
+  const tabBtns = [...el.querySelectorAll('.tab')];
 
-  let open = false, has = false;
-  // 앞사람 글씨는 **화자를 가르는 장치**다. 처음 열 때 받아오면 그 한 번은
-  // 폴백 글꼴로 그려졌다가 바뀐다 — 가르는 장치가 첫 장면에서만 안 듣는다.
-  if (document.fonts && document.fonts.load) {
-    document.fonts.load('23px "Nanum Pen Script"', Object.values(NOTES).map((n) => n.q).join(''))
-      .catch(() => {});
-  }
+  let open = false, has = false, tab = 'ask';
+  // ★ 탭마다 "지난번에 본 상태"를 적어 둔다. 달라졌으면 점이 켜진다.
+  //   무엇이 달라졌는지는 말하지 않는다 — 볼 게 생겼다는 것만.
+  const seen = {};
 
-  const draw = () => {
-    const done = shrines.shrines.filter((s) => s.cleared).length;
+  // 자물쇠: 소포를 열기 전에는 수첩이 없다
+  const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
+
+  // ── 면마다 무엇을 그리나 ──────────────────────────────────────────────────
+  const clearedCount = () => shrines.shrines.filter((s) => s.cleared).length;
+
+  const sigOf = (id) => {
+    const fg = getForage && getForage();
+    if (id === 'ask') return `${clearedCount()}`;
+    if (id === 'field') {
+      return fg ? Object.values(fg.found).filter(Boolean).length
+        + '/' + BEASTS.filter((b) => fg.caught[b.id] > 0).length : '0';
+    }
+    if (id === 'mail') return `${clearedCount()}|${has ? 1 : 0}`;
+    if (id === 'star') return mapPage ? `${mapPage.exploredPct()}|${clearedCount()}` : '0';
+    return '0';
+  };
+
+  const drawAsk = () => {
+    const done = clearedCount();
+    elT.textContent = NOTE_TITLE;
     elN.textContent = `${specs.length}면 중 ${done}면 채움`;
-    rows.innerHTML = specs.map((sp, i) => {
+    elBody.innerHTML = specs.map((sp, i) => {
       const note = NOTES[sp.id] || { q: '?', a: '?' };
       const cleared = shrines.shrines[i] && shrines.shrines[i].cleared;
       const a = cleared
-        ? `<div class="a"><b style="color:${TINT[sp.id]}">${note.a}</b></div>`
-        : '<div class="a blank">— 아직 비어 있다</div>';
-      return `<div class="row"><div class="no">${String(i + 1).padStart(2, '0')}</div>
-        <div><div class="q">${note.q}</div>${a}</div></div>`;
+        ? `<div class="qa"><b style="color:${TINT[sp.id]}">${note.a}</b></div>`
+        : '<div class="qa blank">— 아직 비어 있다</div>';
+      return `<div class="qrow"><div class="qno">${String(i + 1).padStart(2, '0')}</div>
+        <div><div class="qq hw">${note.q}</div>${a}</div></div>`;
     }).join('');
-    // ── 채집 장 ────────────────────────────────────────────────────────
-    // ★ 아직 못 얻은 것에는 **앞사람이 적어 둔 규칙**이 파란 글씨로 남아 있다.
-    //   그게 곧 힌트고, 답은 아니다 — 무엇을 보라고만 한다. 얻고 나면 규칙이
-    //   사라지고 내가 알아낸 한 줄이 그 자리에 들어선다. 수첩이 채워진다는 건
-    //   남의 글씨가 내 글씨로 바뀐다는 뜻이다.
+  };
+
+  const drawField = () => {
     const fg = getForage && getForage();
-    const fgOn = fg && Object.values(fg.found).some(Boolean);
-    elFgN.textContent = fg
-      ? `채집 — ${Object.values(fg.found).filter(Boolean).length}/${FORAGE_KINDS.length}`
-      : '채집';
-    elFg.innerHTML = FORAGE_KINDS.map((k) => {
-      const has = fg && fg.found[k.id];
-      let body = has
-        ? `<div class="said">${k.got}</div>`
-        : `<div class="rule">${(fg && fg.RULES[k.id]) || ''}</div>`;
-      // ★ 고기는 한 가지가 아니다. 미끼가 무엇이 오는지를 정하므로 넷이다 —
-      //   어느 것을 잡아 봤는지 한 줄로 보여 준다(요리가 이걸 볼 것이다).
+    const got = fg ? Object.values(fg.found).filter(Boolean).length : 0;
+    elT.textContent = '들에서 가져온 것';
+    elN.textContent = `${FORAGE_KINDS.length}가지 중 ${Math.min(got, FORAGE_KINDS.length)}가지`;
+    elBody.innerHTML = FORAGE_KINDS.map((k) => {
+      const hasIt = fg && fg.found[k.id];
       let name = k.label;
+      let body = hasIt ? `<div class="fsaid">${k.got}</div>`
+        : `<div class="frule hw">${(fg && fg.RULES[k.id]) || ''}</div>`;
       if (k.id === 'meat' && fg) {
-        const got = BEASTS.filter((b) => fg.caught[b.id] > 0);
-        name = `들짐승 고기 — ${got.length}/${BEASTS.length}종`;
-        body += `<div class="said" style="color:#7d878c">${
-          BEASTS.map((b) => (fg.caught[b.id] > 0
-            ? `<b style="color:${k.tint}">${b.meat}</b>` : `<span style="color:#b9c0c3">${b.name}?</span>`))
-          .join(' · ')}</div>`;
+        const n = BEASTS.filter((b) => fg.caught[b.id] > 0).length;
+        name = `들짐승 고기 — ${n}/${BEASTS.length}종`;
+        body += `<div class="beasts">${BEASTS.map((b) => (fg.caught[b.id] > 0
+          ? `<b style="color:${k.tint}">${b.meat}</b>`
+          : `<span style="color:#c0c6c9">${b.name}?</span>`)).join(' · ')}</div>`;
       }
-      return `<div class="row2">
-        <div class="dot" style="${has ? `background:${k.tint}` : ''}"></div>
-        <div><div class="nm${has ? '' : ' todo'}">${name}</div>${body}</div></div>`;
+      return `<div class="frow">
+        <div class="fdot" style="${hasIt ? `background:${k.tint}` : ''}"></div>
+        <div><div class="fnm${hasIt ? '' : ' todo'}">${name}</div>${body}</div></div>`;
     }).join('');
-    void fgOn;
-
-    // ── 마지막 장 ──────────────────────────────────────────────────────
-    // ★ 사당 여섯을 다 깨야 열린다. 열쇠는 구슬이 아니라 **글씨**다 — 앞사람이
-    //   끝까지 간 사람에게만 남긴 장이고, 그 장에도 자리는 안 적혀 있다.
-    //   "가장 높은 데, 가장 깊은 데, 가장 먼 데" 세 마디가 전부다.
-    //   지도는 다녀온 데만 기록하니, 이 셋을 찾으려면 먼저 걸어야 한다 —
-    //   그때 비로소 안개 지도가 장식이 아니라 도구가 된다.
-    const open6 = done >= specs.length;
-    elLgN.textContent = open6
-      ? `마지막 장 — ${LEGEND.filter((x) => fg && fg.found[x.id]).length}/${LEGEND.length}`
-      : '마지막 장';
-    elLg.innerHTML = open6
-      ? `<div class="said2">${LEGEND_NOTE.join('<br>')}</div>` + LEGEND.map((x) => {
-        const has = fg && fg.found[x.id];
-        return `<div class="row3">
-          <div class="dot" style="${has ? `background:${x.tint}` : ''}"></div>
-          <div><div class="nm${has ? '' : ' todo'}">${has ? x.label : '?'}</div>
-          <div class="where">${has ? x.got : x.hint}</div></div></div>`;
-      }).join('')
-      : `<div class="sealed">${LEGEND_LOCKED}</div>`;
-
-    // 마지막 장 — 여섯을 다 채우기 전에는 앞사람이 무슨 생각이었는지 알 수 없다.
-    elMemo.textContent = done >= specs.length
-      ? '여섯을 다 채웠다. 답을 지우고 갈까, 두고 갈까.'
-      : '(뒷장은 아직 비어 있다)';
   };
 
-  const me = registerOverlay({ get isOpen() { return open; }, close: () => setOpen(false) });
+  // 편지 목록을 먼저 꾸리고, 고른 하나만 편다.
+  let mailSel = 0;
+  const mailList = () => {
+    const fg = getForage && getForage();
+    const done = clearedCount();
+    // ★ 파란 손글씨는 **앞사람의 글씨**다(발치에 그렇게 적어 뒀다). 그런데 여기서
+    //   주인공 본인의 관찰까지 파란 손글씨로 써 놨었다 — 우리가 세운 규칙을
+    //   우리가 어긴 것이고, 그러면 그 색이 아무 뜻도 없어진다.
+    //   내가 본 것은 내 글씨, 수첩에 적혀 있던 것만 앞사람 글씨.
+    const out = [{ tag: '소포', who: '보낸 사람 없음',
+      html: `<div class="said">${OPENING.parcel[1].join('<br>')}</div>
+        <div class="said" style="margin-top:11px;color:#7d878c;font-size:12px">— 수첩 뒷장에 적혀 있던 것 —</div>
+        <div class="said" style="margin-top:3px">별의 자리
+        <b class="hw" style="font-size:22px;letter-spacing:.14em">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i style="font-style:normal;color:#a9a294">▓</i></b></div>
+        <div class="said hw" style="font-size:19px">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</div>` }];
+    // ★ 지킴이의 말 — 예전엔 대사로 지나가고 **어디에도 안 남았다.**
+    //   이 게임에서 가장 감정적인 문장들이다. 깬 사당이 곧 읽을 수 있는 편지다.
+    specs.forEach((sp, i) => {
+      if (!(shrines.shrines[i] && shrines.shrines[i].cleared)) return;
+      const k = KEEPERS[sp.id];
+      out.push({ tag: sp.name.replace('의 사당', ''), who: k.who, tint: TINT[sp.id],
+        html: `<div class="said">${k.orb.join('<br>')}</div>` });
+    });
+    if (done >= specs.length) {
+      const n = fg ? LEGEND.filter((x) => fg.found[x.id]).length : 0;
+      out.push({ tag: `마지막 장 ${n}/${LEGEND.length}`, who: '앞사람',
+        html: `<div class="said hw" style="font-size:19px">${LEGEND_NOTE.join('<br>')}</div>
+          <div class="said" style="margin-top:9px">${LEGEND.map((x) => (fg && fg.found[x.id]
+            ? `<b style="color:${x.tint}">${x.label}</b> <span style="color:#7d878c">${x.got}</span>`
+            : `<span style="color:#a6aeb2">? — ${x.hint}</span>`)).join('<br>')}</div>` });
+      ENDING.forEach(([, who, lines], i) => out.push({ tag: `끝 ${i + 1}`, who,
+        html: `<div class="said">${lines.join('<br>')}</div>` }));
+    } else {
+      out.push({ tag: '?', who: '앞사람',
+        html: `<div class="sealed hw">${LEGEND_LOCKED}</div>` });
+    }
+    return out;
+  };
+
+  const drawMail = () => {
+    const list = mailList();
+    if (mailSel >= list.length) mailSel = list.length - 1;
+    const m = list[mailSel];
+    elT.textContent = '받은 것 · 들은 것';
+    elN.textContent = `${list.length}통 중 ${mailSel + 1}번째`;
+    elBody.innerHTML = `<div class="mail">
+      <div class="chips">${list.map((x, i) =>
+        `<button class="chip${i === mailSel ? ' on' : ''}" data-i="${i}">${x.tag}</button>`).join('')}</div>
+      <div class="letter">
+        <div class="who" ${m.tint ? `style="color:${m.tint}"` : ''}>${m.who}</div>
+        ${m.html}</div></div>`;
+    for (const b of elBody.querySelectorAll('.chip')) {
+      b.addEventListener('click', (e) => { e.stopPropagation(); mailSel = +b.dataset.i; drawMail(); });
+    }
+  };
+
+  const drawStar = () => {
+    elT.textContent = '이 별의 지도';
+    elN.textContent = mapPage ? `${mapPage.exploredPct()}% 둘러봄` : '';
+    elBody.innerHTML = `<div class="mapwrap">
+      <div class="mapstats">
+        <span><b id="nbMs">0 / 6</b> 사당</span>
+        <span><b id="nbMe">0%</b> 둘러본 곳</span>
+        <span class="hw" style="font-size:16px">가 본 데만 밝아진다</span>
+      </div>
+      <div class="mapframe" id="nbMap"></div>
+      <div class="mapkey">
+        <span><i style="background:#fff;border-radius:99px;transform:none"></i>나</span>
+        <span><i style="background:#6fe3d2"></i>아직 못 깬 사당</span>
+        <span><i style="background:#ffd27a"></i>깬 사당</span>
+        <span><i style="background:#7fd8ff"></i>내림판</span>
+      </div></div>`;
+    if (mapPage) {
+      el.querySelector('#nbMap').appendChild(mapPage.canvas);
+      mapPage.draw();
+      el.querySelector('#nbMs').textContent = `${clearedCount()} / ${shrines.shrines.length}`;
+      el.querySelector('#nbMe').textContent = `${mapPage.exploredPct()}%`;
+    }
+  };
+
+  const drawKitchen = () => {
+    elT.textContent = '부엌';
+    elN.textContent = '';
+    elBody.innerHTML = `<div class="soon">
+      <div class="big">아직 아무것도 못 만들어 봤다.</div>
+      <div class="hw" style="font-size:19px">불을 피울 데부터 찾아야겠지.</div></div>`;
+  };
+
+  const DRAW = { star: drawStar, ask: drawAsk, field: drawField,
+    mail: drawMail, kitchen: drawKitchen };
+
+  const syncDots = () => {
+    for (const t of TABS) {
+      const btn = tabBtns.find((b) => b.dataset.tab === t.id);
+      const changed = seen[t.id] !== undefined && seen[t.id] !== sigOf(t.id);
+      btn.querySelector('.dot').hidden = !changed;
+    }
+  };
+
+  const draw = () => {
+    if (!open) { syncDots(); return; }
+    for (const b of tabBtns) b.classList.toggle('on', b.dataset.tab === tab);
+    // 지도는 캔버스를 옮겨 붙이므로, 다른 면으로 갈 때 떼어 둔다
+    if (tab !== 'star' && mapPage && mapPage.canvas.parentElement) {
+      mapPage.canvas.remove();
+    }
+    (DRAW[tab] || drawAsk)();
+    seen[tab] = sigOf(tab);          // 본 면은 점이 꺼진다
+    syncDots();
+  };
+
+  const go = (id) => { tab = id; if (open) draw(); };
+
   const setOpen = (v) => {
-    // ★ 소포를 열기 전에는 수첩이 **없다.** 없는 걸 N으로 펼 수 있으면
-    //   오프닝에서 소포를 열 이유가 사라진다.
     if (v && !has) return;
-    if (v) soloOpen(me);            // 전면 화면은 하나만 — overlay.js
-    open = v; el.classList.toggle('show', v); if (v) draw();
+    if (v) soloOpen(me);
+    open = v;
+    el.classList.toggle('show', v);
+    if (v) draw(); else syncDots();
   };
+
+  for (const b of tabBtns) {
+    b.addEventListener('click', (e) => { e.stopPropagation(); go(b.dataset.tab); });
+  }
   addEventListener('keydown', (e) => {
     if (e.repeat) return;
-    if (e.code === 'KeyN') { setOpen(!open); e.preventDefault(); }
-    else if (e.code === 'Escape' && open) setOpen(false);
+    if (e.code === 'KeyN') { setOpen(!open); e.preventDefault(); return; }
+    if (e.code === 'KeyM') {                       // ★ M은 이제 수첩의 지도 면이다
+      if (!has || !(mapPage && mapPage.has)) return;
+      if (open && tab === 'star') setOpen(false); else { tab = 'star'; setOpen(true); }
+      e.preventDefault(); return;
+    }
+    if (!open) return;
+    if (e.code === 'Escape') { setOpen(false); e.preventDefault(); return; }
+    const t = TABS.find((x) => e.code === `Digit${x.key}`);
+    if (t) { go(t.id); e.preventDefault(); }
   });
   el.addEventListener('click', (e) => { if (e.target === el) setOpen(false); });
 
   return {
-    setOpen, draw,
+    setOpen, draw, go,
     get isOpen() { return open; },
+    get tab() { return tab; },
     get has() { return has; },
     setHas(v) { has = v; if (!v && open) setOpen(false); },
+    // 검사 M — 면마다 스크롤이 생기지 않는가
+    pageMetrics() {
+      const was = open, wasTab = tab;
+      const out = {};
+      if (!open) { open = true; el.classList.add('show'); }
+      for (const t of TABS) {
+        tab = t.id; draw();
+        const scroller = elBody.querySelector('.letters') || elBody;
+        out[t.id] = { need: scroller.scrollHeight, have: scroller.clientHeight };
+      }
+      tab = wasTab;
+      if (!was) { open = false; el.classList.remove('show'); } else draw();
+      return out;
+    },
   };
 }

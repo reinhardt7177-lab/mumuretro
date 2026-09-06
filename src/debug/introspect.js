@@ -725,8 +725,46 @@ export function installDebug(ctx) {
         + ` -> ${fgOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── M 수첩의 모든 면이 한 화면에 들어오는가 ────────────────────────────
+    // ★ 수첩은 이 게임에서 **가장 자주 여는 것**이고, 자주 여는 것일수록 "찾는 데
+    //   걸리는 시간"이 전부다. 재 보니 505px 창에 내용이 1389px이었다 — 2.75화면.
+    //   거기에 지도·편지·레시피를 더할 참이었으니 5화면이 될 뻔했다.
+    //   그래서 다섯 면으로 접고 **성공 기준을 하나로 못 박았다** — 스크롤 없음.
+    //   기준이 하나면 검사도 하나다.
+    //   (편지 면만 예외다. 편지는 쌓이므로 목록에서 하나를 골라 편다.)
+    let nbOK = true;
+    const nbBad = [];
+    if (ctx.notebook && ctx.notebook.pageMetrics) {
+      const wasHas = ctx.notebook.has;
+      ctx.notebook.setHas(true);
+      // 빈 상태와 꽉 찬 상태 둘 다 본다 — 채워지면서 넘치는 것이 진짜 사고다
+      const shr = ctx.shrines ? ctx.shrines.shrines : [];
+      const fg = ctx.forage;
+      const savedCleared = shr.map((s) => s.cleared);
+      const savedFound = fg ? { ...fg.found } : null;
+      const savedCaught = fg ? { ...fg.caught } : null;
+      for (const full of [false, true]) {
+        shr.forEach((s) => { s.cleared = full; });
+        if (fg) {
+          for (const k in fg.found) fg.found[k] = full;
+          for (const b in fg.caught) fg.caught[b] = full ? 1 : 0;
+        }
+        const m = ctx.notebook.pageMetrics();
+        for (const id in m) {
+          const over = m[id].need - m[id].have;
+          if (over > 2) { nbOK = false; nbBad.push(`${id}${full ? '(가득)' : '(빔)'} +${over}px`); }
+        }
+      }
+      shr.forEach((s, i) => { s.cleared = savedCleared[i]; });
+      if (fg) { Object.assign(fg.found, savedFound); Object.assign(fg.caught, savedCaught); }
+      ctx.notebook.setHas(wasHas);
+      log.push('M 수첩 다섯 면이 스크롤 없이'
+        + (nbOK ? ' 전부' : ` 넘침 ${nbBad.slice(0, 4).join(' ')}`)
+        + ` -> ${nbOK ? 'PASS' : 'FAIL'}`);
+    }
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && fgOK;
+      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && fgOK && nbOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
