@@ -129,7 +129,14 @@ let mode = 'lab';                    // 'lab' | 'planet' | 'room'
 let activeShrine = null;
 let room = null;                     // 지금 들어가 있는 사당의 내부
 let cleared = false;                 // 이번 사당을 깼나
-let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표)
+// 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표).
+// ★ 여기 문장들이 **해요체**였다 — "수첩에 적었어요", "밖으로 나가요".
+//   그런데 주인공의 혼잣말은 전부 했다체다("돌아왔다", "미끼를 걸었다").
+//   같은 함수 안에서 "🪤 미끼를 걸었다"와 "📓 …적었어요"가 나란히 있었다.
+//   해요체로 말하는 사람은 이 게임에 **없다.** 그건 튜토리얼의 목소리고,
+//   그 목소리가 끼어드는 순간 이 화면은 한 사람의 일지가 아니게 된다.
+//   전부 주인공의 목소리로 맞춘다.
+let noteMsg = null, noteT = 0;
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
 let sawNote = false;                 // 수첩을 한 번이라도 펴 봤나(오프닝)
 let lastSite = null;                 // 채집 자리가 바뀌는 순간을 잡는다
@@ -227,18 +234,18 @@ function onOrb() {
       // 아직 남았으면 다음 갈 곳을 한마디. 이름도 방향도 대지 않는다.
       const b = beckonNearest(savedPlanet.pos);
       if (b) dialogue.play(`next-${id}`, k.who, b);
-      else noteMsg = '✨ 수첩 한 줄이 채워졌어요 — 밖으로 나가요', noteT = 2.6;
+      else noteMsg = '✨ 수첩 한 줄이 채워졌다 — 이제 나가자', noteT = 2.6;
     } else {
       // 여섯째 — 반전과 엔딩. 세 뭉치를 이어 붙인다.
       const chain = (i) => {
-        if (i >= ENDING.length) { noteMsg = '✨ 수첩을 다 채웠어요'; noteT = 3.0; return; }
+        if (i >= ENDING.length) { noteMsg = '✨ 수첩을 다 채웠다'; noteT = 3.0; return; }
         const [eid, who, lines] = ENDING[i];
         dialogue.play(eid, who, lines, () => chain(i + 1));
       };
       chain(0);
     }
   });
-  if (!dialogue.active) { noteMsg = '✨ 지혜의 구슬을 얻었어요 — 밖으로 나가요'; noteT = 2.6; }
+  if (!dialogue.active) { noteMsg = '✨ 지혜의 구슬을 얻었다 — 이제 나가자'; noteT = 2.6; }
 }
 
 // 실내 받침등 — 주인공이 실루엣이 되지 않을 만큼만.
@@ -420,7 +427,7 @@ function stepRoom(dt, intent) {
     // 실패는 8초어치로 친다. 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르다.
     if (inSeg && !g.solved) {
       const got = room.nudge(g.room, dt + (r.fail ? 8 : 0));
-      if (got) { noteMsg = `💡 힌트가 켜졌어요 — 오른쪽 벽`; noteT = 2.6; }
+      if (got) { noteMsg = `💡 오른쪽 벽에 힌트가 켜졌다`; noteT = 2.6; }
     }
     if (inSeg && r.fail) {
       // 스스로 자리를 옮기는 관문(타일은 갇혀 있어 되돌릴 곳이 없다)은 그대로 둔다.
@@ -439,7 +446,7 @@ function stepRoom(dt, intent) {
   final.update(dt, roomActor, room.scene);
   if (seg && seg.id === 'shrine' && !final.solvedBy(roomActor)) {
     const got = room.nudge('shrine', dt);
-    if (got) { noteMsg = '💡 힌트가 켜졌어요 — 오른쪽 벽'; noteT = 2.6; }
+    if (got) { noteMsg = '💡 오른쪽 벽에 힌트가 켜졌다'; noteT = 2.6; }
   }
   if (final.solvedBy(roomActor)) prize.reveal();
   prize.update(dt);
@@ -553,13 +560,13 @@ function stepPlanet(dt, intent) {
     const have = shrines.clearedCount();
     if (need && have < need) {
       canEnter = false;
-      say(`🔒 ${sp.name} — 구슬 ${need}개가 필요해요 (${have}/${need})`);
+      say(`🔒 ${sp.name} — 구슬 ${need}개가 있어야 한다 (${have}/${need})`);
     } else if (!near.shrine.cleared && !dialogue.hasSeen(`enter-${sp.id}`)) {
       // 지킴이의 첫마디. 들어가기 전에 한 번만.
       dialogue.play(`enter-${sp.id}`, KEEPERS[sp.id].who, KEEPERS[sp.id].enter);
       say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     } else if (near.shrine.cleared) {
-      say(`E — ${sp.name} · 이미 깬 곳이에요`);
+      say(`E — ${sp.name} · 이미 깬 곳이다`);
     } else {
       say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     }
@@ -606,8 +613,8 @@ function onForage(r) {
     lab.fillJar(r.kind);
     // 전설은 한 번 더 짚어 준다 — 여기까지 걸어온 값이다.
     noteMsg = lg ? `✨ ${k.label} — 앞사람이 말한 셋 중 하나다`
-      : r.beast ? `📓 ${r.beast.meat} — 수첩에 적었어요`
-        : `📓 ${k.label} — 수첩에 적었어요`;
+      : r.beast ? `📓 ${r.beast.meat} — 수첩에 적었다`
+        : `📓 ${k.label} — 수첩에 적었다`;
     noteT = lg ? 4.0 : 3.0;
   } else {
     noteMsg = `🎒 ${r.beast ? r.beast.meat : k.label} 하나 더`; noteT = 1.8;

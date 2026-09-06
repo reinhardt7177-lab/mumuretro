@@ -509,6 +509,28 @@ export function installDebug(ctx) {
     let fgOK = true;
     let josaOK = true;
     const josaBad = new Set();
+    // ── K2 화자가 한 사람인가 ──────────────────────────────────────────────
+    // ★ 알림과 프롬프트가 **해요체**로 말하고 있었다 — "수첩에 적었어요",
+    //   "이미 깬 곳이에요", "구슬 두 개가 필요해요". 그런데 이 게임에서
+    //   해요체로 말하는 사람은 **없다.** 주인공은 혼잣말(했다체)이고
+    //   지킴이는 해라체다. 해요체는 튜토리얼의 목소리이고, 그게 끼어드는 순간
+    //   화면은 한 사람의 일지가 아니라 설명서가 된다.
+    //   같은 함수 안에 "미끼를 걸었다"와 "적었어요"가 나란히 있었는데도
+    //   눈으로는 아무렇지 않았다 — 문체는 한 줄씩 읽으면 절대 안 보인다.
+    //
+    //   ★ 그런데 이 검사를 켜자마자 **59군데**가 걸렸다 — 사당 방 안의 과제문이
+    //     전부 해요체다("초록 발판만 밟고 20초를 버텨요"). 이건 실수가 아니라
+    //     다른 결정이다. 밖(내 일지)과 사당 안(과제)이 서로 다른 말투를 쓰는 것.
+    //     그걸 내가 혼자 59줄 고쳐 버리면 그건 검사가 아니라 취향의 강요다.
+    //     그래서 검사는 **바깥 채널만** 본다 — 대사·연구실·들·수첩.
+    //     사당 안 과제문은 아직 정하지 않았다(사용자에게 물어볼 것).
+    //
+    //   한계를 하나 더 적어 둔다. boot.js 안에 박혀 있는 알림 문자열은
+    //   데이터가 아니라 검사가 못 닿는다. 그건 손으로 고쳤다.
+    //   닿지 않는 곳은 반드시 다시 틀린다 — 알림도 언젠가 데이터로 빼야 한다.
+    let toneOK = true;
+    const toneBad = new Set();
+    const TONE = /(어요|아요|에요|예요|해요|세요|셔요|십시오|합니다|입니다)([.!?…)\s]|$)/;
     {
       const PAIR = { '을': true, '를': false, '과': true, '와': false };
       const bat = (ch) => {
@@ -516,8 +538,10 @@ export function installDebug(ctx) {
         if (c < 0xac00 || c > 0xd7a3) return null;
         return (c - 0xac00) % 28 !== 0;
       };
-      const scan = (t) => {
+      // room=true면 사당 방 안의 글이다 — 말투는 안 본다(위 머리말 참고).
+      const scan = (t, room) => {
         if (typeof t !== 'string' || !t) return;
+        if (!room && TONE.test(t)) { toneOK = false; toneBad.add(t); }
         for (let k = 1; k < t.length; k++) {
           const pj = t[k];
           if (!(pj in PAIR)) continue;
@@ -525,17 +549,17 @@ export function installDebug(ctx) {
           if (b !== null && b !== PAIR[pj]) { josaOK = false; josaBad.add(t); }
         }
       };
-      const deep = (v, d = 0) => {
+      const deep = (v, d = 0, room = false) => {
         if (d > 4) return;
-        if (typeof v === 'string') scan(v);
-        else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1));
-        else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1));
+        if (typeof v === 'string') scan(v, room);
+        else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1, room));
+        else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1, room));
       };
       const P = { x: 0, y: 0, z: 0 };
       if (ctx.roomFor && ctx.shrines) {
         for (const sh of ctx.shrines.shrines) {
           const rm = ctx.roomFor(sh);
-          deep(rm.goals); deep(rm.hints);
+          deep(rm.goals, 0, true); deep(rm.hints, 0, true);
           // 프롬프트는 상태에 따라 바뀐다 — 자리를 훑어 나오는 것을 전부 본다.
           // step()은 안 돈다(알림이 끼면 그건 다른 검사거리다).
           for (const r of rm.dungeon.rects) {
@@ -544,10 +568,10 @@ export function installDebug(ctx) {
                 P.x = x; P.z = z;
                 const seg = rm.dungeon.segmentAt(z);
                 for (const gt of rm.gates) {
-                  if (seg && seg.id === gt.room && gt.gate.prompt) scan(gt.gate.prompt(P));
+                  if (seg && seg.id === gt.room && gt.gate.prompt) scan(gt.gate.prompt(P), true);
                 }
                 if (seg && seg.id === 'shrine') {
-                  scan(rm.prize.prompt(P)); scan(rm.final.prompt(P));
+                  scan(rm.prize.prompt(P), true); scan(rm.final.prompt(P), true);
                 }
               }
             }
@@ -591,6 +615,9 @@ export function installDebug(ctx) {
       log.push('K 조사(을/를·과/와)'
         + (josaOK ? ' 전부' : ` 틀림 ${josaBad.size}=${[...josaBad].slice(0, 3).join(' | ')}`)
         + ` -> ${josaOK ? 'PASS' : 'FAIL'}`);
+      log.push('K 바깥 화자가 한 사람(해요체 없음)'
+        + (toneOK ? '' : ` — ${toneBad.size}군데 ${[...toneBad].slice(0, 3).join(' | ')}`)
+        + ` -> ${toneOK ? 'PASS' : 'FAIL'}`);
     }
 
     // ── L 들이 성립하는가 ─────────────────────────────────────────────────
@@ -638,7 +665,20 @@ export function installDebug(ctx) {
           if (degFar < 165) { fgOK = false; fgBad.push(`별똥돌 ${degFar.toFixed(0)}° (대척점 아님)`); }
         }
       }
-      // ④ 바닥에 깐 판이 **뜨지 않는가.** groundY는 중심 한 점만 맞추므로
+      // ④ 수첩에 적히는 문장이 **아직 안 겪은 일을 말하지 않는가**
+      //   ★ 암염의 got이 "체의 사당에서 배운 그대로"였다. 암염은 사당과 상관없이
+      //     캘 수 있으니, 체의 사당을 한 번도 안 간 아이의 수첩에도 그 줄이 적혔다.
+      //     겪지 않은 일을 적어 주면 그건 기록이 아니라 거짓말이다.
+      //     사당을 인용하는 문장은 반드시 gotWith로 묶여 있어야 한다.
+      if (ctx.forageText && ctx.forageText.FORAGE_KINDS) {
+        for (const k of ctx.forageText.FORAGE_KINDS) {
+          if (k.got && k.got.includes('사당')) {
+            fgOK = false; fgBad.push(`${k.label} 문장이 안 깬 사당을 인용`);
+          }
+        }
+      }
+
+      // ⑤ 바닥에 깐 판이 **뜨지 않는가.** groundY는 중심 한 점만 맞추므로
       //   큰 평판은 삼각면 지형 위에서 한쪽이 뜬다(실사용 스크린샷에서 확인).
       //   판의 네 귀퉁이를 각자 제 방향의 지형과 견준다. 뜨는 건 고장이고,
       //   조금 파묻히는 건 "닳아 들어간 자국"이라 봐준다.
@@ -725,46 +765,118 @@ export function installDebug(ctx) {
         + ` -> ${fgOK ? 'PASS' : 'FAIL'}`);
     }
 
-    // ── M 수첩의 모든 면이 한 화면에 들어오는가 ────────────────────────────
+    // ── M 수첩 — 어떤 창에서도 스크롤이 없는가 ─────────────────────────────
     // ★ 수첩은 이 게임에서 **가장 자주 여는 것**이고, 자주 여는 것일수록 "찾는 데
     //   걸리는 시간"이 전부다. 재 보니 505px 창에 내용이 1389px이었다 — 2.75화면.
-    //   거기에 지도·편지·레시피를 더할 참이었으니 5화면이 될 뻔했다.
-    //   그래서 다섯 면으로 접고 **성공 기준을 하나로 못 박았다** — 스크롤 없음.
-    //   기준이 하나면 검사도 하나다.
-    //   (편지 면만 예외다. 편지는 쌓이므로 목록에서 하나를 골라 편다.)
+    //   그래서 다섯 면으로 접고 성공 기준을 하나로 못 박았다 — **스크롤 없음.**
+    //
+    // ★ 그런데 이 검사가 두 군데서 거짓말을 하고 있었다.
+    //   ① **창 하나에서만** 쟀다. 열려 있던 창(574px)에서는 통과했지만
+    //      창 높이 500px에서 물음 면이 60px 넘쳤다. 이제 세 높이에서 잰다.
+    //   ② `.letters`를 찾았는데 그런 클래스는 없다(`.letter`다). 편지 면은
+    //      **아무것도 안 재고** 통과하고 있었다. 이제 열한 통을 다 펴 본다.
     let nbOK = true;
     const nbBad = [];
     if (ctx.notebook && ctx.notebook.pageMetrics) {
       const wasHas = ctx.notebook.has;
+      // ★ 검사가 수첩을 열면 반짝임이 그때 소모된다 — 검사를 한 번 돌렸더니
+      //   아이가 볼 반짝임이 사라져 있었다. 원래대로 되돌려 놓고 나간다.
+      const nbState = ctx.notebook._state && ctx.notebook._state();
       ctx.notebook.setHas(true);
-      // 빈 상태와 꽉 찬 상태 둘 다 본다 — 채워지면서 넘치는 것이 진짜 사고다
       const shr = ctx.shrines ? ctx.shrines.shrines : [];
       const fg = ctx.forage;
       const savedCleared = shr.map((s) => s.cleared);
       const savedFound = fg ? { ...fg.found } : null;
       const savedCaught = fg ? { ...fg.caught } : null;
-      for (const full of [false, true]) {
-        shr.forEach((s) => { s.cleared = full; });
-        if (fg) {
-          for (const k in fg.found) fg.found[k] = full;
-          for (const b in fg.caught) fg.caught[b] = full ? 1 : 0;
-        }
-        const m = ctx.notebook.pageMetrics();
-        for (const id in m) {
-          const over = m[id].need - m[id].have;
-          if (over > 2) { nbOK = false; nbBad.push(`${id}${full ? '(가득)' : '(빔)'} +${over}px`); }
+      // 440 = 창 높이 500px일 때의 수첩 높이(88vh). 여기가 우리가 지키는 바닥이다.
+      for (const H of [440, 540, 660]) {
+        // 빈 상태와 꽉 찬 상태 둘 다 본다 — 채워지면서 넘치는 것이 진짜 사고다
+        for (const full of [false, true]) {
+          shr.forEach((s) => { s.cleared = full; });
+          if (fg) {
+            for (const k in fg.found) fg.found[k] = full;
+            for (const b in fg.caught) fg.caught[b] = full ? 1 : 0;
+          }
+          const m = ctx.notebook.pageMetrics(H);
+          for (const id in m) {
+            const over = m[id].need - m[id].have;
+            if (over > 2) { nbOK = false; nbBad.push(`${H}px ${id}${full ? '(참)' : '(빔)'} +${over}`); }
+          }
         }
       }
+
+      // ── 점과 반짝임이 **정말 켜지는가** ────────────────────────────────
+      // ★ 이건 눈으로만 확인하던 것이다. 점은 조건 한 줄(`!== undefined`) 때문에
+      //   한 번도 안 열어 본 면에서 **영영 안 켜지고 있었다** — 그런데도 화면은
+      //   멀쩡해 보인다. 켜지는지를 검사가 직접 본다.
+      shr.forEach((s) => { s.cleared = false; });
+      if (fg) { for (const k in fg.found) fg.found[k] = false; }
+      ctx.notebook.setHas(false); ctx.notebook.setHas(true);   // 소포를 연 그 순간
+      ctx.notebook.setOpen(false);
+      // ★ 이 두 줄이 진짜 검사다. 처음 이 검사를 짤 때는 "깼더니 켜지더라"만
+      //   봤는데, 기준 잡기를 일부러 지우고 돌려도 **그대로 통과했다** —
+      //   앞선 측정이 남긴 낡은 기준 때문에 점이 원래부터 켜져 있었던 것이다.
+      //   그래서 **아직 아무 일도 없을 때 꺼져 있는가**부터 본다.
+      if (ctx.notebook.dots().includes('ask')) {
+        nbOK = false; nbBad.push('아무것도 안 깼는데 물음 점이 켜져 있음');
+      }
+      // 소포 편지는 이 순간 이미 와 있는 안 읽은 것이다 — 여기는 켜져 있어야 한다.
+      if (!ctx.notebook.dots().includes('mail')) {
+        nbOK = false; nbBad.push('안 읽은 소포 편지인데 점이 안 켜짐');
+      }
+      shr[0].cleared = true;                                   // 사당 하나를 깼다
+      ctx.notebook.draw();
+      if (!ctx.notebook.dots().includes('ask')) {
+        nbOK = false; nbBad.push('사당을 깼는데 물음 점이 안 켜짐');
+      }
+      ctx.notebook.go('ask'); ctx.notebook.setOpen(true);
+      const fl = ctx.notebook.flashed();
+      if (fl.length !== 1) { nbOK = false; nbBad.push(`반짝인 줄 ${fl.length}개(1이어야)`); }
+      ctx.notebook.setOpen(false); ctx.notebook.go('ask'); ctx.notebook.setOpen(true);
+      if (ctx.notebook.flashed().length !== 0) {
+        nbOK = false; nbBad.push('두 번째로 열었는데 또 반짝임');
+      }
+      if (ctx.notebook.dots().includes('ask')) { nbOK = false; nbBad.push('본 면인데 점이 안 꺼짐'); }
+      ctx.notebook.setOpen(false);
+
       shr.forEach((s, i) => { s.cleared = savedCleared[i]; });
       if (fg) { Object.assign(fg.found, savedFound); Object.assign(fg.caught, savedCaught); }
       ctx.notebook.setHas(wasHas);
-      log.push('M 수첩 다섯 면이 스크롤 없이'
-        + (nbOK ? ' 전부' : ` 넘침 ${nbBad.slice(0, 4).join(' ')}`)
+      if (nbState && ctx.notebook._restore) ctx.notebook._restore(nbState);
+
+      // ★ 한 번 여는 동안 같은 면을 두 번 그려도 표시가 살아 있는가.
+      //   실제로 여기서 통째로 사라졌었다(첫 그림이 다 "봤다"고 적어 버려서).
+      ctx.notebook.setHas(true);
+      const st2 = ctx.notebook._state();
+      shr[0].cleared = true;
+      ctx.notebook.setOpen(false); ctx.notebook.go('ask'); ctx.notebook.setOpen(true);
+      const twice = ctx.notebook.flashed().length;
+      ctx.notebook.draw();                                  // 같은 면을 한 번 더
+      if (ctx.notebook.flashed().length !== twice) {
+        nbOK = false; nbBad.push('다시 그렸더니 반짝임이 사라짐');
+      }
+      ctx.notebook.setOpen(false);
+      shr.forEach((s, i) => { s.cleared = savedCleared[i]; });
+      ctx.notebook.setHas(wasHas);
+      ctx.notebook._restore(st2);
+      log.push('M 수첩 — 세 높이 스크롤 없음 · 점 · 반짝임'
+        + (nbOK ? ' 전부' : ` ${nbBad.slice(0, 4).join(' / ')}`)
         + ` -> ${nbOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
+    // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
+    //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
+    //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
+    //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
+    const missing = [...'ABCDEFGHIJKLM'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const coverOK = missing.length === 0;
+    log.push(`검사 A~M 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+      + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && fgOK && nbOK;
+      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
+      && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
