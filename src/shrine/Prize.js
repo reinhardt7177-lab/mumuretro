@@ -10,6 +10,7 @@
 //   안에서 — **물건**이 내려온다. 걸어가서 줍는다(글자가 아니라 행동으로 끝난다).
 //   밖에서 — 그 사당의 빛기둥이 금색이 된다(Shrine.markCleared).
 import * as THREE from 'three';
+import { sfx } from '../core/Audio.js';
 import { SHRINE } from '../data/lighting.js';
 
 const DROP_FROM = 4.6, DROP_TO = 1.25;   // 천장 근처에서 손 높이까지
@@ -52,6 +53,7 @@ export class Prize {
     if (this.drop >= 0 || this.taken) return false;
     this.drop = 0;
     this.group.visible = true;
+    sfx('orb_drop');
     return true;
   }
 

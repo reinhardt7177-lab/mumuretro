@@ -32,6 +32,10 @@ import { buildKitchen } from './world/Kitchen.js';
 import { buildFlash } from './ui/Flash.js';
 import { buildTitle } from './ui/Title.js';
 import { buildRoomBrief } from './ui/RoomBrief.js';
+import { buildMuteButton } from './ui/MuteButton.js';
+import * as Audio from './core/Audio.js';
+import { SFX } from './data/sfx.js';
+const { sfx, bgm, startAudio } = Audio;
 import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
 import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
@@ -182,9 +186,22 @@ function setNote(text) {
   else noteEl.classList.remove('show');
 }
 
+// ★ 관문마다 소리를 걸면 파일 열 개를 고쳐야 하고, 하나 빠뜨리면 그 방만 조용해진다.
+//   전부 `held`로 손에 든 것을 말하므로 **바뀐 것만 보면** 된다 —
+//   빈손→물건은 집기, 물건→빈손은 놓기, 안 바뀌었으면 자리에 넣거나 돌린 것이다.
+//   계약을 하나 더 만들지 않고 이미 있는 것을 읽는다.
+function handSfx(obj, run) {
+  const before = obj.held || null;
+  run();
+  const after = obj.held || null;
+  if (before === after) sfx(before ? 'slot_ok' : 'lever');
+  else sfx(after ? 'pick_up' : 'put_down');
+}
+
 // 실패 — 방 처음으로. 사당 처음이 아니다.
 // 레이저에서 몇 번 죽고 사당 입구로 쫓겨나면 아이는 그만둔다.
 function failTo(seg, msg) {
+  sfx('gate_fail');
   noteMsg = `💫 ${msg}`; noteT = 1.6;
   roomActor.setAt(0, seg.z1 - 1.4, -1);
   // ★ 틀려서 방 처음으로 돌아온 사람이 가장 안내가 필요한 사람이다.
@@ -223,6 +240,7 @@ function enterShrine(shrine) {
   // ★ "난이도 ★☆☆☆☆☆"가 떴다. "틀려도 벌하지 않는다"고 적어 두고 들어가기 전에
   //   겁을 주고 있었다. 게다가 별 수는 깬 개수일 뿐이라 실제 사고량과도 맞지 않았다.
   //   몇 번째인지만 말한다 — 그건 사실이고, 겁이 아니다.
+  bgm(`assets/audio/bgm/${room.spec.id}.mp3`);
   noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 여섯 중 ${tier + 1}번째`;
   noteT = 3.4;
   setPrompt(null);
@@ -231,6 +249,7 @@ function enterShrine(shrine) {
 function exitShrine() {
   brief.hide(); briefWant = null;
   roomActor.freeCam = false;
+  bgm('assets/audio/bgm/planet.mp3');
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
@@ -445,6 +464,7 @@ function stepTitle(dt) {
 
 // 시작 화면 → 지하 연구실. 여기가 실제 게임의 첫 프레임이다.
 function startFromTitle() {
+  bgm('assets/audio/bgm/lab.mp3');     // 없으면 조용할 뿐이다
   mode = 'lab';
   roomActor.freeCam = false;
   planetScene.remove(player.mesh);
@@ -519,6 +539,7 @@ function landOnPlanet() {
   // 삼 년을 붙든 장치가 처음 작동한 순간이다. 예전엔 씬만 갈아 끼웠다 —
   // 화면에서는 아무 일도 안 일어났다. 한 번뿐인 장면은 한 번뿐이게 보여야 한다.
   flash.play('#e8f6ff', 720);
+  sfx('portal'); bgm('assets/audio/bgm/planet.mp3');
   landing.arrive();
   dialogue.play('op-arrive', ...OPENING.arrive);
 }
@@ -560,6 +581,7 @@ function returnToLab() {
   engine.setScene(lab.scene);
   setPrompt(null);
   flash.play('#e8f6ff', 560);
+  sfx('portal'); bgm('assets/audio/bgm/lab.mp3');
   dialogue.play('op-home', ...OPENING.home);
 }
 
@@ -650,12 +672,13 @@ function stepRoom(dt, intent) {
         //   아직 비어 있고, 다음 갈 곳을 알려주는 beckonNearest는 **지금 서 있는
         //   이 사당**을 가장 가깝다고 짚는다. 둘 다 "아직 안 깬 것"으로 보기 때문이다.
         shrines.markCleared(activeShrine);
+        sfx('orb_take');
         onOrb();
-      } else if (final.interact) final.interact(roomActor.position);
+      } else if (final.interact) handSfx(final, () => final.interact(roomActor.position));
     } else {
       // 손으로 만지는 관문은 자기 방 안에서만 반응한다
       const g = gates.find((x) => seg && x.room === seg.id);
-      if (g && g.gate.interact) g.gate.interact(roomActor.position);
+      if (g && g.gate.interact) handSfx(g.gate, () => g.gate.interact(roomActor.position));
     }
   }
 }
@@ -705,12 +728,15 @@ function stepPlanet(dt, intent) {
   if (kitchen.at(player.position)) {
     say(kitchen.prompt(player.position));
     if (intent.action && !dialogue.active) {
+      const heldBefore = kitchen.plates.filter((p) => p.key).length;
       const r = kitchen.interact(player.position);
+      if (!r) sfx(kitchen.plates.filter((p) => p.key).length !== heldBefore ? 'put_down' : 'lever');
       if (r && r.ok) {
+        sfx('cook');
         notebook.draw();
         noteMsg = r.first ? `📓 ${r.recipe.name} — 수첩에 적었다` : `🍲 ${r.recipe.name}, 한 번 더`;
         noteT = 3.0;
-      } else if (r && !r.ok) { noteMsg = `❌ ${r.why}`; noteT = 2.6; }
+      } else if (r && !r.ok) { sfx('nope'); noteMsg = `❌ ${r.why}`; noteT = 2.6; }
     }
     return;
   }
@@ -784,6 +810,7 @@ const flash = buildFlash();
 const title = buildTitle(() => startFromTitle());
 // 방 안내 — 들어서는 순간 한 번, 틀려서 되돌아오면 다시.
 const brief = buildRoomBrief(() => touch.visible);
+buildMuteButton();
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
@@ -801,9 +828,10 @@ function onForage(r) {
     noteT = 2.8;
     return;
   }
-  if (!r.ok) { noteMsg = `❌ ${r.why}`; noteT = 3.2; return; }
+  if (!r.ok) { sfx('nope'); noteMsg = `❌ ${r.why}`; noteT = 3.2; return; }
   const lg = LEGEND.find((x) => x.id === r.kind);
   const k = lg || FORAGE_KINDS.find((x) => x.id === r.kind);
+  sfx(r.beast ? 'trap_snap' : 'forage');
   if (r.first) {
     notebook.draw();
     lab.fillJar(r.kind);
@@ -849,6 +877,7 @@ installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrine
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen, title, endingHome: ENDING_HOME,
   enterShrine, exitShrine, returnToLab, get mode() { return mode; },
+  audio: Audio, sfxTable: SFX,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 
@@ -861,6 +890,12 @@ contact.visible = true;
 pickTitleSpin();
 placeTitleActor();
 title.show();
+// ★ 소리는 첫 제스처 뒤에만 난다(브라우저 정책). 시작 화면의 "화면을 눌러 시작"이
+//   곧 그 제스처라 자연스럽게 맞아떨어진다 — 그 전에 부르면 조용히 거부될 뿐이다.
+addEventListener('pointerdown', () => {
+  startAudio();
+  if (title.isOpen) bgm('assets/audio/bgm/title.mp3');
+}, { once: true });
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';

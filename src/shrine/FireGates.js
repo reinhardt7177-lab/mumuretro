@@ -7,6 +7,7 @@
 //   관찰해서 예측한다. 예진 없이 흔들리면 그건 지진이 아니라 주사위다.
 import * as THREE from 'three';
 import { godEyes } from './GodEyes.js';
+import { sfx } from '../core/Audio.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt } from '../util/rand.js';
 
@@ -85,12 +86,12 @@ export class QuakeGate {
 
     if (this.phase === 'calm') {
       this.warnMat.opacity = 0;
-      if (this.t >= this.calm) { this.phase = 'fore'; this.t = 0; }
+      if (this.t >= this.calm) { this.phase = 'fore'; this.t = 0; sfx('quake_fore'); }
     } else if (this.phase === 'fore') {
       // 예진 — 작게 흔들리고 경고등이 켜진다. 이때 기둥으로 뛰어야 한다.
       actor.shake = Math.max(actor.shake, 0.06);
       this.warnMat.opacity = 0.35 + 0.35 * Math.abs(Math.sin(this.t * 12));
-      if (this.t >= FORE) { this.phase = 'main'; this.t = 0; }
+      if (this.t >= FORE) { this.phase = 'main'; this.t = 0; sfx('quake_main'); }
     } else {
       actor.shake = Math.max(actor.shake, 0.34);
       this.warnMat.opacity = 0.9;
@@ -442,6 +443,9 @@ export class FireGod {
     if (this.pt >= len) {
       this.pt = 0;
       this.phase = this.phase === 'calm' ? 'fore' : this.phase === 'fore' ? 'main' : 'calm';
+      // ★ 예진은 연출이 아니라 **기능**이다. 눈으로만 알리면 화면을 안 보는 순간 못 잡는다.
+      if (this.phase === 'fore') sfx('quake_fore');
+      else if (this.phase === 'main') sfx('quake_main');
     }
     // 예진은 분화구가 깜빡이고, 본진은 조각이 들썩인다 — 소리 없이 눈으로 온다.
     const k = this.phase === 'main' ? Math.sin(this.pt * 42) * 0.06 : 0;

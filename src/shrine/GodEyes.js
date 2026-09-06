@@ -9,6 +9,7 @@
 //   뜻이고, 눈을 뜨는 건 "네가 해냈다"를 말 없이 말하는 가장 싼 연출이다.
 //   구슬이 내려오기 직전 1.5초. 그 1.5초가 여섯 신전의 절정을 같은 결로 묶는다.
 import * as THREE from 'three';
+import { sfx } from '../core/Audio.js';
 
 const DARK = 0x2a2430, LIT = 0xffd27a;
 
@@ -31,6 +32,7 @@ export function godEyes(parent, x, y, z, gap = 0.3, w = 0.44, h = 0.16) {
     tick(dt, solved) {
       const want = solved ? 1 : 0;
       if (awake === want) return;
+      if (want === 1 && awake === 0) sfx('god_wake');   // 1.5초 상승 — 절정
       awake = want > awake ? Math.min(1, awake + dt / 1.5) : Math.max(0, awake - dt / 0.4);
       c.set(DARK).lerp(new THREE.Color(LIT), awake);
       for (const m of mats) m.color.copy(c);

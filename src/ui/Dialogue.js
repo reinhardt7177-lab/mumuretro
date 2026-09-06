@@ -13,6 +13,8 @@
 //   터치 기기의 E 버튼(input.requestAction)으로는 안 넘어간다 —
 //   모바일에서 대사가 열리는 순간 갇힌다. 넘기는 신호는 boot이 intent.action에서
 //   한 번만 읽어 next()로 보낸다. **조작 경로를 둘로 나누면 한쪽만 고쳐지는 날이 온다.**
+import { sfx } from '../core/Audio.js';
+
 const CSS = `
 #dlg{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(8px);
   z-index:35;width:min(90vw,640px);display:none;opacity:0;
@@ -68,6 +70,7 @@ export function buildDialogue(input) {
   };
   const next = () => {
     if (!lines.length) return;
+    sfx('dlg_page');
     i++;
     if (i >= lines.length) close(); else render();
   };

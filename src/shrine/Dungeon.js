@@ -12,6 +12,7 @@
 //   사당이 여섯인데 내부가 하나였다(layouts.js 머리말).
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { sfx } from '../core/Audio.js';
 import { buildOpenField } from './OpenField.js';
 
 const GOLD = 0xffd27a;           // 지나온 문·신전. 사당 테마와 무관한 "끝" 색이다.
@@ -214,6 +215,7 @@ export function buildDungeon(scene, rooms, theme) {
     d.opened = true;
     d.mesh.visible = false;
     d.rect.open = true;
+    sfx('door_open');
     d.glow.color.set(GOLD);        // 열린 문은 금색. 지나온 곳이 표시된다
     return true;
   };

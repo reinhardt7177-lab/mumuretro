@@ -1256,19 +1256,48 @@ export function installDebug(ctx) {
         + (vOK ? ' 전부' : ` — ${vBad.join(' / ')}`) + ` -> ${vOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── W 소리가 없어도 게임이 도는가 ──────────────────────────────────────
+    // ★ 소리는 **있으면 좋은 것**이지 있어야 하는 것이 아니다. 브라우저가 막든,
+    //   mp3가 404든, 학교 망이 끊든 조용해질 뿐이어야 한다(폰트 CDN이 막히는 곳이
+    //   있었고 — 검사 M — 소리도 같은 취급을 받아야 한다).
+    //   그리고 같은 소리가 한 프레임에 겹치면 안 된다. 판정이 매 프레임 도는
+    //   자리에서 소리가 톱니처럼 쌓인다.
+    let wOK = true; const wBad = [];
+    if (ctx.audio) {
+      const A = ctx.audio;
+      try {
+        for (const n of Object.keys(ctx.sfxTable || {})) A.sfx(n);
+        A.sfx('없는이름');                       // 오타가 게임을 멈추면 안 된다
+        A.bgm('assets/audio/bgm/__none__.mp3');  // 404도 조용히
+        A.bgm(null);
+      } catch (e) { wOK = false; wBad.push(`던짐: ${e.message}`); }
+      // 쿨다운 — 같은 소리를 연달아 부르면 두 번째는 안 난다
+      const t = ctx.sfxTable && ctx.sfxTable.pick_up;
+      if (t && !(t.cool > 0)) { wBad.push('pick_up에 쿨다운 없음'); wOK = false; }
+      const noCool = Object.entries(ctx.sfxTable || {}).filter(([, v]) => !(v.cool > 0));
+      if (noCool.length) { wOK = false; wBad.push(`쿨다운 없는 소리 ${noCool.length}`); }
+      // 음소거는 진짜 0이어야 한다
+      const was = A.isMuted();
+      A.setMuted(true);
+      if (!A.isMuted()) { wOK = false; wBad.push('음소거가 안 걸림'); }
+      A.setMuted(was);
+      log.push(`W 소리 — 없어도 돌고 · 오타에 안 멈추고 · 쿨다운 있고 · 음소거됨`
+        + (wOK ? ' 전부' : ` — ${wBad.join(' / ')}`) + ` -> ${wOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQRSTUV'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRSTUVW'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~V 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~W 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && vOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && vOK && wOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

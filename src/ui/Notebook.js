@@ -24,6 +24,7 @@ import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
 import { SHRINE_THEMES } from '../data/lighting.js';
 import { markSvg } from '../data/marks.js';
+import { sfx } from '../core/Audio.js';
 import { RECIPES } from '../data/recipes.js';
 import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
   from '../data/forage.js';
@@ -489,6 +490,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
   //   그래서 반짝일 줄은 (회차, 면)마다 **한 번만 정하고**, 다시 그려도 그대로 쓴다.
   const flash = () => {
     if (measuring) return;
+    let wrote = false;
     const tag = `${openSeq}:${tab}`;
     if (nuFor !== tag) {
       nuFor = tag;
@@ -501,6 +503,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     for (const n of elBody.querySelectorAll('[data-k]')) {
       if (nu.has(n.dataset.k)) n.classList.add('nu');
     }
+    if (wrote) sfx('ui_write');            // 새 줄이 적히는 순간 — 연필 한 획
   };
 
   const draw = () => {
@@ -516,7 +519,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     syncDots();
   };
 
-  const go = (id) => { tab = id; if (open) draw(); };
+  const go = (id) => { if (open && tab !== id) sfx('ui_tab'); tab = id; if (open) draw(); };
 
   const setOpen = (v) => {
     if (v && !has) return;

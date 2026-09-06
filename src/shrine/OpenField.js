@@ -17,6 +17,7 @@
 //   resetDoors · segmentAt · rectOf. Room.js와 boot.js는 어느 쪽인지 모른다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { sfx } from '../core/Audio.js';
 
 const GOLD = 0xffd27a;
 const RAIL = 0.9;              // 난간 높이. 카메라 최저(1.0)보다 낮아야 난간 속에 안 들어간다
@@ -244,6 +245,7 @@ export function buildOpenField(scene, rooms, theme) {
     if (!d || d.opened) return false;
     d.opened = true; d.mesh.visible = false; d.rect.open = true;
     d.glow.color.set(GOLD);
+    sfx('door_open');
     return true;
   };
   const resetDoors = () => {
