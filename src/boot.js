@@ -29,8 +29,8 @@ import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
 import { buildFlash } from './ui/Flash.js';
-import { buildForage, pickForageSpots } from './world/Forage.js';
-import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG } from './data/forage.js';
+import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
+import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -72,10 +72,14 @@ const forageSpots = pickForageSpots(planet, {
     .concat([{ dir: landingDir, r: 16 }]),
   nearDir: landingDir,
 });
+// 전설의 자리 셋 — 최고점·최저점·대척점. 여기도 나무가 덮으면 못 찾는다.
+const legendSpots = pickLegendSpots(planet, landingDir);
 const FORAGE_CLEAR = 10.5 / R;
+const LEGEND_CLEAR = 9.0 / R;
 const nearShrine = (dir) => dir.angleTo(landingDir) < LANDING_CLEAR
   || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR)
-  || forageSpots.some(s => dir.angleTo(s.dir) < FORAGE_CLEAR);
+  || forageSpots.some(s => dir.angleTo(s.dir) < FORAGE_CLEAR)
+  || legendSpots.some(s => dir.angleTo(s.dir) < LEGEND_CLEAR);
 
 const scatter = buildScatter(engine.scene, planet, {
   samples: 160000, seed: 91, exclude: nearShrine,
@@ -519,9 +523,14 @@ function stepPlanet(dt, intent) {
   const fId = fSite ? fSite.id : null;
   if (fId !== lastSite) {
     lastSite = fId;
-    if (fSite && !forage.found[fSite.kind]) {
-      const k = FORAGE_KINDS.find((x) => x.id === fSite.kind);
-      noteMsg = `🌿 ${k.label} — ${forage.RULES[fSite.kind]}`;
+    // ★ 전설 자리는 KINDS에 없다. 여기서 이름을 찾다가 **행성 루프가 통째로
+    //   터졌다** — 히든 자리에 발을 들이는 순간 게임이 멈췄다는 뜻이다.
+    //   그리고 애초에 이름을 띄우면 안 된다. 숨긴 것을 자기가 소개하면
+    //   그건 숨긴 게 아니다 — 알림은 안 띄우고, 가까이 갔을 때 프롬프트가
+    //   "뭔가 빛난다"까지만 말한다.
+    const fk = fSite && FORAGE_KINDS.find((x) => x.id === fSite.kind);
+    if (fk && !forage.found[fSite.kind]) {
+      noteMsg = `🌿 ${fk.label} — ${forage.RULES[fSite.kind]}`;
       noteT = 4.2;
     }
   }
@@ -576,7 +585,7 @@ const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
-const forage = buildForage(planetScene, planet, forageSpots);
+const forage = buildForage(planetScene, planet, forageSpots, legendSpots);
 
 // 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.
 // 틀린 것은 왜 아닌지만 말한다. 무엇이 맞는지는 말하지 않는다.
@@ -588,11 +597,14 @@ function onForage(r) {
     return;
   }
   if (!r.ok) { noteMsg = `❌ ${r.why}`; noteT = 3.2; return; }
-  const k = FORAGE_KINDS.find((x) => x.id === r.kind);
+  const lg = LEGEND.find((x) => x.id === r.kind);
+  const k = lg || FORAGE_KINDS.find((x) => x.id === r.kind);
   if (r.first) {
     notebook.draw();
     lab.fillJar(r.kind);
-    noteMsg = `📓 ${k.label} — 수첩에 적었어요`; noteT = 3.0;
+    // 전설은 한 번 더 짚어 준다 — 여기까지 걸어온 값이다.
+    noteMsg = lg ? `✨ ${k.label} — 앞사람이 말한 셋 중 하나다` : `📓 ${k.label} — 수첩에 적었어요`;
+    noteT = lg ? 4.0 : 3.0;
   } else {
     noteMsg = `🎒 ${k.label} 하나 더`; noteT = 1.8;
   }
@@ -625,7 +637,7 @@ const game = {
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage,
-  forageText: { FORAGE_KINDS, FORAGE_WRONG },
+  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd,
   dialogue: { KEEPERS, ENDING, OPENING } });
 
 // ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────

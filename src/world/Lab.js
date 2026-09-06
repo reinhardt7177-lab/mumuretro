@@ -25,7 +25,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LAB } from '../data/lighting.js';
-import { KINDS as FORAGE_KINDS } from '../data/forage.js';
+import { KINDS as FORAGE_KINDS, LEGEND } from '../data/forage.js';
 
 // 좌표는 **한 군데에만** 적는다. 수첩에 3·5·8이라 그려 놓고 다이얼 정답이 다르면
 // 그건 아이가 절대 못 푸는 문제가 된다. Notebook이 이걸 읽어 뒷장에 그린다.
@@ -235,12 +235,12 @@ export function buildLab() {
       jar.position.set(SHELF_X, y + 0.21, z2);
       scene.add(jar);
       box(0.02, 0.11, 0.15, paper, SHELF_X - 0.15, y + 0.2, z2);
-      if (s === 0) {                                       // 아래 칸이 채집 자리
+      if (s === 0 || k < 3) {                              // 아래 칸 다섯 + 위 칸 셋(전설)
         const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.2, 7),
           basic(0xffffff, 0.85));
         fill.position.set(SHELF_X, y + 0.15, z2);
         fill.visible = false; scene.add(fill);
-        jars[k] = fill;
+        jars[s === 0 ? k : 'L' + k] = fill;
       }
     }
   }
@@ -523,10 +523,20 @@ export function buildLab() {
     // 들에서 처음 가져온 것 — 선반 병 하나가 그 색으로 찬다.
     fillJar(kindId) {
       const i = FORAGE_KINDS.findIndex((k) => k.id === kindId);
-      if (i < 0 || !jars[i]) return false;
-      jars[i].visible = true;
-      jars[i].material.color.set(FORAGE_KINDS[i].tint);
-      return true;
+      if (i >= 0 && jars[i]) {
+        jars[i].visible = true;
+        jars[i].material.color.set(FORAGE_KINDS[i].tint);
+        return true;
+      }
+      // 전설 셋은 **위 칸**에 담긴다. 아래 칸이 다 차야 위 칸이 차기 시작하는 게
+      // 눈에 보이는 순서고, 그게 곧 "여기까지 왔다"는 표시다.
+      const j = LEGEND.findIndex((k) => k.id === kindId);
+      if (j >= 0 && jars['L' + j]) {
+        jars['L' + j].visible = true;
+        jars['L' + j].material.color.set(LEGEND[j].tint);
+        return true;
+      }
+      return false;
     },
 
     // E가 **무엇을** 잡는가. 상태는 보지 않고 자리만 본다(순서는 interact와 같다).

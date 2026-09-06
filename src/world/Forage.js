@@ -13,8 +13,30 @@
 //   방식은 한 번에 맞히는 게 아니라 **보고, 틀리고, 다시 보는** 것이다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
-import { RULES, KINDS, WRONG, BEASTS } from '../data/forage.js';
+import { RULES, KINDS, WRONG, BEASTS, LEGEND } from '../data/forage.js';
 import { josa } from '../util/josa.js';
+
+// ★ 씨앗 난수를 `(s * 1103515245 + 12345) % 2147483648`로 굴리고 있었다.
+//   s가 2^31까지 가면 곱이 **2.4e18** — 자바스크립트 안전 정수(9.0e15)를 넘어
+//   하위 비트가 뭉개진다. `% 2^31`이 쓰는 게 하필 그 비트다.
+//
+//   ★★ 여기서 한 번 잘못 짚었다. 실제 씨앗 아홉 중 여섯이 정답을 같은 자리에
+//      놓은 걸 보고 "그래서 안 섞였다"고 단정했는데, **재 보니 옛 난수도 실제
+//      사용 패턴에서 균등했다**(3칸 33/38/30, 4칸 26/21/32/22). 아홉 개는
+//      그냥 표본이 작았던 것이다. 원인을 눈으로 짚고 넘어갈 뻔했다.
+//
+//   그래도 바꾼 채로 둔다. 안전 정수를 넘긴 곱에 기대는 건 **우연히 맞는 코드**고,
+//   정밀도가 언제 어떻게 깎일지는 보장이 없다. Math.imul은 32비트 곱을 정확히
+//   한다(mulberry32). 고친 이유는 결과가 나빠서가 아니라 근거가 없어서다.
+export const mkRnd = (seed) => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
 
 // ★ 처음엔 2.6이었다. 버섯 넷이 반경 1.25에 둘러서 있으니 **자리 한가운데에
 //   서기만 해도 넷 다 손에 닿았다.** 그러면 "고른다"가 아니라 "가까이 갔다"가 되고,
@@ -22,13 +44,23 @@ import { josa } from '../util/josa.js';
 const REACH = 1.4;                 // 후보 하나를 고르는 거리
 const SITE_R = 9;                  // 이 안이면 그 자리에 있는 것으로 친다
 const TRAP_WAIT = 42;              // 덫이 걸리는 데 걸리는 시간(초)
+// ★ 캔 자리는 다시 난다. 이 한 줄이 문제 셋을 같이 푼다.
+//   ① **막다른 길이 사라진다.** 갈래마다 자리 셋 × 정답 하나 = 평생 3개뿐인데,
+//      덫 미끼는 틀리면 그 재료를 먹는다(열매 2 + 허브 1이 필요하다).
+//      세 번 틀리면 고기를 **영영** 못 얻었다. 요리까지 오면 더 심해진다.
+//   ② **암기가 안 통한다.** 씨앗이 고정이라 다시 켜면 같은 자리에 같은 답이었다.
+//      재 보니 암염은 세 곳 다 정답이 같은 자리였다. 사당은 들어갈 때마다 다시
+//      섞는데 들만 안 그랬다 — 규칙이 두 개면 하나는 틀린 것이다.
+//   ③ **캔 것이 사라진다.** 다시 지으니 캔 자리가 비었다가 새로 찬다.
+//   자리(위치)는 그대로 둔다. 지도가 안개인 게임에서 자리까지 바뀌면 지도가
+//   기록이 아니라 거짓말이 된다 — 사당이 방은 그대로 두고 문제만 바꾸는 것과 같다.
+const REGROW = 75;                 // 캔 자리가 다시 나기까지(초)
 
 // 자리 배치 — 사당·내림판을 피하고, 완만한 데 놓는다.
 // 그리고 **갈래마다 하나는 내림판 가까이** 둔다. 다섯 갈래를 찾겠다고 별을 한 바퀴
 // 돌게 하면 그건 채집이 아니라 심부름이다.
 function pickSpots(planet, avoid, count, seed, nearDir, nearMax) {
-  let s = seed;
-  const rnd = () => (s = (s * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const rnd = mkRnd(seed);
   const out = [];
   const d = new THREE.Vector3();
   for (let guard = 0; guard < 60000 && out.length < count; guard++) {
@@ -63,7 +95,52 @@ export function pickForageSpots(planet, opts = {}) {
   return out;
 }
 
-export function buildForage(scene, planet, spots) {
+// 전설의 자리 셋 — 계산으로 딱 한 점씩 나온다.
+//   가장 높은 데 = 지형 최고점 · 가장 깊은 데 = 최저점 · 가장 먼 데 = 내림판의 대척점
+// ★ 꼭대기와 골짜기는 그대로 두면 너무 가파를 수 있다. 서 있지도 못하는 데에
+//   물건을 놓으면 그건 숨긴 게 아니라 없는 것이다 — 둘레를 훑어 설 만한 데로 옮긴다.
+export function pickLegendSpots(planet, landingDir) {
+  const N = 24000;
+  let hi = null, hiH = -1e9, lo = null, loH = 1e9;
+  const d = new THREE.Vector3();
+  // 황금각 나선 — 구면에 고르게 뿌린다
+  const ga = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++) {
+    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(Math.max(0, 1 - y * y)), th = ga * i;
+    d.set(Math.cos(th) * r, y, Math.sin(th) * r);
+    const h = planet.heightAt(d);
+    if (h > hiH) { hiH = h; hi = d.clone(); }
+    if (h < loH) { loH = h; lo = d.clone(); }
+  }
+  // 그 언저리에서 **설 만한**(완만한) 자리로 옮긴다
+  const settle = (center, maxSlope) => {
+    let best = center, bs = planet.slopeDegAt(center);
+    if (bs <= maxSlope) return best;
+    const up = center.clone();
+    const ref = Math.abs(up.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+    const e = new THREE.Vector3().crossVectors(ref, up).normalize();
+    const n = new THREE.Vector3().crossVectors(up, e).normalize();
+    for (let ring = 1; ring <= 4; ring++) {
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * Math.PI * 2, ang = (ring * 2.2) / planet.R;
+        const c = up.clone().addScaledVector(e, Math.sin(a) * ang)
+          .addScaledVector(n, Math.cos(a) * ang).normalize();
+        const sl = planet.slopeDegAt(c);
+        if (sl < bs) { bs = sl; best = c; }
+      }
+      if (bs <= maxSlope) break;
+    }
+    return best;
+  };
+  const far = settle(landingDir.clone().negate().normalize(), 10);
+  return [
+    { id: 'icebloom', dir: settle(hi, 16) },
+    { id: 'nightmoss', dir: settle(lo, 12) },
+    { id: 'starstone', dir: far },
+  ];
+}
+
+export function buildForage(scene, planet, spots, legendSpots) {
   const R = planet.R;
 
   const green = toon(0x4c7a3e), greenD = toon(0x355a2c);
@@ -103,6 +180,16 @@ export function buildForage(scene, planet, spots) {
   // ── 갈래별로 자리를 짓는다 ───────────────────────────────────────────────
   // 후보(candidate)는 전부 {x, z, ok, why} 꼴이다. ok가 하나만 true다.
 
+  // ★ 후보는 저마다 **자기 무리**를 갖는다. 캐면 그 무리만 사라진다.
+  //   처음엔 열매만 메시를 숨기고 버섯·허브·암염은 그대로 서 있었다 —
+  //   캔 것이 그대로 있으면 그건 고장으로 읽힌다.
+  const cand = (g, x, z) => {
+    const c = new THREE.Group();
+    c.position.set(x, 0, z);
+    g.add(c);
+    return c;
+  };
+
   // 1) 열매 나무 — 익은 것은 **무거워서 처지고 짙다**
   const buildFruit = (dir, seed) => {
     const g = plant(dir);
@@ -113,23 +200,21 @@ export function buildForage(scene, planet, spots) {
       c.position.y = 2.4 + k * 0.75; c.castShadow = true; g.add(c);
     }
     const cands = [];
-    let s = seed;
-    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rnd = mkRnd(seed);
     const ripeIdx = Math.floor(rnd() * 5);
     for (let k = 0; k < 5; k++) {
       const a = (k / 5) * Math.PI * 2 + 0.3;
       const ripe = k === ripeIdx;
-      // 익은 것은 아래(1.5), 덜 익은 것은 위(2.5). 색도 다르다.
+      const x = Math.sin(a) * 1.5, z = Math.cos(a) * 1.5;
+      const cg = cand(g, x, z);
+      // 익은 것은 아래(1.45), 덜 익은 것은 위(2.5). 색도 다르다 — 규칙이 그렇다.
       const y = ripe ? 1.45 : 2.5 + (k % 2) * 0.25;
-      const rad = ripe ? 0.30 : 0.20;
-      const f = new THREE.Mesh(new THREE.IcosahedronGeometry(rad, 0),
+      const f = new THREE.Mesh(new THREE.IcosahedronGeometry(ripe ? 0.30 : 0.20, 0),
         toon(ripe ? 0xb8402c : 0x9fbe5a));
-      f.position.set(Math.sin(a) * 1.5, y, Math.cos(a) * 1.5);
-      f.castShadow = true; g.add(f);
-      // 익은 건 가지가 처진 것으로 보이게 짧은 줄기를 아래로
-      box(0.06, ripe ? 0.5 : 0.22, 0.06, bark,
-        f.position.x, f.position.y + (ripe ? 0.4 : 0.16), f.position.z, g);
-      cands.push({ x: f.position.x, z: f.position.z, ok: ripe, why: WRONG.fruit, mesh: f });
+      f.position.y = y; f.castShadow = true; cg.add(f);
+      // 익은 건 가지가 처진 것으로 보이게 줄기를 길게
+      box(0.06, ripe ? 0.5 : 0.22, 0.06, bark, 0, y + (ripe ? 0.4 : 0.16), 0, cg);
+      cands.push({ x, z, ok: ripe, why: WRONG.fruit, grp: cg });
     }
     return { kind: 'fruit', dir, group: g, cands };
   };
@@ -143,8 +228,7 @@ export function buildForage(scene, planet, spots) {
       { ring: false, dome: true }, { ring: false, dome: false },
     ];
     // 순서를 섞는다 — 늘 같은 자리에 답이 있으면 규칙을 안 읽는다
-    let s = seed;
-    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rnd = mkRnd(seed);
     for (let i = specs.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
       const t = specs[i]; specs[i] = specs[j]; specs[j] = t;
@@ -153,10 +237,11 @@ export function buildForage(scene, planet, spots) {
     specs.forEach((sp, k) => {
       const a = (k / 4) * Math.PI * 2 + 0.5;
       const x = Math.sin(a) * 1.25, z = Math.cos(a) * 1.25;
-      box(0.16, 0.62, 0.16, stem, x, 0.31, z, g);
+      const cg = cand(g, x, z);
+      box(0.16, 0.62, 0.16, stem, 0, 0.31, 0, cg);
       if (sp.ring) {                                      // 대의 고리
         const r2 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.06, 8), stem);
-        r2.position.set(x, 0.42, z); g.add(r2);
+        r2.position.y = 0.42; cg.add(r2);
       }
       // ★ 맞는 것만 주황으로 칠해 놨었다. 그러면 **규칙을 안 읽어도 색으로 풀린다** —
       //   퍼즐이 통째로 사라진다. 색은 갓 모양만 따라간다(모양은 어차피 보이니까).
@@ -165,9 +250,9 @@ export function buildForage(scene, planet, spots) {
         sp.dome ? new THREE.ConeGeometry(0.42, 0.3, 9)     // 우산처럼 덮인
           : new THREE.CylinderGeometry(0.44, 0.18, 0.18, 9), // 접시처럼 뒤집힌
         sp.dome ? capMat : capBad);
-      cap.position.set(x, sp.dome ? 0.76 : 0.7, z);
-      cap.castShadow = true; g.add(cap);
-      cands.push({ x, z, ok: sp.ring && sp.dome,
+      cap.position.y = sp.dome ? 0.76 : 0.7;
+      cap.castShadow = true; cg.add(cap);
+      cands.push({ x, z, ok: sp.ring && sp.dome, grp: cg,
         why: !sp.ring ? WRONG.mushroom_ring : WRONG.mushroom_cap });
     });
     return { kind: 'mushroom', dir, group: g, cands };
@@ -177,8 +262,7 @@ export function buildForage(scene, planet, spots) {
   const buildHerb = (dir, seed) => {
     const g = plant(dir);
     const specs = [{ opp: true, saw: true }, { opp: false, saw: true }, { opp: true, saw: false }];
-    let s = seed;
-    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rnd = mkRnd(seed);
     for (let i = specs.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
       const t = specs[i]; specs[i] = specs[j]; specs[j] = t;
@@ -187,7 +271,8 @@ export function buildForage(scene, planet, spots) {
     specs.forEach((sp, k) => {
       const a = (k / 3) * Math.PI * 2 + 0.4;
       const x = Math.sin(a) * 1.5, z = Math.cos(a) * 1.5;
-      box(0.09, 1.0, 0.09, greenD, x, 0.5, z, g);
+      const cg = cand(g, x, z);
+      box(0.09, 1.0, 0.09, greenD, 0, 0.5, 0, cg);
       // 잎 — 마주나기는 같은 높이에 둘씩, 어긋나기는 번갈아 하나씩
       for (let n = 0; n < 3; n++) {
         const y = 0.34 + n * 0.24;
@@ -195,16 +280,16 @@ export function buildForage(scene, planet, spots) {
         for (const sd of sides) {
           // 색은 셋 다 같다. 톱니는 **톱니로** 보여야지 색으로 보이면 안 된다 —
           // 버섯에서 색이 답을 흘리던 것과 같은 실수다.
-          const leaf = box(0.44, 0.05, 0.2, green, x + sd * 0.26, y, z, g);
+          const leaf = box(0.44, 0.05, 0.2, green, sd * 0.26, y, 0, cg);
           leaf.rotation.z = sd * 0.25;
           if (sp.saw) {                                   // 톱니 — 가장자리에 이가 난다
             for (let t2 = 0; t2 < 3; t2++) {
-              box(0.09, 0.05, 0.09, green, x + sd * (0.13 + t2 * 0.15), y + 0.02, z + 0.13, g);
+              box(0.09, 0.05, 0.09, green, sd * (0.13 + t2 * 0.15), y + 0.02, 0.13, cg);
             }
           }
         }
       }
-      cands.push({ x, z, ok: sp.opp && sp.saw,
+      cands.push({ x, z, ok: sp.opp && sp.saw, grp: cg,
         why: !sp.opp ? WRONG.herb_alt : WRONG.herb_smooth });
     });
     return { kind: 'herb', dir, group: g, cands };
@@ -214,8 +299,7 @@ export function buildForage(scene, planet, spots) {
   const buildSalt = (dir, seed) => {
     const g = plant(dir);
     const specs = ['cube', 'hex', 'rough'];
-    let s = seed;
-    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rnd = mkRnd(seed);
     for (let i = specs.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
       const t = specs[i]; specs[i] = specs[j]; specs[j] = t;
@@ -224,31 +308,31 @@ export function buildForage(scene, planet, spots) {
     specs.forEach((sp, k) => {
       const a = (k / 3) * Math.PI * 2 + 0.6;
       const x = Math.sin(a) * 1.9, z = Math.cos(a) * 1.9;
+      const cg = cand(g, x, z);
       const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 0), rockM);
-      rock.position.set(x, 0.5, z); rock.castShadow = true; g.add(rock);
+      rock.position.y = 0.5; rock.castShadow = true; cg.add(rock);
       blocks.push({ g, x, z, r: 0.95 });
       // 빛나는 결 — 셋 다 빛난다. 이것만 보고는 못 고른다.
       for (let n = 0; n < 4; n++) {
         const a2 = (n / 4) * Math.PI * 2;
         const sh = box(0.22, 0.05, 0.22, saltM,
-          x + Math.sin(a2) * 0.6, 0.62 + (n % 2) * 0.18, z + Math.cos(a2) * 0.6, g);
+          Math.sin(a2) * 0.6, 0.62 + (n % 2) * 0.18, Math.cos(a2) * 0.6, cg);
         sh.rotation.y = a2;
       }
       // 발치의 **깨진 조각** — 여기에 답이 있다
       for (let n = 0; n < 5; n++) {
         const a2 = (n / 5) * Math.PI * 2 + 0.3;
-        const fx = x + Math.sin(a2) * 1.05, fz = z + Math.cos(a2) * 1.05;
         let frag;
         if (sp === 'cube') frag = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.22), saltM);
         else if (sp === 'hex') frag = new THREE.Mesh(
           new THREE.CylinderGeometry(0.14, 0.14, 0.32, 6), saltM);
         else frag = new THREE.Mesh(new THREE.IcosahedronGeometry(0.17, 0), saltM);
-        frag.position.set(fx, 0.12, fz);
+        frag.position.set(Math.sin(a2) * 1.05, 0.12, Math.cos(a2) * 1.05);
         if (sp !== 'cube') frag.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
         else frag.rotation.y = a2;                        // 정육면체는 반듯하게 놓인다
-        frag.castShadow = true; g.add(frag);
+        frag.castShadow = true; cg.add(frag);
       }
-      cands.push({ x, z, ok: sp === 'cube',
+      cands.push({ x, z, ok: sp === 'cube', grp: cg,
         why: sp === 'hex' ? WRONG.salt_hex : WRONG.salt_rough });
     });
     return { kind: 'salt', dir, group: g, cands };
@@ -257,8 +341,7 @@ export function buildForage(scene, planet, spots) {
   // 5) 덫 자리 — 흔적을 읽고 **미끼 접시**를 고른다
   const buildTrap = (dir, seed) => {
     const g = plant(dir);
-    let s = seed;
-    const rnd = () => (s = (s * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const rnd = mkRnd(seed);
     const beast = BEASTS[Math.floor(rnd() * BEASTS.length)];
     box(4.4, 0.08, 4.4, dirtM, 0, 0.025, 0, g);            // 다져진 땅
     // 발자국 — 한쪽으로 이어진다. 그 끝이 덫 자리다.
@@ -318,11 +401,83 @@ export function buildForage(scene, planet, spots) {
   const BUILD = { fruit: buildFruit, mushroom: buildMushroom, herb: buildHerb,
     salt: buildSalt, meat: buildTrap };
   for (const k of KINDS) { found[k.id] = false; bag[k.id] = 0; }
-  for (const sp of spots) {
-    const site = BUILD[sp.kind](sp.dir, sp.seed);
-    site.id = `${sp.kind}${sp.idx}`;
+
+  // 자리를 짓는다. 블록(부딪히는 것)은 어느 자리 것인지 표시해 둔다 —
+  // 다시 지을 때 옛 블록을 걷어내야 하니까.
+  let seedTick = 1;
+  const raise = (kind, dir, seed, id) => {
+    const before = blocks.length;
+    const site = BUILD[kind](dir, seed);
+    for (let k = before; k < blocks.length; k++) blocks[k].site = id;
+    site.id = id; site.dir = dir; site.seed = seed; site.regrowT = -1;
+    return site;
+  };
+  for (const sp of spots) sites.push(raise(sp.kind, sp.dir, sp.seed, `${sp.kind}${sp.idx}`));
+
+  // ── 전설의 재료 셋 ───────────────────────────────────────────────────────
+  // 후보가 없다. 고를 것이 없으니 **찾는 것 자체가 문제**다.
+  // 멀리서 보이는 표식도 없다 — 있으면 그건 숨긴 게 아니라 안내판이다.
+  // 대신 가까이(18u) 가면 은은히 빛나서, 근처까지 왔다면 놓치지는 않는다.
+  const LEG = { icebloom: 0xa9d8ea, nightmoss: 0x59c48a, starstone: 0xc8a2e0 };
+  const buildLegend = (spec) => {
+    const g = plant(spec.dir);
+    const col = LEG[spec.id];
+    const glow = basic(col, 0.9);
+    const cg = cand(g, 0, 0);
+    if (spec.id === 'icebloom') {                 // 얼음꽃 — 바위 틈의 결정
+      const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7, 0), toon(0x8b8b93));
+      rk.position.y = 0.3; rk.castShadow = true; cg.add(rk);
+      for (let k = 0; k < 6; k++) {
+        const a = (k / 6) * Math.PI * 2;
+        const sp2 = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.62, 4), glow);
+        sp2.position.set(Math.sin(a) * 0.24, 0.85, Math.cos(a) * 0.24);
+        sp2.rotation.z = -Math.sin(a) * 0.5; sp2.rotation.x = Math.cos(a) * 0.5;
+        cg.add(sp2);
+      }
+    } else if (spec.id === 'nightmoss') {         // 밤빛이끼 — 바닥에 번진 빛
+      const patch = new THREE.Mesh(new THREE.CircleGeometry(1.15, 12), basic(col, 0.5));
+      patch.rotation.x = -Math.PI / 2; patch.position.y = 0.03; cg.add(patch);
+      for (let k = 0; k < 9; k++) {
+        const a = (k / 9) * Math.PI * 2 + 0.3, r2 = 0.25 + (k % 3) * 0.28;
+        const b2 = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), glow);
+        b2.position.set(Math.sin(a) * r2, 0.14, Math.cos(a) * r2); cg.add(b2);
+      }
+    } else {                                      // 별똥돌 — 얕은 구덩이 속 갈라진 돌
+      const crater = new THREE.Mesh(new THREE.RingGeometry(1.1, 1.9, 14), toon(0x6a5843));
+      crater.rotation.x = -Math.PI / 2; crater.position.y = 0.03; cg.add(crater);
+      const rk = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 0), toon(0x3a3540));
+      rk.position.y = 0.42; rk.castShadow = true; cg.add(rk);
+      for (const ax of [0, 1]) {
+        const seam = box(ax ? 1.3 : 0.09, 0.09, ax ? 0.09 : 1.3, glow, 0, 0.5, 0, cg);
+        seam.rotation.y = ax * 0.6;
+      }
+    }
+    const lt = new THREE.PointLight(col, 3.2, 9, 1.8);
+    lt.position.y = 0.8; cg.add(lt);
+    return { kind: spec.id, dir: spec.dir, group: g, legend: true,
+      cands: [{ x: 0, z: 0, ok: true, why: '', grp: cg }] };
+  };
+  for (const spec of legendSpots || []) {
+    found[spec.id] = false; bag[spec.id] = 0;
+    const before = blocks.length;
+    const site = buildLegend(spec);
+    for (let k = before; k < blocks.length; k++) blocks[k].site = spec.id;
+    site.id = spec.id; site.seed = 1; site.regrowT = -1;
+    BUILD[spec.id] = () => buildLegend(spec);      // 다시 날 때도 같은 모양
     sites.push(site);
   }
+
+  // 다시 난다 — 자리는 그대로, **문제만 새로 섞인다.**
+  const regrow = (site) => {
+    const i = sites.indexOf(site);
+    if (i < 0) return;
+    scene.remove(site.group);
+    site.group.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
+    for (let k = blocks.length - 1; k >= 0; k--) if (blocks[k].site === site.id) blocks.splice(k, 1);
+    // 새 씨앗 — 같은 자리라도 답이 달라진다
+    const seed = (site.seed * 7919 + seedTick++ * 104729) % 2147483647;
+    sites[i] = raise(site.kind, site.dir, seed, site.id);
+  };
 
   // ── 판정 ─────────────────────────────────────────────────────────────────
   const _up = new THREE.Vector3(), _p = new THREE.Vector3();
@@ -390,7 +545,12 @@ export function buildForage(scene, planet, spots) {
     RULES,
 
     update(dt) {
-      for (const s of sites) {
+      for (let i = sites.length - 1; i >= 0; i--) {
+        const s = sites[i];
+        if (s.regrowT > 0) {
+          s.regrowT -= dt;
+          if (s.regrowT <= 0) { regrow(s); continue; }
+        }
         if (s.kind !== 'meat' || !s.trap.set) continue;
         s.trap.t += dt;
         if (s.trap.t >= TRAP_WAIT && !s.trap.caught.visible) {
@@ -428,10 +588,17 @@ export function buildForage(scene, planet, spots) {
         }
         return `🐾 발자국과 먹다 만 것. 무엇이 지나갔나 — ${RULES.meat}`;
       }
+      if (s.legend) {
+        const c2 = s.cands[0];
+        if (c2.taken) return `🌱 가져갔다 — 다시 나기까지 ${Math.max(1, Math.ceil(s.regrowT))}초`;
+        if (Math.hypot(l.x, l.z) > REACH) return '✨ 뭔가 빛난다';
+        const lg = LEGEND.find((x) => x.id === s.kind);
+        return `E — ${josa(lg.label, '을')} 가져가기`;
+      }
       const lab = KINDS.find((k) => k.id === s.kind).label;
       const c = nearestOf(s.cands, l);
       if (!c) return `🌿 ${lab} 자리 — ${RULES[s.kind]}`;
-      if (c.taken) return '이미 가져갔다';
+      if (c.taken) return `🌱 가져갔다 — 다시 나기까지 ${Math.max(1, Math.ceil(s.regrowT))}초`;
       return `E — 이걸로 고르기 (${lab})`;
     },
 
@@ -467,7 +634,8 @@ export function buildForage(scene, planet, spots) {
       if (!c || c.taken) return null;
       if (!c.ok) return { kind: s.kind, ok: false, why: c.why };
       c.taken = true;
-      if (c.mesh) c.mesh.visible = false;
+      if (c.grp) c.grp.visible = false;
+      s.regrowT = REGROW;                 // 이 자리는 잠시 뒤 새로 난다
       bag[s.kind]++;
       const first = !found[s.kind];
       found[s.kind] = true;

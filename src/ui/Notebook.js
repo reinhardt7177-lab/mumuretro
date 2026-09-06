@@ -9,7 +9,7 @@
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
-import { KINDS as FORAGE_KINDS } from '../data/forage.js';
+import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED } from '../data/forage.js';
 
 const CSS = `
 #nb{position:fixed;inset:0;z-index:40;display:none;place-items:center;
@@ -59,6 +59,19 @@ const CSS = `
 #nb .fg .rule{font-family:"Nanum Pen Script","Gowun Batang",cursive;
   font-size:17px;line-height:1.4;color:#2f5490;margin-top:1px}
 #nb .fg .said{font-size:12.5px;color:#5c666b;margin-top:2px}
+#nb .lg{padding:14px 24px;border-top:2px solid #23272a;background:
+  linear-gradient(180deg,rgba(180,170,140,.13),transparent 60%)}
+#nb .lg h4{margin:0 0 8px;font-size:12px;letter-spacing:.06em;color:#7d878c;font-weight:600}
+#nb .lg .sealed{font-family:"Nanum Pen Script","Gowun Batang",cursive;
+  font-size:19px;color:#9aa3a7;line-height:1.5}
+#nb .lg .said2{font-family:"Nanum Pen Script","Gowun Batang",cursive;
+  font-size:19px;color:#2f5490;line-height:1.5;margin-bottom:9px}
+#nb .lg .row3{display:grid;grid-template-columns:14px 1fr;gap:0 10px;padding:6px 0}
+#nb .lg .dot{width:10px;height:10px;border-radius:2px;margin-top:5px;background:#cfd2c8;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+#nb .lg .nm{font-size:13.5px;font-weight:600;color:#3d474c}
+#nb .lg .nm.todo{color:#a6aeb2;font-weight:400}
+#nb .lg .where{font-size:12.5px;color:#5c666b;margin-top:1px}
 #nb .memo{padding:16px 24px;font-family:"Nanum Pen Script","Gowun Batang",cursive;
   font-size:21px;line-height:1.5;color:#2f5490;border-top:1px dashed #d8dad2}
 @media (max-width:640px){#nb .q{font-size:20px}#nb .a{font-size:13.5px}}`;
@@ -83,6 +96,7 @@ export function buildNotebook(shrines, specs, getForage) {
       <span class="why">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</span>
     </div>
     <div class="fg"><h4 id="nbFgN">채집</h4><div id="nbFg"></div></div>
+    <div class="lg"><h4 id="nbLgN">마지막 장</h4><div id="nbLg"></div></div>
     <div class="memo" id="nbMemo"></div>
     <div class="ft"><span>앞사람의 글씨는 파란색이에요</span>
       <span class="close">N — 닫기</span></div>
@@ -93,6 +107,8 @@ export function buildNotebook(shrines, specs, getForage) {
   const elMemo = el.querySelector('#nbMemo');
   const elFg = el.querySelector('#nbFg');
   const elFgN = el.querySelector('#nbFgN');
+  const elLg = el.querySelector('#nbLg');
+  const elLgN = el.querySelector('#nbLgN');
 
   let open = false, has = false;
   // 앞사람 글씨는 **화자를 가르는 장치**다. 처음 열 때 받아오면 그 한 번은
@@ -134,6 +150,26 @@ export function buildNotebook(shrines, specs, getForage) {
         <div><div class="nm${has ? '' : ' todo'}">${k.label}</div>${body}</div></div>`;
     }).join('');
     void fgOn;
+
+    // ── 마지막 장 ──────────────────────────────────────────────────────
+    // ★ 사당 여섯을 다 깨야 열린다. 열쇠는 구슬이 아니라 **글씨**다 — 앞사람이
+    //   끝까지 간 사람에게만 남긴 장이고, 그 장에도 자리는 안 적혀 있다.
+    //   "가장 높은 데, 가장 깊은 데, 가장 먼 데" 세 마디가 전부다.
+    //   지도는 다녀온 데만 기록하니, 이 셋을 찾으려면 먼저 걸어야 한다 —
+    //   그때 비로소 안개 지도가 장식이 아니라 도구가 된다.
+    const open6 = done >= specs.length;
+    elLgN.textContent = open6
+      ? `마지막 장 — ${LEGEND.filter((x) => fg && fg.found[x.id]).length}/${LEGEND.length}`
+      : '마지막 장';
+    elLg.innerHTML = open6
+      ? `<div class="said2">${LEGEND_NOTE.join('<br>')}</div>` + LEGEND.map((x) => {
+        const has = fg && fg.found[x.id];
+        return `<div class="row3">
+          <div class="dot" style="${has ? `background:${x.tint}` : ''}"></div>
+          <div><div class="nm${has ? '' : ' todo'}">${has ? x.label : '?'}</div>
+          <div class="where">${has ? x.got : x.hint}</div></div></div>`;
+      }).join('')
+      : `<div class="sealed">${LEGEND_LOCKED}</div>`;
 
     // 마지막 장 — 여섯을 다 채우기 전에는 앞사람이 무슨 생각이었는지 알 수 없다.
     elMemo.textContent = done >= specs.length

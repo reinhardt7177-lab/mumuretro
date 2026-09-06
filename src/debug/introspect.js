@@ -506,6 +506,7 @@ export function installDebug(ctx) {
     //
     //   을/를·과/와만 본다. 은/는·이/가는 "작은"·"높이"처럼 낱말 끝과 겹쳐
     //   오탐이 난다 — 오탐이 나는 검사는 곧 아무도 안 보는 검사가 된다.
+    let fgOK = true;
     let josaOK = true;
     const josaBad = new Set();
     {
@@ -592,8 +593,58 @@ export function installDebug(ctx) {
         + ` -> ${josaOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── L 들이 성립하는가 ─────────────────────────────────────────────────
+    // ★ 이 검사가 생긴 이유 셋. 전부 **눈으로는 안 보이던 것**이다.
+    //   ① 채집물이 갈래당 평생 3개뿐인데 덫 미끼는 틀리면 재료를 먹었다.
+    //      열매를 세 번 날리면 고기를 **영영** 못 얻는 막다른 길이었다.
+    //      "다시 난다"로 구조를 바꿨으니, 그 구조가 살아 있는지 검사가 지킨다.
+    //   ② 전설 셋은 최고점·최저점·대척점이어야 단서("가장 높은/깊은/먼 데")가
+    //      말이 된다. 지형을 손대면 조용히 어긋난다.
+    //   ③ 자리마다 정답이 정확히 하나여야 한다. 둘이면 규칙이 거짓말이 된다.
+    const fgBad = [];
+    if (ctx.forage) {
+      const fg2 = ctx.forage;
+      // ① 자리마다 정답이 정확히 하나
+      for (const b of fg2.audit()) { fgOK = false; fgBad.push(b); }
+      // ★ 여기 난수 균등 검사를 넣었다가 뺐다. **옛 난수도 그 검사를 통과했다** —
+      //   깨진 것을 못 잡는 검사는 있으나 마나가 아니라, 있으면 안심하게 만들어
+      //   더 나쁘다. 난수는 코드를 봐야 아는 것이지 히스토그램으로 아는 게 아니었다.
+      // ② 다시 나는 구조가 살아 있는가 — 캐는 갈래는 전부 regrowT를 갖는다
+      for (const st of fg2.sites) {
+        if (st.regrowT === undefined) { fgOK = false; fgBad.push(`${st.id} 재생성 없음`); }
+      }
+      // ③ 전설 셋이 정말 최고점·최저점·대척점인가
+      const leg = fg2.sites.filter((st) => st.legend);
+      if (leg.length !== 3) { fgOK = false; fgBad.push(`전설 ${leg.length}곳`); }
+      else {
+        let hiH = -1e9, loH = 1e9;
+        const d3 = new THREE.Vector3(), ga = Math.PI * (3 - Math.sqrt(5));
+        for (let i = 0; i < 12000; i++) {
+          const y = 1 - (i / 11999) * 2, rr = Math.sqrt(Math.max(0, 1 - y * y)), th = ga * i;
+          d3.set(Math.cos(th) * rr, y, Math.sin(th) * rr);
+          const h = planet.heightAt(d3);
+          if (h > hiH) hiH = h;
+          if (h < loH) loH = h;
+        }
+        const by = (id) => leg.find((st) => st.id === id);
+        const hh = planet.heightAt(by('icebloom').dir);
+        const ll = planet.heightAt(by('nightmoss').dir);
+        // 서 있을 자리로 옮기느라 정점에서 조금 내려온다 — 전체 고도차의 25%까지 봐준다
+        const band = (hiH - loH) * 0.25;
+        if (hh < hiH - band) { fgOK = false; fgBad.push(`얼음꽃 높이 ${hh.toFixed(1)}<${(hiH - band).toFixed(1)}`); }
+        if (ll > loH + band) { fgOK = false; fgBad.push(`밤빛이끼 깊이 ${ll.toFixed(1)}>${(loH + band).toFixed(1)}`); }
+        if (ctx.landing) {
+          const degFar = by('starstone').dir.angleTo(ctx.landing.dir) * 180 / Math.PI;
+          if (degFar < 165) { fgOK = false; fgBad.push(`별똥돌 ${degFar.toFixed(0)}° (대척점 아님)`); }
+        }
+      }
+      log.push('L 들 — 정답 하나 · 다시 남 · 전설 셋 자리'
+        + (fgOK ? ' 전부' : ` 어긋남 ${fgBad.slice(0, 3).join(' | ')}`)
+        + ` -> ${fgOK ? 'PASS' : 'FAIL'}`);
+    }
+
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
-      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK;
+      && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && fgOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
