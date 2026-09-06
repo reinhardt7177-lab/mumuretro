@@ -397,6 +397,24 @@ export class WaterGod {
     const top = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.14, 8), this.altarMat);
     top.position.set(this.altar.x, 1.17, this.altar.z); g.add(top);
 
+    // ★ 예전엔 신이 저절로 2.6초마다 바뀌었고 아이는 표지와 같아지는 **순간을 기다려
+    //   눌렀다.** 반응 게임이지 단원(온도가 상태를 정한다)이 아니었다. 셋째 방에서
+    //   손잡이로 온도를 바꿔 밸브를 채웠는데, 신전에 오면 그 배움이 쓰이지 않았다.
+    //   이제 신은 저절로 안 바뀐다. **제단 옆 손잡이로 온도를 올리고 내려** 신을
+    //   표지의 모습으로 만든 뒤 누른다. 앞 방의 배움이 곧 마지막 문제다(젤다).
+    this.lever = { x: cx - 2.6, z: this.gz + 4.6 };
+    const lp = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.3, 0.36), dark);
+    lp.position.set(this.lever.x, 0.65, this.lever.z); g.add(lp);
+    this.leverMat = glowMat(TEMPS[0].color);
+    this.leverKnob = new THREE.Mesh(new THREE.OctahedronGeometry(0.3, 0), this.leverMat);
+    this.leverKnob.position.set(this.lever.x, 1.55, this.lever.z); g.add(this.leverKnob);
+    // 온도계 — 세 눈금. 어디에 있는지 멀리서도 보인다.
+    this.marks = TEMPS.map((t, i) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.12), glowMat(t.color));
+      m.position.set(this.lever.x, 0.35 + i * 0.4, this.lever.z + 0.3); g.add(m);
+      return m;
+    });
+
     // 맞힌 횟수 — 구슬 셋
     this.pips = [];
     for (let i = 0; i < NEED; i++) {
@@ -412,31 +430,37 @@ export class WaterGod {
   }
 
   update(dt) {
-    this.t += dt;
-    if (this.t >= CYCLE) {
-      this.t = 0;
-      this.si = (this.si + 1) % TEMPS.length;
-      this.godMat.color.set(TEMPS[this.si].color);
-    }
     this.god.rotation.y += dt * 0.5;
+    this.leverKnob.position.y = 1.2 + this.si * 0.35;      // 손잡이 높이가 곧 온도
     if (this.flash > 0) this.flash -= dt;
     this.altarMat.color.set(this.flash > 0 ? 0xe0736b
       : (this.si === this.want ? 0xffd27a : 0x3d8fc4));
     return {};
   }
 
-  _atAltar(pos) { return Math.hypot(pos.x - this.altar.x, pos.z - this.altar.z) < this.REACH; }
+  _atAltar(pos) { return Math.hypot(pos.x - this.altar.x, pos.z - this.altar.z) < 1.9; }
+  _atLever(pos) { return Math.hypot(pos.x - this.lever.x, pos.z - this.lever.z) < 1.6; }
+
+  // 손잡이 한 칸 = 온도 한 단계. 얼음 → 물 → 수증기 → 얼음.
+  _setTemp(i) {
+    this.si = (i + TEMPS.length) % TEMPS.length;
+    this.godMat.color.set(TEMPS[this.si].color);
+    this.leverMat.color.set(TEMPS[this.si].color);
+  }
 
   prompt(pos) {
     if (this.solvedBy()) return null;
-    const w = TEMPS[this.want].name, now = TEMPS[this.si].name;
-    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 신이 ${w}일 때 제단을 눌러라`;
-    if (this.flash > 0) return `${now}였다 — 다시 기다려라 (${this.got}/${NEED})`;
-    return `E — 지금 신은 ${now} · 표지는 ${w} (${this.got}/${NEED})`;
+    const w = TEMPS[this.want].name, now = TEMPS[this.si];
+    if (this._atLever(pos)) return `E — 온도 올리기 (지금 ${now.c}° · ${now.name})`;
+    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 손잡이로 신을 ${w}로 만들고 제단을 눌러라`;
+    if (this.flash > 0) return `${now.name}였다 — 표지는 ${w}. 온도를 바꿔라 (${this.got}/${NEED})`;
+    return `E — 지금 신은 ${now.name} · 표지는 ${w} (${this.got}/${NEED})`;
   }
 
   interact(pos) {
-    if (!this._atAltar(pos) || this.solvedBy()) return false;
+    if (this.solvedBy()) return false;
+    if (this._atLever(pos)) { this._setTemp(this.si + 1); return true; }
+    if (!this._atAltar(pos)) return false;
     if (this.si !== this.want) { this.flash = 0.8; return true; }
     this.pips[this.got].material.color.set(0xffd27a);
     this.got++;
@@ -452,7 +476,8 @@ export class WaterGod {
 
   solvedBy() { return this.got >= NEED; }
   restart() {
-    this.got = 0; this.want = randInt(TEMPS.length); this.si = 0; this.t = 0; this.flash = 0;
+    this.got = 0; this.want = randInt(TEMPS.length); this.t = 0; this.flash = 0;
+    this._setTemp(0);
     this.signMat.color.set(TEMPS[this.want].color);
     for (const p of this.pips) p.material.color.set(0x3a4a52);
   }

@@ -393,6 +393,13 @@ export class FireGod {
     this.obstacles = [{ x: cx, z: this.gz, r: 2.9 }];
     this.prizePos = new THREE.Vector3(cx, 0, this.gz + 8.6);
     this.solved = false;
+    // ★ 젤다 신전의 마지막은 새 기믹이 아니라 **앞 방을 합쳐 묻는 자리**다.
+    //   이 신전은 수로 퍼즐 셋뿐이라 첫 방(예진→본진)과 아무 관계가 없었다.
+    //   이제 신이 주기적으로 흔들린다. 예진이 오면 곧 본진이고, **본진 중엔
+    //   수로를 못 돌린다** — 손이 떨려서. 첫 방에서 배운 "작은 흔들림이 먼저
+    //   온다"를 여기서 다시 써야 한다. 전조를 읽고 그 사이에 돌려라.
+    this.phase = 'calm'; this.pt = 0;
+    this.CALM = 6.5; this.FORE = 1.4; this.MAIN = 1.6;
     this._flow();
   }
 
@@ -425,16 +432,34 @@ export class FireGod {
     return best;
   }
 
-  update() { return {}; }
+  update(dt) {
+    if (this.solved) return {};
+    this.pt += dt;
+    const len = this.phase === 'calm' ? this.CALM : this.phase === 'fore' ? this.FORE : this.MAIN;
+    if (this.pt >= len) {
+      this.pt = 0;
+      this.phase = this.phase === 'calm' ? 'fore' : this.phase === 'fore' ? 'main' : 'calm';
+    }
+    // 예진은 분화구가 깜빡이고, 본진은 조각이 들썩인다 — 소리 없이 눈으로 온다.
+    const k = this.phase === 'main' ? Math.sin(this.pt * 42) * 0.06 : 0;
+    for (const c of this.cells) c.grp.position.y = 0.25 + Math.abs(k) * 2;
+    this.crater.material.color.set(this.phase === 'fore'
+      ? (Math.floor(this.pt * 8) % 2 ? 0xfff0b0 : 0xe8664a) : (this.solved ? 0x8e2a12 : 0xe8664a));
+    return {};
+  }
 
   prompt(pos) {
     if (this.solved) return null;
+    if (this.phase === 'main') return '⚠ 본진이다 — 손이 떨려 못 돌린다. 지나갈 때까지';
     const c = this._near(pos);
-    if (!c) return `🌋 용암이 ${this.reach}번째 수로까지 왔다 — 길을 이어라`;
-    return `E — ${c.name} 돌리기 (${c.rot * 90}°)`;
+    const warn = this.phase === 'fore' ? '⚠ 예진 — 곧 흔들린다 · ' : '';
+    if (!c) return `${warn}🌋 용암이 ${this.reach}번째 수로까지 왔다 — 길을 이어라`;
+    return `${warn}E — ${c.name} 돌리기 (${c.rot * 90}°)`;
   }
 
   interact(pos) {
+    // 본진 중엔 안 돌아간다. 벌이 아니다 — 때를 읽으라는 것이다.
+    if (this.phase === 'main') return true;
     const c = this._near(pos);
     if (!c) return false;
     c.rot = (c.rot + 1) % 4;
@@ -445,7 +470,8 @@ export class FireGod {
 
   solvedBy() { return this.solved; }
   restart() {
-    for (const c of this.cells) { c.rot = 0; c.grp.rotation.y = 0; }
+    for (const c of this.cells) { c.rot = 0; c.grp.rotation.y = 0; c.grp.position.y = 0.25; }
+    this.phase = 'calm'; this.pt = 0;
     this._flow();
   }
 }

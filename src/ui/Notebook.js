@@ -23,6 +23,7 @@ import { KEEPERS, ENDING, OPENING } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
 import { SHRINE_THEMES } from '../data/lighting.js';
+import { markSvg } from '../data/marks.js';
 import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
   from '../data/forage.js';
 
@@ -306,9 +307,14 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
       const a = cleared
         ? `<div class="qa"><b style="color:${TINT[sp.id]}">${note.a}</b></div>`
         : '<div class="qa blank">— 아직 비어 있다</div>';
+      // ★ 표지. 다섯 색의 문과 마지막 신이 사당을 **모양**으로 가리키는데 수첩에는
+      //   색만 있었다 — 단서가 한 단계 비어 "기억 못 하면 25번 눌러서 푸는 방"이었다.
+      //   깬 사당의 답 옆에 그 사당의 표지를 찍는다. 답을 흘리는 게 아니라
+      //   아이가 직접 적은 것을 다시 읽게 하는 것이다(marks.js).
+      const mk = cleared ? markSvg(sp.id, TINT[sp.id]) : '';
       return `<div class="qrow"${cleared ? ` data-k="ask:${sp.id}"` : ''}>
         <div class="qno">${String(i + 1).padStart(2, '0')}</div>
-        <div><div class="qq hw">${note.q}</div>${a}</div></div>`;
+        <div><div class="qq hw">${note.q}</div>${a ? a.replace('<b ', mk + '<b ') : a}</div></div>`;
     }).join('');
   };
 
@@ -547,11 +553,15 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
     // ── 검사용 ──────────────────────────────────────────────────────────
     // 검사 M — 면마다 스크롤이 생기지 않는가. pageH를 주면 그 높이로 접어 놓고 잰다
     // (컨테이너 질의라 실제로 접힌 모습이 나온다).
-    pageMetrics(pageH) {
+    // ★ 높이만 고정하고 폭은 창에 맡겼더니 검사가 **창 폭에 따라 흔들렸다** —
+    //   미리보기 창이 279px로 좁아지자 물음 면이 +71px. 어떤 폰도 그렇게 좁지 않다.
+    //   폭도 고정해서 잰다(360 = 가장 좁은 폰, 700 = 설계 폭).
+    pageMetrics(pageH, pageW) {
       const was = open, wasTab = tab, wasSel = mailSel;
       const page = el.querySelector('.page');
-      const savedH = page.style.height;
+      const savedH = page.style.height, savedW = page.style.width;
       if (pageH) page.style.height = `${pageH}px`;
+      if (pageW) page.style.width = `${pageW}px`;
       measuring = true;
       const out = {};
       if (!open) { open = true; el.classList.add('show'); }
@@ -575,7 +585,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
         }
       }
       tab = wasTab; mailSel = wasSel;
-      page.style.height = savedH;
+      page.style.height = savedH; page.style.width = savedW;
       measuring = false;
       if (!was) { open = false; el.classList.remove('show'); } else draw();
       return out;
@@ -584,6 +594,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
     dots: () => TABS.filter((t) => !tabBtns.find((b) => b.dataset.tab === t.id)
       .querySelector('.dot').hidden).map((t) => t.id),
     flashed: () => [...elBody.querySelectorAll('.nu')].map((n) => n.dataset.k),
+    marks: () => elBody.querySelectorAll('svg[aria-label$="표지"]').length,
     // ★ 검사가 수첩을 열면 그때 **반짝임이 한 번 소모된다.** 검사가 지나간 뒤
     //   아이가 볼 것이 없어지면 그건 검사가 게임을 망가뜨린 것이다.
     //   검사가 끝나고 원래대로 돌려놓을 수 있게 열어 둔다.

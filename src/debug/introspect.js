@@ -804,7 +804,8 @@ export function installDebug(ctx) {
       const savedFound = fg ? { ...fg.found } : null;
       const savedCaught = fg ? { ...fg.caught } : null;
       // 440 = 창 높이 500px일 때의 수첩 높이(88vh). 여기가 우리가 지키는 바닥이다.
-      for (const H of [440, 540, 660]) {
+      // 폭도 고정한다 — 창 폭에 따라 결과가 달라지는 검사는 검사가 아니다.
+      for (const W of [360, 700]) for (const H of [440, 540, 660]) {
         // 빈 상태와 꽉 찬 상태 둘 다 본다 — 채워지면서 넘치는 것이 진짜 사고다
         for (const full of [false, true]) {
           shr.forEach((s) => { s.cleared = full; });
@@ -812,7 +813,7 @@ export function installDebug(ctx) {
             for (const k in fg.found) fg.found[k] = full;
             for (const b in fg.caught) fg.caught[b] = full ? 1 : 0;
           }
-          const m = ctx.notebook.pageMetrics(H);
+          const m = ctx.notebook.pageMetrics(H, W);
           for (const id in m) {
             // ★ 편지 본문은 원래 굴러가도 되는 자리다(`.letter{overflow:auto}`) —
             //   편지는 쌓이고 길이도 제각각이라 목록에서 골라 펴는 구조다.
@@ -821,7 +822,7 @@ export function installDebug(ctx) {
             //   그건 검사가 내용을 검열하는 것이다. 면 자체는 어느 높이에서도 안 넘친다.
             if (id.includes(':편지') && H < 660) continue;
             const over = m[id].need - m[id].have;
-            if (over > 2) { nbOK = false; nbBad.push(`${H}px ${id}${full ? '(참)' : '(빔)'} +${over}`); }
+            if (over > 2) { nbOK = false; nbBad.push(`${W}×${H} ${id}${full ? '(참)' : '(빔)'} +${over}`); }
           }
         }
       }
@@ -966,19 +967,73 @@ export function installDebug(ctx) {
         + (pOK ? ' 전부' : ` — ${pBad.join(' / ')}`) + ` -> ${pOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── Q 신전이 앞 방을 합쳐 묻는가 · 수첩이 도구인가 ─────────────────────
+    // ★ 젤다에서 빌린 한 줄 — 마지막은 새 기믹이 아니라 앞 방을 합쳐 묻는 자리다.
+    //   ① 용암의 신: 본진 중엔 수로가 안 돌아가야 한다(첫 방의 전조 읽기가 쓰인다).
+    //   ② 물의 신: 신은 저절로 안 바뀌고 손잡이가 온도를 바꾼다. 표지와 다르면 안 센다.
+    //   ③ 수첩: 깬 사당의 답 옆에 표지가 찍힌다(다섯 색의 문의 단서).
+    let qOK = true; const qBad = [];
+    if (ctx.roomFor && ctx.shrines && ctx.notebook) {
+      const fg5 = ctx.roomFor(ctx.shrines.shrines[4]).final;
+      if (!fg5 || !fg5.cells || fg5.phase === undefined) { qOK = false; qBad.push('용암의 신 주기 없음'); }
+      else {
+        const c = fg5.cells[0]; const r0 = c.rot;
+        fg5.phase = 'main'; fg5.interact({ x: c.x, z: c.z });
+        if (c.rot !== r0) { qOK = false; qBad.push('본진 중에 수로가 돌아감'); }
+        fg5.phase = 'calm'; fg5.interact({ x: c.x, z: c.z });
+        if (c.rot === r0) { qOK = false; qBad.push('고요할 때도 수로가 안 돌아감'); }
+        fg5.restart();
+      }
+      const wg = ctx.roomFor(ctx.shrines.shrines[3]).final;
+      if (!wg || !wg.lever) { qOK = false; qBad.push('물의 신 손잡이 없음'); }
+      else {
+        wg.restart();
+        const s0 = wg.si;
+        wg.interact({ x: wg.lever.x, z: wg.lever.z });
+        if (wg.si === s0) { qOK = false; qBad.push('손잡이가 온도를 안 바꿈'); }
+        // 저절로 바뀌지 않는가
+        const s1 = wg.si; for (let i = 0; i < 300; i++) wg.update(1 / 60);
+        if (wg.si !== s1) { qOK = false; qBad.push('신이 저절로 바뀜'); }
+        // 표지와 다를 때 안 세고, 같을 때 센다
+        while (wg.si === wg.want) wg.interact({ x: wg.lever.x, z: wg.lever.z });
+        const g0 = wg.got; wg.interact({ x: wg.altar.x, z: wg.altar.z });
+        if (wg.got !== g0) { qOK = false; qBad.push('표지와 다른데 셈'); }
+        while (wg.si !== wg.want) wg.interact({ x: wg.lever.x, z: wg.lever.z });
+        wg.flash = 0; wg.interact({ x: wg.altar.x, z: wg.altar.z });
+        if (wg.got !== g0 + 1) { qOK = false; qBad.push('표지와 같은데 안 셈'); }
+        wg.restart();
+      }
+      if (ctx.notebook.marks) {
+        const shr = ctx.shrines.shrines;
+        const saved = shr.map((x) => x.cleared);
+        const wasHas = ctx.notebook.has; ctx.notebook.setHas(true);
+        const st = ctx.notebook._state && ctx.notebook._state();
+        shr.forEach((x) => { x.cleared = true; });
+        ctx.notebook.go('ask'); ctx.notebook.setOpen(true);
+        const n = ctx.notebook.marks();
+        ctx.notebook.setOpen(false);
+        shr.forEach((x, i) => { x.cleared = saved[i]; });
+        if (st && ctx.notebook._restore) ctx.notebook._restore(st);
+        ctx.notebook.setHas(wasHas);
+        if (n !== 5) { qOK = false; qBad.push(`수첩 표지 ${n}개(5여야 — 시간의 사당은 표지가 없다)`); }
+      }
+      log.push('Q 신전이 앞 방을 합친다 · 수첩이 도구다'
+        + (qOK ? ' 전부' : ` — ${qBad.join(' / ')}`) + ` -> ${qOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOP'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQ'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~P 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~Q 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && coverOK;
+      && tOK && rbOK && pOK && qOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 
