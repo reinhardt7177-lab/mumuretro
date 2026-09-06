@@ -114,11 +114,15 @@ export const LAB = {
 //   ground       섬의 바닥돌 · rim 섬 가장자리·절벽
 //   sun          해 색 · sunI 세기 · sunEl 고도(°) · sunAz 방위(°)
 //   cloud        구름 색 · stars 별 개수(0이면 낮)
+// ink — 수첩 종이 위에 적히는 그 사당의 잉크색. glow와 **같은 색상, 어두운 명도**다.
+//   ★ 예전엔 Notebook.js에 TINT가 따로 하드코딩돼 있었다. 그림자 사당은 빛기둥이
+//     뼈 흰색인데 수첩 글씨는 카키였다 — 다섯 색의 문의 단서가 거기서 끊겼다.
+//     "색은 여기에만 산다"를 우리가 어겼던 것이다.
 export const SHRINE_THEMES = {
   // 01 물체의 무게 — 바람의 신전. 가장 높은 하늘, 흰 구름, 청록.
   balance: {
     stone: 0x8c8578, stoneDark: 0x6b6559, stoneLite: 0xa9a294,
-    glow: 0x6fe3d2, glowDim: 0x3fa89b,
+    glow: 0x6fe3d2, glowDim: 0x3fa89b, ink: 0x1d6a5e,
     bg: 0x0b1216, amb: [0x5d7a86, 0x2a2620, 0.50], lamp: 1.0,
     open: { top: 0x4f9fe0, horizon: 0xd9ecf6, ground: 0xb9ad98, rim: 0x7a6f5e,
       sun: 0xfff2dc, sunI: 2.2, sunEl: 48, sunAz: -35, cloud: 0xffffff, stars: 0 },
@@ -126,7 +130,7 @@ export const SHRINE_THEMES = {
   // 02 그림자와 거울 — 거의 완전한 어둠. 뼈처럼 흰 빛 하나.
   shadow: {
     stone: 0x3f3d38, stoneDark: 0x232220, stoneLite: 0x55524a,
-    glow: 0xe9e3cd, glowDim: 0x8b8571,
+    glow: 0xe9e3cd, glowDim: 0x8b8571, ink: 0x7a7258,
     bg: 0x03050a, amb: [0x1c2430, 0x060608, 0.12], lamp: 0.30,
     // 밤의 들판. 어둠이 길인 사당이라 해 대신 낮은 달 — 그림자가 길게 눕는다.
     open: { top: 0x070b1a, horizon: 0x1f2a48, ground: 0x2c2c33, rim: 0x16161c,
@@ -135,7 +139,7 @@ export const SHRINE_THEMES = {
   // 03 혼합물의 분리 — 모래와 황토. 먼지 낀 작업장.
   sift: {
     stone: 0xa08a63, stoneDark: 0x6f5d3f, stoneLite: 0xc2ab7e,
-    glow: 0xe0a955, glowDim: 0x9c6f2c,
+    glow: 0xe0a955, glowDim: 0x9c6f2c, ink: 0x95610f,
     bg: 0x120e08, amb: [0x8a7550, 0x2a2016, 0.55], lamp: 1.0,
     // 사막 메사, 늦은 오후. 번개의 신전 자리다.
     open: { top: 0xd98f4a, horizon: 0xf3d7a6, ground: 0xd6bf8a, rim: 0x8f6f3f,
@@ -144,7 +148,7 @@ export const SHRINE_THEMES = {
   // 04 물의 상태 변화 — 푸른 얼음, 반투명.
   water: {
     stone: 0x6f8a99, stoneDark: 0x445a68, stoneLite: 0x9ab4c2,
-    glow: 0x79c0e8, glowDim: 0x3d7ea8,
+    glow: 0x79c0e8, glowDim: 0x3d7ea8, ink: 0x186a97,
     bg: 0x061018, amb: [0x4a7d99, 0x14202a, 0.60], lamp: 1.0,
     // 물의 신전 — 레퍼런스 그 자체. 맑은 낮, 흰 돌섬, 물이 흐른다.
     open: { top: 0x3f8fdc, horizon: 0xcfe8f5, ground: 0xc9d3d5, rim: 0x6f8a99,
@@ -153,7 +157,7 @@ export const SHRINE_THEMES = {
   // 05 화산과 지진 — 붉음. 여섯 중 가장 밝고 가장 시끄럽다.
   fire: {
     stone: 0x6b4a42, stoneDark: 0x402924, stoneLite: 0x8f665a,
-    glow: 0xe8664a, glowDim: 0x9c2f1c,
+    glow: 0xe8664a, glowDim: 0x9c2f1c, ink: 0xac3620,
     bg: 0x140705, amb: [0x8a3a24, 0x1a0c08, 0.50], lamp: 1.10,
     // 화산 칼데라. 잿빛 하늘, 지평선만 붉게 달아오른다.
     open: { top: 0x3a2a2c, horizon: 0xc9613f, ground: 0x3d312e, rim: 0x1e1614,
@@ -162,7 +166,7 @@ export const SHRINE_THEMES = {
   // 06 지층과 화석 — 지하 깊은 곳. 자수정빛.
   strata: {
     stone: 0x6a5f72, stoneDark: 0x3f3748, stoneLite: 0x8b7f97,
-    glow: 0xab94df, glowDim: 0x6b52a0,
+    glow: 0xab94df, glowDim: 0x6b52a0, ink: 0x63499c,
     bg: 0x0a0710, amb: [0x453a5e, 0x0e0a14, 0.45], lamp: 0.90,
     // 협곡 황혼. 노출된 지층 절벽이 곧 이 사당의 교재다.
     open: { top: 0x3c2f6e, horizon: 0xd4a3b8, ground: 0x8a7c92, rim: 0x4a3f5a,

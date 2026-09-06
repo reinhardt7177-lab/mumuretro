@@ -24,12 +24,14 @@ import { QuakeGate, HexLavaGate, GeyserGate, FireGod } from './FireGates.js';
 import { ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
 import { StrataOrderGate } from './StrataOrder.js';
 import { BalanceScale } from './Scale.js';
+import { WeighGate } from './WeighGate.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
 import { addBoard } from './Signboard.js';
 
 const GATES = {
-  tile: TileGate, laser: LaserGate, plate: PlateGate,          // 01 균형
+  weigh: WeighGate, plate: PlateGate,                          // 01 균형
+  tile: TileGate, laser: LaserGate,                            // (내려 둠 — 무게와 무관했다)
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
   sieve: SieveGate, magnet: MagnetGate, evaporate: EvaporateGate,    // 03 분리
   freeze: FreezeGate, slide: SlideGate, steam: SteamGate,            // 04 물

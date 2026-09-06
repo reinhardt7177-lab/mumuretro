@@ -22,6 +22,7 @@ import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { KEEPERS, ENDING, OPENING } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
+import { SHRINE_THEMES } from '../data/lighting.js';
 import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
   from '../data/forage.js';
 
@@ -210,8 +211,10 @@ const CSS = CSS_BASE
   // 낮고 넓은 창에서는 수첩이 더 넓고 더 높아도 된다 — 남는 건 가로다.
   + `@media (max-height:520px){#nb .page{width:min(96vw,780px);height:95vh}}`;
 
-const TINT = { balance: '#1d6a5e', shadow: '#6a6650', sift: '#95610f',
-  water: '#186a97', fire: '#ac3620', strata: '#63499c' };
+// 사당의 잉크색은 lighting.js에 산다(§SHRINE_THEMES.ink). 여기 따로 적었다가
+// 빛기둥 색과 어긋났고, 다섯 색의 문의 단서가 끊겼다.
+const TINT = Object.fromEntries(Object.entries(SHRINE_THEMES)
+  .map(([id, t]) => [id, '#' + t.ink.toString(16).padStart(6, '0')]));
 
 const TABS = [
   { id: 'star', key: '1', name: '별' },

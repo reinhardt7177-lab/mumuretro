@@ -908,9 +908,10 @@ export function installDebug(ctx) {
     //   조용히 틀린 안내는 안내가 없는 것보다 나쁘다.
     let rbOK = true; const rbBad = [];
     if (ctx.brief && ctx.roomFor && ctx.shrines) {
-      let n = 0;
+      let n = 0, want = 0;
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
+        want += rm.spec.rooms.filter((r) => r.kind === 'room').length;
         const seen = new Set();
         for (const r of rm.dungeon.rects) {
           if (r.kind !== 'room' || seen.has(r.id)) continue;
@@ -923,10 +924,46 @@ export function installDebug(ctx) {
           if (!h || h.texts.length < 2) { rbOK = false; rbBad.push(`${where} 힌트 부족`); }
         }
       }
-      if (n !== 24) { rbOK = false; rbBad.push(`방 ${n}개(24여야)`); }
+      if (n !== want) { rbOK = false; rbBad.push(`방 ${n}개(${want}여야)`); }
       log.push(`O 방마다 그림·목표·조작 ${n}곳`
         + (rbOK ? ' 전부' : ` — ${rbBad.slice(0, 3).join(' / ')}`)
         + ` -> ${rbOK ? 'PASS' : 'FAIL'}`);
+    }
+
+    // ── P 재설계한 방이 정말 문제인가 ──────────────────────────────────────
+    // ★ 비평에서 잰 숫자 둘을 검사로 못 박는다.
+    //   ① 무게 순서 — 크기가 무게를 따라가면 **눈으로 풀린다.** 크기 순위와 무게
+    //      순위가 같은 자리가 셋 이상이면 그건 저울이 필요 없는 방이다.
+    //   ② 마지막 신 — 예전엔 아무 제단에나 올려도 됐다(사고 0). 표지가 다른 제단이
+    //      구슬을 **받지 않는지**, 그리고 받지 않을 때 구슬을 **뺏지 않는지** 본다.
+    let pOK = true; const pBad = [];
+    if (ctx.roomFor && ctx.shrines) {
+      const rmB = ctx.roomFor(ctx.shrines.shrines[0]);
+      const wg = rmB.gates.find((g) => g.room === 'r1');
+      if (!wg || !wg.gate.sizeAgreement) { pOK = false; pBad.push('무게 순서 방 없음'); }
+      else {
+        const agree = wg.gate.sizeAgreement();
+        if (agree > 2) { pOK = false; pBad.push(`무게 순서: 크기가 무게를 ${agree}/5 따라감`); }
+      }
+      const rmS = ctx.roomFor(ctx.shrines.shrines[5]);
+      const gg = rmS.final;
+      if (!gg || !gg.altars || !gg.orbs) { pOK = false; pBad.push('마지막 신 없음'); }
+      else {
+        const before = { held: gg.held, lit: gg.lit };
+        const altar = gg.altars[0];
+        const wrong = gg.orbs.find((o) => o.id !== altar.id);
+        gg.held = wrong;
+        gg.interact({ x: altar.x, z: altar.z });
+        if (altar.got) { pOK = false; pBad.push('마지막 신: 표지가 다른 구슬을 받음'); }
+        if (gg.held !== wrong) { pOK = false; pBad.push('마지막 신: 틀렸다고 구슬을 뺏음'); }
+        const right = gg.orbs.find((o) => o.id === altar.id);
+        gg.held = right; gg.no = 0;
+        gg.interact({ x: altar.x, z: altar.z });
+        if (altar.got !== right) { pOK = false; pBad.push('마지막 신: 맞는 구슬을 안 받음'); }
+        gg.restart(); gg.held = before.held;
+      }
+      log.push(`P 재설계 — 무게는 눈으로 안 풀리고 · 마지막 신은 표지를 본다`
+        + (pOK ? ' 전부' : ` — ${pBad.join(' / ')}`) + ` -> ${pOK ? 'PASS' : 'FAIL'}`);
     }
 
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
@@ -934,14 +971,14 @@ export function installDebug(ctx) {
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNO'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOP'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~O 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~P 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && coverOK;
+      && tOK && rbOK && pOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

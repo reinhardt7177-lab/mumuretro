@@ -294,18 +294,39 @@ export class GrandGod {
     });
 
     // ── 제단 다섯 — 반원으로 ────────────────────────────────────────────
-    this.altars = SHRINE_COLORS.map((s, i) => {
-      const a = -Math.PI / 2 + (i - 2) * 0.32;
-      const x = cx + Math.cos(a + Math.PI / 2) * 6.8;
-      const z = this.gz + 7.4 + Math.sin(a + Math.PI / 2) * 1.6;
+    // ★ 예전엔 **아무 제단에나** 올려도 됐다 — 힌트가 그렇다고 못 박기까지 했다.
+    //   게임의 마지막 방인데 손이 하는 일은 심부름 다섯 번이었다(비평 ①).
+    //   제단마다 색과 이름이 이미 있었는데 맞추라고 하지 않았을 뿐이다.
+    //   이제 제단은 **색을 감추고 표지만** 세운다. 다섯 색의 문에서 본 그 실루엣이다.
+    //   구슬은 이름(프롬프트)과 색을 가졌으니, 아이는 "분리의 구슬 = 체 모양 표지"를
+    //   떠올려야 한다. 여섯 사당을 마지막에 한 번 더 불러오는 의식이 된다.
+    //   자리도 섞는다 — 왼쪽부터 1·2·3·4·5면 표지를 안 봐도 자리로 풀린다.
+    const SIGNS = [
+      () => new THREE.BoxGeometry(1.0, 0.14, 0.2), () => new THREE.CircleGeometry(0.42, 14),
+      () => new THREE.CylinderGeometry(0.42, 0.42, 0.12, 12), () => new THREE.OctahedronGeometry(0.44, 0),
+      () => new THREE.ConeGeometry(0.44, 0.8, 6)];
+    const order = shuffle([0, 1, 2, 3, 4]);
+    // ★ 재 보니 제단 다섯이 x 5.4~6.8, z ±0.96 안에 **한 뭉치로** 몰려 있었다.
+    //   아무 데나 올려도 되던 때는 상관없었지만, 이제 표지를 읽고 골라야 하니
+    //   다섯이 갈려 보여야 한다. 신 앞에 넓은 호로 편다(x −5.9 ~ +5.9).
+    this.altars = order.map((si, i) => {
+      const s = SHRINE_COLORS[si];
+      const a = (i - 2) * 0.5;
+      const x = cx + Math.sin(a) * 7.0;
+      const z = this.gz + 6.0 + (1 - Math.cos(a)) * 2.5;
       const base = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 1.2, 8), dark);
       base.position.set(x, 0.6, z); g.add(base);
       const ringMat = glowMat(0x3f3748);
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.12, 5, 14), ringMat);
       ring.rotation.x = -Math.PI / 2;
       ring.position.set(x, 1.26, z); g.add(ring);
-      return { x, z, ringMat, got: null, color: s.c, name: s.name };
+      const pole = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.6, 0.16), dark);
+      pole.position.set(x, 2.0, z - 0.5); g.add(pole);
+      const sign = new THREE.Mesh(SIGNS[si](), stone);   // stone = stoneLite (이 생성자의 이름)
+      sign.position.set(x, 2.95, z - 0.5); g.add(sign);
+      return { x, z, ringMat, got: null, id: s.id, color: s.c, name: s.name };
     });
+    this.no = 0;                                   // "다른 구슬을 기다린다" 알림 남은 시간
 
     // ── 구슬 다섯 — 입구 쪽 선반 ───────────────────────────────────────
     this.orbs = shuffle(SHRINE_COLORS).map((s, i) => {
@@ -345,6 +366,7 @@ export class GrandGod {
   }
 
   update(dt, actor) {
+    if (this.no > 0) this.no -= dt;
     if (this.held) {
       this.held.mesh.position.set(actor.position.x + actor.heading.x * 0.7, 1.15,
         actor.position.z + actor.heading.z * 0.7);
@@ -365,15 +387,16 @@ export class GrandGod {
   prompt(pos) {
     if (this.lit >= 5) return this.awake < 1 ? '✨ 신이 눈을 뜬다…' : null;
     const n = this._near(pos);
+    if (this.no > 0) return '이 제단은 다른 구슬을 기다린다 — 표지를 봐라';
     if (this.held) {
       if (n && n.kind === 'altar') {
         return n.altar.got ? '이 제단은 찼다' : `E — ${this.held.name}의 구슬 바치기 (${this.lit}/5)`;
       }
-      return `${this.held.name}의 구슬을 들었다 — 제단으로`;
+      return `${this.held.name}의 구슬을 들었다 — 표지가 맞는 제단으로`;
     }
     if (n && n.kind === 'orb') return `E — ${n.orb.name}의 구슬 들기`;
     if (n && n.kind === 'altar' && n.altar.got) return 'E — 되가져오기';
-    return `⛩ 구슬 다섯을 제단에 바쳐라 (${this.lit}/5)`;
+    return `⛩ 구슬 다섯을 제 표지의 제단에 바쳐라 (${this.lit}/5)`;
   }
 
   interact(pos) {
@@ -382,6 +405,8 @@ export class GrandGod {
     if (this.held) {
       if (n.kind !== 'altar' || n.altar.got) return false;
       const a = n.altar;
+      // ★ 표지가 다르면 안 받는다. 구슬은 손에 그대로다 — 벌하지 않는다.
+      if (a.id !== this.held.id) { this.no = 2.4; return true; }
       a.got = this.held;
       this.held.placed = true;
       this.held.mesh.position.set(a.x, 1.7, a.z);
@@ -408,7 +433,7 @@ export class GrandGod {
 
   solvedBy() { return this.lit >= 5 && this.awake >= 1; }
   restart() {
-    this.held = null; this.lit = 0; this.awake = 0;
+    this.held = null; this.lit = 0; this.awake = 0; this.no = 0;
     this.key.intensity = 26; this.inner.intensity = 0;
     for (const m of this.eyeMats) m.color.set(0x2a2430);
     for (const p of this.panels) p.mat.color.set(0x2a2430);

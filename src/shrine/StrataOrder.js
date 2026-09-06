@@ -97,23 +97,41 @@ export class StrataOrderGate {
     // ── 시추 코어 — 이 방의 유일한 근거 ───────────────────────────────────
     // 화석 줄과 겹치지 않게 앞쪽에 둔다 — 겹치면 코어를 읽으려는데 화석이 집힌다.
     const coreX = seg.x0 + 2.2, coreZ = seg.z1 - 2.2;
-    const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.9, 0.5, 8), dark);
-    stand.position.set(coreX, 0.25, coreZ);
-    g.add(stand);
+    // ★ 코어가 **똑바로 서** 있었다. 위가 위고 아래가 아래라 벽에 그대로 베끼면
+    //   끝이었다 — 추론은 "코어의 아래가 벽의 아래" 한 번뿐(비평 ④).
+    //   이제 코어는 받침 위에 **눕혀** 둔다. 어느 끝이 위인지는 **드릴 날**이
+    //   말한다 — 시추는 위에서 아래로 뚫으니 날이 박힌 쪽이 땅 위, 반대쪽이
+    //   가장 깊은 곳이다. 그 한 번의 추론이 이 방의 문제다. 눕힌 방향도 판마다
+    //   섞는다(왼쪽이 늘 위면 외운다).
+    const flip = Math.random() < 0.5 ? 1 : -1;       // +1: 드릴 날이 +x쪽(오른쪽)
+    for (const dz of [-1.0, 1.0]) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), dark);
+      leg.position.set(coreX + dz * 1.5, 0.35, coreZ); g.add(leg);
+    }
+    const cradle = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.16, 0.9), dark);
+    cradle.position.set(coreX, 0.78, coreZ); g.add(cradle);
     for (let i = 0; i < 4; i++) {
-      const y = 0.7 + i * 0.92;
+      // i=0 이 맨 아래(가장 오래됨). 눕히면 드릴 날 **반대편**이 i=0이다.
+      const off = (1.5 - i) * 0.92 * flip;
       const band = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.9, 8), toon(BAND_C[i]));
-      band.position.set(coreX, y, coreZ);
+      band.rotation.z = Math.PI / 2;
+      band.position.set(coreX + off, 1.32, coreZ);
       g.add(band);
-      // 그 층에 묻힌 화석 — 색과 크기가 바닥의 화석과 같다
       const f = FOSSILS[this.order[i]];
       const emb = new THREE.Mesh(new THREE.DodecahedronGeometry(f.r * 0.8, 0), toon(f.c));
-      emb.position.set(coreX, y, coreZ + 0.42);
+      emb.position.set(coreX + off, 1.32, coreZ + 0.42);
       g.add(emb);
     }
-    const cap = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.5, 8), lite);
-    cap.position.set(coreX, 4.65, coreZ);
-    g.add(cap);
+    // 드릴 날 — 이 끝이 땅 위다. 날은 위에서 아래로 들어간다.
+    const bit = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 6), lite);
+    bit.rotation.z = -flip * Math.PI / 2;
+    bit.position.set(coreX + flip * 2.35, 1.32, coreZ);
+    g.add(bit);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.3, 8), lite);
+    collar.rotation.z = Math.PI / 2;
+    collar.position.set(coreX + flip * 1.95, 1.32, coreZ);
+    g.add(collar);
+    this.flip = flip;
     this.core = { x: coreX, z: coreZ };
 
     // ── 바닥의 화석 넷 ────────────────────────────────────────────────────
