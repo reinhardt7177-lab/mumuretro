@@ -22,7 +22,11 @@ const glowMat = (c) => {
   return m;
 };
 const N = 5;
-const REACH = 2.6;
+const REACH = 2.6;          // 접시 — 둘뿐이고 3.8 떨어져 있다
+// ★ 상자·받침은 2.2 간격인데 손이 2.6이면 어디 서든 둘이 겹친다 — 내려놓기 버그의 배경.
+//   촘촘한 것은 손을 좁게 잡는다(SortGate의 ITEM_REACH와 같은 이유). 1.4면 겹치는
+//   띠가 2.2−1.4 = 0.8 → 둘 사이 0.6u 밖에 없고, 거기서도 가까운 쪽이 이긴다.
+const NEAR = 1.4;
 
 export class WeighGate {
   constructor(scene, seg, opts = {}) {
@@ -105,11 +109,13 @@ export class WeighGate {
     //   가까우면 "내려놓기"가 그냥 무시됐다 — 실사용에서 "상자 내려놓기가 안 됨".
     //   손에 든 채로 만질 수 있는 건 접시와 받침뿐이다.
     if (!this.held) {
+      bd = NEAR;
       for (const b of this.boxes) {
         const p = b.mesh.position;
         const d = Math.hypot(pos.x - p.x, pos.z - p.z);
         if (d < bd) { bd = d; best = { kind: 'box', box: b }; }
       }
+      bd = best ? bd : REACH;
     }
     for (const p of this.pans) {
       const d = Math.hypot(pos.x - p.x, pos.z - p.z);
@@ -117,7 +123,7 @@ export class WeighGate {
     }
     for (const s of this.slots) {
       const d = Math.hypot(pos.x - s.x, pos.z - s.z);
-      if (d < bd && !s.box) { bd = d; best = { kind: 'slot', slot: s }; }
+      if (d < Math.min(bd, NEAR) && !s.box) { bd = d; best = { kind: 'slot', slot: s }; }
     }
     return best;
   }

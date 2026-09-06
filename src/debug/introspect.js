@@ -958,6 +958,20 @@ export function installDebug(ctx) {
         wgt.interact({ x: pan.x, z: pan.z });                  // 접시에
         if (wgt.held || pan.box !== b0) { pOK = false; pBad.push('접시에 못 올림'); }
         wgt.restart();
+        // ★ 상자 줄을 따라 걸으며 "지금 잡히는 상자"가 앞으로만 바뀌는가.
+        //   손(2.6)이 간격(2.2)보다 길면 두 상자 사이에서 A→B→A로 흔들린다 —
+        //   폰 조이스틱은 늘 조금씩 흔들리므로 그게 곧 "E가 엉뚱한 걸 집는" 것이다.
+        const seq = [];
+        const zRow = wgt.boxes[0].home.z;
+        for (let x = -6; x <= 6; x += 0.1) {
+          const n = wgt._near({ x, z: zRow });
+          const id = n && n.kind === 'box' ? wgt.boxes.indexOf(n.box) : -1;
+          if (seq[seq.length - 1] !== id) seq.push(id);
+        }
+        const hits = seq.filter((i) => i >= 0);
+        const rev = hits.some((v, i) => i >= 2 && hits[i - 2] === v && hits[i - 1] !== v);
+        if (rev) { pOK = false; pBad.push(`상자 줄에서 후보가 되돌아감 ${hits.join('>')}`); }
+        if (new Set(hits).size < 5) { pOK = false; pBad.push(`상자 줄에서 ${new Set(hits).size}개만 잡힘`); }
       }
       const rmS = ctx.roomFor(ctx.shrines.shrines[5]);
       const gg = rmS.final;
@@ -1167,19 +1181,52 @@ export function installDebug(ctx) {
         + (eOK ? ' 전부' : ` — ${eBad.join(' / ')}`) + ` -> ${eOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── U 체의 신이 앞 방을 합치는가 ────────────────────────────────────────
+    // ★ 3짝 6가지 순열, 되가져오기 자유라 평균 세 번이면 풀렸다. 넷째 섞임
+    //   "모래 섞인 소금물"은 거름망 → 화로 **순서**가 있고, 거꾸로 하면 그 그릇만
+    //   처음으로 돌아간다(도구는 선반으로, 손은 비고). 안 맞는 도구는 손에 남는다.
+    let uOK = true; const uBad = [];
+    if (ctx.roomFor && ctx.shrines) {
+      const sgod = ctx.roomFor(ctx.shrines.shrines[2]).final;
+      if (!sgod || !sgod.orderedCount) { uOK = false; uBad.push('체의 신 v2 없음'); }
+      else {
+        sgod.restart();
+        const ids = new Set(sgod.tools.map((t) => t.id));
+        for (const m of sgod.mixes) for (const id of m.need) if (!ids.has(id)) { uOK = false; uBad.push(`${m.mix}: 없는 도구 ${id}`); }
+        if (sgod.orderedCount() !== 1) { uOK = false; uBad.push(`순서 있는 섞임의 유효 순서 ${sgod.orderedCount()}`); }
+        const om = sgod.mixes.find((m) => m.order);
+        const T = (id) => sgod.tools.find((t) => t.id === id);
+        // 거꾸로: 화로 먼저 → 그릇 처음으로, 도구는 선반, 손은 빈다
+        sgod.held = T('burner'); sgod.interact({ x: om.x, z: om.z });
+        if (om.done.length !== 0 || sgod.held || T('burner').used) { uOK = false; uBad.push('순서를 틀렸는데 그릇이 안 돌아감/도구를 뺏음'); }
+        // 안 맞는 도구: 체를 소금물에 → 아무 일도 없고 손에 남는다
+        const salt = sgod.mixes.find((m) => m.mix === '소금물');
+        sgod.held = T('sieve'); sgod.interact({ x: salt.x, z: salt.z });
+        if (salt.done.length !== 0 || sgod.held !== T('sieve')) { uOK = false; uBad.push('안 맞는 도구가 먹히거나 손에서 사라짐'); }
+        sgod.held = null;
+        // 바른 순서: 거름망 → 화로
+        sgod.held = T('filter'); sgod.interact({ x: om.x, z: om.z });
+        sgod.held = T('burner'); sgod.interact({ x: om.x, z: om.z });
+        if (om.done.length !== 2) { uOK = false; uBad.push(`바른 순서인데 done ${om.done.length}`); }
+        sgod.restart();
+      }
+      log.push('U 체의 신 — 넷째 섞임은 순서가 있고 · 틀리면 그 그릇만 · 안 맞는 도구는 손에'
+        + (uOK ? ' 전부' : ` — ${uBad.join(' / ')}`) + ` -> ${uOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQRST'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRSTU'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~T 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~U 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

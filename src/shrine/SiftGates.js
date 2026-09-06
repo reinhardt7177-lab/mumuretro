@@ -473,11 +473,20 @@ export class EvaporateGate {
 //   콩 + 좁쌀      → 체
 // 4-1 단원 전체의 요약이고, 몸이 아니라 머리로 푸는 자리다.
 // ══════════════════════════════════════════════════════════════════════════
+// ★ 3짝 6가지 순열이라 평균 세 번이면 풀렸고, 앞 세 방과 아무 관계가 없었다.
+//   젤다의 마지막은 앞 방을 합쳐 묻는 자리다. 넷째 섞임 하나가 그 일을 한다 —
+//   **모래 섞인 소금물.** 거르고(둘째 방) 날려야(셋째 방) 하는데 **순서가 있다.**
+//   물을 먼저 날리면 소금이 모래에 붙어 못 거른다. 틀리면 왜 아닌지만 말하고
+//   그 그릇만 처음으로 돌린다 — 벌이 아니라 실험이다.
+//   안 맞는 도구는 아무 일도 안 일어나고 손에 그대로 남는다.
 const PAIRS = [
-  { mix: '쇠구슬과 모래', tool: 'magnet', toolName: '자석' },
-  { mix: '소금물', tool: 'burner', toolName: '화로' },
-  { mix: '콩과 좁쌀', tool: 'sieve', toolName: '체' },
+  { mix: '쇠구슬과 모래', need: ['magnet'] },
+  { mix: '콩과 좁쌀', need: ['sieve'] },
+  { mix: '소금물', need: ['burner'] },
+  { mix: '모래 섞인 소금물', need: ['filter', 'burner'], order: true,
+    why: '물을 먼저 날렸더니 소금이 모래에 붙었다 — 거른 뒤에 날려라. 물을 다시 부었다' },
 ];
+const TOOL_REACH = 1.4;      // 도구·그릇이 3.0 간격이다. 손이 2.6이면 늘 둘이 겹친다(무게 방과 같은 병)
 
 export class SiftGod {
   constructor(scene, seg, theme) {
@@ -501,44 +510,51 @@ export class SiftGod {
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.16, 14), glowMat(theme.glow));
     disc.position.set(cx, 5.5, this.gz); g.add(disc);
 
-    // 섞인 것 셋 — 신 앞에 나란히
-    // 섞인 것과 도구의 자리를 판마다 섞는다. 짝은 물리가 정하지만
-    // 자리까지 고정이면 "왼쪽은 왼쪽"으로 외워진다.
+    // 섞인 것 넷 — 신 앞에 나란히. 자리는 판마다 섞는다.
     this.mixes = shuffle(PAIRS).map((p, i) => {
-      const x = cx - 4.0 + i * 4.0, z = this.gz + 3.6;
+      const x = cx - 4.5 + i * 3.0, z = this.gz + 3.6;
       const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.85, 1.0, 8), dark);
       ped.position.set(x, 0.5, z); g.add(ped);
       const mat = glowMat(theme.glowDim);
       const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), mat);
       bowl.rotation.x = Math.PI; bowl.position.set(x, 1.2, z); g.add(bowl);
-      return { ...p, x, z, mat, tooled: null };
+      // 두 단계짜리는 점 둘 — 몇 번 갈라야 하는지는 미리 보인다(무엇으로는 안 보인다)
+      const pips = p.need.map((_, k) => {
+        const d = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.08), glowMat(0x4a3a22));
+        d.position.set(x - 0.15 + k * 0.3, 0.55, z + 0.95); g.add(d); return d;
+      });
+      return { ...p, x, z, mat, pips, done: [] };
     });
 
-    // 도구 셋 — 반대편에
-    this.tools = [
+    // 도구 넷 — 반대편
+    this.tools = shuffle([
       { id: 'sieve', name: '체', c: 0xc9a06a },
       { id: 'magnet', name: '자석', c: 0xe0736b },
+      { id: 'filter', name: '거름망', c: 0xb9c7c9 },
       { id: 'burner', name: '화로', c: 0xe8a04a },
-    ];
-    this.tools = shuffle(this.tools).map((t, i) => {
-      const x = cx - 4.0 + i * 4.0, z = this.gz + 7.4;
+    ]).map((t, i) => {
+      const x = cx - 4.5 + i * 3.0, z = this.gz + 7.4;
       const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.44, 0), glowMat(t.c));
       m.position.set(x, 1.0, z);
       g.add(m);
-      return { ...t, mesh: m, home: m.position.clone(), x, z, used: false };
+      return { ...t, mesh: m, home: m.position.clone(), x, z, used: null };
     });
 
     this.obstacles = [{ x: cx, z: this.gz, r: 2.2 }];
     this.prizePos = new THREE.Vector3(cx, 0, this.gz + 10.4);
     this.solved = false;
+    this.msg = null; this.msgT = 0;
+    this._check();
   }
 
   _near(pos) {
-    let best = null, bd = this.REACH;
-    for (const t of this.tools) {
-      if (t.used || t === this.held) continue;
-      const d = Math.hypot(pos.x - t.x, pos.z - t.z);
-      if (d < bd) { bd = d; best = { kind: 'tool', tool: t }; }
+    let best = null, bd = TOOL_REACH;
+    if (!this.held) {
+      for (const t of this.tools) {
+        if (t.used) continue;
+        const d = Math.hypot(pos.x - t.x, pos.z - t.z);
+        if (d < bd) { bd = d; best = { kind: 'tool', tool: t }; }
+      }
     }
     for (const m of this.mixes) {
       const d = Math.hypot(pos.x - m.x, pos.z - m.z);
@@ -547,15 +563,38 @@ export class SiftGod {
     return best;
   }
 
+  _mixDone(m) { return m.done.length === m.need.length; }
+
   _check() {
-    this.solved = this.mixes.every((m) => m.tooled === m.tool);
+    this.solved = this.mixes.every((m) => this._mixDone(m));
     for (const m of this.mixes) {
-      m.mat.color.set(!m.tooled ? 0x9c6f2c : (m.tooled === m.tool ? 0xffd27a : 0xe0736b));
+      m.mat.color.set(this._mixDone(m) ? 0xffd27a : (m.done.length ? 0xe0a955 : 0x9c6f2c));
+      m.pips.forEach((d, k) => d.material.color.set(k < m.done.length ? 0xffd27a : 0x4a3a22));
     }
+  }
+
+  // 도구를 그릇에 댄다. 받아들이면 true, 그대로면 false, 순서를 틀렸으면 'spoil'.
+  _apply(m, tool) {
+    const left = m.need.filter((id) => !m.done.includes(id));
+    if (!left.includes(tool.id)) return false;                 // 안 맞는 도구 — 아무 일도 없다
+    if (m.order && left[0] !== tool.id) return 'spoil';         // 순서를 틀렸다
+    m.done.push(tool.id);
+    tool.used = m;
+    tool.mesh.position.set(m.x, 1.9 + (m.done.length - 1) * 0.55, m.z);
+    return true;
+  }
+
+  _spoil(m) {
+    for (const id of m.done) {
+      const t = this.tools.find((x) => x.id === id);
+      t.used = null; t.mesh.position.copy(t.home);
+    }
+    m.done = [];
   }
 
   update(dt, actor) {
     if (this.eyes) this.eyes.tick(dt, this.solvedBy());
+    if (this.msgT > 0) this.msgT -= dt;
     if (this.held) {
       this.held.mesh.position.set(actor.position.x + actor.heading.x * 0.65, 1.15,
         actor.position.z + actor.heading.z * 0.65);
@@ -566,35 +605,47 @@ export class SiftGod {
 
   prompt(pos) {
     if (this.solved) return null;
+    if (this.msgT > 0) return this.msg;
     const n = this._near(pos);
     if (this.held) {
-      if (n && n.kind === 'mix') return `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
+      if (n && n.kind === 'mix') {
+        return this._mixDone(n.mix) ? `${n.mix.mix}은 다 갈랐다` : `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
+      }
       return `${josa(this.held.name, '를')} 들었다 — 섞인 것에 가져가라`;
     }
     if (n && n.kind === 'tool') return `E — ${n.tool.name} 들기`;
     if (n && n.kind === 'mix') {
-      return n.mix.tooled ? `E — ${n.mix.mix}에서 도구 되가져오기` : `${n.mix.mix} — 무엇으로 가르지?`;
+      const m = n.mix;
+      if (m.done.length) return `E — ${m.mix}에서 마지막 도구 되가져오기 (${m.done.length}/${m.need.length})`;
+      return `${m.mix} — 무엇으로 가르지? (${m.need.length}번)`;
     }
-    return '⚖ 섞인 것마다 알맞은 도구를 골라라';
+    return '⚖ 섞인 것마다 알맞은 도구를 골라라. 두 번 갈라야 하는 것도 있다';
   }
 
   interact(pos) {
     const n = this._near(pos);
     if (!n) return false;
     if (this.held) {
-      if (n.kind !== 'mix' || n.mix.tooled) return false;
-      n.mix.tooled = this.held.id;
-      this.held.used = true;
-      this.held.mesh.position.set(n.mix.x, 1.9, n.mix.z);
+      if (n.kind !== 'mix' || this._mixDone(n.mix)) return false;
+      const r = this._apply(n.mix, this.held);
+      if (r === 'spoil') {
+        // ★ 순서를 틀리면 그 그릇만 처음으로. 도구는 선반으로 돌아간다 — 뺏지 않는다.
+        this._spoil(n.mix);
+        this.msg = `❌ ${n.mix.why}`; this.msgT = 3.4;
+        this.held.mesh.position.copy(this.held.home); this.held = null;
+        this._check();
+        return true;
+      }
+      if (!r) { this.msg = `${this.held.name}으로는 ${n.mix.mix}이 안 갈라진다`; this.msgT = 2.2; return true; }
       this.held = null;
       this._check();
       return true;
     }
     if (n.kind === 'tool') { this.held = n.tool; return true; }
-    if (n.mix.tooled) {                                       // 되가져오기
-      const t = this.tools.find((x) => x.id === n.mix.tooled);
-      n.mix.tooled = null;
-      t.used = false;
+    if (n.mix.done.length) {                                   // 마지막 도구 되가져오기
+      const id = n.mix.done.pop();
+      const t = this.tools.find((x) => x.id === id);
+      t.used = null;
       this.held = t;
       this._check();
       return true;
@@ -603,10 +654,20 @@ export class SiftGod {
   }
 
   solvedBy() { return this.solved; }
-  restart() {if (this.eyes) this.eyes.reset(); 
-    this.held = null;
-    for (const m of this.mixes) m.tooled = null;
-    for (const t of this.tools) { t.used = false; t.mesh.position.copy(t.home); }
+  restart() {
+    if (this.eyes) this.eyes.reset();
+    this.held = null; this.msgT = 0;
+    for (const m of this.mixes) m.done = [];
+    for (const t of this.tools) { t.used = null; t.mesh.position.copy(t.home); }
     this._check();
+  }
+
+  // 검사용 — 순서가 있는 섞임에서 유효한 순서의 수(1이어야 한다)
+  orderedCount() {
+    const m = this.mixes.find((x) => x.order);
+    if (!m) return -1;
+    const perms = (a) => (a.length < 2 ? [a]
+      : a.flatMap((v, i) => perms(a.filter((_, j) => j !== i)).map((r) => [v, ...r])));
+    return perms(m.need).filter((seq) => seq.every((id, k) => id === m.need[k])).length;
   }
 }
