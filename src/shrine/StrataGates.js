@@ -116,15 +116,15 @@ export class ShaftGate {
         if (r.t >= 0.5) { r.state = 'off'; r.mesh.visible = false; r.shadow.visible = false; }
       }
     }
-    if (hit) return { fail: '낙석에 맞았어요 — 바닥 그림자를 보고 비켜요' };
+    if (hit) return { fail: '낙석에 맞았다 — 바닥 그림자를 보고 비켜라' };
     return {};
   }
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
     const soon = this.rocks.some((r) => r.state === 'tell' && r.t > (this.tell || TELL) * 0.5);
-    if (pos.z >= this.zIn) return '🪨 바닥에 그림자가 뜨면 그 자리로 바위가 떨어져요';
-    return soon ? '⚠ 그림자를 피해요!' : '🪨 앞으로 — 그림자를 보면서';
+    if (pos.z >= this.zIn) return '🪨 바닥에 그림자가 뜨면 그 자리로 바위가 떨어진다';
+    return soon ? '⚠ 그림자를 피해라!' : '🪨 앞으로 — 그림자를 보면서';
   }
 
   // 낙석이 잦아지고 그림자 예고가 짧아진다. 다만 0.7초 밑으로는 안 내린다 —
@@ -199,7 +199,7 @@ export class FiveDoorsGate {
     const l = this._near(pos);
     if (!l) {
       const n = this.levers.filter((x) => x.ci === x.si).length;
-      return `🔮 표지의 사당 색으로 맞춰요 (${n}/5)`;
+      return `🔮 표지의 사당 색으로 맞춰라 (${n}/5)`;
     }
     const cur = l.ci < 0 ? '없음' : SHRINE_COLORS[l.ci].name;
     return `E — 색 바꾸기 (지금 ${cur})`;
@@ -363,17 +363,17 @@ export class GrandGod {
   }
 
   prompt(pos) {
-    if (this.lit >= 5) return this.awake < 1 ? '✨ 신이 눈을 떠요…' : null;
+    if (this.lit >= 5) return this.awake < 1 ? '✨ 신이 눈을 뜬다…' : null;
     const n = this._near(pos);
     if (this.held) {
       if (n && n.kind === 'altar') {
-        return n.altar.got ? '이 제단은 찼어요' : `E — ${this.held.name}의 구슬 바치기 (${this.lit}/5)`;
+        return n.altar.got ? '이 제단은 찼다' : `E — ${this.held.name}의 구슬 바치기 (${this.lit}/5)`;
       }
-      return `${this.held.name}의 구슬을 들었어요 — 제단으로`;
+      return `${this.held.name}의 구슬을 들었다 — 제단으로`;
     }
     if (n && n.kind === 'orb') return `E — ${n.orb.name}의 구슬 들기`;
     if (n && n.kind === 'altar' && n.altar.got) return 'E — 되가져오기';
-    return `⛩ 구슬 다섯을 제단에 바쳐요 (${this.lit}/5)`;
+    return `⛩ 구슬 다섯을 제단에 바쳐라 (${this.lit}/5)`;
   }
 
   interact(pos) {

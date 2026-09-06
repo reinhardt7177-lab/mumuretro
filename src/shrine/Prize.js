@@ -77,8 +77,8 @@ export class Prize {
 
   prompt(pos) {
     if (this.taken || this.drop < 0) return null;
-    if (this.drop < 1) return '✨ 지혜의 구슬이 내려와요';
-    return this._near(pos) ? 'E — 지혜의 구슬 줍기' : '✨ 구슬 가까이 가서 E로 주워요';
+    if (this.drop < 1) return '✨ 지혜의 구슬이 내려온다';
+    return this._near(pos) ? 'E — 지혜의 구슬 줍기' : '✨ 구슬 가까이 가서 E로 주워라';
   }
 
   interact(pos) {

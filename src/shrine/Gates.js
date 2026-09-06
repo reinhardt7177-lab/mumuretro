@@ -214,7 +214,7 @@ export class TileGate {
     if (this._ropeOn()) {
       this.ropeA += dt * this._ropeSpeed();
       this.rope.rotation.y = -this.ropeA;
-      if (onGrid && this._ropeHit(p)) return this._die(actor, '줄에 걸렸어요 — 올 때 뛰어넘어요');
+      if (onGrid && this._ropeHit(p)) return this._die(actor, '줄에 걸렸다 — 올 때 뛰어넘어라');
     }
 
     // 시계는 **발판 위에 있을 때만** 간다. 입구 발판에서 지켜보는 건 공짜지만 진도는 안 나간다.
@@ -244,7 +244,7 @@ export class TileGate {
     //   "빨간 발판에 있는데 안 죽음"이 정확히 이거였다(실사용 확인).
     if (this.phase === 'judge') {
       const cell = this._cell(p);
-      if (cell !== null && !this.safe.has(cell)) return this._die(actor, '빨간 발판이 가라앉았어요');
+      if (cell !== null && !this.safe.has(cell)) return this._die(actor, '빨간 발판이 가라앉았다');
     }
 
     if (this.left <= 0 && !this.cleared) {
@@ -259,12 +259,12 @@ export class TileGate {
 
   prompt() {
     if (this.cleared) return null;
-    if (this.fall > 0) return '떨어졌어요!';
-    if (!this.locked) return '들어가면 문이 닫혀요 — 20초 버티기';
+    if (this.fall > 0) return '떨어졌다!';
+    if (!this.locked) return '들어가면 문이 닫힌다 — 20초 버티기';
     // ★ 예전엔 "준비… · 17초"였다. 17이 시작 카운트다운인지 생존 시간인지 안 읽힌다
     //   ("왜 17초임"). 숫자 하나에 두 가지 뜻을 담지 않는다 — 시작 카운트는 초 단위
     //   맨숫자로, 생존 시계는 항상 "N초 남음"으로 못 박는다.
-    if (this.round === 0) return `⬛ 곧 시작해요 · ${Math.max(1, Math.ceil(this.t))}`;
+    if (this.round === 0) return `⬛ 곧 시작한다 · ${Math.max(1, Math.ceil(this.t))}`;
     const rope = this._ropeOn() ? ' · 줄은 뛰어넘기' : '';
     const clock = `${Math.ceil(this.left)}초 남음`;
     if (this.phase === 'show') return `${clock} · 🟩 초록으로!${rope}`;
@@ -367,7 +367,7 @@ export class LaserGate {
       b.mesh.position.z = z;
       // 방을 꽉 채우므로 x는 안 본다. 발끝(y)과 머리(y+1.5) 사이에 걸리면 맞은 것.
       if (Math.abs(p.z - z) < 0.45 && b.y > p.y + 0.15 && b.y < p.y + 1.5) {
-        hit = b.jump ? '낮은 줄이에요 — 뛰어넘어요' : '높은 줄이에요 — 뛰지 말고 지나가요';
+        hit = b.jump ? '낮은 줄이다 — 뛰어넘어라' : '높은 줄이다 — 뛰지 말고 지나가라';
       }
     }
     return hit ? { fail: hit } : {};
@@ -378,10 +378,10 @@ export class LaserGate {
   prompt(pos) {
     if (pos.z < this.zOut) return null;
     const b = this._zone(pos.z);
-    if (!b) return '🔴 구획 셋 — 낮은 줄은 뛰고, 높은 줄은 뛰지 말아요';
+    if (!b) return '🔴 구획 셋 — 낮은 줄은 뛰고, 높은 줄은 뛰지 마라';
     const near = Math.abs(pos.z - b.mesh.position.z) < 3.0;
-    const what = b.jump ? '낮은 줄 — 뛰어넘어요' : '높은 줄 — 뛰지 말고 지나가요';
-    return `🔴 ${b.i + 1}/3 · ${near ? '지금이에요! ' : ''}${what}`;
+    const what = b.jump ? '낮은 줄 — 뛰어넘어라' : '높은 줄 — 뛰지 말고 지나가라';
+    return `🔴 ${b.i + 1}/3 · ${near ? '지금이다! ' : ''}${what}`;
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
@@ -540,20 +540,20 @@ export class PlateGate {
     if (this.solvedBy()) return null;
     // 막다른 길에 들어섰으면 그 사실부터 말한다. 아이가 스스로 알아낼 수 없는 종류다.
     const say = `주문 ${Math.min(3, this.round + 1)}/3`;
-    const stuck = !this._canFinish() ? ' — 지금은 못 맞춰요, 되가져와요' : '';
+    const stuck = !this._canFinish() ? ' — 지금은 못 맞춘다, 되가져와라' : '';
     const n = this._nearest(pos);
     // 손에 뭘 들었는지, 어디로 가야 하는지 항상 말해 준다. 방 안에서 침묵하지 않는다.
     if (!n) {
-      if (this.held) return `${this.held.w}kg 상자를 들고 있어요 — 판 가까이 가서 E`;
-      return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐요 (E)'
-        : `📦 ${say} · ${josa(this.plates[0].need, '과')} ${josa(this.plates[1].need, '을')} 만들어요`;
+      if (this.held) return `${this.held.w}kg 상자를 들고 있다 — 판 가까이 가서 E`;
+      return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐라 (E)'
+        : `📦 ${say} · ${josa(this.plates[0].need, '과')} ${josa(this.plates[1].need, '을')} 만들어라`;
     }
-    if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있어요 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
+    if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있다 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
     const p = this._sum(n.plate), need = n.plate.need;
     if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
-    if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무거워요' : stuck}`;
+    if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무겁다' : stuck}`;
     // 빈 판 앞에 빈손으로 선 자리. 흔한 상태인데 여기서 침묵하고 있었다(전수 조사).
-    return `이 판은 ${josa(need, '이')} 필요해요 — 상자를 가져와요`;
+    return `이 판은 ${josa(need, '이')} 필요하다 — 상자를 가져와라`;
   }
 
   interact(pos) {

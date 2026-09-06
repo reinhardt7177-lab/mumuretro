@@ -218,18 +218,18 @@ export class BalanceScale {
   //   화면이 침묵하면 아이는 "고장났다"로 읽는다. 못 하는 것도 못 한다고 말해 준다.
   prompt(pos) {
     if (this.balanced) return null;
-    const held = this.held ? `${this.held.w}kg 들고 있어요` : null;
+    const held = this.held ? `${this.held.w}kg 들고 있다` : null;
     const n = this._nearest(pos);
-    if (!n) return held ? `${held} — 막대의 빈 칸으로 가서 E` : '선반에서 추를 골라 E로 들어요';
+    if (!n) return held ? `${held} — 막대의 빈 칸으로 가서 E` : '선반에서 추를 골라 E로 들어라';
     if (n.kind === 'stock') return held ? `${held} — 막대의 빈 칸으로 가서 E` : `E — ${n.item.w}kg 추 들기`;
     const s = n.slot;
     if (this.held) {
-      if (s.box) return `${held} — 이 칸엔 이미 있어요, 빈 칸으로`;
+      if (s.box) return `${held} — 이 칸엔 이미 있다, 빈 칸으로`;
       return `E — 여기 놓기 (${s.side < 0 ? '왼쪽' : '오른쪽'} ${s.index}칸)`;
     }
-    if (s.box && s.fixed) return '이건 고정된 추예요 — 반대쪽으로 수평을 맞춰요';
+    if (s.box && s.fixed) return '이건 고정된 추다 — 반대쪽으로 수평을 맞춰라';
     if (s.box) return `E — ${s.box.w}kg 되가져오기`;
-    return '여기는 비었어요 — 선반에서 추를 가져와요';
+    return '여기는 비었다 — 선반에서 추를 가져와라';
   }
 
   // E를 눌렀다. 무언가 했으면 true.

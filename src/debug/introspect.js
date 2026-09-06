@@ -518,19 +518,33 @@ export function installDebug(ctx) {
     //   같은 함수 안에 "미끼를 걸었다"와 "적었어요"가 나란히 있었는데도
     //   눈으로는 아무렇지 않았다 — 문체는 한 줄씩 읽으면 절대 안 보인다.
     //
-    //   ★ 그런데 이 검사를 켜자마자 **59군데**가 걸렸다 — 사당 방 안의 과제문이
-    //     전부 해요체다("초록 발판만 밟고 20초를 버텨요"). 이건 실수가 아니라
-    //     다른 결정이다. 밖(내 일지)과 사당 안(과제)이 서로 다른 말투를 쓰는 것.
-    //     그걸 내가 혼자 59줄 고쳐 버리면 그건 검사가 아니라 취향의 강요다.
-    //     그래서 검사는 **바깥 채널만** 본다 — 대사·연구실·들·수첩.
-    //     사당 안 과제문은 아직 정하지 않았다(사용자에게 물어볼 것).
+    //   ★ 이 검사를 켜자마자 **59군데**가 걸렸다 — 사당 방 안의 과제문이 전부
+    //     해요체였다("초록 발판만 밟고 20초를 버텨요"). 그건 실수가 아니라 다른
+    //     결정이었으므로 혼자 안 고치고 물었고, **지킴이의 해라체**로 정해졌다.
+    //     "과제를 내는 사람이 지킴이"라는 게 화면에서 읽히고, 이 게임의 목소리는
+    //     둘(주인공 혼잣말 · 지킴이 해라체)로 끝난다. 그래서 예외도 없앴다 —
+    //     규칙이 하나면 검사도 하나다.
     //
     //   한계를 하나 더 적어 둔다. boot.js 안에 박혀 있는 알림 문자열은
     //   데이터가 아니라 검사가 못 닿는다. 그건 손으로 고쳤다.
     //   닿지 않는 곳은 반드시 다시 틀린다 — 알림도 언젠가 데이터로 빼야 한다.
     let toneOK = true;
     const toneBad = new Set();
-    const TONE = /(어요|아요|에요|예요|해요|세요|셔요|십시오|합니다|입니다)([.!?…)\s]|$)/;
+    // ★ 처음엔 어미 목록으로 잡았다 — 어요·아요·에요·해요·세요.
+    //   그러고 ALL PASS를 받았는데, 화면에는 "빛에 닿으면 들켜요", "건너요",
+    //   "맞춰요", "끼워요", "남겨요"가 그대로 남아 있었다. 전부 목록에 없는
+    //   음절이다(켜요·너요·춰요·워요·겨요). **깨진 것을 못 잡는 검사가
+    //   PASS를 찍어 준 것**이고, 그게 검사가 없는 것보다 나쁘다는 바로 그 경우다.
+    //   해요체는 어미 목록이 아니라 **마디가 '요'로 끝나는 것**이다. 그렇게 잰다.
+    // ★ 줄임표(…)로는 안 나눈다. 나눴더니 "🌋 고요… 4 — 기둥 위치를 봐 둬라"의
+    //   **"고요"**를 해요체로 잡았다. 이 게임에서 …은 문장 끝이 아니라 뜸이다.
+    const TONE = (t) => t.split(/[.!?\n]/).some((c) => {
+      const w = c.trim().replace(/[)\]"'·\s]+$/, '');
+      // ★ 처음엔 `니다$`도 같이 봤는데 "가장자리가 톱니다"를 잡았다.
+      //   오탐이 나는 검사는 곧 아무도 안 보는 검사가 된다. 합쇼체는 이 게임에
+      //   한 줄도 없으니 안 본다 — 없는 것을 지키느라 있는 것을 놓치면 안 된다.
+      return /요$/.test(w);
+    });
     {
       const PAIR = { '을': true, '를': false, '과': true, '와': false };
       const bat = (ch) => {
@@ -538,10 +552,9 @@ export function installDebug(ctx) {
         if (c < 0xac00 || c > 0xd7a3) return null;
         return (c - 0xac00) % 28 !== 0;
       };
-      // room=true면 사당 방 안의 글이다 — 말투는 안 본다(위 머리말 참고).
-      const scan = (t, room) => {
+      const scan = (t) => {
         if (typeof t !== 'string' || !t) return;
-        if (!room && TONE.test(t)) { toneOK = false; toneBad.add(t); }
+        if (TONE(t)) { toneOK = false; toneBad.add(t); }
         for (let k = 1; k < t.length; k++) {
           const pj = t[k];
           if (!(pj in PAIR)) continue;
@@ -549,17 +562,17 @@ export function installDebug(ctx) {
           if (b !== null && b !== PAIR[pj]) { josaOK = false; josaBad.add(t); }
         }
       };
-      const deep = (v, d = 0, room = false) => {
+      const deep = (v, d = 0) => {
         if (d > 4) return;
-        if (typeof v === 'string') scan(v, room);
-        else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1, room));
-        else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1, room));
+        if (typeof v === 'string') scan(v);
+        else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1));
+        else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1));
       };
       const P = { x: 0, y: 0, z: 0 };
       if (ctx.roomFor && ctx.shrines) {
         for (const sh of ctx.shrines.shrines) {
           const rm = ctx.roomFor(sh);
-          deep(rm.goals, 0, true); deep(rm.hints, 0, true);
+          deep(rm.goals); deep(rm.hints);
           // 프롬프트는 상태에 따라 바뀐다 — 자리를 훑어 나오는 것을 전부 본다.
           // step()은 안 돈다(알림이 끼면 그건 다른 검사거리다).
           for (const r of rm.dungeon.rects) {
@@ -568,10 +581,10 @@ export function installDebug(ctx) {
                 P.x = x; P.z = z;
                 const seg = rm.dungeon.segmentAt(z);
                 for (const gt of rm.gates) {
-                  if (seg && seg.id === gt.room && gt.gate.prompt) scan(gt.gate.prompt(P), true);
+                  if (seg && seg.id === gt.room && gt.gate.prompt) scan(gt.gate.prompt(P));
                 }
                 if (seg && seg.id === 'shrine') {
-                  scan(rm.prize.prompt(P), true); scan(rm.final.prompt(P), true);
+                  scan(rm.prize.prompt(P)); scan(rm.final.prompt(P));
                 }
               }
             }
@@ -615,7 +628,7 @@ export function installDebug(ctx) {
       log.push('K 조사(을/를·과/와)'
         + (josaOK ? ' 전부' : ` 틀림 ${josaBad.size}=${[...josaBad].slice(0, 3).join(' | ')}`)
         + ` -> ${josaOK ? 'PASS' : 'FAIL'}`);
-      log.push('K 바깥 화자가 한 사람(해요체 없음)'
+      log.push('K 화자가 둘뿐(해요체 없음)'
         + (toneOK ? '' : ` — ${toneBad.size}군데 ${[...toneBad].slice(0, 3).join(' | ')}`)
         + ` -> ${toneOK ? 'PASS' : 'FAIL'}`);
     }

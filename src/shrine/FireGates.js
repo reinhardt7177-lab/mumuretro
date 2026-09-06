@@ -95,7 +95,7 @@ export class QuakeGate {
       this.warnMat.opacity = 0.9;
       if (inRoom && !this._safe(p)) {
         this.phase = 'calm'; this.t = 0; this.warnMat.opacity = 0;
-        return { fail: '지진에 휩쓸렸어요 — 예진이 오면 기둥으로' };
+        return { fail: '지진에 휩쓸렸다 — 예진이 오면 기둥으로' };
       }
       if (this.t >= this.main) { this.phase = 'calm'; this.t = 0; }
     }
@@ -107,9 +107,9 @@ export class QuakeGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (this.phase === 'calm') return `🌋 고요… ${Math.max(1, Math.ceil(this.calm - this.t))} — 기둥 위치를 봐 둬요`;
-    if (this.phase === 'fore') return '⚠ 예진이에요! 기둥 곁으로!';
-    return this._safe(pos) ? '🪨 기둥을 붙잡았어요' : '⚠ 흔들려요! 기둥으로!';
+    if (this.phase === 'calm') return `🌋 고요… ${Math.max(1, Math.ceil(this.calm - this.t))} — 기둥 위치를 봐 둬라`;
+    if (this.phase === 'fore') return '⚠ 예진이다! 기둥 곁으로!';
+    return this._safe(pos) ? '🪨 기둥을 붙잡았다' : '⚠ 흔들린다! 기둥으로!';
   }
 
   // 고요가 짧아지고 본진이 길어진다. 기둥 사이를 뛸 시간이 줄어든다.
@@ -196,15 +196,15 @@ export class HexLavaGate {
       }
     }
     if (inRoom && (!here || here.state === 'lava')) {
-      return { fail: '용암에 빠졌어요 — 갈 길을 미리 정해요' };
+      return { fail: '용암에 빠졌다 — 갈 길을 미리 정해라' };
     }
     return {};
   }
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (pos.z >= this.zIn) return '🔥 밟고 지나온 칸은 가라앉아요 — 길을 미리 정해요';
-    return '🔥 되돌아갈 수 없어요!';
+    if (pos.z >= this.zIn) return '🔥 밟고 지나온 칸은 가라앉는다 — 길을 미리 정해라';
+    return '🔥 되돌아갈 수 없다!';
   }
 
   // 밟은 칸이 더 빨리 가라앉는다.
@@ -283,7 +283,7 @@ export class GeyserGate {
     }
     if (hit) {
       actor.shake = Math.max(actor.shake, 0.25);
-      return { fail: '간헐천에 데었어요 — 고리가 차오르면 비켜요' };
+      return { fail: '간헐천에 데었다 — 고리가 차오르면 비켜라' };
     }
     return {};
   }
@@ -291,8 +291,8 @@ export class GeyserGate {
   prompt(pos) {
     if (pos.z < this.zOut) return null;
     const soon = this.vents.filter((v) => v.per - v.t < 1.2 && v.t >= (this.erupt || ERUPT)).length;
-    if (pos.z >= this.zIn) return '💨 고리가 차오르면 뿜어요 — 주기가 셋 다 달라요';
-    return soon ? '💨 곧 뿜어요!' : '💨 지금이에요 — 건너요';
+    if (pos.z >= this.zIn) return '💨 고리가 차오르면 뿜는다 — 주기가 셋 다 다르다';
+    return soon ? '💨 곧 뿜는다!' : '💨 지금이다 — 건너라';
   }
 
   // 주기가 짧아지고 뿜는 시간이 길어진다 — 잠잠한 틈이 줄어든다.
@@ -430,7 +430,7 @@ export class FireGod {
   prompt(pos) {
     if (this.solved) return null;
     const c = this._near(pos);
-    if (!c) return `🌋 용암이 ${this.reach}번째 수로까지 왔어요 — 길을 이어요`;
+    if (!c) return `🌋 용암이 ${this.reach}번째 수로까지 왔다 — 길을 이어라`;
     return `E — ${c.name} 돌리기 (${c.rot * 90}°)`;
   }
 

@@ -176,15 +176,15 @@ export class StrataOrderGate {
     if (this.solved) return null;
     const m = this._mark(pos);
     if (this.held) {
-      if (!m) return `${josa(this.held.name, '을')} 들었어요 — 꽂을 층의 표석 위로`;
-      return m.slot.got ? `${m.slot.level + 1}층은 이미 찼어요` : `E — ${m.slot.level + 1}층에 꽂기`;
+      if (!m) return `${josa(this.held.name, '을')} 들었다 — 꽂을 층의 표석 위로`;
+      return m.slot.got ? `${m.slot.level + 1}층은 이미 찼다` : `E — ${m.slot.level + 1}층에 꽂기`;
     }
     if (m && m.slot.got) return `E — ${m.slot.level + 1}층에서 되빼기`;
     const f = this._nearFossil(pos);
     if (f) return `E — ${f.name} 들기`;
-    if (this._atCore(pos)) return '⛏ 시추 코어 — 아래부터 쌓인 순서 그대로예요';
+    if (this._atCore(pos)) return '⛏ 시추 코어 — 아래부터 쌓인 순서 그대로다';
     const n = this.fossils.filter((x) => x.slot).length;
-    return `🦴 코어를 읽고 같은 순서로 벽에 꽂아요 (${n}/4)`;
+    return `🦴 코어를 읽고 같은 순서로 벽에 꽂아라 (${n}/4)`;
   }
 
   interact(pos) {

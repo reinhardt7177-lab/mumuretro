@@ -46,9 +46,9 @@ const GRAINS = [
 ];
 // 주문 셋. keep = 위 접시에 남아야 할 알갱이 종류
 const ORDERS = [
-  { keep: [0], say: '굵은 알갱이만 남겨요' },
-  { keep: [0, 1], say: '굵은 것과 중간을 남겨요' },
-  { keep: [], say: '하나도 남기지 말아요' },
+  { keep: [0], say: '굵은 알갱이만 남겨라' },
+  { keep: [0, 1], say: '굵은 것과 중간을 남겨라' },
+  { keep: [], say: '하나도 남기지 마라' },
 ];
 
 export class SieveGate {
@@ -208,7 +208,7 @@ export class SieveGate {
     const say = `주문 ${this.round + 1}/3 · ${this.orders[this.round].say}`;
     if (this.held) {
       return this._atFrame(pos)
-        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${josa(this.held.spec.label, '를')} 들었어요 — 틀로`;
+        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${josa(this.held.spec.label, '를')} 들었다 — 틀로`;
     }
     if (this._atFrame(pos) && this.fitted >= 0) return `E — 체 빼기 · ${say}`;
     const s = this._nearSieve(pos);
@@ -353,10 +353,10 @@ export class EvaporateGate {
     if (n === 'filter') return 'E — 거름망에 붓기 (알갱이)';
     if (n === 'burner') return 'E — 화로에 올리기 (물 날리기)';
     if (n === 'tap') return this.state === 'lump' ? 'E — 물 붓고 처음부터' : 'E — 내려놓기';
-    return { mixed: '쇠가루·모래·소금이 물에 섞여 있어요 (1/3)',
-      demag: '쇠가루는 뺐어요 — 다음은 알갱이 (2/3)',
-      filtered: '모래도 걸렀어요 — 이제 물을 날려요 (3/3)',
-      lump: '순서가 어긋나 굳었어요 — 물을 부어 처음부터' }[this.state];
+    return { mixed: '쇠가루·모래·소금이 물에 섞여 있다 (1/3)',
+      demag: '쇠가루는 뺐다 — 다음은 알갱이 (2/3)',
+      filtered: '모래도 걸렀다 — 이제 물을 날려라 (3/3)',
+      lump: '순서가 어긋나 굳었다 — 물을 부어 처음부터' }[this.state];
   }
 
   interact(pos) {
@@ -508,13 +508,13 @@ export class SiftGod {
     const n = this._near(pos);
     if (this.held) {
       if (n && n.kind === 'mix') return `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
-      return `${josa(this.held.name, '를')} 들었어요 — 섞인 것에 가져가요`;
+      return `${josa(this.held.name, '를')} 들었다 — 섞인 것에 가져가라`;
     }
     if (n && n.kind === 'tool') return `E — ${n.tool.name} 들기`;
     if (n && n.kind === 'mix') {
-      return n.mix.tooled ? `E — ${n.mix.mix}에서 도구 되가져오기` : `${n.mix.mix} — 무엇으로 가를까요?`;
+      return n.mix.tooled ? `E — ${n.mix.mix}에서 도구 되가져오기` : `${n.mix.mix} — 무엇으로 가르지?`;
     }
-    return '⚖ 섞인 것마다 알맞은 도구를 골라요';
+    return '⚖ 섞인 것마다 알맞은 도구를 골라라';
   }
 
   interact(pos) {

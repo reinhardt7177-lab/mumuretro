@@ -196,14 +196,14 @@ export class MagnetGate {
     if (this.held) {
       if (n && n.kind === 'bin') return `E — ${n.bin.yes ? c.yes : c.no} 통에`;
       if (n && n.kind === 'basin') return 'E — 물통에 담가 보기';
-      return `${say} — 통에 담아요`;
+      return `${say} — 통에 담아라`;
     }
     if (n && n.kind === 'item') {
-      return `E — 들기 · ${n.item.iron ? '자석이 당겨요' : '자석이 반응 안 해요'}`;
+      return `E — 들기 · ${n.item.iron ? '자석이 당긴다' : '자석이 반응 안 한다'}`;
     }
     if (n && n.kind === 'basin') {
-      if (this.testItem) return `${this.testItem.floats ? '떠요!' : '가라앉아요!'} — E로 꺼내기`;
-      return '💧 물통 — 물건을 담가 보면 알아요';
+      if (this.testItem) return `${this.testItem.floats ? '뜬다!' : '가라앉는다!'} — E로 꺼내기`;
+      return '💧 물통 — 물건을 담가 보면 안다';
     }
     if (n && n.kind === 'bin' && n.bin.got.length) return 'E — 통에서 되꺼내기';
     return `🧲 ${say}`;

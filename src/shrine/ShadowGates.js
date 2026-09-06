@@ -134,15 +134,15 @@ export class ShadeGate {
     if (this.expose >= this.exposeMax) {
       this.expose = 0;
       this.eyeMat.opacity = 0;
-      return { fail: '빛에 들켰어요 — 그림자 안으로' };
+      return { fail: '빛에 들켰다 — 그림자 안으로' };
     }
     return {};
   }
 
   prompt(pos) {
     if (pos.z < this.safeOut) return null;
-    if (pos.z >= this.safeIn) return '🕯 그림자 안으로만 — 빛에 서면 들켜요';
-    return this.expose > 0.1 ? '⚠ 들키는 중! 그림자로!' : '🕯 그림자를 따라가요';
+    if (pos.z >= this.safeIn) return '🕯 그림자 안으로만 — 빛에 서면 들킨다';
+    return this.expose > 0.1 ? '⚠ 들키는 중! 그림자로!' : '🕯 그림자를 따라가라';
   }
 
   // 등불이 빨라지고 들키기까지의 여유가 짧아진다.
@@ -315,7 +315,7 @@ export class MirrorGate {
   prompt(pos) {
     if (this.hit) return null;
     const m = this._near(pos);
-    if (!m) return '🔦 거울을 돌려 빛을 표적에 꽂아요';
+    if (!m) return '🔦 거울을 돌려 빛을 표적에 꽂아라';
     return `E — 거울 돌리기 (${Math.round(m.a * 180 / Math.PI) % 360}°)`;
   }
 
@@ -452,7 +452,7 @@ export class SilhouetteGate {
     if (this.solved) return null;
     const n = `${this.round + 1}/3`;
     const gap = this._size() > this.holeW
-      ? '그림자가 커요 — 등불에서 멀리' : '그림자가 작아요 — 등불 가까이';
+      ? '그림자가 크다 — 등불에서 멀리' : '그림자가 작다 — 등불 가까이';
     if (this.held) return `${n} · ${gap} (E로 놓기)`;
     return this._near(pos) ? `E — 물체 밀기 (${n})` : `🔦 ${n} · ${gap}`;
   }
@@ -602,7 +602,7 @@ export class MirrorGod {
     const n = this._near(pos);
     if (n === 'a') return `E — 등불 돌리기 (그림자 방향) ${this.ai + 1}/${ANGLES}`;
     if (n === 'b') return `E — 등불 높이 (그림자 길이) ${this.hi + 1}/${HEIGHTS.length}`;
-    return '🕯 신의 그림자를 바닥의 자리에 맞춰요';
+    return '🕯 신의 그림자를 바닥의 자리에 맞춰라';
   }
 
   interact(pos) {

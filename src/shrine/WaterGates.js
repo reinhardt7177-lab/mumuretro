@@ -109,7 +109,7 @@ export class FreezeGate {
         b.mat.opacity = left < THAW_WARN ? 0.4 + 0.5 * Math.abs(Math.sin(b.t * 9)) : 0.9;
         if (b.t >= b.solid) {
           b.phase = 'water'; b.t = 0; b.rect.open = false; b.mat.opacity = 0;
-          if (p.z < b.z1 && p.z > b.z0) fail = '얼음이 녹아 물에 빠졌어요';
+          if (p.z < b.z1 && p.z > b.z0) fail = '얼음이 녹아 물에 빠졌다';
         }
       }
       b.knobMat.color.set(b.phase === 'water' ? 0x79c0e8 : 0xbfe4f5);
@@ -130,13 +130,13 @@ export class FreezeGate {
     const n = `${Math.min(3, done + 1)}/3`;
     const b = this._atLever(pos);
     if (b) {
-      if (b.phase === 'water') return `E — 온도 내리기 (${n}번째 줄을 얼려요)`;
+      if (b.phase === 'water') return `E — 온도 내리기 (${n}번째 줄을 얼려라)`;
       if (b.phase === 'freezing') return '❄ 어는 중…';
-      return `❄ ${Math.max(1, Math.ceil(b.solid - b.t))}초 뒤 녹아요 — 건너요!`;
+      return `❄ ${Math.max(1, Math.ceil(b.solid - b.t))}초 뒤 녹는다 — 건너라!`;
     }
     const on = this._bandAt(pos.z);
-    if (on && on.phase === 'ice') return `❄ ${Math.max(1, Math.ceil(on.solid - on.t))}초! 건너요`;
-    return `🌊 물은 못 건너요 — 손잡이로 얼려요 (${n})`;
+    if (on && on.phase === 'ice') return `❄ ${Math.max(1, Math.ceil(on.solid - on.t))}초! 건너라`;
+    return `🌊 물은 못 건넌다 — 손잡이로 얼려라 (${n})`;
   }
 
   interact(pos) {
@@ -214,7 +214,7 @@ export class SlideGate {
     for (const h of this.holes) {
       if (Math.hypot(p.x - h.x, p.z - h.z) < h.r * 0.72 * (this.grow || 1)) {
         actor.slip = 0;
-        return { fail: '구멍에 빠졌어요 — 미리 속도를 줄여요' };
+        return { fail: '구멍에 빠졌다 — 미리 속도를 줄여라' };
       }
     }
     return {};
@@ -222,8 +222,8 @@ export class SlideGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (pos.z >= this.zIn) return '🧊 여기부터 미끄러워요 — 미리 멈춰야 해요';
-    return '🧊 미끄러워요! 구멍을 피해요';
+    if (pos.z >= this.zIn) return '🧊 여기부터 미끄럽다 — 미리 멈춰야 한다';
+    return '🧊 미끄럽다! 구멍을 피해라';
   }
 
   // 구멍이 넓어진다. 미리 줄이지 않으면 빠진다.
@@ -327,10 +327,10 @@ export class SteamGate {
     if (n && n.kind === 'lever') return `E — 온도 바꾸기 (지금 ${t.c}° · ${t.name})`;
     if (n && n.kind === 'valve') {
       const want = TEMPS.find((x) => x.state === n.valve.want).name;
-      if (n.valve.filled) return `${want} 밸브는 채웠어요`;
-      return t.state === n.valve.want ? `E — ${want} 넣기` : `이 밸브는 ${josa(want, '를')} 원해요 (지금 ${t.name})`;
+      if (n.valve.filled) return `${want} 밸브는 채웠다`;
+      return t.state === n.valve.want ? `E — ${want} 넣기` : `이 밸브는 ${josa(want, '를')} 원한다 (지금 ${t.name})`;
     }
-    return `🫖 지금 ${t.c}° · ${t.name} — 밸브 셋을 채워요`;
+    return `🫖 지금 ${t.c}° · ${t.name} — 밸브 셋을 채워라`;
   }
 
   interact(pos) {
@@ -430,8 +430,8 @@ export class WaterGod {
   prompt(pos) {
     if (this.solvedBy()) return null;
     const w = TEMPS[this.want].name, now = TEMPS[this.si].name;
-    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 신이 ${w}일 때 제단을 눌러요`;
-    if (this.flash > 0) return `${now}였어요 — 다시 기다려요 (${this.got}/${NEED})`;
+    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 신이 ${w}일 때 제단을 눌러라`;
+    if (this.flash > 0) return `${now}였다 — 다시 기다려라 (${this.got}/${NEED})`;
     return `E — 지금 신은 ${now} · 표지는 ${w} (${this.got}/${NEED})`;
   }
 

@@ -52,7 +52,7 @@ class TodoGate {
     console.warn(`[shrine] 관문 '${opts.kind}' 아직 없음 — 통과만 됩니다`);
   }
   update() { return {}; }
-  prompt() { return `🚧 ${this.kind} — 만드는 중이에요, 그냥 지나가요`; }
+  prompt() { return `🚧 ${this.kind} — 아직 만드는 중이다, 그냥 지나가라`; }
   solvedBy(actor) { return actor.position.z < this.seg.z0 + 1.6; }
   restart() {}
 }
@@ -76,7 +76,7 @@ class TodoGod {
   _near(p) { return Math.hypot(p.x - this.x, p.z - this.z) < 2.8; }
   prompt(p) {
     if (this.solved) return null;
-    return this._near(p) ? `E — 제단 (🚧 ${this.kind})` : `🚧 ${this.kind} — 제단으로 가면 구슬이 나와요`;
+    return this._near(p) ? `E — 제단 (🚧 ${this.kind})` : `🚧 ${this.kind} — 제단으로 가면 구슬이 나온다`;
   }
   interact(p) { if (!this._near(p)) return false; this.solved = true; return true; }
   solvedBy() { return this.solved; }
@@ -130,7 +130,7 @@ export function buildRoom(spec) {
     goals[r.id] = r.goal;
     addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
     if (!r.hints) continue;
-    const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있어요', spec.theme.glow, true);
+    const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있다', spec.theme.glow, true);
     hints[r.id] = { board, texts: r.hints, level: 0, t: 0 };
   }
 
@@ -202,7 +202,7 @@ export function buildRoom(spec) {
       for (const id in hints) {
         const h = hints[id];
         h.level = 0; h.t = 0;
-        h.board.set('힌트', '아직 잠겨 있어요', true);
+        h.board.set('힌트', '아직 잠겨 있다', true);
       }
       dungeon.resetDoors();
       if (final.restart) final.restart();
