@@ -638,7 +638,89 @@ export function installDebug(ctx) {
           if (degFar < 165) { fgOK = false; fgBad.push(`별똥돌 ${degFar.toFixed(0)}° (대척점 아님)`); }
         }
       }
-      log.push('L 들 — 정답 하나 · 다시 남 · 전설 셋 자리'
+      // ④ 바닥에 깐 판이 **뜨지 않는가.** groundY는 중심 한 점만 맞추므로
+      //   큰 평판은 삼각면 지형 위에서 한쪽이 뜬다(실사용 스크린샷에서 확인).
+      //   판의 네 귀퉁이를 각자 제 방향의 지형과 견준다. 뜨는 건 고장이고,
+      //   조금 파묻히는 건 "닳아 들어간 자국"이라 봐준다.
+      {
+        const C = new THREE.Vector3();
+        for (const st of fg2.sites) {
+          st.group.updateMatrixWorld();
+          st.group.traverse((o) => {
+            // ★ 두께와 크기로 "바닥 판"을 짐작했더니 줄기에 달린 허브 잎까지
+            //   잡았다. 짐작하지 말고 layFlat이 남긴 표시만 본다.
+            if (!o.isMesh || !o.visible || !o.userData.decal) return;
+            const pr = o.geometry.parameters;
+            let up = -9;
+            for (const sx of [-0.5, 0.5]) for (const sz of [-0.5, 0.5]) {
+              C.set(sx * pr.width, pr.height / 2, sz * pr.depth);
+              o.localToWorld(C);
+              const dv = C.length() - (Rp + planet.heightAt(C.clone().normalize()));
+              if (dv > up) up = dv;
+            }
+            // 잔디 카펫이 지형 위 0.15u에 있고 판은 그 위에 깔린다 — 지형 기준으로는
+            // 0.15+ 떠 있는 게 정상이다. 그보다 0.2 더 뜨면 그건 공중이다.
+            if (up > 0.35) {
+              fgOK = false;
+              fgBad.push(`${st.id} 바닥판 ${up.toFixed(2)}u 떠 있음`);
+            }
+          });
+        }
+      }
+
+      // ⑤ 들에서도 **걸어서 닿는가.** 덫에 충돌체를 달자 밀려나는 거리가 손보다
+      //   길어져 영영 못 만지는 상태가 됐었다(연구실 콘솔과 같은 실수).
+      //   갈래마다 한 자리씩만 걸어 본다 — 열다섯 곳을 다 걸으면 검사가 느려진다.
+      if (ra) {
+        const savedR2 = ra.rects, savedO2 = ra.obstacles, savedP2 = ra.position.clone();
+        const seen2 = new Set();
+        const _w = new THREE.Vector3();
+        for (const st of fg2.sites) {
+          if (seen2.has(st.kind)) continue;
+          seen2.add(st.kind);
+          st.group.updateMatrixWorld();
+          for (const tg of fg2.touchables(st)) {
+            // 자리의 접평면에서, 목표를 향해 여덟 방향에서 다가간다
+            let best2 = Infinity;
+            for (let k = 0; k < 8; k++) {
+              const a2 = (k / 8) * Math.PI * 2;
+              const sx = tg.x + Math.sin(a2) * 6, sz = tg.z + Math.cos(a2) * 6;
+              _w.set(sx, 0, sz);
+              st.group.localToWorld(_w);
+              planet.projectToSurface(_w);
+              player.position.copy(_w); player._initFrame();
+              for (let i = 0; i < 700; i++) {
+                _w.set(tg.x, 0, tg.z);
+                st.group.localToWorld(_w);
+                planet.projectToSurface(_w);
+                const cur = player.position.clone().normalize();
+                if (cur.angleTo(_w.clone().normalize()) * Rp < 0.35) break;
+                const tan = _w.clone().normalize()
+                  .addScaledVector(cur, -_w.clone().normalize().dot(cur)).normalize();
+                player.heading.copy(tan); player._initFrame();
+                engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+                input.setTestIntent({ x: 0, y: 1, run: false });
+                step(1 / 60);
+              }
+              input.setTestIntent(null);
+              _w.set(tg.x, 0, tg.z);
+              st.group.localToWorld(_w);
+              best2 = Math.min(best2,
+                player.position.clone().normalize().angleTo(_w.clone().normalize()) * Rp);
+            }
+            // 여유 0.2u는 걸음이 딱 떨어지지 않는 몫 + 각도 오차. 이보다 빡빡하면
+            // "닿기는 하는데 자꾸 놓치는" 상태가 된다.
+            if (best2 > tg.r - 0.2) {
+              fgOK = false;
+              fgBad.push(`${st.id}/${tg.name} ${best2.toFixed(2)}u(손 ${tg.r})`);
+            }
+          }
+        }
+        ra.rects = savedR2; ra.obstacles = savedO2;
+        ra.setAt(savedP2.x, savedP2.z, -1);
+      }
+
+      log.push('L 들 — 정답 하나 · 다시 남 · 전설 자리 · 걸어서 닿기'
         + (fgOK ? ' 전부' : ` 어긋남 ${fgBad.slice(0, 3).join(' | ')}`)
         + ` -> ${fgOK ? 'PASS' : 'FAIL'}`);
     }

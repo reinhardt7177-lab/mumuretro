@@ -42,8 +42,15 @@ export const mkRnd = (seed) => {
 //   서기만 해도 넷 다 손에 닿았다.** 그러면 "고른다"가 아니라 "가까이 갔다"가 되고,
 //   무엇을 보고 있는지도 안 알려 준다. 후보 하나 앞에 서야 그 하나가 잡힌다.
 const REACH = 1.4;                 // 후보 하나를 고르는 거리
+// ★ 덫은 부딪히는 물건이라(제단 위에 올라설 수 없다) **밀려나는 거리보다
+//   손이 더 길어야** 한다. 반경 1.15 + 몸 0.32 = 1.47까지 밀리는데 손이 1.4면
+//   영영 못 만진다 — 연구실 콘솔에서 오프닝을 통째로 못 깨게 만들었던 그 버그다.
+//   같은 실수를 두 번 하지 않으려고 숫자를 나란히 적어 둔다.
+const TRAP_BLOCK = 1.15, TRAP_REACH = 2.2;
 const SITE_R = 9;                  // 이 안이면 그 자리에 있는 것으로 친다
-const TRAP_WAIT = 42;              // 덫이 걸리는 데 걸리는 시간(초)
+// 짐승이 오기까지, 그리고 오는 길에 걸리는 시간. 기다림이 길면 그건 재미가
+// 아니라 벌이다 — 42초를 30초로 줄이고 마지막 7초는 **눈앞에서 걸어온다.**
+const TRAP_WAIT = 30, APPROACH = 7;
 // ★ 캔 자리는 다시 난다. 이 한 줄이 문제 셋을 같이 푼다.
 //   ① **막다른 길이 사라진다.** 갈래마다 자리 셋 × 정답 하나 = 평생 3개뿐인데,
 //      덫 미끼는 틀리면 그 재료를 먹는다(열매 2 + 허브 1이 필요하다).
@@ -140,7 +147,7 @@ export function pickLegendSpots(planet, landingDir) {
   ];
 }
 
-export function buildForage(scene, planet, spots, legendSpots) {
+export function buildForage(scene, planet, spots, legendSpots, carpet) {
   const R = planet.R;
 
   const green = toon(0x4c7a3e), greenD = toon(0x355a2c);
@@ -180,12 +187,64 @@ export function buildForage(scene, planet, spots, legendSpots) {
   // ── 갈래별로 자리를 짓는다 ───────────────────────────────────────────────
   // 후보(candidate)는 전부 {x, z, ok, why} 꼴이다. ok가 하나만 true다.
 
+  // ★ 자리의 바닥면은 **중심 한 점**에서 잰 접평면이다. 중심에서 멀어질수록
+  //   실제 지형과 벌어지고, 재 보니 최악 1.45u가 땅에 파묻혀 있었다
+  //   (암염 조각·버섯·얼음꽃). 물건은 **자기 자리의** 지형 높이에 앉아야 한다.
+  const _gv = new THREE.Vector3(), _gn = new THREE.Vector3();
+  const groundY = (g, x, z) => {
+    g.updateMatrixWorld();
+    const w = g.localToWorld(_gv.set(x, 0, z));
+    return planet.R + planet.heightAt(_gn.copy(w).normalize()) - w.length();
+  };
+
+  // ★ 바닥에 까는 판은 groundY만으로는 모자란다. 그건 **중심 한 점**만 맞추는데,
+  //   1.5u짜리 판이 삼각면 지형에 놓이면 한쪽은 뜨고 한쪽은 묻힌다.
+  //   실사용 스크린샷에서 길 자국이 공중에 떠 그림자가 갈라져 보였다.
+  //   면 전체를 **지형 법선에 맞춰 눕히고**, 살짝 파묻어 뜨지 않게 한다.
+  //   (파묻히는 건 "닳아 들어간 자국"으로 읽히지만 뜨는 건 그냥 고장이다.)
+  const _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+  const _e1 = new THREE.Vector3(), _e2 = new THREE.Vector3(), _nm = new THREE.Vector3();
+  const _pa = new THREE.Vector3(), _pb = new THREE.Vector3(), _pc = new THREE.Vector3();
+  const YAX = new THREE.Vector3(0, 1, 0);
+  // ★ 그리고 바닥 판은 **지형이 아니라 잔디 위**에 깔아야 한다. 잔디 카펫은
+  //   지형에서 0.15u 떠 있는데(플레이어도 그만큼 들려 걷는다) 판을 지형 높이에
+  //   두면 0.185u 아래로 들어가 **아예 안 보인다.** 실제로 길과 발자국이 통째로
+  //   사라졌고, 그걸 스크린샷으로 지적받고서야 알았다 —
+  //   "지면"이라는 말이 두 가지를 가리키고 있었던 것이다.
+  const lift = (dir) => (carpet && carpet.liftAt ? carpet.liftAt(dir) : 0);
+  const layFlat = (mesh, g, x, z, yaw = 0, over = 0.02) => {
+    g.updateMatrixWorld();
+    const w = _gv.set(x, 0, z);
+    g.localToWorld(w);
+    const up = _gn.copy(w).normalize();
+    // 접선 두 방향으로 0.5u 떨어진 표면점 → 그 세 점의 법선이 실제 지면 기울기다
+    const ref = Math.abs(up.y) > 0.99 ? new THREE.Vector3(1, 0, 0) : YAX;
+    _e1.crossVectors(ref, up).normalize();
+    _e2.crossVectors(up, _e1).normalize();
+    const d = 0.5 / planet.R;
+    planet.surfaceAt(_pa.copy(up), _pa);
+    planet.surfaceAt(_pb.copy(up).addScaledVector(_e1, d).normalize(), _pb);
+    planet.surfaceAt(_pc.copy(up).addScaledVector(_e2, d).normalize(), _pc);
+    _nm.crossVectors(_pb.sub(_pa), _pc.sub(_pa)).normalize();
+    if (_nm.dot(up) < 0) _nm.negate();
+    // 월드 법선을 자리(group)의 로컬 방향으로
+    g.getWorldQuaternion(_q1);
+    _nm.applyQuaternion(_q2.copy(_q1).invert());
+    mesh.quaternion.setFromUnitVectors(YAX, _nm);
+    if (yaw) mesh.quaternion.multiply(_q2.setFromAxisAngle(YAX, yaw));
+    mesh.position.set(x, groundY(g, x, z) + lift(up) + over, z);
+    // 검사가 "바닥에 깐 것"만 골라 보게 표시해 둔다. 두께와 크기로 짐작하면
+    // 줄기에 달린 허브 잎까지 바닥 판으로 잡는다(실제로 오탐이 났다).
+    mesh.userData.decal = true;
+    return mesh;
+  };
+
   // ★ 후보는 저마다 **자기 무리**를 갖는다. 캐면 그 무리만 사라진다.
   //   처음엔 열매만 메시를 숨기고 버섯·허브·암염은 그대로 서 있었다 —
   //   캔 것이 그대로 있으면 그건 고장으로 읽힌다.
   const cand = (g, x, z) => {
     const c = new THREE.Group();
-    c.position.set(x, 0, z);
+    c.position.set(x, groundY(g, x, z), z);
     g.add(c);
     return c;
   };
@@ -222,7 +281,13 @@ export function buildForage(scene, planet, spots, legendSpots) {
   // 2) 버섯 — 고리 **와** 갓, 둘 다 맞아야 한다
   const buildMushroom = (dir, seed) => {
     const g = plant(dir);
-    box(3.6, 0.1, 3.6, greenD, 0, 0.03, 0, g);          // 이끼 자리
+    // ★ 3.6×3.6짜리 이끼판 한 장이었다. 그 크기의 평판은 삼각면 지형 위에서
+    //   **반드시** 한쪽이 뜬다. 작은 이끼 여럿으로 쪼개고 각자 눕힌다.
+    for (let m = 0; m < 9; m++) {
+      const am = (m / 9) * Math.PI * 2 + 0.4, rm = 0.5 + (m % 3) * 0.62;
+      layFlat(box(0.8, 0.08, 0.8, greenD, 0, 0, 0, g),
+        g, Math.sin(am) * rm, Math.cos(am) * rm, am, 0.04);
+    }
     const specs = [                                       // 고리·우산
       { ring: true, dome: true }, { ring: true, dome: false },
       { ring: false, dome: true }, { ring: false, dome: false },
@@ -311,7 +376,10 @@ export function buildForage(scene, planet, spots, legendSpots) {
       const cg = cand(g, x, z);
       const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 0), rockM);
       rock.position.y = 0.5; rock.castShadow = true; cg.add(rock);
-      blocks.push({ g, x, z, r: 0.95 });
+      // ★ 0.95였다. 밀려나는 거리 0.95+0.32=1.27인데 손이 1.4라 여유가 0.13u뿐 —
+      //   각도가 조금만 틀어져도 프롬프트가 깜박인다. 바위 반지름은 0.85이므로
+      //   0.78이면 표면에서 0.07 안쪽까지만 들어가고 여유는 0.30u가 된다.
+      blocks.push({ g, x, z, r: 0.78 });
       // 빛나는 결 — 셋 다 빛난다. 이것만 보고는 못 고른다.
       for (let n = 0; n < 4; n++) {
         const a2 = (n / 4) * Math.PI * 2;
@@ -327,7 +395,7 @@ export function buildForage(scene, planet, spots, legendSpots) {
         else if (sp === 'hex') frag = new THREE.Mesh(
           new THREE.CylinderGeometry(0.14, 0.14, 0.32, 6), saltM);
         else frag = new THREE.Mesh(new THREE.IcosahedronGeometry(0.17, 0), saltM);
-        frag.position.set(Math.sin(a2) * 1.05, 0.12, Math.cos(a2) * 1.05);
+        frag.position.set(Math.sin(a2) * 0.78, 0.12, Math.cos(a2) * 0.78);
         if (sp !== 'cube') frag.rotation.set(rnd() * 3, rnd() * 3, rnd() * 3);
         else frag.rotation.y = a2;                        // 정육면체는 반듯하게 놓인다
         frag.castShadow = true; cg.add(frag);
@@ -339,62 +407,145 @@ export function buildForage(scene, planet, spots, legendSpots) {
   };
 
   // 5) 덫 자리 — 흔적을 읽고 **미끼 접시**를 고른다
+  //
+  // ★ 처음엔 바닥에 판자를 눕혀 놨더니 스크린샷에서 "널브러진 널판"으로 보였다.
+  //   재 보니 그럴 만했다 — 덫이 흙판(반경 2.2) **밖**인 2.6u에 있었고, 접시
+  //   가운데 것은 중심에서 0.9u라 발자국·먹다 만 것과 겹쳤고, 접시 간격 1.5u는
+  //   손 닿는 거리 1.4u와 거의 같았다.
+  //   그래서 **한 축 위에 늘어놓는다.** 짐승이 오는 길(u축)을 정하고,
+  //   흔적 → 미끼 접시 셋 → 제단이 그 길을 따라 순서대로 선다.
+  //   덫은 **띄운 제단**이다. 바닥에 붙은 물건은 지형에 묻히고 눕혀 놓은 것처럼
+  //   보이지만, 다리를 달아 띄우면 "놓인 것"으로 읽힌다.
   const buildTrap = (dir, seed) => {
     const g = plant(dir);
     const rnd = mkRnd(seed);
     const beast = BEASTS[Math.floor(rnd() * BEASTS.length)];
-    box(4.4, 0.08, 4.4, dirtM, 0, 0.025, 0, g);            // 다져진 땅
-    // 발자국 — 한쪽으로 이어진다. 그 끝이 덫 자리다.
-    const dirA = rnd() * Math.PI * 2;
+    const A = rnd() * Math.PI * 2;                     // 짐승이 오는 방향
+    const su = Math.sin(A), cu = Math.cos(A);
+    // 로컬 좌표: u는 오는 길, v는 그 옆
+    const at = (u, v) => ({ x: su * u + cu * v, z: cu * u - su * v });
+
+    // ★ 여기가 이 자리의 **전부**다. 발자국과 먹다 만 것이 곧 문제고, 제단과 접시는
+    //   답을 적는 칸일 뿐이다. 그런데 처음엔 발자국이 0.2×0.34짜리라 플레이 거리
+    //   (7.5u 뒤)에서 **아예 안 보였다.** 단서가 안 보이면 남는 건 접시 셋 찍기다.
+    //   레퍼런스도 같은 말을 한다 — 몬스터 헌터의 함정은 지면 자국이 크고 대비가
+    //   세서 못 지나친다. 자국을 키우고, 풀밭 위에서 읽히도록 어둡게 깐다.
+    // ★ 처음엔 같은 크기 판 아홉을 0.5u 간격으로 깔았더니 **연속된 널판**이 됐다.
+    //   닳은 길은 규칙적이지 않다 — 폭·각도·간격을 흔들고 사이를 벌려 둔다.
+    const PATH = toon(0x6b5940), FOOT = toon(0x2e2419);
+    for (let k = 0; k < 8; k++) {
+      const p2 = at(-3.3 + k * 0.62, (rnd() - 0.5) * 0.4);
+      layFlat(box(0.85 + rnd() * 0.6, 0.08, 0.5 + rnd() * 0.3, PATH, 0, 0, 0, g),
+        g, p2.x, p2.z, A + (rnd() - 0.5) * 0.5, 0.02);
+    }
+    // 발자국 — 오는 길을 따라 제단 쪽으로. 크고 어둡게, 그리고 짐승마다 모양이 다르다.
     for (let k = 0; k < 5; k++) {
-      const t = -1.6 + k * 0.75;
-      const fx = Math.sin(dirA) * t, fz = Math.cos(dirA) * t;
-      for (const sd of [-0.16, 0.16]) {
-        const fp = box(0.2, 0.03, 0.32, toon(0x4e4034),
-          fx + Math.cos(dirA) * sd, 0.05, fz - Math.sin(dirA) * sd, g);
-        fp.rotation.y = dirA;
+      const u = -3.0 + k * 0.62;
+      for (const sd of [-0.3, 0.3]) {
+        const p2 = at(u, sd + (beast.id === 'graze' ? 0 : (k % 2 ? 0.06 : -0.06)));
+        const gy = groundY(g, p2.x, p2.z) + 0.055;
+        void gy;
+        if (beast.id === 'graze') {                 // 갈라진 발굽 — 둘로 나뉜 자국
+          for (const half of [-0.09, 0.09]) {
+            const q = at(u, sd + half);
+            layFlat(box(0.15, 0.06, 0.38, FOOT, 0, 0, 0, g), g, q.x, q.z, A, 0.05);
+          }
+        } else if (beast.id === 'dig') {             // 발톱이 길게 끌린 자국
+          layFlat(box(0.3, 0.06, 0.7, FOOT, 0, 0, 0, g), g, p2.x, p2.z, A, 0.05);
+        } else {                                     // 깡충이 — 앞이 넓은 두 발
+          layFlat(box(0.38, 0.06, 0.5, FOOT, 0, 0, 0, g), g, p2.x, p2.z, A, 0.05);
+        }
       }
     }
-    // 먹다 만 것 — 미끼가 무엇인지 여기 적혀 있다
-    const leftK = beast.eats;
+    // 먹다 만 것 — **미끼가 무엇인지 여기 적혀 있다.** 길에서 비켜 둔다.
+    const lk = beast.eats;
+    const lp = at(-2.5, 1.45);
+    // ★ 미끼가 무엇인지 **여기 적혀 있다.** 작으면 그건 안 적힌 것이다 —
+    //   밝은 돌판 위에 올리고 크기를 키운다(먹다 만 것이라 조각도 흩어 둔다).
+    const lgy = groundY(g, lp.x, lp.z);
+    layFlat(box(1.1, 0.1, 1.1, toon(0xa8a49a), 0, 0, 0, g), g, lp.x, lp.z, A, 0.04);
     const left = new THREE.Mesh(
-      leftK === 'fruit' ? new THREE.IcosahedronGeometry(0.22, 0)
-        : leftK === 'mushroom' ? new THREE.ConeGeometry(0.2, 0.24, 7)
-          : new THREE.BoxGeometry(0.4, 0.05, 0.18),
-      toon(leftK === 'fruit' ? 0xb8402c : leftK === 'mushroom' ? 0xb9663f : 0x6f9c52));
-    left.position.set(Math.sin(dirA + 2.2) * 1.3, 0.16, Math.cos(dirA + 2.2) * 1.3);
-    g.add(left);
-    // 털 몇 올
-    for (let k = 0; k < 4; k++) {
-      const a2 = dirA + 2.0 + k * 0.14;
-      box(0.05, 0.02, 0.26, furM, Math.sin(a2) * 1.6, 0.06, Math.cos(a2) * 1.6, g)
-        .rotation.y = a2;
+      lk === 'fruit' ? new THREE.IcosahedronGeometry(0.34, 0)
+        : lk === 'mushroom' ? new THREE.ConeGeometry(0.32, 0.4, 7)
+          : new THREE.BoxGeometry(0.62, 0.09, 0.3),
+      toon(lk === 'fruit' ? 0xb8402c : lk === 'mushroom' ? 0xb9663f : 0x6f9c52));
+    left.position.set(lp.x, lgy + 0.28, lp.z);
+    left.rotation.set(0.4, A, 0.25);                 // 먹다 만 것은 반듯하지 않다
+    left.castShadow = true; g.add(left);
+    for (let k = 0; k < 3; k++) {                    // 부스러기
+      const q = at(-2.5 + (k - 1) * 0.32, 1.45 + (k % 2 ? 0.3 : -0.3));
+      const bit = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1, 0),
+        toon(lk === 'fruit' ? 0xb8402c : lk === 'mushroom' ? 0xb9663f : 0x6f9c52));
+      bit.position.set(q.x, groundY(g, q.x, q.z) + 0.1, q.z); g.add(bit);
     }
-    // 덫 — 발자국이 간 쪽 끝
-    const tx = Math.sin(dirA) * 2.6, tz = Math.cos(dirA) * 2.6;
-    const trapG = new THREE.Group(); trapG.position.set(tx, 0, tz); g.add(trapG);
-    box(1.3, 0.12, 1.3, bark, 0, 0.07, 0, trapG);
-    for (const sd of [-1, 1]) box(0.1, 0.5, 1.3, bark, sd * 0.6, 0.32, 0, trapG);
-    const caught = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42, 0), furM);
-    caught.position.set(0, 0.42, 0); caught.visible = false; trapG.add(caught);
-    // 미끼 접시 셋 — 덫 앞에 나란히. **자리로 고른다**(메뉴를 띄우지 않는다)
+    // 털 몇 올 — 반대편에
+    for (let k = 0; k < 4; k++) {
+      const fp2 = at(-2.0 - k * 0.18, -1.3 - (k % 2) * 0.2);
+      box(0.05, 0.03, 0.28, furM, fp2.x, groundY(g, fp2.x, fp2.z) + 0.05, fp2.z, g)
+        .rotation.y = A + 0.4;
+    }
+
+    // ── 제단형 덫 ─────────────────────────────────────────────────────────
+    const tp0 = at(2.7, 0);
+    const trapG = new THREE.Group();
+    trapG.position.set(tp0.x, groundY(g, tp0.x, tp0.z), tp0.z);
+    trapG.rotation.y = A;
+    g.add(trapG);
+    blocks.push({ g, x: tp0.x, z: tp0.z, r: TRAP_BLOCK });   // 제단 위엔 못 올라선다
+    const PLAT_Y = 0.58;                              // 띄운 높이
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      box(0.26, PLAT_Y, 0.26, toon(0x7d776c), sx * 0.62, PLAT_Y / 2, sz * 0.62, trapG);
+    }
+    box(1.72, 0.18, 1.72, toon(0xa8a49a), 0, PLAT_Y + 0.09, 0, trapG);   // 돌판
+    box(1.96, 0.09, 1.96, toon(0xc2bdb0), 0, PLAT_Y + 0.22, 0, trapG);   // 갓돌 — 밝게
+    // 문틀 — 기둥 둘과 가로대. 문은 위에 걸려 있다가 걸리면 내려온다.
+    for (const sx of [-1, 1]) box(0.22, 1.6, 0.22, toon(0x7a5b3a), sx * 0.9, PLAT_Y + 1.05, 0, trapG);
+    box(2.24, 0.26, 0.3, toon(0x7a5b3a), 0, PLAT_Y + 1.95, 0, trapG);
+    const gate = box(1.68, 1.1, 0.14, toon(0x8a6a44), 0, PLAT_Y + 1.3, 0.66, trapG);
+    for (let k = 0; k < 5; k++) box(0.08, 1.0, 0.08, toon(0x4a3625),
+      -0.66 + k * 0.33, PLAT_Y + 1.3, 0.66, trapG);
+    // 판 위에 올려 둔 미끼 — 무엇을 걸었는지 눈으로 보인다
+    const baitM = new THREE.Mesh(new THREE.IcosahedronGeometry(0.2, 0), toon(0xb8402c));
+    baitM.position.set(0, PLAT_Y + 0.42, 0); baitM.visible = false; trapG.add(baitM);
+
+    // ── 짐승 ──────────────────────────────────────────────────────────────
+    // ★ "실제 동물이 와서 먹는 연출". 시간만 흐르고 결과만 바뀌면 그건 타이머지
+    //   사냥이 아니다. 길을 따라 걸어 들어와 판 위에 올라선다.
+    const beastG = new THREE.Group();
+    beastG.visible = false; g.add(beastG);
+    const fur = toon(beast.id === 'hop' ? 0xb59a76 : beast.id === 'dig' ? 0x6f5a45 : 0x8d8672);
+    const body = box(0.46, 0.36, 0.72, fur, 0, 0.34, 0, beastG);
+    box(0.34, 0.3, 0.3, fur, 0, 0.5, -0.46, beastG);                     // 머리
+    for (const sx of [-1, 1]) {                                          // 귀 — 짐승마다 다르다
+      const ear = box(0.1, beast.id === 'hop' ? 0.42 : 0.14, 0.08, fur,
+        sx * 0.11, beast.id === 'hop' ? 0.82 : 0.66, -0.5, beastG);
+      ear.rotation.z = sx * 0.2;
+    }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      box(0.11, 0.28, 0.11, fur, sx * 0.17, 0.14, sz * 0.22, beastG);
+    }
+    box(0.12, 0.12, 0.22, fur, 0, 0.4, 0.44, beastG);                    // 꼬리
+    for (const sx of [-1, 1]) box(0.04, 0.04, 0.04, basic(0x241a12), sx * 0.09, 0.54, -0.61, beastG);
+
     const dishes = [];
     ['fruit', 'mushroom', 'herb'].forEach((k, i) => {
-      const off = (i - 1) * 1.5;
-      const dx = tx + Math.cos(dirA) * off - Math.sin(dirA) * 1.7;
-      const dz = tz - Math.sin(dirA) * off - Math.cos(dirA) * 1.7;
-      const d2 = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.4, 0.14, 8), bark);
-      d2.position.set(dx, 0.07, dz); d2.castShadow = true; g.add(d2);
+      const p2 = at(0.9, (i - 1) * 1.9);              // 간격 1.9u — 손 닿는 거리 1.4보다 넉넉히
+      const gy = groundY(g, p2.x, p2.z);
+      box(0.66, 0.42, 0.66, toon(0xa8a49a), p2.x, gy + 0.21, p2.z, g);   // 밝은 돌받침
+      const d3 = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.4, 0.16, 8), toon(0x7a5b3a));
+      d3.position.set(p2.x, gy + 0.5, p2.z); d3.castShadow = true; g.add(d3);
       const mark = new THREE.Mesh(
         k === 'fruit' ? new THREE.IcosahedronGeometry(0.17, 0)
           : k === 'mushroom' ? new THREE.ConeGeometry(0.16, 0.2, 7)
-            : new THREE.BoxGeometry(0.32, 0.04, 0.14),
+            : new THREE.BoxGeometry(0.32, 0.05, 0.14),
         toon(k === 'fruit' ? 0xb8402c : k === 'mushroom' ? 0xb9663f : 0x6f9c52));
-      mark.position.set(dx, 0.2, dz); g.add(mark);
-      dishes.push({ x: dx, z: dz, kind: k });
+      mark.position.set(p2.x, gy + 0.68, p2.z); g.add(mark);
+      dishes.push({ x: p2.x, z: p2.z, kind: k, mark });
     });
-    return { kind: 'meat', dir, group: g, beast, dishes,
-      trap: { x: tx, z: tz, caught, set: null, t: 0 }, cands: [] };
+
+    return { kind: 'meat', dir, group: g, beast, dishes, A, at,
+      trap: { x: tp0.x, z: tp0.z, set: null, t: 0, done: false,
+        gate, gateY: PLAT_Y + 1.3, baitM, beastG, platY: PLAT_Y + 0.26, caught: false } };
   };
 
   // ── 자리 놓기 ────────────────────────────────────────────────────────────
@@ -542,6 +693,17 @@ export function buildForage(scene, planet, spots, legendSpots) {
   return {
     sites, bag, found, blocks, resolve,
     at: siteAt,
+    // ★ 검사용 — 만질 것과 그 손 닿는 거리. 연구실이 검사 I에서 쓰는 것과 같은 꼴이다.
+    //   덫에 충돌체를 다는 순간 밀려나는 거리(1.15+0.32)가 손(1.4)보다 커져
+    //   **영영 못 만지는** 상태가 됐었다 — 연구실 콘솔과 똑같은 실수였다.
+    //   목록을 여기서 내보내야 검사가 옛 자리를 재는 일이 없다.
+    touchables(site) {
+      if (site.kind === 'meat') {
+        return [{ name: '덫', x: site.trap.x, z: site.trap.z, r: TRAP_REACH }]
+          .concat(site.dishes.map((d, i) => ({ name: `접시${i + 1}`, x: d.x, z: d.z, r: REACH })));
+      }
+      return site.cands.map((c, i) => ({ name: `후보${i + 1}`, x: c.x, z: c.z, r: REACH }));
+    },
     RULES,
 
     update(dt) {
@@ -552,10 +714,30 @@ export function buildForage(scene, planet, spots, legendSpots) {
           if (s.regrowT <= 0) { regrow(s); continue; }
         }
         if (s.kind !== 'meat' || !s.trap.set) continue;
-        s.trap.t += dt;
-        if (s.trap.t >= TRAP_WAIT && !s.trap.caught.visible) {
-          s.trap.caught.visible = s.trap.set === s.beast.eats;
-          s.trap.done = true;
+        const t = s.trap;
+        t.t += dt;
+        const right = t.set === s.beast.eats;
+        // ★ 시간만 흐르고 결과만 바뀌면 그건 타이머지 사냥이 아니다.
+        //   맞는 미끼면 마지막 7초 동안 **길을 따라 걸어 들어온다.**
+        if (right && !t.caught && t.t >= TRAP_WAIT - APPROACH) {
+          const k = Math.min(1, (t.t - (TRAP_WAIT - APPROACH)) / APPROACH);
+          const u = -6.0 + k * 8.7;                   // 길 밖에서 제단까지
+          const p2 = s.at(u, 0);
+          t.beastG.visible = true;
+          const gy = k < 0.92 ? 0 : t.platY;          // 마지막에 판 위로 올라선다
+          t.beastG.position.set(p2.x, gy + Math.abs(Math.sin(k * 26)) * 0.16, p2.z);
+          t.beastG.rotation.y = s.A + Math.PI;
+        }
+        if (t.t >= TRAP_WAIT && !t.done) {
+          t.done = true;
+          t.caught = right;
+          if (right) {
+            t.gate.position.y = t.gateY - 0.86;       // 문이 내려온다
+            t.baitM.visible = false;
+          } else {
+            t.beastG.visible = false;
+            t.baitM.visible = false;                  // 미끼만 없어졌다
+          }
         }
       }
     },
@@ -570,13 +752,16 @@ export function buildForage(scene, planet, spots, legendSpots) {
       const l = localOf(s, worldPos);
       if (s.kind === 'meat') {
         const t = s.trap;
-        if (Math.hypot(l.x - t.x, l.z - t.z) < REACH) {
-          if (t.caught.visible) return 'E — 걸린 것을 거두기';
+        if (Math.hypot(l.x - t.x, l.z - t.z) < TRAP_REACH) {
+          if (t.caught) return `E — 걸린 ${josa(s.beast.name, '을')} 거두기`;
           // ★ 시간이 다 됐는데 아무것도 안 걸렸을 때 "놓아둔 지 0초"만 계속 떠 있었다.
           //   빈 덫인지 아직 기다리는 중인지 알 길이 없어서 **영원히 기다리는 것처럼**
           //   보였다. 헛수고였다는 것도 결과다 — 결과는 말해 줘야 한다.
           if (t.done) return 'E — 빈 덫을 거두기';
-          if (t.set) return `🪤 놓아둔 지 ${Math.max(0, Math.ceil(TRAP_WAIT - t.t))}초`;
+          if (t.set) {
+            if (t.beastG.visible) return '🐾 뭔가 온다 — 움직이지 말자';
+            return `🪤 놓아둔 지 ${Math.max(0, Math.ceil(TRAP_WAIT - t.t))}초`;
+          }
           return '🪤 덫 — 앞의 접시에 미끼를 놓아야 한다';
         }
         const d2 = nearestOf(s.dishes, l);
@@ -609,23 +794,31 @@ export function buildForage(scene, planet, spots, legendSpots) {
       const l = localOf(s, worldPos);
       if (s.kind === 'meat') {
         const t = s.trap;
-        if (Math.hypot(l.x - t.x, l.z - t.z) < REACH) {
-          if (t.caught.visible) {
-            t.caught.visible = false; t.set = null; t.t = 0;
+        if (Math.hypot(l.x - t.x, l.z - t.z) < TRAP_REACH) {
+          const reset = () => {
+            t.set = null; t.t = 0; t.done = false; t.caught = false;
+            t.gate.position.y = t.gateY;
+            t.beastG.visible = false; t.baitM.visible = false;
+            for (const d3 of s.dishes) d3.mark.visible = true;
+          };
+          if (t.caught) {
+            reset();
             bag.meat = (bag.meat || 0) + 1;
             const first = !found.meat; found.meat = true;
             return { kind: 'meat', ok: true, first };
           }
-          if (t.done && !t.caught.visible) {
-            t.set = null; t.t = 0; t.done = false;
-            return { kind: 'meat', ok: false, why: WRONG.empty };
-          }
+          if (t.done) { reset(); return { kind: 'meat', ok: false, why: WRONG.empty }; }
           return null;
         }
         const d2 = nearestOf(s.dishes, l);
         if (d2 && !t.set && bag[d2.kind] > 0) {
           bag[d2.kind]--;
-          t.set = d2.kind; t.t = 0; t.done = false;
+          t.set = d2.kind; t.t = 0; t.done = false; t.caught = false;
+          // 접시에서 집어 제단 위에 올려 둔다 — 무엇을 걸었는지 눈으로 보인다
+          d2.mark.visible = false;
+          t.baitM.visible = true;
+          t.baitM.material = toon(d2.kind === 'fruit' ? 0xb8402c
+            : d2.kind === 'mushroom' ? 0xb9663f : 0x6f9c52);
           return { kind: 'bait', ok: d2.kind === s.beast.eats, set: d2.kind };
         }
         return null;

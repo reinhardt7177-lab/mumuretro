@@ -585,7 +585,7 @@ const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
-const forage = buildForage(planetScene, planet, forageSpots, legendSpots);
+const forage = buildForage(planetScene, planet, forageSpots, legendSpots, carpet);
 
 // 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.
 // 틀린 것은 왜 아닌지만 말한다. 무엇이 맞는지는 말하지 않는다.
