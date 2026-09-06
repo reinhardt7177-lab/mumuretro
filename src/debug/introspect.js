@@ -812,6 +812,12 @@ export function installDebug(ctx) {
           }
           const m = ctx.notebook.pageMetrics(H);
           for (const id in m) {
+            // ★ 편지 본문은 원래 굴러가도 되는 자리다(`.letter{overflow:auto}`) —
+            //   편지는 쌓이고 길이도 제각각이라 목록에서 골라 펴는 구조다.
+            //   그래서 편지는 **설계 높이(660)에서만** 스크롤을 금한다.
+            //   낮은 창에서까지 금하면 "긴 편지를 쓰지 말라"는 말이 되고,
+            //   그건 검사가 내용을 검열하는 것이다. 면 자체는 어느 높이에서도 안 넘친다.
+            if (id.includes(':편지') && H < 660) continue;
             const over = m[id].need - m[id].have;
             if (over > 2) { nbOK = false; nbBad.push(`${H}px ${id}${full ? '(참)' : '(빔)'} +${over}`); }
           }
@@ -892,19 +898,48 @@ export function installDebug(ctx) {
       log.push(`N 시작 화면 시선줄 ${tMsg} -> ${tOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── O 방마다 안내가 성립하는가 ─────────────────────────────────────────
+    // ★ 베타 테스터: "어떤 방법으로 각 방을 통과하는지 모르겠다."
+    //   정보는 있었지만 **조작**을 말하는 데가 한 군데도 없었다. 이제 방마다
+    //   그림 하나 · 목표 한 줄 · 조작 한 줄이 뜬다. 그 셋이 다 있는지 본다 —
+    //   방을 하나 새로 넣고 act를 빠뜨리면 안내가 조용히 '걷기'로 떨어진다.
+    //   조용히 틀린 안내는 안내가 없는 것보다 나쁘다.
+    let rbOK = true; const rbBad = [];
+    if (ctx.brief && ctx.roomFor && ctx.shrines) {
+      let n = 0;
+      for (const sh of ctx.shrines.shrines) {
+        const rm = ctx.roomFor(sh);
+        const seen = new Set();
+        for (const r of rm.dungeon.rects) {
+          if (r.kind !== 'room' || seen.has(r.id)) continue;
+          seen.add(r.id); n++;
+          const where = `${rm.spec.name}·${r.name}`;
+          if (!r.act) { rbOK = false; rbBad.push(`${where} 손짓 없음`); }
+          else if (!ctx.brief.has(r.act)) { rbOK = false; rbBad.push(`${where} 모르는 손짓 ${r.act}`); }
+          if (!rm.goals[r.id]) { rbOK = false; rbBad.push(`${where} 목표 없음`); }
+          const h = rm.hints[r.id];
+          if (!h || h.texts.length < 2) { rbOK = false; rbBad.push(`${where} 힌트 부족`); }
+        }
+      }
+      if (n !== 24) { rbOK = false; rbBad.push(`방 ${n}개(24여야)`); }
+      log.push(`O 방마다 그림·목표·조작 ${n}곳`
+        + (rbOK ? ' 전부' : ` — ${rbBad.slice(0, 3).join(' / ')}`)
+        + ` -> ${rbOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMN'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNO'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~N 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~O 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && coverOK;
+      && tOK && rbOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

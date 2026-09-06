@@ -173,7 +173,7 @@ export function buildDungeon(scene, rooms, theme) {
       id: s.id, kind: s.kind, x0: -hw, x1: hw,
       z0: s.to, z1: s.from, h: s.h,
       open: s.open !== false && !s.door,
-      glow: gcol.getHex(), name: s.name, gate: s.gate,
+      glow: gcol.getHex(), name: s.name, gate: s.gate, act: s.act,
     });
 
     // 문 — 통로 입구를 막는 발광 판. 조건이 풀리면 사라지고 통로가 열린다.

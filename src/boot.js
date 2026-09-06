@@ -30,6 +30,7 @@ import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
 import { buildFlash } from './ui/Flash.js';
 import { buildTitle } from './ui/Title.js';
+import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
 import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
@@ -139,6 +140,7 @@ let cleared = false;                 // 이번 사당을 깼나
 //   전부 주인공의 목소리로 맞춘다.
 let noteMsg = null, noteT = 0;
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
+let briefWant = null;                // 띄울 방 안내(대사가 끝나기를 기다린다)
 let sawNote = false;                 // 수첩을 한 번이라도 펴 봤나(오프닝)
 let lastSite = null;                 // 채집 자리가 바뀌는 순간을 잡는다
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
@@ -172,6 +174,9 @@ function setPrompt(text) {
 function failTo(seg, msg) {
   noteMsg = `💫 ${msg}`; noteT = 1.6;
   roomActor.setAt(0, seg.z1 - 1.4, -1);
+  // ★ 틀려서 방 처음으로 돌아온 사람이 가장 안내가 필요한 사람이다.
+  //   벌이 아니라 도움이다("틀려도 벌하지 않는다").
+  if (room && room.goals[seg.id]) brief.show(seg.name, room.goals[seg.id], seg.act);
 }
 const segOf = (id) => room.dungeon.rectOf(id);
 
@@ -207,6 +212,7 @@ function enterShrine(shrine) {
 }
 
 function exitShrine() {
+  brief.hide(); briefWant = null;
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
@@ -287,6 +293,9 @@ function step(dt) {
   //   같은 E가 아래로 흘러 상호작용까지 한다 — 그게 바로 피하려던
   //   "넘기려다 뭘 집었다"다.
   if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
+  // 안내가 떠 있으면 E는 안내를 닫는 데 쓴다. 닫으려다 뭘 집으면 안 된다 —
+  // 대사창과 완전히 같은 규칙이고, 같은 자리에서 처리해야 한 쪽만 고쳐지지 않는다.
+  else if (brief.isOpen && intent.action) { brief.hide(); intent.action = false; }
   // 밖에서는 해가 있다. 받침등은 실내에서만 켠다.
   fill.intensity = mode === 'planet' ? 0 : (mode === 'lab' ? FILL_LAB : FILL_ROOM);
   if (mode === 'title') { stepTitle(dt); return; }
@@ -546,7 +555,17 @@ function stepRoom(dt, intent) {
       const k = KEEPERS[room.spec.id];
       dialogue.play(`arrive-${room.spec.id}`, k.who, k.arrive);
     }
-    if (goal) { noteMsg = `📜 ${seg.name} — ${goal}`; noteT = 3.6; }
+    // ★ 예전엔 여기서 3.6초짜리 알림 한 줄만 띄웠다. 눈을 깜빡이면 사라지고
+    //   다시 못 본다. 게다가 **목표만** 말하고 손이 무엇을 하는지는 안 말했다 —
+    //   테스터가 막힌 건 목표가 아니라 조작이었다(RoomBrief.js 머리말).
+    if (goal) briefWant = { name: seg.name, goal, act: seg.act };
+  }
+  // ★ 대사창이 떠 있는데 안내까지 띄우면 두 장이 겹쳐 **둘 다 안 읽힌다**
+  //   (신전에 들어서는 순간이 정확히 그렇다 — 지킴이가 말을 걸면서 안내가 뜬다).
+  //   말이 끝나기를 기다렸다 띄운다.
+  if (briefWant && !dialogue.active) {
+    brief.show(briefWant.name, briefWant.goal, briefWant.act);
+    briefWant = null;
   }
 
   // 관문 — 자기 구간에 있을 때만 돈다. 레이저는 방 밖에서도 움직여야 자연스럽지만
@@ -722,6 +741,8 @@ refreshHint();
 // 지하 연구실과, 별 위의 같은 자리. 이 둘이 포탈의 양 끝이다.
 const flash = buildFlash();
 const title = buildTitle(() => startFromTitle());
+// 방 안내 — 들어서는 순간 한 번, 틀려서 되돌아오면 다시.
+const brief = buildRoomBrief(() => touch.visible);
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
@@ -771,6 +792,7 @@ const loop = new Loop(step, () => engine.render());
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
+  brief,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
@@ -781,7 +803,7 @@ const game = {
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
-  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd,
+  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 

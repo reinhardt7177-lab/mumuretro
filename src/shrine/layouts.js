@@ -40,7 +40,7 @@ function spine({ rooms, corridor = 4, entryTo, w: cw = 4.2, ch = 4.2 }) {
   let z = entryTo;
   rooms.forEach((r, i) => {
     out.push({ id: r.id, kind: 'room', name: r.name, w: r.w, from: z, to: z - r.len, h: r.h,
-      gate: r.gate, goal: r.goal, hints: r.hints });
+      gate: r.gate, goal: r.goal, hints: r.hints, act: r.act });
     z -= r.len;
     const last = i === rooms.length - 1;
     const cl = last ? corridor : (r.corridor || corridor);
@@ -61,16 +61,23 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '빛 타일', w: 10, len: 14, h: 5.5, gate: 'tile',
-            goal: '초록 발판만 밟고 20초를 버텨라. 빨강은 가라앉는다.',
-            hints: ['초록이 켜질 때 어디에 설지 미리 정해라.', '가장자리보다 가운데가 살아남을 때가 많다.'] },
-        { id: 'r2', name: '레이저 회랑', w: 8, len: 16, h: 5.5, gate: 'laser',
+        { id: 'r1', name: '빛 타일', w: 10, len: 14, h: 5.5, gate: 'tile', act: 'standJump',
+            // ★ 이 방에는 규칙이 **셋**인데 목표에는 둘만 적혀 있었다 —
+            //   문이 닫힌다는 것도, **도는 줄**도 없었다. 줄은 프롬프트에
+            //   "· 줄은 뛰어넘기"로 잠깐 붙고 죽을 때 한 번 말해 줄 뿐이었다.
+            //   베타 테스터가 "어떻게 통과하는지 모르겠다"고 한 방이 바로 여기다.
+            //   화면에 있는 규칙은 전부 적는다. 정답이 아니라 규칙이다.
+            goal: '들어가면 문이 닫힌다. 초록만 밟고 20초, 도는 줄은 뛰어넘어라.',
+            hints: ['초록이 켜질 때 어디에 설지 미리 정해라.',
+              '줄은 일정하게 돈다. 오는 걸 보고 뛰면 늦다.',
+              '가장자리보다 가운데가 살아남을 때가 많다.'] },
+        { id: 'r2', name: '레이저 회랑', w: 8, len: 16, h: 5.5, gate: 'laser', act: 'jump',
             goal: '구획 셋. 낮은 줄은 뛰고, 높은 줄은 뛰지 마라.',
             hints: ['구획마다 줄 높이가 다르다. 발밑 띠 색을 봐라.', '붉은 띠는 낮은 줄 뛰기, 푸른 띠는 높은 줄 뛰지 않기.'] },
-        { id: 'r3', name: '무게 압력판', w: 12, len: 10, h: 5.5, gate: 'plate',
+        { id: 'r3', name: '무게 압력판', w: 12, len: 10, h: 5.5, gate: 'plate', act: 'carry',
             goal: '두 판이 주문한 무게를 만들어라. 주문은 세 번 바뀐다.',
             hints: ['판 테두리가 붉으면 너무 무거운 것이다.', '큰 상자를 먼저 놓고 남는 수를 작은 상자로 채워라.'] },
-        { id: 'shrine', name: '신전', w: 18, len: 16, h: 9,
+        { id: 'shrine', name: '신전', w: 18, len: 16, h: 9, act: 'carry',
             goal: '왼쪽 3kg이 2칸에 있다. 오른쪽으로 수평을 맞춰라.',
             hints: ['무게 × 칸수가 같아야 수평이 된다.', '왼쪽은 3kg이 2칸이다. 오른쪽도 그만큼.'] },
       ],
@@ -88,16 +95,16 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 5.0, corridor: 6, ch: 4.4,
       rooms: [
-        { id: 'r1', name: '그림자 밟기', w: 9, len: 16, h: 6.0, gate: 'shade',
+        { id: 'r1', name: '그림자 밟기', w: 9, len: 16, h: 6.0, gate: 'shade', act: 'stand',
             goal: '빛에 닿으면 들킨다. 기둥 그림자만 밟고 건너라.',
             hints: ['그림자는 등불 반대편에 생긴다.', '등불이 돌면 그림자도 돈다. 기둥을 따라 함께 돌아라.'] },
-        { id: 'r2', name: '거울 세 장', w: 9, len: 14, h: 6.0, gate: 'mirror',
+        { id: 'r2', name: '거울 세 장', w: 9, len: 14, h: 6.0, gate: 'mirror', act: 'turn',
             goal: '거울을 돌려 빛을 표적에 꽂아라. 앞 거울부터.',
             hints: ['빛이 어디서 끊겼는지 봐라. 거기가 고칠 거울이다.', '입구에서 가장 가까운 거울부터 맞춰라.'] },
-        { id: 'r3', name: '그림자 크기', w: 9, len: 12, h: 6.0, gate: 'silhouette',
+        { id: 'r3', name: '그림자 크기', w: 9, len: 12, h: 6.0, gate: 'silhouette', act: 'carry',
             goal: '물체를 밀어 그림자를 구멍 크기에 맞춰라.',
             hints: ['등불에 가까울수록 그림자가 커진다.', '그림자가 구멍보다 크면 물체를 벽 쪽으로 밀어라.'] },
-        { id: 'shrine', name: '신전', w: 16, len: 16, h: 8,
+        { id: 'shrine', name: '신전', w: 16, len: 16, h: 8, act: 'turn',
             goal: '손잡이 둘로 신의 그림자를 바닥 자리에 얹어라.',
             hints: ['손잡이 하나는 방향, 하나는 길이를 바꾼다.', '방향을 먼저 맞추고 그다음 길이를 맞춰라.'] },
       ],
@@ -113,16 +120,16 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 6.0, gate: 'sieve',
+        { id: 'r1', name: '체 고르기', w: 12, len: 12, h: 6.0, gate: 'sieve', act: 'carry',
             goal: '주문한 알갱이만 남기는 체를 골라 틀에 끼워라.',
             hints: ['구멍이 클수록 많이 빠진다.', '남길 알갱이보다 조금 작은 구멍을 골라라.'] },
-        { id: 'r2', name: '성질로 나누기', w: 12, len: 12, h: 6.0, gate: 'magnet',
+        { id: 'r2', name: '성질로 나누기', w: 12, len: 12, h: 6.0, gate: 'magnet', act: 'carry',
             goal: '기준이 세 번 바뀐다. 대 보고 담가 보고 나눠 담아라.',
             hints: ['겉모습은 다 같다. 대 보고 담가 봐야 안다.', '기준이 바뀌면 같은 물건도 다른 통으로 간다.'] },
-        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 6.0, gate: 'evaporate',
+        { id: 'r3', name: '거름과 증발', w: 12, len: 12, h: 6.0, gate: 'evaporate', act: 'carry',
             goal: '소금만 남겨라. 자석·거름망·화로를 어떤 순서로?',
             hints: ['쇠는 자석으로, 알갱이는 체로, 녹은 것은 끓여서.', '물이 없어지면 아무것도 못 거른다. 물이 있을 때 먼저.'] },
-        { id: 'shrine', name: '신전', w: 16, len: 16, h: 6.5,
+        { id: 'shrine', name: '신전', w: 16, len: 16, h: 6.5, act: 'carry',
             goal: '섞인 것마다 알맞은 도구를 짝지어라.',
             hints: ['무엇으로 갈라지는지 하나씩 생각해라.', '크기가 다른가? 쇠인가? 물에 녹아 있나?'] },
       ],
@@ -137,16 +144,16 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '얼려서 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze',
+        { id: 'r1', name: '얼려서 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze', act: 'turn',
             goal: '물 세 줄. 줄마다 얼려서 건너라 — 갈수록 빨리 녹는다.',
             hints: ['손잡이는 줄마다 따로 있다.', '얼음이 깜빡이면 곧 녹는다. 미리 다음 손잡이로.'] },
-        { id: 'r2', name: '미끄러운 바닥', w: 10, len: 14, h: 7.0, gate: 'slide',
+        { id: 'r2', name: '미끄러운 바닥', w: 10, len: 14, h: 7.0, gate: 'slide', act: 'slip',
             goal: '얼음 위에선 안 멈춘다. 미리 줄이고 구멍을 피해라.',
             hints: ['얼음 위에선 안 멈춘다. 구멍 한참 전에 손을 떼라.', '벽에 부딪히면 멈춘다. 벽을 이용해라.'] },
-        { id: 'r3', name: '수증기 승강기', w: 10, len: 12, h: 7.0, gate: 'steam',
+        { id: 'r3', name: '수증기 승강기', w: 10, len: 12, h: 7.0, gate: 'steam', act: 'turn',
             goal: '온도를 바꿔 밸브 셋이 원하는 모습을 채워라.',
             hints: ['손잡이로 온도를 바꾸면 가마솥이 변한다.', '밸브 색이 곧 그 밸브가 원하는 모습이다.'] },
-        { id: 'shrine', name: '신전', w: 18, len: 18, h: 10,
+        { id: 'shrine', name: '신전', w: 18, len: 18, h: 10, act: 'time',
             goal: '신이 표지와 같은 모습일 때 제단을 눌러라. 세 번.',
             hints: ['신이 바뀌는 걸 한 바퀴 지켜봐라.', '표지와 신이 같은 색일 때 눌러라.'] },
       ],
@@ -161,16 +168,16 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '예진', w: 11, len: 15, h: 6.5, gate: 'quake',
+        { id: 'r1', name: '예진', w: 11, len: 15, h: 6.5, gate: 'quake', act: 'avoid',
             goal: '예진이 오면 기둥 곁으로. 본진에 기둥 밖이면 휩쓸린다.',
             hints: ['크게 흔들리기 전에 반드시 작게 먼저 흔들린다.', '예진이 오면 가장 가까운 기둥 고리 안으로.'] },
-        { id: 'r2', name: '용암 육각형', w: 9, len: 12, h: 6.5, gate: 'hexlava',
+        { id: 'r2', name: '용암 육각형', w: 9, len: 12, h: 6.5, gate: 'hexlava', act: 'stand',
             goal: '밟은 칸은 가라앉는다. 갈 길을 미리 정해라.',
             hints: ['밟고 지나온 칸은 가라앉는다.', '건너기 전에 끝까지 갈 길을 눈으로 그려라.'] },
-        { id: 'r3', name: '간헐천', w: 13, len: 14, h: 6.5, gate: 'geyser',
+        { id: 'r3', name: '간헐천', w: 13, len: 14, h: 6.5, gate: 'geyser', act: 'time',
             goal: '고리가 차오르면 뿜는다. 주기가 셋 다 다르다.',
             hints: ['발밑 고리가 차오르면 곧 뿜는다.', '주기가 셋 다 다르다. 방금 뿜은 곳이 제일 안전하다.'] },
-        { id: 'shrine', name: '신전', w: 18, len: 18, h: 9,
+        { id: 'shrine', name: '신전', w: 18, len: 18, h: 9, act: 'turn',
             goal: '수로를 돌려 신에서 배수구까지 용암 길을 이어라.',
             hints: ['용암이 어디서 멈췄는지 봐라.', '멈춘 바로 그 수로부터 고쳐라.'] },
       ],
@@ -187,16 +194,16 @@ export const SHRINES = [
     rooms: spine({
       entryTo: 6.0, corridor: 6,
       rooms: [
-        { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder',
+        { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder', act: 'carry',
             goal: '시추 코어를 읽고, 같은 순서로 벽에 꽂아라.',
             hints: ['시추 코어를 먼저 읽어라.', '코어의 맨 아래 칸이 벽의 1층이다.'] },
-        { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft',
+        { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft', act: 'avoid',
             goal: '바닥에 그림자가 뜨면 그 자리로 바위가 떨어진다.',
             hints: ['바닥 그림자가 커지면 그 자리로 떨어진다.', '그림자를 보고 옆으로 한 걸음이면 된다.'] },
-        { id: 'r3', name: '다섯 색의 문', w: 12, len: 14, h: 6.0, gate: 'fiveDoors',
+        { id: 'r3', name: '다섯 색의 문', w: 12, len: 14, h: 6.0, gate: 'fiveDoors', act: 'turn',
             goal: '표지가 가리키는 사당의 색으로 손잡이를 맞춰라.',
             hints: ['표지 모양이 어느 사당이었는지 떠올려라.', '사당마다 빛기둥 색이 달랐다.'] },
-        { id: 'shrine', name: '신전', w: 20, len: 22, h: 20,
+        { id: 'shrine', name: '신전', w: 20, len: 22, h: 20, act: 'carry',
             goal: '구슬 다섯을 제단에 바쳐라.',
             hints: ['구슬은 아무 제단에나 올려도 된다.', '다섯을 다 올리면 신이 눈을 뜬다.'] },
       ],
