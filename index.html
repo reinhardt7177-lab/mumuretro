@@ -4,10 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>무무 행성</title>
+
+<!-- ── 링크로 보냈을 때 보이는 것 ────────────────────────────────────────────
+     카카오톡에 링크를 붙였더니 제목 아래에 "여기를 눌러 링크를 확인하세요."만
+     떴다. og:* 가 하나도 없었기 때문이다 — 메신저는 페이지를 열어 보지 않고
+     이 <head>만 읽는다. 여기가 비어 있으면 게임이 아무리 좋아도 링크는 빈칸이다.
+
+     · 그림은 실제 게임 화면이다(사당 앞, 걷는 자세). 따로 그린 일러스트를 쓰면
+       열었을 때와 달라서, 그건 예고가 아니라 낚시가 된다.
+     · 주소는 반드시 절대경로. 상대경로를 쓰면 카카오·페이스북이 못 가져간다.
+     · 파일 이름을 og.jpg가 아니라 cover.jpg로 새로 뒀다. 메신저는 주소 단위로
+       미리보기를 캐시하므로, 같은 이름에 덮어쓰면 예전 그림이 계속 나온다.
+       (assets/og.jpg는 예전 판(집배원)의 것이라 안 쓴다.) -->
+<link rel="canonical" href="https://mumuretro.vercel.app/">
+<meta name="description" content="작은 별을 걸어 다니며 사당 여섯을 풀고, 들에서 모으고, 수첩을 채우는 탐험. 초등 4학년 과학.">
+<meta name="theme-color" content="#c2dce6">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="무무 행성">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://mumuretro.vercel.app/">
+<meta property="og:title" content="무무 행성 — 작은 별을 걸어서">
+<meta property="og:description" content="사당 여섯을 풀고, 들에서 모으고, 수첩을 채운다. 브라우저에서 바로 시작.">
+<meta property="og:image" content="https://mumuretro.vercel.app/assets/cover.jpg">
+<meta property="og:image:secure_url" content="https://mumuretro.vercel.app/assets/cover.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="빛기둥이 솟은 사당을 향해 걸어가는 탐험가">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="무무 행성 — 작은 별을 걸어서">
+<meta name="twitter:description" content="사당 여섯을 풀고, 들에서 모으고, 수첩을 채운다. 브라우저에서 바로 시작.">
+<meta name="twitter:image" content="https://mumuretro.vercel.app/assets/cover.jpg">
+
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap">
-<meta name="description" content="구면 행성을 걷는 로우폴리 탐험 — 재설계 v2">
 <style>
   /* 재설계 v2 — UI는 아직 없다. 지형·빛·대기가 실제로 되는지 보는 빌드다.
      상시 화면 규칙(상시 5개 · flex 컬럼 · 색 5계열)은 UI가 들어올 때 다시 적용한다. */
