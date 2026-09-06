@@ -24,6 +24,7 @@ import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
 import { SHRINE_THEMES } from '../data/lighting.js';
 import { markSvg } from '../data/marks.js';
+import { RECIPES } from '../data/recipes.js';
 import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
   from '../data/forage.js';
 
@@ -225,7 +226,7 @@ const TABS = [
   { id: 'kitchen', key: '5', name: '부엌' },
 ];
 
-export function buildNotebook(shrines, specs, getForage, mapPage) {
+export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -285,6 +286,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
         + '/' + BEASTS.filter((b) => fg.caught[b.id] > 0).length : '0';
     }
     if (id === 'mail') return `${clearedCount()}|${has ? 1 : 0}`;
+    if (id === 'kitchen') { const kt = getKitchen && getKitchen(); return kt ? `${kt.made.size}` : '0'; }
     if (id === 'star') {
       // ★ 예전엔 둘러본 %를 그대로 서명에 넣었다. 그러면 **한 걸음 걸을 때마다**
       //   점이 켜진다 — 늘 켜져 있는 점은 꺼져 있는 점과 똑같이 아무 뜻이 없다.
@@ -440,16 +442,27 @@ export function buildNotebook(shrines, specs, getForage, mapPage) {
     }
   };
 
+  // ★ "아직 아무것도 못 만들어 봤다"가 몇 판째 그대로였다 — 약속만 있고 부엌이 없었다.
+  //   이제 내림판 옆 모닥불이 그 자리다. 여기는 물음 면과 같은 꼴이다: 앞사람이
+  //   파란 글씨로 **재료 하나와 맛만** 흘려 뒀고, 만들면 내 글씨로 이유가 적힌다.
+  //   요리 이름은 만들기 전엔 안 보인다 — 이름을 보면 재료가 반쯤 딸려 온다.
   const drawKitchen = () => {
+    const kt = getKitchen && getKitchen();
+    const made = kt ? kt.made : new Set();
     elT.textContent = '부엌';
-    elN.textContent = '';
-    // ★ 여기 두 줄 다 **주인공의 생각**인데 아랫줄이 파란 손글씨(hw)였다.
-    //   파란색은 앞사람의 글씨라고 화면 아래에 못 박아 놓고 우리가 어겼다 —
-    //   편지 면에서 똑같은 실수를 이미 한 번 잡았는데 여기 남아 있었다.
-    //   색이 화자를 가르는 장치인 이상, 한 군데만 어겨도 그 색은 뜻을 잃는다.
-    elBody.innerHTML = `<div class="soon">
-      <div class="big">아직 아무것도 못 만들어 봤다.</div>
-      <div style="font-size:15px;color:#8b9399">불을 피울 데부터 찾아야겠지.</div></div>`;
+    elN.textContent = `${RECIPES.length}가지 중 ${made.size}가지`;
+    elBody.innerHTML = RECIPES.map((r, i) => {
+      const done = made.has(r.id);
+      // 전설 요리는 마지막 장을 읽기 전엔 줄 자체가 안 보인다 — 가진 것만 적는다
+      if (r.legend && !done && clearedCount() < specs.length) {
+        return `<div class="frow"><div class="fdot"></div>
+          <div><div class="fnm todo">?</div><div class="frule hw" style="color:#9aa3a7">(마지막 장을 읽어야 보인다.)</div></div></div>`;
+      }
+      return `<div class="frow"${done ? ` data-k="ck:${r.id}"` : ''}>
+        <div class="fdot" style="${done ? 'background:#c0653a' : ''}"></div>
+        <div><div class="fnm${done ? '' : ' todo'}">${done ? r.name : `요리 ${i + 1}`}</div>
+        ${done ? `<div class="fsaid">${r.got}</div>` : `<div class="frule hw">${r.hint}</div>`}</div></div>`;
+    }).join('');
   };
 
   const DRAW = { star: drawStar, ask: drawAsk, field: drawField,

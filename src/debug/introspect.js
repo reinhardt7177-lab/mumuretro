@@ -1021,19 +1021,84 @@ export function installDebug(ctx) {
         + (qOK ? ' 전부' : ` — ${qBad.join(' / ')}`) + ` -> ${qOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── R 부엌이 성립하는가 ─────────────────────────────────────────────────
+    // ★ 부엌은 채집이 **쓰이는 곳**이다. 여기서 재는 것 넷:
+    //   ① 레시피 재료가 전부 bag 열쇠에 있는가(없는 재료를 부르는 요리는 영영 못 만든다)
+    //   ② 접시·솥에 **걸어서 닿는가**(불 충돌 0.55+0.32 < 손 1.6 — 콘솔·덫과 같은 실수)
+    //   ③ 틀린 셋은 요리가 아니고 재료를 **안 뺏는가**
+    //   ④ 맞는 셋은 요리이고 재료를 **하나씩만** 쓰는가
+    let rOK = true; const rBad = [];
+    if (ctx.kitchen && ctx.forage) {
+      const kt = ctx.kitchen, fg3 = ctx.forage;
+      const keys = new Set(Object.keys(fg3.bag).concat(
+        ['meat_rabbit', 'meat_deer', 'meat_chicken', 'meat_boar']));
+      for (const r of kt.RECIPES) {
+        for (const k of r.needs) if (!keys.has(k) && !(k in fg3.bag)) { rOK = false; rBad.push(`${r.name}: 모르는 재료 ${k}`); }
+        if (kt.judge(r.needs) !== r) { rOK = false; rBad.push(`${r.name}: 제 재료로 안 맞음`); }
+      }
+      if (kt.judge(['fruit', 'fruit', 'fruit'])) { rOK = false; rBad.push('열매 셋이 요리로 잡힘'); }
+      // ③④ — 재고를 놓고 실제로 걸어 본다
+      const saved = { ...fg3.bag };
+      const r0 = kt.RECIPES[0];
+      for (const k of r0.needs) fg3.bag[k] = 2;
+      fg3.bag.herb = 2;
+      kt.plates[0].key = r0.needs[0]; kt.plates[1].key = r0.needs[1]; kt.plates[2].key = 'herb';
+      const potW = kt.group.localToWorld(new THREE.Vector3(0, 0, 0));
+      const bad = kt.interact(potW);
+      if (!bad || bad.ok) { rOK = false; rBad.push('틀린 셋이 요리가 됨'); }
+      if (fg3.bag[r0.needs[0]] !== 2 || fg3.bag.herb !== 2) { rOK = false; rBad.push('틀렸는데 재료를 뺏음'); }
+      kt.plates[0].key = r0.needs[0]; kt.plates[1].key = r0.needs[1]; kt.plates[2].key = r0.needs[2];
+      const good = kt.interact(potW);
+      if (!good || !good.ok || good.recipe !== r0) { rOK = false; rBad.push('맞는 셋이 요리가 안 됨'); }
+      for (const k of r0.needs) if (fg3.bag[k] !== 1) { rOK = false; rBad.push(`${k} 재고 ${fg3.bag[k]}(1이어야)`); }
+      kt.made.delete(r0.id);
+      for (const k in fg3.bag) fg3.bag[k] = saved[k] || 0;
+      for (const p of kt.plates) p.key = null;
+      // ② 걸어서 닿기 — 검사 L과 같은 걸음
+      if (ra) {
+        const _w = new THREE.Vector3();
+        kt.group.updateMatrixWorld();
+        for (const tg of kt.touchables()) {
+          let best2 = Infinity;
+          for (let k = 0; k < 8; k++) {
+            const a2 = (k / 8) * Math.PI * 2;
+            _w.set(tg.x + Math.sin(a2) * 5, 0, tg.z + Math.cos(a2) * 5);
+            kt.group.localToWorld(_w); planet.projectToSurface(_w);
+            player.position.copy(_w); player._initFrame();
+            for (let i = 0; i < 600; i++) {
+              _w.set(tg.x, 0, tg.z); kt.group.localToWorld(_w); planet.projectToSurface(_w);
+              const cur = player.position.clone().normalize();
+              if (cur.angleTo(_w.clone().normalize()) * Rp < 0.35) break;
+              const tan = _w.clone().normalize().addScaledVector(cur, -_w.clone().normalize().dot(cur)).normalize();
+              player.heading.copy(tan); player._initFrame();
+              engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
+              input.setTestIntent({ x: 0, y: 1, run: false });
+              step(1 / 60);
+            }
+            input.setTestIntent(null);
+            _w.set(tg.x, 0, tg.z); kt.group.localToWorld(_w);
+            best2 = Math.min(best2, player.position.clone().normalize().angleTo(_w.clone().normalize()) * Rp);
+          }
+          if (best2 > tg.r - 0.2) { rOK = false; rBad.push(`${tg.name} ${best2.toFixed(2)}u(손 ${tg.r})`); }
+        }
+      }
+      log.push(`R 부엌 — 재료 있음 · 걸어서 닿기 · 틀리면 안 뺏고 맞으면 하나씩`
+        + (rOK ? ' 전부' : ` — ${rBad.slice(0, 4).join(' / ')}`) + ` -> ${rOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQ'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQR'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~Q 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~R 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

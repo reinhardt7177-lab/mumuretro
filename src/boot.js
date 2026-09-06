@@ -28,6 +28,7 @@ import { buildNotebook } from './ui/Notebook.js';
 import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
+import { buildKitchen } from './world/Kitchen.js';
 import { buildFlash } from './ui/Flash.js';
 import { buildTitle } from './ui/Title.js';
 import { buildRoomBrief } from './ui/RoomBrief.js';
@@ -648,6 +649,7 @@ function stepPlanet(dt, intent) {
   scatter.resolve(player.position, 0.32);
   shrines.resolve(player.position, 0.32);
   forage.resolve(player.position, 0.32);
+  kitchen.resolve(player.position, 0.32);
   // 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은 카펫(0.15u 위)이다.
   // 그 차이만큼 시각적으로 올려 세운다. 안 그러면 발이 정확히 카펫 두께만큼 잠긴다.
   _cUp.copy(player.position).normalize();
@@ -674,6 +676,20 @@ function stepPlanet(dt, intent) {
   if (landing.near(player.position)) {
     say('E — 연구실로 돌아가기');
     if (intent.action && !dialogue.active) returnToLab();
+    return;
+  }
+  // 부엌 — 내림판 바로 옆이다. 자리 안이면 부엌이 말한다.
+  kitchen.update(dt);
+  if (kitchen.at(player.position)) {
+    say(kitchen.prompt(player.position));
+    if (intent.action && !dialogue.active) {
+      const r = kitchen.interact(player.position);
+      if (r && r.ok) {
+        notebook.draw();
+        noteMsg = r.first ? `📓 ${r.recipe.name} — 수첩에 적었다` : `🍲 ${r.recipe.name}, 한 번 더`;
+        noteT = 3.0;
+      } else if (r && !r.ok) { noteMsg = `❌ ${r.why}`; noteT = 2.6; }
+    }
     return;
   }
   // 채집 — 자리 안에 있으면 그게 우선이다. 사당 기단과는 12u 떨어져 놓으므로
@@ -736,7 +752,7 @@ const mapPage = buildMapPage(planet, player, shrines, SHRINES, () => landing);
 const touch = buildTouchControls(input, mapPage, () => notebook);
 // 대사창과 탐사 수첩. 사당이 왜 있는지를 이 둘이 말한다.
 const dialogue = buildDialogue(input);
-const notebook = buildNotebook(shrines, SHRINES, () => forage, mapPage);
+const notebook = buildNotebook(shrines, SHRINES, () => forage, mapPage, () => kitchen);
 
 touch.onShow(refreshHint);
 refreshHint();
@@ -751,6 +767,8 @@ const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
 const forage = buildForage(planetScene, planet, forageSpots, legendSpots, carpet);
+// 부엌 — 내림판 옆 모닥불. 채집이 쓰이는 곳(recipes.js 머리말).
+const kitchen = buildKitchen(planetScene, planet, landing, carpet, forage);
 
 // 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.
 // 틀린 것은 왜 아닌지만 말한다. 무엇이 맞는지는 말하지 않는다.
@@ -795,7 +813,7 @@ const loop = new Loop(step, () => engine.render());
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
-  brief,
+  brief, kitchen,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
@@ -806,7 +824,7 @@ const game = {
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
-  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief,
+  forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 
