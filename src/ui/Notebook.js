@@ -9,6 +9,7 @@
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { registerOverlay, soloOpen } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
+import { KINDS as FORAGE_KINDS } from '../data/forage.js';
 
 const CSS = `
 #nb{position:fixed;inset:0;z-index:40;display:none;place-items:center;
@@ -46,6 +47,18 @@ const CSS = `
 #nb .coord .num i{font-style:normal;color:#a9a294;letter-spacing:0}
 #nb .coord .why{font-family:"Nanum Pen Script","Gowun Batang",cursive;
   font-size:19px;color:#2f5490;flex:1;min-width:220px}
+#nb .fg{padding:14px 24px;border-top:1px dashed #d8dad2}
+#nb .fg h4{margin:0 0 9px;font-size:12px;letter-spacing:.06em;color:#7d878c;font-weight:600}
+#nb .fg .row2{display:grid;grid-template-columns:14px 1fr;gap:0 10px;padding:7px 0;
+  border-bottom:1px dotted #e0e2da}
+#nb .fg .row2:last-child{border-bottom:0}
+#nb .fg .dot{width:10px;height:10px;border-radius:2px;margin-top:5px;
+  background:#cfd2c8;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+#nb .fg .nm{font-size:13.5px;font-weight:600;color:#3d474c}
+#nb .fg .nm.todo{color:#a6aeb2;font-weight:400}
+#nb .fg .rule{font-family:"Nanum Pen Script","Gowun Batang",cursive;
+  font-size:17px;line-height:1.4;color:#2f5490;margin-top:1px}
+#nb .fg .said{font-size:12.5px;color:#5c666b;margin-top:2px}
 #nb .memo{padding:16px 24px;font-family:"Nanum Pen Script","Gowun Batang",cursive;
   font-size:21px;line-height:1.5;color:#2f5490;border-top:1px dashed #d8dad2}
 @media (max-width:640px){#nb .q{font-size:20px}#nb .a{font-size:13.5px}}`;
@@ -54,7 +67,7 @@ const CSS = `
 const TINT = { balance: '#1d6a5e', shadow: '#6a6650', sift: '#95610f',
   water: '#186a97', fire: '#ac3620', strata: '#63499c' };
 
-export function buildNotebook(shrines, specs) {
+export function buildNotebook(shrines, specs, getForage) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
@@ -69,6 +82,7 @@ export function buildNotebook(shrines, specs) {
       <span class="num">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i>▓</i></span>
       <span class="why">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</span>
     </div>
+    <div class="fg"><h4 id="nbFgN">채집</h4><div id="nbFg"></div></div>
     <div class="memo" id="nbMemo"></div>
     <div class="ft"><span>앞사람의 글씨는 파란색이에요</span>
       <span class="close">N — 닫기</span></div>
@@ -77,6 +91,8 @@ export function buildNotebook(shrines, specs) {
   const rows = el.querySelector('#nbRows');
   const elN = el.querySelector('#nbN');
   const elMemo = el.querySelector('#nbMemo');
+  const elFg = el.querySelector('#nbFg');
+  const elFgN = el.querySelector('#nbFgN');
 
   let open = false, has = false;
   // 앞사람 글씨는 **화자를 가르는 장치**다. 처음 열 때 받아오면 그 한 번은
@@ -98,6 +114,27 @@ export function buildNotebook(shrines, specs) {
       return `<div class="row"><div class="no">${String(i + 1).padStart(2, '0')}</div>
         <div><div class="q">${note.q}</div>${a}</div></div>`;
     }).join('');
+    // ── 채집 장 ────────────────────────────────────────────────────────
+    // ★ 아직 못 얻은 것에는 **앞사람이 적어 둔 규칙**이 파란 글씨로 남아 있다.
+    //   그게 곧 힌트고, 답은 아니다 — 무엇을 보라고만 한다. 얻고 나면 규칙이
+    //   사라지고 내가 알아낸 한 줄이 그 자리에 들어선다. 수첩이 채워진다는 건
+    //   남의 글씨가 내 글씨로 바뀐다는 뜻이다.
+    const fg = getForage && getForage();
+    const fgOn = fg && Object.values(fg.found).some(Boolean);
+    elFgN.textContent = fg
+      ? `채집 — ${Object.values(fg.found).filter(Boolean).length}/${FORAGE_KINDS.length}`
+      : '채집';
+    elFg.innerHTML = FORAGE_KINDS.map((k) => {
+      const has = fg && fg.found[k.id];
+      const body = has
+        ? `<div class="said">${k.got}</div>`
+        : `<div class="rule">${(fg && fg.RULES[k.id]) || ''}</div>`;
+      return `<div class="row2">
+        <div class="dot" style="${has ? `background:${k.tint}` : ''}"></div>
+        <div><div class="nm${has ? '' : ' todo'}">${k.label}</div>${body}</div></div>`;
+    }).join('');
+    void fgOn;
+
     // 마지막 장 — 여섯을 다 채우기 전에는 앞사람이 무슨 생각이었는지 알 수 없다.
     elMemo.textContent = done >= specs.length
       ? '여섯을 다 채웠다. 답을 지우고 갈까, 두고 갈까.'

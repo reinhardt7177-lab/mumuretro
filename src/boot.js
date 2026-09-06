@@ -29,6 +29,8 @@ import { KEEPERS, ENDING, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
 import { buildLanding } from './world/Landing.js';
 import { buildFlash } from './ui/Flash.js';
+import { buildForage, pickForageSpots } from './world/Forage.js';
+import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
 
 const canvas = document.getElementById('c');
@@ -63,8 +65,17 @@ const landingDir = player.position.clone().normalize();
 //   판 반경 + 카메라 거리 + 나무 반경만큼은 비워야 한다. 겸사겸사 멀리서도
 //   "저기가 내 자리"로 읽히는 **빈터**가 된다.
 const LANDING_CLEAR = 12.0 / R;
+// 채집 자리도 **미리** 잡아 둔다. 산포물이 그 위에서 자라면 버섯밭에 서서
+// 화면이 침엽수 안쪽이 된다(내림판에서 이미 겪었다 — 카메라는 6.5u 뒤에 선다).
+const forageSpots = pickForageSpots(planet, {
+  avoid: shrineSpots.map((sp) => ({ dir: sp.dir, r: 14 }))
+    .concat([{ dir: landingDir, r: 16 }]),
+  nearDir: landingDir,
+});
+const FORAGE_CLEAR = 10.5 / R;
 const nearShrine = (dir) => dir.angleTo(landingDir) < LANDING_CLEAR
-  || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR);
+  || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR)
+  || forageSpots.some(s => dir.angleTo(s.dir) < FORAGE_CLEAR);
 
 const scatter = buildScatter(engine.scene, planet, {
   samples: 160000, seed: 91, exclude: nearShrine,
@@ -117,6 +128,7 @@ let cleared = false;                 // 이번 사당을 깼나
 let noteMsg = null, noteT = 0;       // 잠깐 뜨는 알림(실패 안내·사당 이름·방 목표)
 let lastSeg = null;                  // 방이 바뀌는 순간을 잡는다
 let sawNote = false;                 // 수첩을 한 번이라도 펴 봤나(오프닝)
+let lastSite = null;                 // 채집 자리가 바뀌는 순간을 잡는다
 const savedPlanet = { pos: new THREE.Vector3(), heading: new THREE.Vector3() };
 
 // 화면 아래 조작 안내 — **가진 것만 적는다.**
@@ -459,11 +471,17 @@ function stepRoom(dt, intent) {
 }
 
 function stepPlanet(dt, intent) {
+  // ★ 알림(noteMsg)을 실내에서만 띄우고 있었다. 그래서 들에서 "덜 익었다" 같은
+  //   판정이 화면에 **아예 안 나왔다**. 밖이라고 규칙이 다를 이유가 없다 —
+  //   여기서 한 번 깎고, 아래 setPrompt들이 note를 먼저 본다(say).
+  if (noteT > 0) noteT -= dt;
+  const say = (t) => setPrompt(noteT > 0 ? noteMsg : t);
   player.update(dt, intent, engine.camFwd, engine.camRight);
   // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
   // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
   scatter.resolve(player.position, 0.32);
   shrines.resolve(player.position, 0.32);
+  forage.resolve(player.position, 0.32);
   // 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은 카펫(0.15u 위)이다.
   // 그 차이만큼 시각적으로 올려 세운다. 안 그러면 발이 정확히 카펫 두께만큼 잠긴다.
   _cUp.copy(player.position).normalize();
@@ -488,8 +506,29 @@ function stepPlanet(dt, intent) {
   // 내림판 — 사당보다 먼저 본다. 판 위에 사당이 겹칠 일은 없지만(사당 자리를 먼저 잡고
   // 그 밖에 스폰한다) 겹치면 **돌아갈 길이 막히는 쪽**이 더 나쁘다.
   if (landing.near(player.position)) {
-    setPrompt('E — 연구실로 돌아가기');
+    say('E — 연구실로 돌아가기');
     if (intent.action && !dialogue.active) returnToLab();
+    return;
+  }
+  // 채집 — 자리 안에 있으면 그게 우선이다. 사당 기단과는 12u 떨어져 놓으므로
+  // 프롬프트가 겹칠 일이 없다(검사 L이 그걸 잰다).
+  forage.update(dt);
+  // 새 자리에 들어서면 **무엇을 보라는지** 한 번 알린다. 사당 방 목표와 같은 규칙 —
+  // 벽의 판(여기선 수첩)은 언제든 다시 읽을 수 있지만 처음 한 번은 눈앞에 띄운다.
+  const fSite = forage.at(player.position);
+  const fId = fSite ? fSite.id : null;
+  if (fId !== lastSite) {
+    lastSite = fId;
+    if (fSite && !forage.found[fSite.kind]) {
+      const k = FORAGE_KINDS.find((x) => x.id === fSite.kind);
+      noteMsg = `🌿 ${k.label} — ${forage.RULES[fSite.kind]}`;
+      noteT = 4.2;
+    }
+  }
+  const fSay = forage.prompt(player.position);
+  if (fSay) {
+    say(fSay);
+    if (intent.action && !dialogue.active) onForage(forage.interact(player.position));
     return;
   }
   const atDoor = near.shrine && near.distU < shrines.ENTER_R;
@@ -503,17 +542,17 @@ function stepPlanet(dt, intent) {
     const have = shrines.clearedCount();
     if (need && have < need) {
       canEnter = false;
-      setPrompt(`🔒 ${sp.name} — 구슬 ${need}개가 필요해요 (${have}/${need})`);
+      say(`🔒 ${sp.name} — 구슬 ${need}개가 필요해요 (${have}/${need})`);
     } else if (!near.shrine.cleared && !dialogue.hasSeen(`enter-${sp.id}`)) {
       // 지킴이의 첫마디. 들어가기 전에 한 번만.
       dialogue.play(`enter-${sp.id}`, KEEPERS[sp.id].who, KEEPERS[sp.id].enter);
-      setPrompt(`E — ${sp.name}에 들어가기 (${sp.unit})`);
+      say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     } else if (near.shrine.cleared) {
-      setPrompt(`E — ${sp.name} · 이미 깬 곳이에요`);
+      say(`E — ${sp.name} · 이미 깬 곳이에요`);
     } else {
-      setPrompt(`E — ${sp.name}에 들어가기 (${sp.unit})`);
+      say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
     }
-  } else setPrompt(null);
+  } else say(null);
   if (canEnter && intent.action && !dialogue.active) enterShrine(near.shrine);
 }
 
@@ -526,7 +565,7 @@ const mapPage = buildMapPage(planet, player, shrines, SHRINES);
 const touch = buildTouchControls(input, mapPage, () => notebook);
 // 대사창과 탐사 수첩. 사당이 왜 있는지를 이 둘이 말한다.
 const dialogue = buildDialogue(input);
-const notebook = buildNotebook(shrines, SHRINES);
+const notebook = buildNotebook(shrines, SHRINES, () => forage);
 
 touch.onShow(refreshHint);
 refreshHint();
@@ -535,6 +574,29 @@ refreshHint();
 const flash = buildFlash();
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
+
+// 들 — 위에서 잡아 둔 자리에 짓는다.
+const forage = buildForage(planetScene, planet, forageSpots);
+
+// 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.
+// 틀린 것은 왜 아닌지만 말한다. 무엇이 맞는지는 말하지 않는다.
+function onForage(r) {
+  if (!r) return;
+  if (r.kind === 'bait') {
+    noteMsg = r.ok ? '🪤 미끼를 걸었다 — 두고 갔다 오자' : '🪤 미끼를 걸었다';
+    noteT = 2.8;
+    return;
+  }
+  if (!r.ok) { noteMsg = `❌ ${r.why}`; noteT = 3.2; return; }
+  const k = FORAGE_KINDS.find((x) => x.id === r.kind);
+  if (r.first) {
+    notebook.draw();
+    lab.fillJar(r.kind);
+    noteMsg = `📓 ${k.label} — 수첩에 적었어요`; noteT = 3.0;
+  } else {
+    noteMsg = `🎒 ${k.label} 하나 더`; noteT = 1.8;
+  }
+}
 
 // 가장 가까운 **안 깬** 사당이 어떤 곳인지 한마디로. 이름도 방향도 대지 않는다 —
 // 화살표를 띄우면 이 게임은 문제가 아니라 심부름이 된다.
@@ -553,7 +615,7 @@ const loop = new Loop(step, () => engine.render());
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
-  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash,
+  roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage,
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
   get cleared() { return cleared; },
@@ -562,7 +624,8 @@ const game = {
 };
 window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
-  roomActor, roomFor, withPlanetMode, lab, landing,
+  roomActor, roomFor, withPlanetMode, lab, landing, forage,
+  forageText: { FORAGE_KINDS, FORAGE_WRONG },
   dialogue: { KEEPERS, ENDING, OPENING } });
 
 // ── 시작 — 별이 아니라 **집**에서 ────────────────────────────────────────────

@@ -25,6 +25,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LAB } from '../data/lighting.js';
+import { KINDS as FORAGE_KINDS } from '../data/forage.js';
 
 // 좌표는 **한 군데에만** 적는다. 수첩에 3·5·8이라 그려 놓고 다이얼 정답이 다르면
 // 그건 아이가 절대 못 푸는 문제가 된다. Notebook이 이걸 읽어 뒷장에 그린다.
@@ -220,16 +221,27 @@ export function buildLab() {
   }
 
   // 표본 선반 — 오른쪽 벽. 긴 면(2.8u)이 **벽을 따라** 놓이고 깊이는 0.6u뿐이다.
+  // ★ 빈 병은 **비워 둔 자리**다. 들에서 하나 가져올 때마다 아래 칸이 하나씩 찬다 —
+  //   수첩에 한 줄이 늘고 선반에 색이 하나 는다. 모은 것이 눈에 보여야 모으고 싶어진다.
+  const jars = {};
   for (let s = 0; s < 2; s++) {
     const y = 1.4 + s * 0.88;
     box(0.6, 0.1, SHELF_L, wood, SHELF_X, y, SHELF_Z);
     for (const dz of [-1.1, 0, 1.1]) box(0.5, 0.15, 0.1, woodD, SHELF_X + 0.02, y - 0.12, SHELF_Z + dz);
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < 5; k++) {
+      const z2 = SHELF_Z - 1.12 + k * 0.56;
       const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.32, 7),
         basic(0x8fb8bd, 0.55));
-      jar.position.set(SHELF_X, y + 0.21, SHELF_Z - 0.99 + k * 0.66);
+      jar.position.set(SHELF_X, y + 0.21, z2);
       scene.add(jar);
-      box(0.02, 0.11, 0.15, paper, SHELF_X - 0.15, y + 0.2, SHELF_Z - 0.99 + k * 0.66);
+      box(0.02, 0.11, 0.15, paper, SHELF_X - 0.15, y + 0.2, z2);
+      if (s === 0) {                                       // 아래 칸이 채집 자리
+        const fill = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.2, 7),
+          basic(0xffffff, 0.85));
+        fill.position.set(SHELF_X, y + 0.15, z2);
+        fill.visible = false; scene.add(fill);
+        jars[k] = fill;
+      }
     }
   }
 
@@ -507,6 +519,15 @@ export function buildLab() {
     },
 
     nearStairs(pos) { return near(pos, STAIR_X, STAIR_Z, 2.8); },
+
+    // 들에서 처음 가져온 것 — 선반 병 하나가 그 색으로 찬다.
+    fillJar(kindId) {
+      const i = FORAGE_KINDS.findIndex((k) => k.id === kindId);
+      if (i < 0 || !jars[i]) return false;
+      jars[i].visible = true;
+      jars[i].material.color.set(FORAGE_KINDS[i].tint);
+      return true;
+    },
 
     // E가 **무엇을** 잡는가. 상태는 보지 않고 자리만 본다(순서는 interact와 같다).
     // 검사 I가 "닿았다"가 아니라 **"그것에 닿았다"**를 재기 위한 것이다 —

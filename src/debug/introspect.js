@@ -554,6 +554,22 @@ export function installDebug(ctx) {
         }
       }
       if (ctx.dialogue) deep(ctx.dialogue);
+      if (ctx.forageText) deep(ctx.forageText);
+      // ★ 들 프롬프트는 검사 밖에 있었다. 그래서 "무른열매**을** 미끼로 놓기"가
+      //   그대로 화면에 떴다 — 검사가 닿지 않는 곳은 반드시 틀린다.
+      if (ctx.forage) {
+        deep(ctx.forage.RULES);
+        const V = new THREE.Vector3();
+        for (const site of ctx.forage.sites) {
+          site.group.updateMatrixWorld();
+          for (let x = -5; x <= 5; x += 1.0) {
+            for (let z = -5; z <= 5; z += 1.0) {
+              V.set(x, 0, z);
+              scan(ctx.forage.prompt(site.group.localToWorld(V)));
+            }
+          }
+        }
+      }
       if (ctx.lab) {
         const st = ctx.lab.state, keep = { ...st };
         for (const set of [{ hasNote: false, read: false, open: false },
