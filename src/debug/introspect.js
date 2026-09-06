@@ -1214,19 +1214,61 @@ export function installDebug(ctx) {
         + (uOK ? ' 전부' : ` — ${uBad.join(' / ')}`) + ` -> ${uOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── V 알림이 프롬프트를 먹지 않는가 ────────────────────────────────────
+    // ★ 알림이 프롬프트 자리를 통째로 차지했다(prompt = noteMsg). 사당에 들어선
+    //   3.4초 동안 "E — 상자 들기"가 사라졌고, 터치 E 버튼은 프롬프트가 'E '로
+    //   시작할 때만 뜨므로 **버튼째 없어졌다**(폰에서 확인). 둘은 다른 줄이어야 한다.
+    //   그리고 별표("난이도 ★☆☆☆☆☆")도 뺐다 — 벌하지 않겠다면서 겁을 주고 있었다.
+    let vOK = true; const vBad = [];
+    {
+      const pEl = document.getElementById('prompt');
+      const nEl = document.getElementById('note');
+      if (!nEl) { vOK = false; vBad.push('알림 줄(#note)이 없다'); }
+      else if (nEl === pEl) { vOK = false; vBad.push('알림과 프롬프트가 같은 줄'); }
+      // 별표가 어디에도 안 뜨는가 — 문자열을 직접 본다
+      if (ctx.shrines && ctx.roomFor) {
+        const star = ctx.shrines.shrines.some((sh) => {
+          const rm = ctx.roomFor(sh);
+          return /★|☆/.test(`${rm.spec.name}${rm.spec.unit}`);
+        });
+        if (star) { vOK = false; vBad.push('사당 이름/단원에 별표'); }
+      }
+      // 방 안에서 알림을 띄운 채 한 틱 — 프롬프트는 여전히 관문의 말이어야 한다
+      if (ctx.roomFor && ctx.shrines && ra && ctx.enterShrine && ctx.exitShrine) {
+        const wasMode = ctx.mode;
+        ctx.enterShrine(ctx.shrines.shrines[0]);
+        const rm = ctx.roomFor(ctx.shrines.shrines[0]);
+        const wg = rm.gates.find((g) => g.room === 'r1');
+        const b0 = wg.gate.boxes[0];
+        ra.setAt(b0.home.x, b0.home.z + 0.6, -1);
+        step(1 / 60);
+        const before = pEl.textContent;
+        step(1 / 60);                       // 알림이 살아 있는 동안 한 틱 더
+        const after = pEl.textContent;
+        if (nEl.classList.contains('show') && before !== after) {
+          vOK = false; vBad.push(`알림 중에 프롬프트가 바뀜 "${before}" → "${after}"`);
+        }
+        if (/★|☆/.test(nEl.textContent)) { vOK = false; vBad.push('입장 알림에 별표'); }
+        ctx.exitShrine();
+        if (wasMode === 'lab') ctx.returnToLab && ctx.returnToLab();
+      }
+      log.push('V 알림과 프롬프트가 다른 줄 · 별표 없음'
+        + (vOK ? ' 전부' : ` — ${vBad.join(' / ')}`) + ` -> ${vOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQRSTU'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRSTUV'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~U 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~V 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && vOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

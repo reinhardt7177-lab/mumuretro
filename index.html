@@ -63,6 +63,21 @@
     opacity:0;pointer-events:none;transition:opacity .16s,transform .16s;
     box-shadow:0 4px 0 rgba(63,168,155,.9);}
   #prompt.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  /* 잠깐 뜨는 알림 — **프롬프트와 다른 줄이다.**
+     ★ 예전엔 알림이 프롬프트 자리를 통째로 차지했다(prompt = noteMsg). 그래서
+       사당에 들어선 3.4초 동안 "E — 상자 들기"가 사라졌고, 터치 E 버튼은
+       프롬프트가 'E '로 시작할 때만 뜨므로 **버튼째 없어졌다**(폰에서 확인).
+       방금 무슨 일이 있었는지와 지금 무엇을 누를 수 있는지는 다른 정보다.
+     색도 다르다 — 프롬프트는 청록(누를 것), 알림은 잉크(일어난 일). */
+  #note{position:fixed;bottom:106px;left:50%;transform:translateX(-50%) translateY(6px);
+    background:rgba(24,38,44,.88);color:#eef4f5;font-size:13.5px;font-weight:600;
+    letter-spacing:.4px;padding:8px 18px;border-radius:18px;z-index:23;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+    max-width:min(86vw,520px);text-align:center;word-break:keep-all;
+    backdrop-filter:blur(3px);}
+  #note.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media (max-width:640px){#note{bottom:112px;font-size:12.5px;padding:7px 14px;}}
+  @media (max-height:520px){#note{bottom:96px;}}
   #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
     background:rgba(40,70,80,.5);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;
     letter-spacing:1px;z-index:20;white-space:nowrap;
@@ -76,6 +91,7 @@
   <canvas id="c"></canvas>
   <div id="load">행성을 빚는 중…</div>
   <div id="prompt"></div>
+  <div id="note"></div>
   <div id="hint"></div>
 
 <!-- 모듈/런타임 오류를 로딩 화면에 스택과 함께 띄운다 -->

@@ -171,6 +171,17 @@ function setPrompt(text) {
   else promptEl.classList.remove('show');
 }
 
+// 알림 — **프롬프트와 다른 줄.** 방금 무슨 일이 있었는지와 지금 무엇을 누를 수
+// 있는지는 다른 정보다. 예전엔 알림이 프롬프트를 통째로 덮어서, 사당에 들어선
+// 3.4초 동안 터치 E 버튼이 사라졌다(버튼은 프롬프트가 'E '로 시작할 때만 뜬다).
+// 대사가 떠 있으면 알림은 접는다 — 두 장이 겹치면 둘 다 안 읽힌다.
+const noteEl = document.getElementById('note');
+function setNote(text) {
+  if (!noteEl) return;
+  if (text) { noteEl.textContent = text; noteEl.classList.add('show'); }
+  else noteEl.classList.remove('show');
+}
+
 // 실패 — 방 처음으로. 사당 처음이 아니다.
 // 레이저에서 몇 번 죽고 사당 입구로 쫓겨나면 아이는 그만둔다.
 function failTo(seg, msg) {
@@ -209,7 +220,10 @@ function enterShrine(shrine) {
   roomActor.setAt(0, ENTRY_Z, -1);
   engine.setScene(room.scene);
   // 들어서면 어디에 왔는지 3초간 알린다. 사당마다 다른 곳이라는 게 첫 정보여야 한다.
-  noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 난이도 ${'★'.repeat(tier + 1)}${'☆'.repeat(5 - tier)} (${tier + 1}/6)`;
+  // ★ "난이도 ★☆☆☆☆☆"가 떴다. "틀려도 벌하지 않는다"고 적어 두고 들어가기 전에
+  //   겁을 주고 있었다. 게다가 별 수는 깬 개수일 뿐이라 실제 사고량과도 맞지 않았다.
+  //   몇 번째인지만 말한다 — 그건 사실이고, 겁이 아니다.
+  noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 여섯 중 ${tier + 1}번째`;
   noteT = 3.4;
   setPrompt(null);
 }
@@ -307,6 +321,9 @@ function step(dt) {
   else if (brief.isOpen && intent.action) { brief.hide(); intent.action = false; }
   // 밖에서는 해가 있다. 받침등은 실내에서만 켠다.
   fill.intensity = mode === 'planet' ? 0 : (mode === 'lab' ? FILL_LAB : FILL_ROOM);
+  // 알림 시계는 한곳에서 돈다 — 모드마다 따로 깎으면 한쪽만 고쳐지는 날이 온다.
+  if (noteT > 0) noteT -= dt;
+  setNote(noteT > 0 && !dialogue.active ? noteMsg : null);
   if (mode === 'title') { stepTitle(dt); return; }
   if (mode === 'lab') { stepLab(dt, intent); return; }
   if (mode === 'room') { stepRoom(dt, intent); return; }
@@ -451,9 +468,7 @@ function stepLab(dt, intent) {
   roomActor.updateCamera(engine.camera, input, dt);
   lab.update(dt);
 
-  let prompt = lab.prompt(roomActor.position);
-  if (noteT > 0) { noteT -= dt; prompt = noteMsg; }
-  setPrompt(prompt);
+  setPrompt(lab.prompt(roomActor.position));
 
   // 계단 앞에 처음 서면 왜 안 올라가는지 한 번 말한다. play가 id로 한 번만 건다.
   if (lab.nearStairs(roomActor.position)) dialogue.play('op-stairs', ...OPENING.stairs);
@@ -619,8 +634,6 @@ function stepRoom(dt, intent) {
     prompt = prize.prompt(roomActor.position) || final.prompt(roomActor.position) || prompt;
   }
 
-  // 알림이 떠 있으면 그게 우선이다
-  if (noteT > 0) { noteT -= dt; prompt = noteMsg; }
   const atExit = roomActor.position.z > EXIT_Z - 0.9;
   if (atExit) prompt = 'E — 사당 밖으로';
   setPrompt(prompt);
@@ -651,8 +664,7 @@ function stepPlanet(dt, intent) {
   // ★ 알림(noteMsg)을 실내에서만 띄우고 있었다. 그래서 들에서 "덜 익었다" 같은
   //   판정이 화면에 **아예 안 나왔다**. 밖이라고 규칙이 다를 이유가 없다 —
   //   여기서 한 번 깎고, 아래 setPrompt들이 note를 먼저 본다(say).
-  if (noteT > 0) noteT -= dt;
-  const say = (t) => setPrompt(noteT > 0 ? noteMsg : t);
+  const say = (t) => setPrompt(t);
   player.update(dt, intent, engine.camFwd, engine.camRight);
   // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
   // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
@@ -836,6 +848,7 @@ window.game = game;
 installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrines, PEAKS,
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen, title, endingHome: ENDING_HOME,
+  enterShrine, exitShrine, returnToLab, get mode() { return mode; },
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 
