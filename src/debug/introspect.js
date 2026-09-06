@@ -945,6 +945,19 @@ export function installDebug(ctx) {
       else {
         const agree = wg.gate.sizeAgreement();
         if (agree > 2) { pOK = false; pBad.push(`무게 순서: 크기가 무게를 ${agree}/5 따라감`); }
+        // ★ 실사용 제보 "상자 내려놓기가 안 됨". 들고 있을 때 옆 상자가 후보에 끼어
+        //   접시·받침을 밀어냈고, 제자리에 도로 놓는 길도 없었다. 둘 다 잰다.
+        const wgt = wg.gate; wgt.restart();
+        const b0 = wgt.boxes[0], b1 = wgt.boxes[1];
+        wgt.interact({ x: b0.home.x, z: b0.home.z });          // 든다
+        if (wgt.held !== b0) { pOK = false; pBad.push('상자를 못 듦'); }
+        wgt.interact({ x: b1.home.x + 0.3, z: b1.home.z });    // 옆 상자 곁에서 E — 제자리로
+        if (wgt.held || b0.where !== 'home') { pOK = false; pBad.push('든 상자를 못 내려놓음'); }
+        wgt.interact({ x: b0.home.x, z: b0.home.z });
+        const pan = wgt.pans[0];
+        wgt.interact({ x: pan.x, z: pan.z });                  // 접시에
+        if (wgt.held || pan.box !== b0) { pOK = false; pBad.push('접시에 못 올림'); }
+        wgt.restart();
       }
       const rmS = ctx.roomFor(ctx.shrines.shrines[5]);
       const gg = rmS.final;
@@ -1086,19 +1099,61 @@ export function installDebug(ctx) {
         + (rOK ? ' 전부' : ` — ${rBad.slice(0, 4).join(' / ')}`) + ` -> ${rOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── S 체 고르기가 두 단계인가 ──────────────────────────────────────────
+    // ★ 3택1이라 찍어도 평균 두 번이면 넘었다. 체질의 산물은 둘이고, 셋째 주문은
+    //   아래 접시를 다시 올려야만 풀린다. 잰다: 모든 주문이 풀리는가 · 두 단계짜리가
+    //   정말 있는가(체 하나로는 절대 안 되는가) · 아래 접시가 실제로 재료를 줄이는가.
+    let sOK = true; const sBad = [];
+    if (ctx.roomFor && ctx.shrines) {
+      const rmC = ctx.roomFor(ctx.shrines.shrines[2]);
+      const sg = rmC.gates.find((g) => g.room === 'r1');
+      if (!sg || !sg.gate.minSteps) { sOK = false; sBad.push('체 고르기 없음'); }
+      else {
+        const gate = sg.gate;
+        const steps = gate.orders.map((o) => gate.minSteps(o));
+        if (steps.some((n) => n === 0)) { sOK = false; sBad.push(`못 푸는 주문 ${steps.join(',')}`); }
+        if (!steps.includes(2)) { sOK = false; sBad.push(`두 단계 주문 없음 ${steps.join(',')}`); }
+        // 아래 접시 — 중간 체(4mm)를 끼우면 굵은 것(6mm)만 남고 중·고가 빠진다.
+        // 그걸 올리면 위에는 중·고만 남아야 한다.
+        // ★ 처음엔 큰 체(8mm)로 썼다가 검사가 틀렸다 — 큰 체는 셋 다 떨어뜨린다.
+        //   검사를 짜는 사람이 체를 잘못 알면 검사가 게임을 잘못 가르친다.
+        gate.restart();
+        const mid = gate.sieves.find((x) => x.spec.hole === 'mid');
+        gate.held = mid; gate.interact({ x: gate.frame.x, z: gate.frame.z });
+        if (gate.round === 0) {                       // 첫 주문이 "굵은 것만"이면 이미 넘어갔다
+          gate.interact({ x: gate.tray.x, z: gate.tray.z });
+          if (gate.mix.has(0) || gate.mix.size !== 2) { sOK = false; sBad.push(`아래 접시 올린 뒤 mix ${[...gate.mix]}`); }
+        }
+        // 한 주문을 맞추면 다시 다 부어진다
+        gate.restart();
+        const want = gate.orders[0];
+        if (want.steps === 1) {
+          const sv = gate.sieves.find((x) => {
+            const a = gate._aboveSet(x.spec, new Set([0, 1, 2]));
+            return a.size === want.keep.length && want.keep.every((k) => a.has(k));
+          });
+          gate.held = sv; gate.interact({ x: gate.frame.x, z: gate.frame.z });
+          if (gate.round !== 1 || gate.mix.size !== 3) { sOK = false; sBad.push(`한 단계 주문 뒤 round ${gate.round}, mix ${gate.mix.size}`); }
+        }
+        gate.restart();
+      }
+      log.push(`S 체 고르기 — 주문 전부 풀림 · 두 단계 있음 · 아래 접시가 줄인다`
+        + (sOK ? ' 전부' : ` — ${sBad.join(' / ')}`) + ` -> ${sOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQR'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRS'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~R 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~S 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

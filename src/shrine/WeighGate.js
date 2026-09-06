@@ -101,11 +101,15 @@ export class WeighGate {
 
   _near(pos) {
     let best = null, bd = REACH;
-    for (const b of this.boxes) {
-      if (b.where === 'held') continue;
-      const p = b.mesh.position;
-      const d = Math.hypot(pos.x - p.x, pos.z - p.z);
-      if (d < bd) { bd = d; best = { kind: 'box', box: b }; }
+    // ★ 들고 있을 때는 상자를 후보에서 뺀다. 넣어 두니 옆 상자가 접시·받침보다
+    //   가까우면 "내려놓기"가 그냥 무시됐다 — 실사용에서 "상자 내려놓기가 안 됨".
+    //   손에 든 채로 만질 수 있는 건 접시와 받침뿐이다.
+    if (!this.held) {
+      for (const b of this.boxes) {
+        const p = b.mesh.position;
+        const d = Math.hypot(pos.x - p.x, pos.z - p.z);
+        if (d < bd) { bd = d; best = { kind: 'box', box: b }; }
+      }
     }
     for (const p of this.pans) {
       const d = Math.hypot(pos.x - p.x, pos.z - p.z);
@@ -152,7 +156,7 @@ export class WeighGate {
     if (this.held) {
       if (n && n.kind === 'pan') return 'E — 접시에 올리기';
       if (n && n.kind === 'slot') return `E — ${n.slot.i + 1}번 받침에 놓기 (왼쪽이 가장 가볍다)`;
-      return '상자를 들었다 — 저울 접시나 받침으로';
+      return 'E — 여기 내려놓기 · 저울 접시나 받침으로 가져가도 된다';
     }
     if (n && n.kind === 'box') {
       const b = n.box;
@@ -164,6 +168,15 @@ export class WeighGate {
 
   interact(pos) {
     const n = this._near(pos);
+    if (this.held && !n) {
+      // ★ 제자리에 도로 내려놓는 길이 없었다. 접시나 받침이 아니면 E가 아무 일도
+      //   안 했다 — 든 상자를 못 버리는 건 벌이다. 아무 데서나 내려놓는다.
+      const b = this.held;
+      b.where = 'home'; b.at = null;
+      b.mesh.position.copy(b.home);
+      this.held = null;
+      return true;
+    }
     if (!n) return false;
     if (this.held) {
       if (n.kind === 'pan') {

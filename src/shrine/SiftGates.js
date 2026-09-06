@@ -45,10 +45,15 @@ const GRAINS = [
   { size: 0.11, mm: 0.6, color: 0x8a6b34, name: '고운 모래' },
 ];
 // 주문 셋. keep = 위 접시에 남아야 할 알갱이 종류
+// ★ 셋 다 체 하나로 풀렸다 — 3택1이라 찍어도 평균 두 번이면 넘었다(비평).
+//   체질에는 산물이 **둘**이다. 남는 것과 빠지는 것. 단원이 가르치는 게 그거다.
+//   셋째 주문 "중간만"은 체 하나로는 **절대** 안 된다(체는 큰 것부터 남긴다).
+//   큰 체로 굵은 것을 걸러 내고, **아래 접시에 빠진 것을 다시 올려** 중간 체로
+//   거른다 — 두 단계. 이 방에서 처음으로 "빠진 것도 재료다"를 손으로 알게 된다.
 const ORDERS = [
-  { keep: [0], say: '굵은 알갱이만 남겨라' },
-  { keep: [0, 1], say: '굵은 것과 중간을 남겨라' },
-  { keep: [], say: '하나도 남기지 마라' },
+  { keep: [0], say: '굵은 알갱이만 남겨라', steps: 1 },
+  { keep: [0, 1], say: '굵은 것과 중간을 남겨라', steps: 1 },
+  { keep: [1], say: '중간 알갱이만 남겨라', steps: 2 },
 ];
 
 export class SieveGate {
@@ -59,6 +64,7 @@ export class SieveGate {
     this.fitted = -1;
     this.round = 0;             // 지금 주문
     this.solved = false;
+    this.mix = new Set([0, 1, 2]);   // 지금 위에 부어 둔 알갱이 — 아래 접시를 올리면 줄어든다
     // 주문 순서를 섞는다. 늘 "굵은 것만"으로 시작하면 첫 수는 외워진다.
     this.orders = shuffle(ORDERS);
     const cx = (seg.x0 + seg.x1) / 2;
@@ -105,7 +111,15 @@ export class SieveGate {
 
     // 위 접시 · 아래 접시 — 알갱이가 이 둘로 갈린다. 갈리는 게 보여야 한다.
     this.above = new THREE.Group(); this.above.position.set(this.frame.x, 1.75, this.frame.z);
-    this.below = new THREE.Group(); this.below.position.set(this.frame.x, 0.08, this.frame.z);
+    // ★ 아래 접시는 틀 **앞**에 제 자리를 갖는다. 틀과 같은 자리에 두면 "체 빼기"와
+    //   "아래 접시 올리기"가 한 자리에 겹쳐 메뉴가 된다(조작은 하나로 — 자리로 고른다).
+    this.tray = { x: cx, z: seg.z0 + 6.2 };
+    const tray = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.2, 0.14, 10), dark);
+    tray.position.set(this.tray.x, 0.07, this.tray.z); g.add(tray);
+    this.trayMat = glowMat(th.glowDim);
+    const trayRing = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.05, 5, 18), this.trayMat);
+    trayRing.rotation.x = -Math.PI / 2; trayRing.position.set(this.tray.x, 0.15, this.tray.z); g.add(trayRing);
+    this.below = new THREE.Group(); this.below.position.set(this.tray.x, 0.14, this.tray.z);
     g.add(this.above); g.add(this.below);
     this.grainMesh = [];
     for (const [gi, gr] of GRAINS.entries()) {
@@ -148,14 +162,21 @@ export class SieveGate {
   }
 
   // 지금 끼운 체로 무엇이 남고 무엇이 빠지는가. 알갱이가 체 구멍보다 크면 남는다.
+  // 지금 체로 위에 남는 알갱이 종류(mix 안에서)
+  _aboveSet(sv, mix = this.mix) {
+    return new Set([...mix].filter((gi) => !sv || GRAINS[gi].mm > sv.mm));
+  }
   _apply() {
     const sv = this.fitted >= 0 ? this.sieves[this.fitted].spec : null;
+    const upSet = this._aboveSet(sv);
     for (const gm of this.grainMesh) {
-      const gr = GRAINS[gm.gi];
-      const stays = !sv || gr.mm > sv.mm;
-      const parent = stays ? this.above : this.below;
+      const inMix = this.mix.has(gm.gi);
+      gm.mesh.visible = inMix;                       // 부어 두지 않은 것은 없다
+      const parent = inMix && upSet.has(gm.gi) ? this.above : this.below;
       if (gm.mesh.parent !== parent) parent.add(gm.mesh);
     }
+    const belowN = [...this.mix].filter((gi) => !upSet.has(gi)).length;
+    this.trayMat.color.set(sv && belowN ? 0xe0a955 : 0x9c6f2c);
     this._paintOrder();
     if (this.solved || this.fitted < 0) {
       this.slotMat.color.set(this.solved ? 0xffd27a : 0x9c6f2c);
@@ -174,7 +195,22 @@ export class SieveGate {
     const s = this.sieves[this.fitted];
     this.fitted = -1;
     s.grp.position.copy(s.home);
+    this.mix = new Set([0, 1, 2]);                   // 다음 주문은 다시 다 부어 놓고
     this._apply();
+  }
+
+  // 주문 하나를 푸는 데 체질이 몇 번 필요한가(검사용). 1·2·불가(0).
+  minSteps(order) {
+    const want = new Set(order.keep);
+    const same = (a) => a.size === want.size && [...want].every((x) => a.has(x));
+    const all = new Set([0, 1, 2]);
+    for (const sv of SIEVES) if (same(this._aboveSet(sv, all))) return 1;
+    for (const a of SIEVES) {
+      const below = new Set([...all].filter((gi) => !this._aboveSet(a, all).has(gi)));
+      if (!below.size) continue;
+      for (const b of SIEVES) if (same(this._aboveSet(b, below))) return 2;
+    }
+    return 0;
   }
 
   _paintOrder() {
@@ -193,6 +229,12 @@ export class SieveGate {
     return best;
   }
   _atFrame(pos) { return Math.hypot(pos.x - this.frame.x, pos.z - this.frame.z) < REACH + 0.4; }
+  _atTray(pos) { return Math.hypot(pos.x - this.tray.x, pos.z - this.tray.z) < 1.4; }
+  _belowSet() {
+    const sv = this.fitted >= 0 ? this.sieves[this.fitted].spec : null;
+    const up = this._aboveSet(sv);
+    return new Set([...this.mix].filter((gi) => !up.has(gi)));
+  }
 
   update(dt, actor) {
     if (this.held) {
@@ -210,6 +252,11 @@ export class SieveGate {
       return this._atFrame(pos)
         ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${josa(this.held.spec.label, '를')} 들었다 — 틀로`;
     }
+    if (this._atTray(pos)) {
+      const b = this._belowSet();
+      if (this.fitted >= 0 && b.size) return `E — 아래 접시를 위로 올리기 (빠진 것만 다시 거른다) · ${say}`;
+      return this.fitted < 0 ? '아래 접시 — 체를 끼우면 빠진 것이 여기 모인다' : '아래 접시가 비었다';
+    }
     if (this._atFrame(pos) && this.fitted >= 0) return `E — 체 빼기 · ${say}`;
     const s = this._nearSieve(pos);
     if (s) return `E — ${s.spec.label} 들기 · ${say}`;
@@ -224,6 +271,17 @@ export class SieveGate {
       this.held.grp.position.set(this.frame.x, 1.75, this.frame.z);
       this.held.grp.rotation.y = 0;
       this.held = null;
+      this._apply();
+      return true;
+    }
+    // 아래 접시 올리기 — 빠진 것만 남기고 체는 선반으로 돌아간다
+    if (this._atTray(pos) && this.fitted >= 0) {
+      const b = this._belowSet();
+      if (!b.size) return false;
+      this.mix = b;
+      const s = this.sieves[this.fitted];
+      this.fitted = -1;
+      s.grp.position.copy(s.home); s.grp.rotation.y = 0;
       this._apply();
       return true;
     }
@@ -243,7 +301,7 @@ export class SieveGate {
   solvedBy() { return this.solved; }
   restart() {
     this.held = null; this.fitted = -1;
-    this.round = 0; this.solved = false;
+    this.round = 0; this.solved = false; this.mix = new Set([0, 1, 2]);
     this.orders = shuffle(ORDERS);       // 다시 도전하면 주문 순서도 새로
     for (const p of this.pips) p.material.color.set(0x4a3a22);
     for (const s of this.sieves) { s.grp.position.copy(s.home); s.grp.rotation.y = 0; }

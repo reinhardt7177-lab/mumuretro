@@ -183,12 +183,14 @@ const TIGHT = `
   #nb .qrow{padding:4px 0}
   #nb .qq{font-size:16.5px;line-height:1.2}
   #nb .qa{font-size:12.5px;line-height:1.34}
-  #nb .frow{padding:3px 0}
+  #nb .frow{padding:2px 0}
   /* ★ 손글씨 웹폰트(Nanum Pen Script)가 안 실리면 대체 글꼴이 더 넓어 들 면이
      440px에서 47px 넘쳤다. 학교 망은 폰트 CDN을 막는 곳이 있다 — 그 상태가
-     기본이라고 보고 접는다. 검사 M은 폰트가 없는 창에서도 통과해야 한다. */
+     기본이라고 보고 접는다. 검사 M은 폰트가 없는 창에서도 통과해야 한다.
+     부엌 면(여섯 줄)이 360×440에서 +5px — 줄 여백을 한 번 더 줄였다. */
   #nb .frule{font-size:13.5px;line-height:1.18}
-  #nb .fsaid{font-size:11.5px;line-height:1.35}
+  #nb .fsaid{font-size:11.5px;line-height:1.3}
+  #nb .fnm{font-size:12.5px}
   #nb .said{font-size:13.5px;line-height:1.6}
 `;
 // 더 낮은 창(가로로 든 폰 등) — 한 단 더 접는다. 그래도 안 들어가면 굴러간다.
@@ -359,7 +361,8 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
         <div class="said" style="margin-top:11px;color:#7d878c;font-size:12px">— 수첩 뒷장에 적혀 있던 것 —</div>
         <div class="said" style="margin-top:3px">별의 자리
         <b class="hw" style="font-size:22px;letter-spacing:.14em">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i style="font-style:normal;color:#a9a294">▓</i></b></div>
-        <div class="said hw" style="font-size:19px">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</div>` }];
+        <div class="said hw" style="font-size:19px">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</div>
+        <div class="said hw" style="font-size:17px;margin-top:8px;color:#5a7ab0">내림판 옆에 불 자리를 만들어 뒀다. 솥도. 들에서 가져온 걸 거기서 익혀라.</div>` }];
     // ★ 지킴이의 말 — 예전엔 대사로 지나가고 **어디에도 안 남았다.**
     //   이 게임에서 가장 감정적인 문장들이다. 깬 사당이 곧 읽을 수 있는 편지다.
     specs.forEach((sp, i) => {
