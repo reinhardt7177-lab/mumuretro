@@ -195,6 +195,7 @@ function enterShrine(shrine) {
   roomActor.rects = room.dungeon.rects;
   roomActor.obstacles = room.obstacles;
   roomActor.slip = 0;                  // 얼음 방에서 나가다 만 상태가 다음 사당에 묻지 않게
+  roomActor.freeCam = !!room.dungeon.open;   // 하늘의 섬 — 천장이 없으니 카메라를 푼다
   cleared = shrine.cleared;
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
@@ -213,6 +214,7 @@ function enterShrine(shrine) {
 
 function exitShrine() {
   brief.hide(); briefWant = null;
+  roomActor.freeCam = false;
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
@@ -420,6 +422,7 @@ function stepTitle(dt) {
 // 시작 화면 → 지하 연구실. 여기가 실제 게임의 첫 프레임이다.
 function startFromTitle() {
   mode = 'lab';
+  roomActor.freeCam = false;
   planetScene.remove(player.mesh);
   contact.visible = false;
   lab.scene.add(player.mesh);

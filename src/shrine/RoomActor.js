@@ -31,6 +31,7 @@ export class RoomActor {
     this.moving = false; this.running = false;
     // 카메라 자체 방위. 바깥과 달리 up이 항상 +Y라 각도 하나면 된다.
     this.camYaw = Math.PI;
+    this.freeCam = false;                // 열린 사당 — boot이 켠다
     this._camPlaced = false;
     // 방 안 장애물(석상 등). 원기둥 하나면 충분하다 — 실내엔 몇 개 없다.
     this.obstacles = [];
@@ -158,9 +159,15 @@ export class RoomActor {
   // 여백을 두는 이유: 벽에 정확히 붙으면 근평면(0.3u)이 벽을 뚫어 벽 너머가 보인다.
   // 닫힌 문도 카메라에겐 통과 가능하다 — 문 너머가 보이는 건 오히려 좋다(다음 목표).
   // 걷기와 같은 이유로 여백은 합집합 경계에 건다. 안 그러면 이음매마다 카메라가 튄다.
+  // ★ 열린 사당(freeCam)에서는 옆벽이 없다. 카메라가 섬 가장자리 밖 허공에 서도
+  //   보이는 건 하늘뿐이라 괜찮다 — 다만 4u까지만. 더 나가면 섬이 화면에서 빠진다.
+  //   바닥 최저는 1.0 — 난간(0.9)보다 높아야 난간 속으로 안 들어간다.
   _inAny(x, z, y) {
+    const pad = this.freeCam ? 4 : 0, ymin = this.freeCam ? 1.0 : 0.4;
     for (const r of this.rects) {
-      if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && y >= 0.4 && y <= r.h - 0.35) return true;
+      const top = (r.camH ?? r.h) - 0.35;
+      if (x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad
+        && y >= ymin && y <= top) return true;
     }
     return false;
   }
@@ -186,7 +193,8 @@ export class RoomActor {
       const x = target.x + dirX * k, z = target.z + dirZ * k;
       let best = 0;
       for (const r of this.rects) {
-        if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && r.h > best) best = r.h;
+        const ch = r.camH ?? r.h;
+        if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && ch > best) best = ch;
       }
       if (best > 0 && best < lo) lo = best;
       if (best === 0) break;                      // 밖이면 더 볼 것 없다

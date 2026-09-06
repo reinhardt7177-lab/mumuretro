@@ -345,6 +345,8 @@ export function installDebug(ctx) {
         const out = [];
         scn.traverse((o) => {
           if (!o.isMesh || !o.material || o.material.transparent) return;
+          // 하늘 돔은 안에 있으라고 만든 것이다. 열린 사당의 840u 돔이 걸렸다.
+          if (o.userData.sky) return;
           if (o.material.visible === false || !o.visible) return;
           for (let p = o.parent; p; p = p.parent) if (p === player.mesh) return;
           out.push({ box: new THREE.Box3().setFromObject(o), o });

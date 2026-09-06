@@ -177,12 +177,15 @@ const TIGHT = `
   #nb .hd .t{font-size:15px}
   #nb .body{padding:0 18px}
   #nb .ft{padding:6px 18px 8px;font-size:11px}
-  #nb .qrow{padding:5px 0}
-  #nb .qq{font-size:16.5px;line-height:1.22}
-  #nb .qa{font-size:12.5px;line-height:1.4}
-  #nb .frow{padding:4px 0}
-  #nb .frule{font-size:14.5px;line-height:1.25}
-  #nb .fsaid{font-size:11.5px}
+  #nb .qrow{padding:4px 0}
+  #nb .qq{font-size:16.5px;line-height:1.2}
+  #nb .qa{font-size:12.5px;line-height:1.34}
+  #nb .frow{padding:3px 0}
+  /* ★ 손글씨 웹폰트(Nanum Pen Script)가 안 실리면 대체 글꼴이 더 넓어 들 면이
+     440px에서 47px 넘쳤다. 학교 망은 폰트 CDN을 막는 곳이 있다 — 그 상태가
+     기본이라고 보고 접는다. 검사 M은 폰트가 없는 창에서도 통과해야 한다. */
+  #nb .frule{font-size:13.5px;line-height:1.18}
+  #nb .fsaid{font-size:11.5px;line-height:1.35}
   #nb .said{font-size:13.5px;line-height:1.6}
 `;
 // 더 낮은 창(가로로 든 폰 등) — 한 단 더 접는다. 그래도 안 들어가면 굴러간다.

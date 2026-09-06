@@ -101,42 +101,72 @@ export const LAB = {
   bg: 0x141110, amb: [0x93815f, 0x2f2620, 0.95], lamp: 1.0,
 };
 
+// ── 열린 사당 ──────────────────────────────────────────────────────────────
+// ★ 사당이 전부 **동굴**이었다. 천장 5.5u, 옆벽, 통로 — 여섯이 색만 다른 같은 굴이었다.
+//   젤다(티어스 오브 더 킹덤)의 신전을 옆에 놓고 보면 차이가 한눈에 온다: 그쪽은
+//   **하늘에 뜬 섬**이고, 신전이 입구에서부터 보이고, 기믹이 열린 들판에 펼쳐진다.
+//   그래서 여섯을 전부 하늘로 올린다. 관문 좌표는 그대로 두고(−Z 한 줄기),
+//   천장과 옆벽만 걷어 내고 그 자리에 하늘·해·구름·낭떠러지를 둔다.
+//
+// open 블록 — 열린 사당의 하늘. 사당마다 시간대가 다르다. 같은 파란 하늘 여섯 개면
+//   또 "색만 다른 같은 굴"이 된다.
+//   top/horizon  하늘 꼭대기·지평선(=안개색. Sky.js 규칙 1과 같다)
+//   ground       섬의 바닥돌 · rim 섬 가장자리·절벽
+//   sun          해 색 · sunI 세기 · sunEl 고도(°) · sunAz 방위(°)
+//   cloud        구름 색 · stars 별 개수(0이면 낮)
 export const SHRINE_THEMES = {
-  // 01 물체의 무게 — 따뜻한 돌, 청록 발광. 조용한 기준점.
+  // 01 물체의 무게 — 바람의 신전. 가장 높은 하늘, 흰 구름, 청록.
   balance: {
     stone: 0x8c8578, stoneDark: 0x6b6559, stoneLite: 0xa9a294,
     glow: 0x6fe3d2, glowDim: 0x3fa89b,
     bg: 0x0b1216, amb: [0x5d7a86, 0x2a2620, 0.50], lamp: 1.0,
+    open: { top: 0x4f9fe0, horizon: 0xd9ecf6, ground: 0xb9ad98, rim: 0x7a6f5e,
+      sun: 0xfff2dc, sunI: 2.2, sunEl: 48, sunAz: -35, cloud: 0xffffff, stars: 0 },
   },
   // 02 그림자와 거울 — 거의 완전한 어둠. 뼈처럼 흰 빛 하나.
   shadow: {
     stone: 0x3f3d38, stoneDark: 0x232220, stoneLite: 0x55524a,
     glow: 0xe9e3cd, glowDim: 0x8b8571,
     bg: 0x03050a, amb: [0x1c2430, 0x060608, 0.12], lamp: 0.30,
+    // 밤의 들판. 어둠이 길인 사당이라 해 대신 낮은 달 — 그림자가 길게 눕는다.
+    open: { top: 0x070b1a, horizon: 0x1f2a48, ground: 0x2c2c33, rim: 0x16161c,
+      sun: 0xc9d4ff, sunI: 0.35, sunEl: 14, sunAz: 120, cloud: 0x2a3150, stars: 320 },
   },
   // 03 혼합물의 분리 — 모래와 황토. 먼지 낀 작업장.
   sift: {
     stone: 0xa08a63, stoneDark: 0x6f5d3f, stoneLite: 0xc2ab7e,
     glow: 0xe0a955, glowDim: 0x9c6f2c,
     bg: 0x120e08, amb: [0x8a7550, 0x2a2016, 0.55], lamp: 1.0,
+    // 사막 메사, 늦은 오후. 번개의 신전 자리다.
+    open: { top: 0xd98f4a, horizon: 0xf3d7a6, ground: 0xd6bf8a, rim: 0x8f6f3f,
+      sun: 0xffd9a0, sunI: 2.0, sunEl: 22, sunAz: -70, cloud: 0xffe6c2, stars: 0 },
   },
   // 04 물의 상태 변화 — 푸른 얼음, 반투명.
   water: {
     stone: 0x6f8a99, stoneDark: 0x445a68, stoneLite: 0x9ab4c2,
     glow: 0x79c0e8, glowDim: 0x3d7ea8,
     bg: 0x061018, amb: [0x4a7d99, 0x14202a, 0.60], lamp: 1.0,
+    // 물의 신전 — 레퍼런스 그 자체. 맑은 낮, 흰 돌섬, 물이 흐른다.
+    open: { top: 0x3f8fdc, horizon: 0xcfe8f5, ground: 0xc9d3d5, rim: 0x6f8a99,
+      sun: 0xffffff, sunI: 2.4, sunEl: 58, sunAz: 20, cloud: 0xffffff, stars: 0 },
   },
   // 05 화산과 지진 — 붉음. 여섯 중 가장 밝고 가장 시끄럽다.
   fire: {
     stone: 0x6b4a42, stoneDark: 0x402924, stoneLite: 0x8f665a,
     glow: 0xe8664a, glowDim: 0x9c2f1c,
     bg: 0x140705, amb: [0x8a3a24, 0x1a0c08, 0.50], lamp: 1.10,
+    // 화산 칼데라. 잿빛 하늘, 지평선만 붉게 달아오른다.
+    open: { top: 0x3a2a2c, horizon: 0xc9613f, ground: 0x3d312e, rim: 0x1e1614,
+      sun: 0xffb08a, sunI: 1.3, sunEl: 30, sunAz: 160, cloud: 0x5a4442, stars: 0 },
   },
   // 06 지층과 화석 — 지하 깊은 곳. 자수정빛.
   strata: {
     stone: 0x6a5f72, stoneDark: 0x3f3748, stoneLite: 0x8b7f97,
     glow: 0xab94df, glowDim: 0x6b52a0,
     bg: 0x0a0710, amb: [0x453a5e, 0x0e0a14, 0.45], lamp: 0.90,
+    // 협곡 황혼. 노출된 지층 절벽이 곧 이 사당의 교재다.
+    open: { top: 0x3c2f6e, horizon: 0xd4a3b8, ground: 0x8a7c92, rim: 0x4a3f5a,
+      sun: 0xffc7e0, sunI: 1.4, sunEl: 12, sunAz: -110, cloud: 0xe7c6d6, stars: 90 },
   },
 };
 

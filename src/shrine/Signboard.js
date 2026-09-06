@@ -73,8 +73,21 @@ export function addBoard(scene, seg, side, title, body, glowHex, dim = false) {
   back.position.z = -0.07;
   g.add(back);
 
-  g.position.set(side < 0 ? seg.x0 + 0.36 : seg.x1 - 0.36, 2.35, seg.z1 - 2.6);
-  g.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+  if (seg.field) {
+    // ★ 열린 사당에는 걸 벽이 없다. 판을 **기둥에 세운다** — 난간 안쪽,
+    //   들어서는 자리에서 비스듬히 마주 보게. 벽에 걸린 판은 옆을 봐야 읽혔는데
+    //   세운 판은 앞을 보고 걸어도 읽힌다. 굴에서 못 읽던 이유 하나가 여기서 사라진다.
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.9, 0.16),
+      new THREE.MeshBasicMaterial({ color: 0x1a262c }));
+    post.material.userData.outlineParameters = { visible: false };
+    post.position.set(0, -H / 2 - 0.95 + 0.06, -0.06);
+    g.add(post);
+    g.position.set(side < 0 ? seg.x0 + 1.1 : seg.x1 - 1.1, 2.0, seg.z1 - 1.4);
+    g.rotation.y = side < 0 ? Math.PI * 0.32 : -Math.PI * 0.32;
+  } else {
+    g.position.set(side < 0 ? seg.x0 + 0.36 : seg.x1 - 0.36, 2.35, seg.z1 - 2.6);
+    g.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+  }
   scene.add(g);
 
   return {

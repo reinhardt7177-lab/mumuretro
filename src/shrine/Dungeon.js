@@ -12,11 +12,14 @@
 //   사당이 여섯인데 내부가 하나였다(layouts.js 머리말).
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
+import { buildOpenField } from './OpenField.js';
 
 const GOLD = 0xffd27a;           // 지나온 문·신전. 사당 테마와 무관한 "끝" 색이다.
 const WALL = 0.6;
 
 export function buildDungeon(scene, rooms, theme) {
+  // 열린 사당(하늘의 섬) — 같은 계약, 다른 지붕. OpenField.js 머리말.
+  if (theme.open) return buildOpenField(scene, rooms, theme);
   const stone = toon(theme.stone);
   const dark = toon(theme.stoneDark);
   const lite = toon(theme.stoneLite);
