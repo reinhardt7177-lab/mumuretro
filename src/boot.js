@@ -33,12 +33,14 @@ import { buildFlash } from './ui/Flash.js';
 import { buildTitle } from './ui/Title.js';
 import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildMuteButton } from './ui/MuteButton.js';
+import { buildSettings } from './ui/Settings.js';
 import * as Audio from './core/Audio.js';
 import { SFX } from './data/sfx.js';
 const { sfx, bgm, startAudio } = Audio;
 import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
 import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
 import { installDebug } from './debug/introspect.js';
+import { quality, makeAutoQuality } from './render/Quality.js';
 
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
@@ -811,6 +813,8 @@ const title = buildTitle(() => startFromTitle());
 // 방 안내 — 들어서는 순간 한 번, 틀려서 되돌아오면 다시.
 const brief = buildRoomBrief(() => touch.visible);
 buildMuteButton();
+// 화면 설정 — 화질을 손으로 고른다. 기본은 자동이라 아무도 안 건드려도 된다.
+const settings = buildSettings(() => engine);
 const lab = buildLab();
 const landing = buildLanding(planetScene, planet, landingDir);
 
@@ -859,11 +863,18 @@ function beckonNearest(from) {
 }
 
 const loop = new Loop(step, () => engine.render());
+// ── 렉이 나면 스스로 화질을 내린다 ──────────────────────────────────────────
+// ★ 학교 태블릿은 성능이 천차만별이고 이름으로는 못 가른다. 그래서 재고 내린다.
+//   아이에게는 아무 말도 안 한다 — "화질을 낮췄습니다"는 이 게임에 없는 목소리이고,
+//   무엇보다 아이가 할 수 있는 일이 아니다. 콘솔에만 남긴다.
+loop.onFrame = makeAutoQuality((name, med) => {
+  console.log(`[perf] 프레임 중앙값 ${med}ms — 화질을 '${name}'으로 내림`);
+});
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
-  brief, kitchen,
+  brief, kitchen, settings,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
@@ -877,7 +888,7 @@ installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrine
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen, title, endingHome: ENDING_HOME,
   enterShrine, exitShrine, returnToLab, get mode() { return mode; },
-  audio: Audio, sfxTable: SFX,
+  audio: Audio, sfxTable: SFX, quality, settings,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
 
