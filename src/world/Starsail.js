@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { STARSAIL as D } from '../data/starsail.js';
 import { STARSAIL_PALETTE as C } from '../data/lighting.js';
 import { buildSpaceVista } from './SpaceVista.js';
+import { buildStarRoute } from './StarRoute.js';
 
 // 기존 lab 저장 키와 숫자 퍼즐. 공간·소포 회수만 새 범선 계약으로 감싼다.
 export async function installStarsail(lab) {
@@ -35,6 +36,7 @@ export async function installStarsail(lab) {
   sun.shadow.bias = -.0006; scene.add(sun);
   const fill = new THREE.DirectionalLight(C.ambient, .8); fill.position.set(-10,8,-15); scene.add(fill);
   const vista=buildSpaceVista(scene),{sky,planet}=vista;
+  const route=buildStarRoute(scene,v.gimbal,planet);
   const halfWidth=z=>{
     for(let i=1;i<D.profile.length;i++){const[a,wa]=D.profile[i-1],[b,wb]=D.profile[i];if(z<=b)return wa+(wb-wa)*(z-a)/(b-a);}
     return D.profile.at(-1)[1];
@@ -79,7 +81,7 @@ export async function installStarsail(lab) {
     if(!original.restore(s))return false;
     recovered=s.parcelRecovered??true;recovering=0;sync();return true;
   };
-  lab.update=dt=>{original.update(dt);vista.update(dt);time+=dt;recovering=Math.max(0,recovering-dt);sync();};
+  lab.update=dt=>{original.update(dt);vista.update(dt);route.update(dt,lab.state.open);time+=dt;recovering=Math.max(0,recovering-dt);sync();};
   lab.prompt=p=>{
     if(!recovered)return nearWinch(p)?'E — 소포 건져 올리기':'배 밖에 소포가 떠 있다 — 우현 회수 손잡이로';
     if(recovering)return '소포가 갑판으로 올라온다';
@@ -95,6 +97,6 @@ export async function installStarsail(lab) {
     return original.interact(p);
   };
   lab.reachables.push({name:'회수 손잡이',x:D.winch.x,z:D.winch.z,r:D.winch.reach});
-  lab.starsail={model:asset.scene,planet,sky,get recovered(){return recovered;},get recovering(){return recovering;}};
+  lab.starsail={model:asset.scene,planet,sky,route,get recovered(){return recovered;},get recovering(){return recovering;}};
   sync();return lab;
 }

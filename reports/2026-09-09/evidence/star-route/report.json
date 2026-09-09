@@ -1,0 +1,12 @@
+{
+  "pass": true,
+  "results": {
+    "first": 0.0062499999999999995,
+    "middle": 0.50625,
+    "last": 1,
+    "length": 52.41636110286661,
+    "surface": 9.4,
+    "strength": 1
+  },
+  "errors": []
+}

@@ -87,29 +87,29 @@
       "details": [
         {
           "q": "high",
-          "calls": 360,
-          "triangles": 67651,
+          "calls": 365,
+          "triangles": 67715,
           "width": 1440,
           "height": 900
         },
         {
           "q": "mid",
-          "calls": 360,
-          "triangles": 67651,
+          "calls": 365,
+          "triangles": 67715,
           "width": 1440,
           "height": 900
         },
         {
           "q": "low",
-          "calls": 347,
-          "triangles": 67638,
+          "calls": 352,
+          "triangles": 67702,
           "width": 1440,
           "height": 900
         },
         {
           "q": "min",
-          "calls": 137,
-          "triangles": 33202,
+          "calls": 141,
+          "triangles": 33264,
           "width": 1152,
           "height": 720
         }
@@ -125,29 +125,29 @@
   "metrics": [
     {
       "q": "high",
-      "calls": 360,
-      "triangles": 67651,
+      "calls": 365,
+      "triangles": 67715,
       "width": 1440,
       "height": 900
     },
     {
       "q": "mid",
-      "calls": 360,
-      "triangles": 67651,
+      "calls": 365,
+      "triangles": 67715,
       "width": 1440,
       "height": 900
     },
     {
       "q": "low",
-      "calls": 347,
-      "triangles": 67638,
+      "calls": 352,
+      "triangles": 67702,
       "width": 1440,
       "height": 900
     },
     {
       "q": "min",
-      "calls": 137,
-      "triangles": 33202,
+      "calls": 141,
+      "triangles": 33264,
       "width": 1152,
       "height": 720
     }
