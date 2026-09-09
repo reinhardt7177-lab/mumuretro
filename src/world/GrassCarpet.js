@@ -13,6 +13,7 @@
 // 삼각형은 지형과 같은 27,380개. 알파도, 인스턴스도, 드로우콜 폭증도 없다.
 import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
+import { MEADOW, PATH } from '../data/lighting.js';
 
 // 카펫이 지면 위로 솟는 높이(월드).
 // ★ 0.34로 잡았다가 0.15로 내렸다. 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은
@@ -24,19 +25,20 @@ const LIFT_JITTER = 0.07;     // 두께 변주 — 이게 없으면 지형을 �
 const SINK = -1.2;            // 풀이 없는 곳은 지형 안으로 넣어 완전히 감춘다
 
 // 흐물거림. 파장이 짧으면 지글거리고, 길면 지면 전체가 출렁여 멀미가 난다.
-const RIPPLE = { amp: 0.09, freq: 0.55, speed: 1.15 };
-
-const PALETTE = [0x76994e, 0x84a659, 0x6d9048, 0x8fb063];
+const RIPPLE = { amp: 0.035, freq: 0.55, speed: 1.15 };
 
 export function buildGrassCarpet(scene, planet, opts = {}) {
   const R = planet.R;
   const grassAt = opts.grassAt || (() => 1);      // dir → 0..1 (풀이 얼마나 자라는가)
+  const pathAt = opts.pathAt || (() => 0);        // dir → 0..1 (발길이 낸 길)
+  const pathMaskAt = dir => THREE.MathUtils.clamp(Number(pathAt(dir)) || 0, 0, 1);
+  const coverageAt = dir => grassAt(dir) * (1 - pathMaskAt(dir));
   const uTime = { value: 0 };
 
   // 이 방향의 카펫 두께. 메시를 만들 때 쓴 식과 **반드시 같아야** 한다 —
   // 다르면 플레이어가 잔디 위에 뜨거나 다시 잠긴다.
   const liftAt = (dir) => {
-    const g = grassAt(dir);
+    const g = coverageAt(dir);
     if (g <= 0.01) return 0;
     return (LIFT + fbm(dir.x * 14, dir.y * 14, dir.z * 14, 2) * LIFT_JITTER) * g;
   };
@@ -49,37 +51,43 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
   const grassAmt = new Float32Array(n);           // 셰이더가 파도를 걸 세기
 
   const d = new THREE.Vector3();
-  const col = new THREE.Color(), tmp = new THREE.Color();
-  const pal = PALETTE.map(c => new THREE.Color(c));
+  const col = new THREE.Color();
+  const pal = MEADOW.map(c => new THREE.Color(c));
+  const soil = new THREE.Color(PATH.soil);
 
   let covered = 0;
   for (let i = 0; i < n; i++) {
     d.set(pos.getX(i), pos.getY(i), pos.getZ(i));
     const len = d.length();
     d.multiplyScalar(1 / len);                    // 단위 방향
-    const g = grassAt(d);                          // 0..1
+    const pathMask = pathMaskAt(d), baseGrass = grassAt(d);
+    const g = baseGrass * (1 - pathMask);          // 경로 한가운데는 잔디가 짧아진다
     grassAmt[i] = g;
     if (g > 0.01) covered++;
 
     // 두께를 노이즈로 흔든다. 주파수를 높게 잡아 지형 실루엣이 아니라 표면 질감이 되게.
     const j = fbm(d.x * 14, d.y * 14, d.z * 14, 2) * LIFT_JITTER;
-    const lift = g > 0.01 ? (LIFT + j) * g : SINK;
+    // 흙길은 바로 지면 아래로만 숨긴다. 여기까지 SINK(-1.2)를 쓰면 경로 옆 잔디도
+    // 긴 삼각형으로 끌려 내려가 길 가장자리가 톱니처럼 갈라진다.
+    const lift = g > 0.01 ? (LIFT + j) * g : (baseGrass > 0.01 && pathMask > 0 ? -0.012 : SINK);
     const r = len + lift;
     pos.setXYZ(i, d.x * r, d.y * r, d.z * r);
 
-    // 색도 노이즈로. 한 가지 초록이 넓게 이어지면 카펫이 아니라 페인트가 된다.
-    const t = fbm(d.x * 6, d.y * 6, d.z * 6, 2) * 0.5 + 0.5;
-    const k = Math.min(pal.length - 1, Math.floor(t * pal.length));
-    col.copy(pal[k]);
-    tmp.copy(col).multiplyScalar(0.92 + ((i * 2654435761) % 1000) / 1000 * 0.16);
-    colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b;
+    // 정점 번호 난수를 없앤다. 같은 자리에 복제된 정점은 같은 색이어야 이음매가 없다.
+    // 큰 초록 덩어리와 작은 표면 결이 부드럽게 이어진다.
+    const t = THREE.MathUtils.clamp(fbm(d.x * 6, d.y * 6, d.z * 6, 2) * 0.5 + 0.5, 0, 1);
+    const band = t * (pal.length - 1), k = Math.min(pal.length - 2, Math.floor(band));
+    col.copy(pal[k]).lerp(pal[k + 1], band - k);
+    col.multiplyScalar(1 + fbm(d.x * 24, d.y * 24, d.z * 24, 2) * 0.025);
+    col.lerp(soil, pathMask);
+    colors[i * 3] = col.r; colors[i * 3 + 1] = col.g; colors[i * 3 + 2] = col.b;
   }
 
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('aGrass', new THREE.BufferAttribute(grassAmt, 1));
-  geo.computeVertexNormals();
-
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+  // 원래 지형의 연속 법선을 유지한다. 가려진 카펫 가장자리를 밑으로 넣은 변위가
+  // 위쪽 잔디의 조명까지 꺾어 어두운 띠를 만들면 안 된다.
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.userData.outlineParameters = { visible: false };   // 지면에 외곽선은 그물망이 된다
 
   // 흐물거림 — 표면 법선 방향으로 흐르는 파도. 풀이 없는 곳(aGrass=0)은 움직이지 않는다.

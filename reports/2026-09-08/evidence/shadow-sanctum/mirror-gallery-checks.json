@@ -1,0 +1,331 @@
+{
+  "date": "2026-09-08T11:42:37.212Z",
+  "checks": [
+    {
+      "name": "Real pre-upgrade save resumes in expanded mirror room",
+      "pass": true,
+      "detail": [
+        0,
+        0,
+        -18
+      ]
+    },
+    {
+      "name": "Legacy angle, first gate, hint and unfinished status survive migration",
+      "pass": true,
+      "detail": {
+        "version": 2,
+        "fields": {
+          "a.0": 0.7853981633974483,
+          "a.1": 0,
+          "a.2": 0,
+          "hit": false
+        }
+      }
+    },
+    {
+      "name": "All 4096 angle layouts stay bounded and obey continuous equal-angle reflection",
+      "pass": true,
+      "detail": [
+        {
+          "seed": 2199462457,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.349875176113313e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 1,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.704878796500663e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 2,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.611440949382906e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 7,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.577566798522237e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 31,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.31862112653326e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 208,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.577566798522237e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 812744,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.609205467364653e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 20260908,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.757607208176007e-16,
+          "initialSolved": false
+        }
+      ]
+    },
+    {
+      "name": "Eight seeds require all three mirrors and never auto-complete on entry",
+      "pass": true,
+      "detail": [
+        {
+          "seed": 2199462457,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.349875176113313e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 1,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.704878796500663e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 2,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.611440949382906e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 7,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.577566798522237e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 31,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 5.31862112653326e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 208,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.577566798522237e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 812744,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.609205467364653e-16,
+          "initialSolved": false
+        },
+        {
+          "seed": 20260908,
+          "solutions": 8,
+          "shortest": 3,
+          "outside": 0,
+          "reflections": 552,
+          "reflectionError": 4.757607208176007e-16,
+          "initialSolved": false
+        }
+      ]
+    },
+    {
+      "name": "Walk from connecting bridge and turn each reachable mirror with E",
+      "pass": true,
+      "detail": [
+        {
+          "index": 0,
+          "expected": 3,
+          "actual": 3,
+          "position": [
+            -3.644085808926506,
+            0,
+            -22.554633282965796
+          ],
+          "otherUnchanged": true
+        },
+        {
+          "index": 1,
+          "expected": 3,
+          "actual": 3,
+          "position": [
+            -3.5786029263641455,
+            0,
+            -19.251944084048368
+          ],
+          "otherUnchanged": true
+        },
+        {
+          "index": 2,
+          "expected": 1,
+          "actual": 1,
+          "position": [
+            0.9213970736358565,
+            0,
+            -19.251944084048368
+          ],
+          "otherUnchanged": true
+        }
+      ]
+    },
+    {
+      "name": "144 camera directions avoid real stone and mirror surfaces",
+      "pass": true,
+      "detail": {
+        "count": 144,
+        "failures": []
+      }
+    },
+    {
+      "name": "Rendered beam endpoints coincide with computed reflection path",
+      "pass": true,
+      "detail": {
+        "maxError": 1.6011864169946884e-15,
+        "rejected": true
+      }
+    },
+    {
+      "name": "Corrupted optical hit flag rejects without changing live progress",
+      "pass": true
+    },
+    {
+      "name": "Full-pass render stays within 1000 draw calls",
+      "pass": true,
+      "detail": {
+        "draw": {
+          "frame": 102,
+          "calls": 563,
+          "triangles": 29749,
+          "points": 640,
+          "lines": 0
+        },
+        "meshes": 55,
+        "batches": 11,
+        "instances": 199,
+        "camera": [
+          0.08128010026828451,
+          3.0463117156667394,
+          -12.753997591806396
+        ]
+      }
+    },
+    {
+      "name": "Solved mirror door opens and player walks into next corridor",
+      "pass": true,
+      "detail": {
+        "pos": [
+          0.0034338985276575295,
+          0,
+          -32.896682964269665
+        ],
+        "boundary": -31
+      }
+    },
+    {
+      "name": "New semantic save restores solved optics and pedestal-side checkpoint",
+      "pass": true,
+      "detail": [
+        0.9213970736358565,
+        0,
+        -19.251944084048368
+      ]
+    },
+    {
+      "name": "Fault injection: removing wall clipping is detected",
+      "pass": true
+    },
+    {
+      "name": "Fault injection: old camera minimum places camera inside near wall",
+      "pass": true
+    },
+    {
+      "name": "Mobile touch E rotates the nearby mirror once",
+      "pass": true
+    },
+    {
+      "name": "Close mirror camera lifts above device and keeps explorer visible",
+      "pass": true
+    },
+    {
+      "name": "Mobile notebook button opens",
+      "pass": true
+    },
+    {
+      "name": "PC notebook button opens",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or WebGL shader errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": [],
+  "sceneMetrics": {
+    "draw": {
+      "frame": 102,
+      "calls": 563,
+      "triangles": 29749,
+      "points": 640,
+      "lines": 0
+    },
+    "meshes": 55,
+    "batches": 11,
+    "instances": 199,
+    "camera": [
+      0.08128010026828451,
+      3.0463117156667394,
+      -12.753997591806396
+    ]
+  }
+}

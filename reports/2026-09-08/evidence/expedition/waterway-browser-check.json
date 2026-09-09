@@ -1,0 +1,212 @@
+{
+  "date": "2026-09-08T04:32:30.117Z",
+  "checks": [
+    {
+      "name": "Unaligned light and distant heater add no energy",
+      "pass": true,
+      "details": {
+        "phase": "ice",
+        "temperatureC": -8,
+        "meltFraction": 0,
+        "heaterWatts": 0,
+        "lightWatts": 0,
+        "beamHit": false,
+        "energyJ": 0,
+        "flow": 0
+      }
+    },
+    {
+      "name": "Walk, carry and place heater creates heat through distance",
+      "pass": true,
+      "details": {
+        "walks": [
+          {
+            "frames": 95,
+            "distance": 7.91666666666666
+          },
+          {
+            "frames": 53,
+            "distance": 4.416666666666586
+          }
+        ],
+        "state": {
+          "version": 1,
+          "discovered": true,
+          "heater": {
+            "x": -2.001121201153316,
+            "z": -1.3070370961080586,
+            "held": false
+          },
+          "mirrorAngle": 180,
+          "thermal": {
+            "version": 1,
+            "energyJ": 24901.9774578944,
+            "temperatureC": 0,
+            "meltFraction": 0.024257417538605993
+          },
+          "energyFromHeater": 24901.9774578944,
+          "energyFromLight": 0,
+          "flow": 0
+        },
+        "status": {
+          "phase": "melting",
+          "temperatureC": 0,
+          "meltFraction": 0.024257417538605993,
+          "heaterWatts": 10928.364888210492,
+          "lightWatts": 0,
+          "beamHit": false,
+          "energyJ": 24901.9774578944,
+          "flow": 0
+        }
+      }
+    },
+    {
+      "name": "Mid-puzzle reload preserves placement and accumulated melting energy",
+      "pass": true,
+      "details": {
+        "version": 1,
+        "discovered": true,
+        "heater": {
+          "x": -2.001121201153316,
+          "z": -1.3070370961080586,
+          "held": false
+        },
+        "mirrorAngle": 180,
+        "thermal": {
+          "version": 1,
+          "energyJ": 28180.48692435755,
+          "temperatureC": 0,
+          "meltFraction": 0.03407331414478308
+        },
+        "energyFromHeater": 28180.48692435755,
+        "energyFromLight": 0,
+        "flow": 0
+      }
+    },
+    {
+      "name": "Heater alone restores water flow and opens the shrine gate",
+      "pass": true,
+      "details": {
+        "frames": 1772,
+        "status": {
+          "phase": "water",
+          "temperatureC": 0,
+          "meltFraction": 1,
+          "heaterWatts": 10928.364888210492,
+          "lightWatts": 0,
+          "beamHit": false,
+          "energyJ": 350800,
+          "flow": 1
+        },
+        "trail": {
+          "version": 1,
+          "overlook": false,
+          "glider": false,
+          "water": true,
+          "restored": true
+        },
+        "record": "온열기를 가까이 옮기자 열이 더 잘 닿았다."
+      }
+    },
+    {
+      "name": "Opened outdoor gate enters the existing water shrine and returns to the same spot",
+      "pass": true,
+      "details": {
+        "prompt": "E — 물의 사당에 들어가기",
+        "roomId": "water",
+        "mode": "room",
+        "restored": [
+          62.579696811811665,
+          18.08891708566405,
+          19.813984902296234
+        ],
+        "before": [
+          62.579696811811665,
+          18.08891708566405,
+          19.813984902296234
+        ],
+        "cleared": false
+      }
+    },
+    {
+      "name": "Restored waterway stays open after another reload",
+      "pass": true
+    },
+    {
+      "name": "Older saves without expedition fields remain playable",
+      "pass": true,
+      "details": {
+        "mode": "planet",
+        "glider": false,
+        "solved": false
+      }
+    },
+    {
+      "name": "Touch E rotates mirror until its actual light ray hits the receiver",
+      "pass": true,
+      "details": {
+        "turns": 4,
+        "optics": {
+          "phase": "ice",
+          "temperatureC": -7.882463330739266,
+          "meltFraction": 0,
+          "heaterWatts": 0,
+          "lightWatts": 14809.620326852482,
+          "beamHit": true,
+          "energyJ": 246.82700544754138,
+          "flow": 0
+        }
+      }
+    },
+    {
+      "name": "Mirror alone melts ice with no heater contribution",
+      "pass": true,
+      "details": {
+        "frames": 1421,
+        "state": {
+          "version": 1,
+          "discovered": true,
+          "heater": {
+            "x": -7,
+            "z": 2.8,
+            "held": false
+          },
+          "mirrorAngle": 240,
+          "thermal": {
+            "version": 1,
+            "energyJ": 350800,
+            "temperatureC": 0,
+            "meltFraction": 1
+          },
+          "energyFromHeater": 0,
+          "energyFromLight": 350800,
+          "flow": 1
+        },
+        "record": "거울의 빛을 검은 흡수판에 모으자 얼음에 열이 전달됐다."
+      }
+    },
+    {
+      "name": "Mobile notebook records the method that was actually used",
+      "pass": true
+    },
+    {
+      "name": "Touch E at the overlook acquires the glider after walking back",
+      "pass": true
+    },
+    {
+      "name": "Touch jump hold opens the sail and pointer cancel releases it",
+      "pass": true,
+      "details": {
+        "gliding": true,
+        "h": 5.339078893537433,
+        "held": true
+      }
+    },
+    {
+      "name": "No browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": []
+}

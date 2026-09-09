@@ -15,9 +15,10 @@
 //   아니라 고장이고, 뒤엣것을 알려 주면 그건 게임이 아니다.
 //   여기 적히는 것은 셋뿐이다 — 그림 하나 · 목표 한 줄 · 조작 한 줄.
 //
-// ★ 조작을 뺏지 않는다(대사창과 같은 규칙). 읽는 동안에도 걷고 돌아본다.
+// ★ 읽는 동안에는 게임 루프가 이동과 위험을 멈춘다.
 //   틀려서 되돌아왔을 때 다시 뜬다 — 그때가 가장 필요한 때다.
 //   벌이 아니라 도움이다.
+import { registerOverlay, soloOpen } from './overlay.js';
 
 // ── 조작 여섯 ────────────────────────────────────────────────────────────────
 // 방은 스물넷이지만 손이 하는 일은 여섯 가지뿐이다. 그림도 여섯 장이면 된다 —
@@ -140,13 +141,13 @@ const ACTS = {
 export const BRIEF_ACTS = Object.keys(ACTS);
 
 const CSS = `
-#rb{position:fixed;left:50%;top:9%;transform:translateX(-50%) translateY(-8px);
-  z-index:36;width:min(92vw,470px);display:none;opacity:0;
-  transition:opacity .18s ease,transform .18s ease;cursor:pointer;
+#rb{position:fixed;inset:0;padding:9vh 16px 20px;overflow-y:auto;
+  z-index:36;display:none;opacity:0;align-items:start;justify-items:center;
+  background:rgba(8,20,24,.3);transition:opacity .18s ease;
   font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   -webkit-tap-highlight-color:transparent}
-#rb.on{display:block;opacity:1;transform:translateX(-50%) translateY(0)}
-#rb .card{background:rgba(247,250,250,.95);border:1px solid rgba(35,39,42,.14);
+#rb.on{display:grid;opacity:1}
+#rb .card{box-sizing:border-box;width:min(100%,470px);background:rgba(247,250,250,.97);border:1px solid rgba(35,39,42,.14);
   border-radius:10px;padding:13px 16px 12px;
   box-shadow:0 18px 46px -22px rgba(8,20,24,.75);backdrop-filter:blur(3px)}
 #rb .top{display:flex;align-items:center;gap:12px}
@@ -157,14 +158,18 @@ const CSS = `
 #rb .how{margin-top:9px;padding-top:8px;border-top:1px dashed rgba(35,39,42,.18);
   font-size:13px;line-height:1.45;color:#3d474c;word-break:keep-all}
 #rb .how b{color:#12655c;font-weight:700}
-#rb .ok{margin-top:8px;text-align:right;font-size:11.5px;color:#7d878c}
+#rb .ok{display:block;margin:12px 0 0 auto;min-height:40px;padding:8px 15px;
+  appearance:none;border:1px solid #12655c;border-radius:6px;background:#12655c;
+  color:#fff;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;cursor:pointer}
+#rb .ok:hover{background:#0c5149}
+#rb .ok:focus-visible{outline:3px solid #c0653a;outline-offset:3px}
 @media (max-width:640px){
-  #rb{top:6%;width:94vw}
+  #rb{padding:6vh 12px 16px}
   #rb svg{width:84px;height:64px}
   #rb .goal{font-size:14.5px}
   #rb .how{font-size:12px}
 }
-@media (max-height:430px){#rb{top:4%}#rb .card{padding:9px 12px 8px}
+@media (max-height:430px){#rb{padding-top:4vh}#rb .card{padding:9px 12px 8px}
   #rb svg{width:76px;height:58px}#rb .goal{font-size:13.5px}
   #rb .how{margin-top:6px;padding-top:6px;font-size:11.5px}#rb .ok{margin-top:5px}}
 @media (prefers-reduced-motion:reduce){#rb{transition:none}}`;
@@ -176,10 +181,15 @@ export function buildRoomBrief(isTouch) {
 
   const el = document.createElement('div');
   el.id = 'rb';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-labelledby', 'rbGoal');
+  el.setAttribute('aria-describedby', 'rbHow');
+  el.setAttribute('aria-hidden', 'true');
   el.innerHTML = '<div class="card"><div class="top">'
     + '<svg viewBox="0 0 130 92" aria-hidden="true"></svg>'
-    + '<div class="txt"><div class="nm"></div><div class="goal"></div></div></div>'
-    + '<div class="how"></div><div class="ok"></div></div>';
+    + '<div class="txt"><div class="nm"></div><div class="goal" id="rbGoal"></div></div></div>'
+    + '<div class="how" id="rbHow"></div><button type="button" class="ok"></button></div>';
   document.body.appendChild(el);
   const elSvg = el.querySelector('svg');
   const elNm = el.querySelector('.nm');
@@ -187,22 +197,41 @@ export function buildRoomBrief(isTouch) {
   const elHow = el.querySelector('.how');
   const elOk = el.querySelector('.ok');
 
-  let open = false;
-  const hide = () => { open = false; el.classList.remove('on'); };
-  el.addEventListener('pointerdown', (e) => { e.stopPropagation(); hide(); });
+  let open = false, returnFocus = null;
+  const hide = () => {
+    if (!open) return;
+    open = false;
+    el.classList.remove('on');
+    el.setAttribute('aria-hidden', 'true');
+    if (returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+    returnFocus = null;
+  };
+  const me = registerOverlay({ get isOpen() { return open; }, close: hide });
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+  el.addEventListener('click', (e) => { e.stopPropagation(); hide(); });
+  el.addEventListener('keydown', (e) => {
+    if (!open) return;
+    if (e.code === 'Escape' || e.code === 'KeyE') { e.preventDefault(); e.stopPropagation(); hide(); }
+    else if (e.code === 'Tab') { e.preventDefault(); elOk.focus(); }
+    else if (e.code === 'Enter' || e.code === 'Space') e.stopPropagation();
+  });
 
   return {
     // name: 방 이름 · goal: 목표 한 줄 · act: 손이 하는 일(ACTS의 열쇠)
     show(name, goal, act) {
+      soloOpen(me);
+      if (!open) returnFocus = document.activeElement;
       const a = ACTS[act] || ACTS.stand;
       const touch = !!(isTouch && isTouch());
       elSvg.innerHTML = a.svg;
       elNm.textContent = name;
       elGoal.textContent = goal || '';
       elHow.innerHTML = `<b>${touch ? a.keyTouch : a.key}</b> — ${a.how}`;
-      elOk.textContent = touch ? '눌러서 닫기' : 'E · 눌러서 닫기';
+      elOk.textContent = touch ? '알았다 · 시작하기' : '알았다 · E / Enter';
       open = true;
       el.classList.add('on');
+      el.setAttribute('aria-hidden', 'false');
+      elOk.focus({ preventScroll: true });
     },
     hide,
     get isOpen() { return open; },

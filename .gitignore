@@ -14,3 +14,7 @@ tmp/
 secrets.*
 
 .vercel
+
+# Upstream clone and pre-integration backups
+.integration/
+*.blend1

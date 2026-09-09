@@ -1,0 +1,13 @@
+{
+  "pass": true,
+  "checks": [
+    "crossfade immediate mute",
+    "mute throughout fades",
+    "custom volume restoration",
+    "rapid transition cleanup",
+    "persistent mute",
+    "storage-denied fallback",
+    "nine scene mappings and unknown scene fallback"
+  ],
+  "pendingFrames": 0
+}

@@ -1,0 +1,24 @@
+{
+  "pass": true,
+  "modules": [
+    "Lab",
+    "Forage",
+    "Kitchen",
+    "MapPage"
+  ],
+  "checks": [
+    "lab real interaction and portal visuals",
+    "reseeded harvested site restore",
+    "bait is not charged twice",
+    "approaching and caught trap visuals",
+    "invalid inventory rejected",
+    "kitchen plates and made recipes",
+    "map 20000-cell roundtrip and canvas reconstruction",
+    "invalid map remains unchanged"
+  ],
+  "map": {
+    "seen": 936,
+    "total": 20000,
+    "percent": 4.7
+  }
+}

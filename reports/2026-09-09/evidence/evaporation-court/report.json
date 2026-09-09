@@ -1,0 +1,259 @@
+{
+  "date": "2026-09-08T15:16:57.477Z",
+  "checks": [
+    {
+      "name": "Legacy filtered liquid, hints and doors resume",
+      "pass": true,
+      "details": {
+        "seed": 3986657247,
+        "state": {
+          "version": 1,
+          "id": "sift",
+          "seed": 3986657247,
+          "tier": 0,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            false
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "orders": [
+                  0,
+                  2,
+                  1
+                ],
+                "held": -1,
+                "fitted": -1,
+                "round": 0,
+                "solved": false,
+                "mix": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "crits": [
+                  1,
+                  0,
+                  2
+                ],
+                "held": -1,
+                "testItem": -1,
+                "testT": 0,
+                "round": 0,
+                "solved": false,
+                "bin.0": -1,
+                "bin.1": -1,
+                "bin.2": -1,
+                "bin.3": -1,
+                "bin.4": -1,
+                "bin.5": -1,
+                "got.0": [],
+                "got.1": []
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "state": "filtered"
+              }
+            }
+          ],
+          "final": {
+            "fields": {
+              "held": -1,
+              "solved": false,
+              "used.0": -1,
+              "used.1": -1,
+              "used.2": -1,
+              "used.3": -1,
+              "done.0": [],
+              "done.1": [],
+              "done.2": [],
+              "done.3": [],
+              "eyes": 0
+            },
+            "visual": {
+              "layout": 3131246180,
+              "nodes": [],
+              "materials": []
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": -1,
+            "t": 0
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 1,
+              "t": 60
+            },
+            "shrine": {
+              "level": 0,
+              "t": 0
+            }
+          },
+          "checkpoint": {
+            "x": 0,
+            "y": 0,
+            "z": -27,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        }
+      }
+    },
+    {
+      "name": "Sand deposit stays inside paper without coincident cone faces",
+      "pass": true,
+      "details": {
+        "minimumGap": 0.029999994388440795
+      }
+    },
+    {
+      "name": "Five mixture states show separate iron, sand, dissolved liquid and salt",
+      "pass": true,
+      "details": [
+        {
+          "state": "mixed",
+          "iron": false,
+          "sand": false,
+          "salt": false,
+          "fluid": true,
+          "potIron": true,
+          "potSand": true,
+          "potLump": false,
+          "atBurner": false
+        },
+        {
+          "state": "demag",
+          "iron": true,
+          "sand": false,
+          "salt": false,
+          "fluid": true,
+          "potIron": false,
+          "potSand": true,
+          "potLump": false,
+          "atBurner": false
+        },
+        {
+          "state": "filtered",
+          "iron": true,
+          "sand": true,
+          "salt": false,
+          "fluid": true,
+          "potIron": false,
+          "potSand": false,
+          "potLump": false,
+          "atBurner": false
+        },
+        {
+          "state": "salt",
+          "iron": true,
+          "sand": true,
+          "salt": true,
+          "fluid": false,
+          "potIron": false,
+          "potSand": false,
+          "potLump": false,
+          "atBurner": true
+        },
+        {
+          "state": "lump",
+          "iron": false,
+          "sand": false,
+          "salt": false,
+          "fluid": false,
+          "potIron": false,
+          "potSand": false,
+          "potLump": true,
+          "atBurner": false
+        }
+      ]
+    },
+    {
+      "name": "Injected missing salt display is detected",
+      "pass": true
+    },
+    {
+      "name": "Impossible held salt rejects atomically",
+      "pass": true
+    },
+    {
+      "name": "Legacy held filtered liquid remains in hand",
+      "pass": true
+    },
+    {
+      "name": "New held liquid roundtrips without applying heat",
+      "pass": true
+    },
+    {
+      "name": "Restored liquid can be walked to the burner and finished",
+      "pass": true
+    },
+    {
+      "name": "Carried liquid can be returned away from stations",
+      "pass": true
+    },
+    {
+      "name": "Walk, fail heat, reset water, recover wrong filter, separate and exit",
+      "pass": true,
+      "details": {
+        "states": [
+          "demag",
+          "filtered",
+          "salt"
+        ],
+        "open": true,
+        "z": -38.95694132080944
+      }
+    },
+    {
+      "name": "144 camera views avoid solid apparatus",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "bad": []
+      }
+    },
+    {
+      "name": "Mobile notebook freezes held liquid and hints",
+      "pass": true
+    },
+    {
+      "name": "Touch E evaporates the filtered liquid once",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "frame": 34,
+    "calls": 546,
+    "triangles": 20997,
+    "points": 0,
+    "lines": 0
+  }
+}

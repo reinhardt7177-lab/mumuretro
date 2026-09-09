@@ -16,6 +16,10 @@ export class Input {
     this._touchMove = { active: false, x: 0, y: 0 };
 
     addEventListener('keydown', e => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey
+        || e.target?.closest?.('[role="dialog"]')
+        || e.target?.closest?.('input,select,textarea,[contenteditable="true"]')
+        || (['Enter', 'Space'].includes(e.code) && e.target?.closest?.('button,a'))) return;
       if (e.repeat) return;                 // 누르고 있어도 점프는 한 번만
       this.keys[e.code] = true;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
@@ -27,6 +31,7 @@ export class Input {
 
     // 마우스 드래그 = 시점 회전
     let drag = false, lx = 0, ly = 0;
+    this._resetMouse = () => { drag = false; };
     canvas.addEventListener('mousedown', e => { drag = true; lx = e.clientX; ly = e.clientY; });
     addEventListener('mouseup', () => { drag = false; });
     addEventListener('mousemove', e => {
@@ -41,12 +46,15 @@ export class Input {
     }, { passive: false });
 
     this._initTouch(canvas);
+    addEventListener('blur', () => this.reset());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.reset(); });
   }
 
   // 화면 왼쪽 절반 = 이동 조이스틱, 오른쪽 절반 = 시점 드래그.
   _initTouch(canvas) {
     const move = this._touchMove;
     let moveId = null, lookId = null, ox = 0, oy = 0, llx = 0, lly = 0;
+    this._resetTouch = () => { moveId = lookId = null; };
     const R = 60; // 조이스틱 반경(px)
     canvas.addEventListener('touchstart', e => {
       for (const t of e.changedTouches) {
@@ -92,6 +100,16 @@ export class Input {
   // 조작 경로를 둘로 나누면 한쪽만 고쳐지는 일이 반드시 생긴다.
   requestAction() { this._action = true; }
   setHoldJump(on) { this._holdJump = !!on; }
+
+  reset() {
+    this.keys = {};
+    this._action = this._jump = this._holdJump = false;
+    this._yawDelta = 0;
+    this._touchMove.active = false;
+    this._touchMove.x = this._touchMove.y = 0;
+    this._resetMouse?.(); this._resetTouch?.();
+    this.intent = { x: 0, y: 0, run: false, action: false, jump: false, jumpHeld: false };
+  }
 
   poll() {
     if (this._test) { this.intent = { x: 0, y: 0, run: false, action: false, jump: false, jumpHeld: false, ...this._test }; return this.intent; }

@@ -1,0 +1,44 @@
+{
+  "samples": [
+    {
+      "a": 0,
+      "points": 1393,
+      "mismatch": 251
+    },
+    {
+      "a": 0.7,
+      "points": 1393,
+      "mismatch": 129
+    },
+    {
+      "a": 1.4,
+      "points": 1393,
+      "mismatch": 206
+    },
+    {
+      "a": 2.1,
+      "points": 1393,
+      "mismatch": 180
+    },
+    {
+      "a": 3.141592653589793,
+      "points": 1393,
+      "mismatch": 234
+    }
+  ],
+  "seed": 4171220906,
+  "checkpoint": {
+    "x": 0,
+    "y": 0,
+    "z": 4,
+    "yaw": 0,
+    "resetHazard": -1
+  },
+  "metrics": {
+    "frame": 782,
+    "calls": 634,
+    "triangles": 18241,
+    "points": 640,
+    "lines": 0
+  }
+}

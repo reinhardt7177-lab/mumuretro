@@ -1,0 +1,177 @@
+{
+  "date": "2026-09-09T01:08:00.322Z",
+  "checks": [
+    {
+      "name": "Legacy completed bowl and ordered first step restore",
+      "pass": true
+    },
+    {
+      "name": "All nine bowl stages show dissolution and separate final materials",
+      "pass": true,
+      "details": [
+        {
+          "mix": "모래 섞인 소금물",
+          "count": 0,
+          "liquid": true,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0,
+          "complete": false,
+          "hasLiquid": true
+        },
+        {
+          "mix": "모래 섞인 소금물",
+          "count": 1,
+          "liquid": true,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0.4819898104550582,
+          "complete": false,
+          "hasLiquid": true
+        },
+        {
+          "mix": "모래 섞인 소금물",
+          "count": 2,
+          "liquid": false,
+          "salt": true,
+          "expectSalt": true,
+          "gap": 0.9600000000000009,
+          "complete": true,
+          "hasLiquid": true
+        },
+        {
+          "mix": "쇠구슬과 모래",
+          "count": 0,
+          "liquid": false,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0,
+          "complete": false,
+          "hasLiquid": false
+        },
+        {
+          "mix": "쇠구슬과 모래",
+          "count": 1,
+          "liquid": false,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0.96,
+          "complete": true,
+          "hasLiquid": false
+        },
+        {
+          "mix": "콩과 좁쌀",
+          "count": 0,
+          "liquid": false,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0,
+          "complete": false,
+          "hasLiquid": false
+        },
+        {
+          "mix": "콩과 좁쌀",
+          "count": 1,
+          "liquid": false,
+          "salt": false,
+          "expectSalt": false,
+          "gap": 0.9599999999999997,
+          "complete": true,
+          "hasLiquid": false
+        },
+        {
+          "mix": "소금물",
+          "count": 0,
+          "liquid": true,
+          "salt": false,
+          "expectSalt": false,
+          "gap": null,
+          "complete": false,
+          "hasLiquid": true
+        },
+        {
+          "mix": "소금물",
+          "count": 1,
+          "liquid": false,
+          "salt": true,
+          "expectSalt": true,
+          "gap": null,
+          "complete": true,
+          "hasLiquid": true
+        }
+      ]
+    },
+    {
+      "name": "Injected overlapping separated materials is detected",
+      "pass": true
+    },
+    {
+      "name": "Held and installed tool ownership conflict rejects atomically",
+      "pass": true
+    },
+    {
+      "name": "Old held burner and installed filter remain usable",
+      "pass": true
+    },
+    {
+      "name": "New held tool roundtrips without solving another bowl",
+      "pass": true
+    },
+    {
+      "name": "Held tool can return on empty floor or beside a completed bowl",
+      "pass": true
+    },
+    {
+      "name": "Walk, wrong order, wrong tool, undo, five correct applications and awakening",
+      "pass": true,
+      "details": {
+        "solved": true,
+        "awake": 1,
+        "drop": 1,
+        "allReturned": true,
+        "position": [
+          5.999484512794958,
+          0,
+          -43.0426502091281
+        ]
+      }
+    },
+    {
+      "name": "Walk to reward and collect only once",
+      "pass": true
+    },
+    {
+      "name": "Collected reward remains collected after restart",
+      "pass": true
+    },
+    {
+      "name": "144 camera views avoid sanctuary props",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "bad": []
+      }
+    },
+    {
+      "name": "Notebook pauses tools and shrine hints on mobile",
+      "pass": true
+    },
+    {
+      "name": "Touch E completes the ordered mixture and releases both tools",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "frame": 34,
+    "calls": 491,
+    "triangles": 21913,
+    "points": 0,
+    "lines": 0
+  }
+}

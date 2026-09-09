@@ -1,0 +1,138 @@
+{
+  "date": "2026-09-08T00:21:00.098Z",
+  "checks": [
+    {
+      "name": "External hosts blocked: local engine boots",
+      "pass": true
+    },
+    {
+      "name": "Author link does not start game",
+      "pass": true
+    },
+    {
+      "name": "First gesture keeps lab music",
+      "pass": true
+    },
+    {
+      "name": "Opening dialogue has a camera inside the lab",
+      "pass": true
+    },
+    {
+      "name": "Mute via Enter and during fade",
+      "pass": true
+    },
+    {
+      "name": "Unmute via Space",
+      "pass": true
+    },
+    {
+      "name": "Walk from bed to parcel without teleport",
+      "pass": true,
+      "details": {
+        "before": [
+          0,
+          0,
+          7
+        ],
+        "after": [
+          0,
+          0,
+          2.140000000000018
+        ],
+        "prompt": "E — 소포 열어 보기",
+        "frames": 82
+      }
+    },
+    {
+      "name": "Parcel grants notebook and PC icon",
+      "pass": true
+    },
+    {
+      "name": "Reading freezes movement and consumes held input",
+      "pass": true
+    },
+    {
+      "name": "Notebook reading advances tutorial",
+      "pass": true
+    },
+    {
+      "name": "Blur releases all game input",
+      "pass": true
+    },
+    {
+      "name": "Notebook also freezes quake clock",
+      "pass": true
+    },
+    {
+      "name": "Versioned checkpoint contains expected progress",
+      "pass": true
+    },
+    {
+      "name": "Continue offered after reload",
+      "pass": true
+    },
+    {
+      "name": "Progress survives reload and resumes outside shrine",
+      "pass": true,
+      "details": {
+        "mode": "planet",
+        "count": 1,
+        "map": {
+          "seen": 1050,
+          "total": 20000,
+          "percent": 5.3
+        },
+        "tab": "field"
+      }
+    },
+    {
+      "name": "Checkpoint returns to saved outdoor position",
+      "pass": true,
+      "details": 0
+    },
+    {
+      "name": "Completed shrine stays open without duplicate orb",
+      "pass": true
+    },
+    {
+      "name": "Hint three waits until 135 seconds",
+      "pass": true
+    },
+    {
+      "name": "Completed save opens a lasting end card",
+      "pass": true
+    },
+    {
+      "name": "Cancel new exploration preserves saved progress",
+      "pass": true
+    },
+    {
+      "name": "New exploration keeps previous save as backup",
+      "pass": true
+    },
+    {
+      "name": "Phone notebook opens by tap",
+      "pass": true
+    },
+    {
+      "name": "Phone notebook closes by tap",
+      "pass": true
+    },
+    {
+      "name": "Missing engine shows retry instead of endless loading",
+      "pass": true
+    },
+    {
+      "name": "No unhandled browser errors",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "All requested local assets exist",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "pageErrors": [],
+  "failedLocalRequests": []
+}

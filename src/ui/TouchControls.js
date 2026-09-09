@@ -5,26 +5,28 @@
 //   걷고 둘러보는 것까지만 되고 **사당에 들어갈 수조차 없었다**(점검에서 확인).
 //
 // 아트 바이블 「상시 표시는 다섯뿐」과 부딪히지 않는 방법:
-//   · 터치 기기에서만 나타난다(포인터가 굵을 때, 또는 실제로 화면을 만졌을 때)
+//   · 이동용 버튼은 터치 기기에서만, 수첩 버튼은 PC에서도 나타난다
 //   · E 버튼은 **할 수 있는 일이 있을 때만** 뜬다. 프롬프트가 'E —'로 시작하면
 //     그게 곧 "지금 누를 것이 있다"는 신호다. 늘 떠 있는 버튼이 아니다
-//   · 지도와 점프만 상주하고, 둘 다 작다
+//   · 수첩과 지도는 얻은 뒤에만 표시한다
 //
 // 자리: 오른쪽 아래. 왼쪽 절반은 이동 조이스틱이고 오른쪽 절반은 시점 드래그인데,
 // 버튼은 캔버스의 형제 요소라 버튼을 누른 손가락은 캔버스로 내려가지 않는다.
 const CSS = `
 #touchUI{position:fixed;right:calc(14px + env(safe-area-inset-right));
   bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;
-  display:none;flex-direction:column;align-items:flex-end;gap:12px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:12px;
   font-family:system-ui,'Malgun Gothic',sans-serif;-webkit-user-select:none;user-select:none;
   touch-action:none}
-#touchUI.on{display:flex}
+/* PC에서는 수첩만 표시한다. 터치 이동 버튼을 켜거나 조작 안내를 바꾸지 않는다. */
+#touchUI:not(.on) button:not(#tcNote){display:none}
 #touchUI button{
   -webkit-tap-highlight-color:transparent;appearance:none;cursor:pointer;
   display:grid;place-items:center;border-radius:999px;
   background:rgba(14,22,26,.62);border:1px solid rgba(180,214,220,.34);
   color:#dfe9ea;backdrop-filter:blur(4px);transition:transform .08s ease,background .12s ease}
 #touchUI button:active{transform:scale(.92);background:rgba(111,227,210,.28)}
+#touchUI button:focus-visible{outline:2px solid #6fe3d2;outline-offset:3px}
 #tcAct{width:78px;height:78px;font-size:15px;font-weight:600;letter-spacing:.02em;
   border-color:rgba(111,227,210,.72);background:rgba(20,46,46,.72)}
 #tcAct[hidden]{display:none}
@@ -34,6 +36,11 @@ const CSS = `
   right:calc(14px + env(safe-area-inset-right))}
 #tcMap{top:calc(14px + env(safe-area-inset-top))}
 #tcNote{top:calc(68px + env(safe-area-inset-top))}
+#tcNote:hover{background:rgba(20,46,46,.85);border-color:rgba(111,227,210,.72)}
+#tcNote:focus-visible{outline:2px solid #6fe3d2;outline-offset:3px}
+#touchUI:not(.on) #tcNote::after{content:'N';position:absolute;right:-3px;bottom:-3px;
+  width:17px;height:17px;display:grid;place-items:center;border-radius:5px;
+  background:#dfe9ea;color:#16242c;font-size:10px;font-weight:700;line-height:1}
 #tcFull{top:calc(122px + env(safe-area-inset-top))}
 @media (max-height:520px){#tcAct{width:64px;height:64px;font-size:13px}
   #tcJump{width:52px;height:52px}}
@@ -61,7 +68,8 @@ export function buildTouchControls(input, mapPage, notebook) {
   el.innerHTML = `
     <button id="tcFull" aria-label="전체 화면" hidden>⛶</button>
     <button id="tcMap" aria-label="지도">🗺</button>
-    <button id="tcNote" aria-label="탐사 수첩">📓</button>
+    <button id="tcNote" type="button" aria-label="탐사 수첩 열기" aria-controls="nb"
+      aria-expanded="false" aria-keyshortcuts="N" title="탐사 수첩 열기 (N)" hidden>📓</button>
     <button id="tcJump" aria-label="점프">점프</button>
     <button id="tcAct" aria-label="상호작용" hidden>E</button>`;
   document.body.appendChild(el);
@@ -74,13 +82,30 @@ export function buildTouchControls(input, mapPage, notebook) {
 
   // 버튼을 누른 손가락이 시점 드래그로도 새지 않게 막는다.
   const tap = (btn, down, up) => {
-    const start = (e) => { e.preventDefault(); e.stopPropagation(); down(); };
-    const end = (e) => { e.preventDefault(); e.stopPropagation(); if (up) up(); };
-    btn.addEventListener('touchstart', start, { passive: false });
-    btn.addEventListener('touchend', end, { passive: false });
-    btn.addEventListener('touchcancel', end, { passive: false });
-    btn.addEventListener('mousedown', start);
-    addEventListener('mouseup', () => { if (up) up(); });
+    let held = false;
+    const end = () => { if (!held) return; held = false; if (up) up(); };
+    btn.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      held = true;
+      btn.setPointerCapture?.(e.pointerId);
+      down();
+    });
+    btn.addEventListener('pointerup', (e) => { e.preventDefault(); e.stopPropagation(); end(); });
+    btn.addEventListener('pointercancel', end);
+    btn.addEventListener('lostpointercapture', end);
+    btn.addEventListener('keydown', (e) => {
+      if (e.code !== 'Enter' && e.code !== 'Space') return;
+      e.preventDefault(); e.stopPropagation();
+      if (e.repeat) return;
+      held = true; down();
+    });
+    btn.addEventListener('keyup', (e) => {
+      if (e.code !== 'Enter' && e.code !== 'Space') return;
+      e.preventDefault(); e.stopPropagation(); end();
+    });
+    btn.addEventListener('blur', end);
+    addEventListener('blur', end);
   };
 
   tap(bAct, () => input.requestAction());
@@ -90,7 +115,16 @@ export function buildTouchControls(input, mapPage, notebook) {
   // ★ 지도는 수첩의 한 면이 됐다. 버튼은 그 면을 연다 — 화면을 둘로 안 나눈다.
   tap(bMap, () => { const n = notebook(); if (n) { if (n.isOpen && n.tab === 'star') n.setOpen(false);
     else { n.go('star'); n.setOpen(true); } } });
-  tap(bNote, () => { const n = notebook(); if (n) n.setOpen(!n.isOpen); });
+  // 기본 click을 써서 마우스·터치·키보드 Enter/Space로 같은 버튼을 연다.
+  bNote.addEventListener('pointerdown', (e) => e.stopPropagation());
+  bNote.addEventListener('keydown', (e) => {
+    if (e.code === 'Enter' || e.code === 'Space') e.stopPropagation();
+  });
+  bNote.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const n = notebook();
+    if (n) n.setOpen(!n.isOpen);
+  });
 
   // ── 전체 화면 ────────────────────────────────────────────────────────
   // ★ 카카오톡 안에서 열면 위아래 주소창·탐색바가 화면의 3분의 1을 먹는다.
@@ -101,13 +135,19 @@ export function buildTouchControls(input, mapPage, notebook) {
   const root = document.documentElement;
   const canFull = !!(root.requestFullscreen || root.webkitRequestFullscreen);
   const inFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
-  const syncFull = () => { bFull.textContent = inFull() ? '⤡' : '⛶'; };
+  const syncFull = () => {
+    bFull.textContent = inFull() ? '⤡' : '⛶';
+    bFull.setAttribute('aria-label', inFull() ? '전체 화면 나가기' : '전체 화면');
+    bFull.setAttribute('aria-pressed', String(inFull()));
+  };
   if (canFull) {
     bFull.hidden = false;
     tap(bFull, () => {
       try {
-        if (inFull()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        else (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+        const requested = inFull()
+          ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+          : (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+        requested?.catch?.(() => {});
       } catch (e) { /* 막아 둔 브라우저도 있다 — 조용히 넘어간다 */ }
     });
     addEventListener('fullscreenchange', syncFull);
@@ -124,6 +164,7 @@ export function buildTouchControls(input, mapPage, notebook) {
     if (on) return;
     on = true;
     el.classList.add('on');
+    bNote.title = '탐사 수첩 열기';
     if (onShow) onShow();
   };
   // ★ 예전엔 `(pointer: coarse)` 하나만 봤다. 그건 **주 포인터**가 손가락일 때만
@@ -160,6 +201,7 @@ export function buildTouchControls(input, mapPage, notebook) {
     //   아직 손에 없다 — 그 동안은 버튼 자체가 없어야 한다.
     bMap.hidden = !mapPage.has;
     bNote.hidden = !(n && n.has);
+    bNote.setAttribute('aria-expanded', String(!!(n && n.isOpen)));
   };
 
   return {

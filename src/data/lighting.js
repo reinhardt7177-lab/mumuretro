@@ -41,17 +41,29 @@ export const SKY = {
 //   대기 원근은 **원경을 물러나게** 하는 것이지 근경을 지우는 게 아니다.
 //   28u에서 0.40으로 다시 잡는다:
 //   1 − exp(−(28k)²) = 0.40  →  28k = 0.715  →  k = 0.0255
-export const FOG_DENSITY = 0.0255;
+// 탐험 구간의 중경을 남긴다. 28u에서 약 30%, 50u에서 약 69%가 대기색으로 간다.
+export const FOG_DENSITY = 0.0215;
 export const HORIZON_U = 28;      // 카메라 고도 6.3u, R 68u 기준 지평선 거리
 
 // ── 광원 강도 ───────────────────────────────────────────────────────────────
 // ACES 톤매핑이 전체를 눌러서, 노출 1.0을 쓰려면 광원을 그만큼 올려야 한다.
 export const INTENSITY = {
-  sun:   2.6,
-  hemi:  0.95,   // 하늘 → 그림자를 채우는 빛
-  fill:  0.22,   // 반대편 약한 보조광. 이게 없으면 그림자 면이 단색 판이 된다
-  rim:   0.25,   // 실루엣 가장자리(§4). Toon.js가 쓴다
+  sun:   2.45,
+  hemi:  1.05,   // 수관 아래도 재질색이 남도록 하늘빛을 조금 더 받는다
+  fill:  0.28,
+  rim:   0.16,   // 밝은 윤곽이 면 전체를 덮지 않게 절제한다
 };
+
+// 자연물은 서로 다른 재질로 읽히되 한 풍경 안에서 색이 이어진다.
+export const FOLIAGE = {
+  trunk:     0x6b5138,
+  canopy:    [0x547f50, 0x659454, 0x4e794a, 0x769e59],
+  canopyDry: [0x8e995d, 0xa0a66d],
+  rock:      [0x858b94, 0x747c88, 0x989eaa],
+  bush:      [0x587e4c, 0x698d55, 0x507647],
+};
+export const MEADOW = [0x6c9557, 0x789e60, 0x83a669, 0x91ae73];
+export const PATH = { soil: 0xb1a07b };
 
 // ── 사당 (§5 형태 언어) ─────────────────────────────────────────────────────
 // 세계의 나머지는 전부 둥근 유기물이다(원뿔 나무 · 덩어리 바위 · 매끈한 지형).
@@ -118,6 +130,34 @@ export const LAB = {
 //   ★ 예전엔 Notebook.js에 TINT가 따로 하드코딩돼 있었다. 그림자 사당은 빛기둥이
 //     뼈 흰색인데 수첩 글씨는 카키였다 — 다섯 색의 문의 단서가 거기서 끊겼다.
 //     "색은 여기에만 산다"를 우리가 어겼던 것이다.
+export const MIRROR_PALETTE = Object.freeze({
+  stone: 0xc7bc9c, stoneLight: 0xe7dab8, stoneShade: 0x948c82,
+  floor: 0x555b69, floorLight: 0x62697a, grout: 0x333b4c,
+  brass: 0xa68449, brassLight: 0xe3bd73, metalDark: 0x554c40,
+  mirror: 0x9bc6de, mirrorEdge: 0xe0eaff, ray: 0xffc879,
+  rayCore: 0xffedbb, receiverIdle: 0x626b7c, moon: 0xd6e2ff,
+});
+
+export const SILHOUETTE_PALETTE = Object.freeze({
+  stone: 0xc7c8bc, stoneLight: 0xe4dfc9, brass: 0x927349, brassLight: 0xcda765,
+  floor: 0x8f9ba0, floorInset: 0x829398, hardware: 0x26343f,
+  screen: 0xdfd7b8, shadow: 0x202a42, target: 0xddaa55, complete: 0xffd27a,
+  lamp: 0xffdda0, unlit: 0x54575b,
+});
+
+export const SANCTUM_PALETTE = Object.freeze({
+  stone: 0xc7c8bc, pale: 0xe6e0ce, recess: 0x5c7280, brass: 0x937647, gold: 0xd3b574,
+  floor: 0x9ba9ad, floorRim: 0x728990, shadow: 0x202b45, target: 0xd7a951,
+  lamp: 0xffdda2, complete: 0xffd27a, metal: 0xb9d1ce, dark: 0x293c4b,
+});
+
+export const SHADE_PALETTE = Object.freeze({
+  stone: 0xc7bc9c, stoneLight: 0xe7dab8, stoneShade: 0x888579,
+  floor: 0xb9ae91, floorAlt: 0xb4a98c, shade: 0x25334a,
+  brass: 0xa68449, brassLight: 0xe3bd73, lamp: 0xffe1a0,
+  warning: 0xff786c, inset: 0x415068,
+});
+
 export const SHRINE_THEMES = {
   // 01 물체의 무게 — 바람의 신전. 가장 높은 하늘, 흰 구름, 청록.
   balance: {
@@ -147,12 +187,13 @@ export const SHRINE_THEMES = {
   },
   // 04 물의 상태 변화 — 푸른 얼음, 반투명.
   water: {
-    stone: 0x6f8a99, stoneDark: 0x445a68, stoneLite: 0x9ab4c2,
-    glow: 0x79c0e8, glowDim: 0x3d7ea8, ink: 0x186a97,
+    stone: 0xc5c6b1, stoneDark: 0x365e66, stoneLite: 0xefe1b9,
+    glow: 0x7fe8db, glowDim: 0x259baf, ink: 0x186a97,
+    court: { water: 0x299eb9, foam: 0xd4fff0, bronze: 0xb4a36f, moss: 0x77935b },
     bg: 0x061018, amb: [0x4a7d99, 0x14202a, 0.60], lamp: 1.0,
     // 물의 신전 — 레퍼런스 그 자체. 맑은 낮, 흰 돌섬, 물이 흐른다.
-    open: { top: 0x3f8fdc, horizon: 0xcfe8f5, ground: 0xc9d3d5, rim: 0x6f8a99,
-      sun: 0xffffff, sunI: 2.4, sunEl: 58, sunAz: 20, cloud: 0xffffff, stars: 0 },
+    open: { top: 0x4b9dce, horizon: 0xa5d3df, ground: 0xd7d3ba, rim: 0x748c88,
+      sun: 0xffedc4, sunI: 2.4, sunEl: 52, sunAz: -35, cloud: 0xffffff, stars: 0 },
   },
   // 05 화산과 지진 — 붉음. 여섯 중 가장 밝고 가장 시끄럽다.
   fire: {
@@ -184,4 +225,25 @@ export const GROUND = {
   rockDark:  0x6e7078,   // 그늘진 바위
   peak:      0xc8c9c0,   // 정상부 — 멀리서 봉우리를 표시하는 밝은 점
   sand:      0xd8caa0,   // 저지대 마른 흙
+};
+export const SIEVE_PALETTE = {
+  floor: 0xcec4ac, floorAlt: 0xbab9af, stone: 0xb5a27b, pale: 0xe1d6ba,
+  wood: 0x695039, edge: 0x493e32, brass: 0xb39151, mesh: 0x746d5b,
+  coarse: 0xc9a06a, medium: 0xa8823f, fine: 0x8a6b34, gold: 0xffd27a,
+};
+export const SORT_PALETTE = {
+  sample: 0x9a938a, water: 0x78b8cc, glass: 0xdaf1ee,
+  ink: 0x493e32, paper: 0xe1d6ba, yes: 0x6fe3d2, no: 0x8a8b90,
+  wrong: 0xe0736b, gold: 0xffd27a, idle: 0x3a3020,
+};
+export const EVAPORATION_PALETTE = {
+  iron: 0x555b60, sand: 0xc5a36d, salt: 0xf0ece0, paper: 0xf2e7cc,
+  water: 0x78b8cc, clay: 0xb88157, glass: 0xdaf1ee, magnet: 0xe0736b,
+  pole: 0xdfe3e6, fire: 0xf3a24a, charcoal: 0x493e32,
+};
+// 우주 범선 거점 — 별바다와 따뜻한 갑판.
+export const STARSAIL_PALETTE = {
+  sky: 0x253550, ambient: 0xbcd1ee, ground: 0x655044, sun: 0xffdda5,
+  stars: 0xb7d5f1, planet: 0x4b896b, continents: 0x9baa62,
+  rope: 0xa48a59, brass: 0xb88d45, parcel: 0x9a7951,
 };

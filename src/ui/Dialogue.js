@@ -1,7 +1,7 @@
 // 대사창 — 화면 아래에 한 줄씩.
 //
 // 규칙 넷을 코드로 못 박는다. 스토리보드에 적어 놓고 안 지키면 그건 적어 둔 게 아니다.
-//   조작을 뺏지 않는다      대사 중에도 걷고 돌아본다. 멈춰 세우면 읽는 게 아니라 기다리는 게 된다
+//   읽는 동안 안전하다     대사 중 이동·위험 타이머는 boot에서 잠시 멈춘다
 //   자동으로 안 넘어간다    E·탭으로만. 읽는 속도는 아이마다 다르고 놓친 줄은 못 되돌린다
 //   언제든 건너뛴다         Esc 한 번이면 뭉치가 통째로 끝난다
 //   한 번 본 것은 안 나온다 같은 대사를 두 번째 판에 또 읽히면 그건 벌이다
@@ -55,6 +55,7 @@ export function buildDialogue(input) {
   const elLine = el.querySelector('#dlgLine');
 
   const seen = new Set();
+  let activeId = null;
   let lines = [], i = 0, who = '', onDone = null;
 
   const render = () => {
@@ -63,6 +64,7 @@ export function buildDialogue(input) {
     elLine.textContent = lines[i] || '';
   };
   const close = () => {
+    activeId = null;
     lines = []; i = 0;
     el.classList.remove('show');
     const cb = onDone; onDone = null;
@@ -90,6 +92,7 @@ export function buildDialogue(input) {
     play(id, who_, text, done) {
       if (seen.has(id)) { if (done) done(); return false; }
       seen.add(id);
+      activeId = id;
       who = who_ || '';
       lines = Array.isArray(text) ? text.slice(0, 4) : [text];
       i = 0; onDone = done || null;
@@ -101,6 +104,14 @@ export function buildDialogue(input) {
     get active() { return lines.length > 0; },
     // 이미 본 대사인가 — 수첩에서 다시 읽히려고
     hasSeen(id) { return seen.has(id); },
+    exportState() { return { version: 1, seen: [...seen].filter(id => id !== activeId) }; },
+    importState(state) {
+      if (state?.version !== 1 || !Array.isArray(state.seen) || state.seen.length > 200) return false;
+      for (const id of state.seen) {
+        if (typeof id === 'string' && /^[a-z][a-z0-9-]{0,79}$/.test(id)) seen.add(id);
+      }
+      return true;
+    },
     close,
   };
 }

@@ -8,9 +8,23 @@
 //   1) **답이 바뀌어야 한다.** 장식만 흔들면 외운 답이 그대로 통한다.
 //   2) **항상 풀려야 한다.** 무작위로 뽑고 끝내지 않고, 뽑은 뒤 풀리는지 확인한다.
 //      못 풀 판을 한 번이라도 내주면 아이는 게임이 고장났다고 생각한다.
-export const randInt = (n) => Math.floor(Math.random() * n);
+let source = Math.random;
+export const random = () => source();
+// 사당의 배치만 재현한다. 전역 Math.random과 바깥 세계의 난수는 건드리지 않는다.
+export function withSeed(seed, make) {
+  const previous = source;
+  let state = seed >>> 0;
+  source = () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(state ^ state >>> 15, 1 | state);
+    t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+  try { return make(); } finally { source = previous; }
+}
+export const randInt = (n) => Math.floor(random() * n);
 export const pick = (arr) => arr[randInt(arr.length)];
-export const range = (lo, hi) => lo + Math.random() * (hi - lo);
+export const range = (lo, hi) => lo + random() * (hi - lo);
 
 export function shuffle(arr) {
   const a = arr.slice();

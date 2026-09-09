@@ -5,7 +5,12 @@
 //
 // installDebug에 넘기는 인자 목록이 곧 "이 게임의 상태 전부"다. 늘어나기 시작하면 그게 경고다.
 import * as THREE from 'three';
+import { PlateGate } from '../shrine/Gates.js';
+import { checkPlateCarry } from './plateCarryTest.js';
+import { ShadeGate } from '../shrine/ShadowGates.js';
+import { checkShadowWalk } from './shadowWalkTest.js';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
+import { solidBounds } from './solidBounds.js';
 
 const ENTRY_Z_TEST = 10.0;   // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
 
@@ -16,6 +21,40 @@ export function installDebug(ctx) {
   const lum = (r, g, b) => 0.2126 * srgb(r) + 0.7152 * srgb(g) + 0.0722 * srgb(b);
 
   window.__dbg = {
+    // ── 성능 — 한 프레임에 무엇을 얼마나 칠하는가 ─────────────────────────
+    // ★ 렉은 눈으로 못 잰다. 그리고 프레임률만 봐서는 **무엇이** 비싼지 모른다.
+    //   그래서 항목별로 나눠 센다: 그리기 호출 · 삼각형 · 칠하는 픽셀.
+    //   픽셀은 기기와 무관한 숫자라 태블릿 이야기를 이 자리에서 할 수 있다.
+    perf() {
+      const r = engine.renderer, gl = r.getContext();
+      const q = ctx.quality;
+      const wasAuto = r.info.autoReset;
+      r.info.autoReset = false; r.info.reset();
+      engine.render();
+      const calls = r.info.render.calls, tris = r.info.render.triangles;
+      r.info.autoReset = wasAuto;
+      const W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, px = W * H;
+      const post = engine.post;
+      let bloomPx = 0;
+      if (post && post.bloom && post.bloom.enabled) {
+        const mips = post.bloom.renderTargetsHorizontal;
+        bloomPx = mips.reduce((a, t) => a + t.width * t.height * 2, 0)
+          + mips[0].width * mips[0].height
+          + post.bloom.renderTargetBright.width * post.bloom.renderTargetBright.height;
+      }
+      const outlinePx = q && !q.get('outline') ? 0 : px;
+      const fill = px + outlinePx + bloomPx + px * 2;  // 씬 + 외곽선 + 블룸 + 그레이드 + 출력
+      const sm = engine.sun.castShadow ? engine.sun.shadow.mapSize.x * engine.sun.shadow.mapSize.y : 0;
+      const M = (v) => +(v / 1e6).toFixed(2);
+      return {
+        단수: q ? q.name : '(없음)',
+        화면: `${W}x${H}`, 픽셀비: r.getPixelRatio(),
+        칠하는픽셀: { 씬: M(px), 외곽선: M(outlinePx), 블룸: M(bloomPx),
+          그레이드: M(px), 출력: M(px), 합계Mpx: M(fill) },
+        그림자맵Mpx: M(sm),
+        그리기호출: calls, 삼각형: tris,
+      };
+    },
     // ── 위치 ────────────────────────────────────────────────────────────
     get pos() { return player.position.toArray().map(v => +v.toFixed(2)); },
     get altitude() { return +player.position.length().toFixed(3); },
@@ -340,21 +379,9 @@ export function installDebug(ctx) {
     if (ctx.roomFor && ctx.shrines && ra) {
       const want = Math.max(3.2, Math.min(6.5, input.camDist));
       const savedR = ra.rects, savedO = ra.obstacles, savedP = ra.position.clone();
-      const _bb = new THREE.Box3();
-      const solidsOf = (scn) => {
-        const out = [];
-        scn.traverse((o) => {
-          if (!o.isMesh || !o.material || o.material.transparent) return;
-          // 하늘 돔은 안에 있으라고 만든 것이다. 열린 사당의 840u 돔이 걸렸다.
-          if (o.userData.sky) return;
-          if (o.material.visible === false || !o.visible) return;
-          for (let p = o.parent; p; p = p.parent) if (p === player.mesh) return;
-          out.push({ box: new THREE.Box3().setFromObject(o), o });
-        });
-        return out;
-      };
-      const scan = (rects, label, scn) => {
-        ra.rects = rects; ra.obstacles = [];
+      const solidsOf = scn => solidBounds(scn, player.mesh);
+      const scan = (rects, label, scn, obstacles = []) => {
+        ra.rects = rects; ra.obstacles = obstacles;
         const outerZ = Math.max(...rects.map((r) => r.z1));
         // 벽·바닥·천장 슬래브는 카메라가 그 안에 있으면 그것도 버그다 — 다 넣는다.
         const solids = scn ? solidsOf(scn) : [];
@@ -367,7 +394,24 @@ export function installDebug(ctx) {
             // 대신 입구 통로를 카메라보다 길게 잡아 시작 지점이 그 가장자리에
             // 안 걸리게 했다(layouts.ENTRY_Z).
             if (z > outerZ - want) continue;
-            ra.setAt((r.x0 + r.x1) / 2, z, -1);
+            // 배치가 섞이면 중앙에 거름깔때기나 석상이 올 수 있다.
+            // 장치 내부로 순간이동하지 않고 같은 깊이의 실제 보행 가능한 지점을 검사한다.
+            const center = (r.x0 + r.x1) / 2;
+            const x = [0, 1.5, -1.5, 3, -3, 4.5, -4.5, 6, -6].map(dx => center + dx)
+              .find(x => x >= r.x0 + .35 && x <= r.x1 - .35
+                && obstacles.every(o => (() => {
+                  const dx = (o.x2 ?? o.x) - o.x, dz = (o.z2 ?? o.z) - o.z;
+                  const l2 = dx * dx + dz * dz;
+                  const t = l2 ? Math.max(0, Math.min(1, ((x-o.x)*dx+(z-o.z)*dz)/l2)) : 0;
+                  return Math.hypot(x-o.x-dx*t, z-o.z-dz*t) >= o.r + .05;
+                })()));
+            if (x === undefined) {
+              camOK = false; hangOK = false;
+              camBad.push(`${label}/${r.id}@${f}=보행 검사 지점 없음`);
+              hangBad.push(`${label}/${r.id}@${f}=보행 검사 지점 없음`);
+              continue;
+            }
+            ra.setAt(x, z, -1);
             ra._camPlaced = false;
             ra.updateCamera(engine.camera, input, 1 / 60);
             const d = Math.hypot(engine.camera.position.x - ra.position.x,
@@ -390,10 +434,10 @@ export function installDebug(ctx) {
           }
         }
       };
-      if (ctx.lab) scan(ctx.lab.rects, '연구실', ctx.lab.scene);
+      if (ctx.lab) scan(ctx.lab.rects, '연구실', ctx.lab.scene, ctx.lab.obstacles);
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
-        scan(rm.dungeon.rects, rm.spec.id, rm.scene);
+        scan(rm.dungeon.rects, rm.spec.id, rm.scene, rm.obstacles);
       }
       ra.rects = savedR; ra.obstacles = savedO;
       ra.setAt(savedP.x, savedP.z, -1); ra._camPlaced = false;
@@ -468,10 +512,63 @@ export function installDebug(ctx) {
           reachBad.push(`${t.name}자리에서 ${got || '아무것도'} 잡힘`);
         }
       }
+      // ── I2 만진 뒤 **옆엣것으로 건너갈 수 있는가** ────────────────────────
+      // ★ 위의 닿기 검사는 물건마다 **빈 바닥에서 5u 떨어져 곧장 걸어 들어간다.**
+      //   그래서 "다이얼 하나를 맞춘 뒤 옆 다이얼로 옮겨 가기"는 한 번도 안 재
+      //   본다. 실사용 제보가 정확히 거기였다 — 첫 숫자를 맞추고 다음 숫자로
+      //   갈 방법이 없었다.
+      //
+      //   원인은 콘솔을 **원 셋으로 줄지어** 막은 것이었다(반지름 0.9, 간격 1.5).
+      //   겹친 자리에 생긴 V자 홈이 밀어내기의 고정점이라, 아이가 조이스틱을
+      //   콘솔 쪽으로 기울인 채 옆으로 밀면 좌표가 소수점까지 매 프레임 똑같았다.
+      //   **한 픽셀도 안 움직였다.**
+      //
+      //   그래서 여기서는 아이가 실제로 하는 짓을 그대로 한다 — 콘솔에 붙인 채
+      //   (조이스틱을 앞으로 기울인 채) 옆으로 민다. 기울기를 여러 번 훑는 이유:
+      //   옆으로만 밀면(0°) 홈에 안 빠져서 **깨진 채로도 통과한다.**
+      let slideOK = true;
+      const slideBad = [];
+      {
+        const dials = lab.reachables.filter((t) => t.name.startsWith('다이얼'));
+        const want = dials.map((t) => t.name);
+        // 앞면에 붙어 서는 자리 — 다이얼 앞에서 콘솔 쪽으로 눌러 붙인다
+        const settle = (x, z) => {
+          ra.setAt(x, z + 1.2, -1); ra.camYaw = 0;
+          for (let i = 0; i < 90; i++)
+            ra.update(1 / 60, { x: 0, y: 1, run: false, jump: false }, engine.camera);
+        };
+        for (const dir of [1, -1]) {                 // 오른쪽으로 / 왼쪽으로
+          const from = dir > 0 ? dials[0] : dials[dials.length - 1];
+          // 90°(옆 성분 0)는 뺀다 — 벽에 정면으로만 밀면 안 미끄러지는 게 맞다.
+          for (let deg = 0; deg <= 75; deg += 15) {
+            settle(from.x, from.z);
+            const th = deg * Math.PI / 180;
+            // camYaw 0에서 cr이 −X이므로 intent.x의 부호를 뒤집어야 +X로 간다
+            const intent = { x: -dir * Math.cos(th), y: Math.sin(th),
+              run: false, jump: false };
+            const got = new Set();
+            for (let i = 0; i < 300; i++) {
+              ra.update(1 / 60, intent, engine.camera);
+              const n = lab.pickAt(ra.position);
+              if (n) got.add(n);
+            }
+            const miss = want.filter((n) => !got.has(n));
+            if (miss.length) {
+              slideOK = false;
+              slideBad.push(`${dir > 0 ? '→' : '←'}${deg}°:${miss.join('/')}못감`
+                + `(x=${ra.position.x.toFixed(2)})`);
+            }
+          }
+        }
+      }
+      reachOK = reachOK && slideOK;
+
       ra.rects = savedR; ra.obstacles = savedO;
       ra.setAt(savedP.x, savedP.z, -1); ra._camPlaced = false;
       log.push('I 연구실에서 걸어서 닿기'
-        + (reachOK ? ' 전부' : ` 못 닿음 ${reachBad.join(' ')}`)
+        + (reachOK ? ' 전부' : ` 못 닿음 ${reachBad.concat(slideBad).join(' ')}`)
+        + ' · 콘솔에 붙은 채 다이얼 사이 건너가기'
+        + (slideOK ? ' 전부' : ` 막힘 ${slideBad.length}`)
         + ` -> ${reachOK ? 'PASS' : 'FAIL'}`);
     }
 
@@ -974,6 +1071,26 @@ export function installDebug(ctx) {
         if (new Set(hits).size < 5) { pOK = false; pBad.push(`상자 줄에서 ${new Set(hits).size}개만 잡힘`); }
       }
       const rmS = ctx.roomFor(ctx.shrines.shrines[5]);
+      // 압력판 방에서도 같은 제보가 재발했다. 기존 검사는 무게 순서 방만 봤다.
+      const plateScene = new THREE.Scene();
+      const plateTest = new PlateGate(plateScene, { x0: -7, x1: 7, z0: -14, z1: 0 });
+      const shadowRoom = ctx.roomFor(ctx.shrines.shrines[1]);
+      const shadeTest = new ShadeGate(plateScene, { x0: -4.5, x1: 4.5, z0: -16, z1: 0, h: 6 },
+        { theme: shadowRoom.spec.theme });
+      try {
+        const result = checkPlateCarry(plateTest);
+        if (result.failures.length) { pOK = false; pBad.push(...result.failures); }
+        const shadeResult = checkShadowWalk(shadeTest);
+        if (shadeResult.failures.length) { pOK = false; pBad.push(...shadeResult.failures); }
+      } finally {
+        const geometries = new Set(), materials = new Set();
+        plateScene.traverse((o) => {
+          if (o.geometry) geometries.add(o.geometry);
+          if (o.material) for (const m of [o.material].flat()) materials.add(m);
+        });
+        geometries.forEach((g) => g.dispose());
+        materials.forEach((m) => m.dispose());
+      }
       const gg = rmS.final;
       if (!gg || !gg.altars || !gg.orbs) { pOK = false; pBad.push('마지막 신 없음'); }
       else {
@@ -990,7 +1107,7 @@ export function installDebug(ctx) {
         if (altar.got !== right) { pOK = false; pBad.push('마지막 신: 맞는 구슬을 안 받음'); }
         gg.restart(); gg.held = before.held;
       }
-      log.push(`P 재설계 — 무게는 눈으로 안 풀리고 · 마지막 신은 표지를 본다`
+      log.push(`P 재설계 — 상자 회수 · 그림자 속도와 판정 · 마지막 신 표지`
         + (pOK ? ' 전부' : ` — ${pBad.join(' / ')}`) + ` -> ${pOK ? 'PASS' : 'FAIL'}`);
     }
 
@@ -1285,19 +1402,77 @@ export function installDebug(ctx) {
         + (wOK ? ' 전부' : ` — ${wBad.join(' / ')}`) + ` -> ${wOK ? 'PASS' : 'FAIL'}`);
     }
 
+    // ── X 화면 설정이 실제로 화면을 바꾸는가 ──────────────────────────────
+    // ★ 설정은 **눌러도 아무 일 없는 단추**가 되기 가장 쉬운 자리다. 단수 이름만
+    //   바뀌고 캔버스가 그대로면 아이는 "느린 걸 골랐는데 똑같다"를 겪는다.
+    //   그래서 이름이 아니라 **그리는 크기**가 따라오는지 잰다.
+    //   덤으로 셋을 더 본다 — 고정하면 자동 내림이 멈추는가(손으로 정한 것을
+    //   기계가 뒤집으면 설정이 아니다) · 자동으로 되돌리면 저장이 지워지는가 ·
+    //   패널 글에 해요체가 없는가(검사 K의 규칙은 화면 전체에 걸린다).
+    let xOK = true;
+    const xBad = [];
+    if (ctx.settings && ctx.quality) {
+      const S = ctx.settings, Q = ctx.quality;
+      const wasName = Q.name, wasForced = Q.forced;
+      let saved = null;
+      try { saved = localStorage.getItem('mumu.q'); } catch (e) { /* 무시 */ }
+      const gl = engine.renderer.getContext();
+      const size = () => `${gl.drawingBufferWidth}x${gl.drawingBufferHeight}`;
+      try {
+      const seen = new Map();
+      for (const q of S._btns()) {
+        if (q === 'auto') continue;
+        S._click(q);
+        if (Q.name !== q) { xOK = false; xBad.push(`${q}를 눌렀는데 ${Q.name}`); continue; }
+        seen.set(q, size());
+      }
+      // 단수마다 그리는 크기가 달라야 한다(low와 min처럼 배율이 다르면 크기도 다르다)
+      const sizes = [...seen.values()];
+      if (new Set(sizes).size < 2) {
+        xOK = false; xBad.push(`단수를 바꿔도 캔버스가 안 바뀜(${sizes.join(' ')})`);
+      }
+      // 고정하면 자동 내림이 멈추는가
+      if (!Q.forced) { xOK = false; xBad.push('골랐는데 고정이 안 됨'); }
+      // 자동으로 되돌리면 저장이 지워지고 기기 기본으로 가는가
+      S._click('auto');
+      let after = null;
+      try { after = localStorage.getItem('mumu.q'); } catch (e) { /* 무시 */ }
+      if (after !== null) { xOK = false; xBad.push('자동인데 저장이 남음'); }
+      if (Q.forced) { xOK = false; xBad.push('자동인데 고정이 풀리지 않음'); }
+      if (Q.name !== S.deviceDefault) {
+        xOK = false; xBad.push(`자동인데 ${Q.name}(기기 기본은 ${S.deviceDefault})`);
+      }
+      // 패널 글에 해요체가 없는가.
+      // ★ 살아 있는 DOM을 읽으면 안 된다 — 검사가 단추를 누르는 순간 paint()가
+      //   글자를 도로 덮어써서 일부러 심은 해요체를 못 잡고 PASS가 떴다.
+      //   화면에 나갈 수 있는 글의 **표**를 본다(Settings.settingsTexts).
+      for (const t of (S._texts ? S._texts() : [])) {
+        if (TONE(t)) { xOK = false; xBad.push(`해요체 "${String(t).slice(0, 20)}"`); }
+      }
+      // ★ 검사가 게임을 망가뜨리면 안 된다 — 고르고 나가지 않는다. 원래대로 돌린다.
+      } finally {
+        if (wasForced) Q.pin(wasName); else { Q.auto(); Q.set(wasName); }
+        try {
+          if (saved === null) localStorage.removeItem('mumu.q'); else localStorage.setItem('mumu.q', saved);
+        } catch (e) { /* 저장소가 막힌 환경에서도 실행 상태는 복원한다. */ }
+      }
+      log.push('X 화면 설정이 캔버스를 바꿈 · 고정하면 자동 멈춤 · 자동이면 저장 지움'
+        + (xOK ? '' : ` — ${xBad.join(' / ')}`) + ` -> ${xOK ? 'PASS' : 'FAIL'}`);
+    }
+
     // ── 검사가 다 돌긴 했는가 ──────────────────────────────────────────────
     // ★ L·M이 **한 줄도 안 찍히고도 "ALL PASS"가 뜬 적이 있다.** 오래된 탭이라
     //   `pageMetrics`가 없었고, 검사는 `if (ctx.notebook && ...)`로 조용히 건너뛰었다.
     //   없으면 넘어가는 검사는 **없는 것보다 나쁘다** — 통과했다고 믿게 만든다.
     //   A~M이 한 줄씩은 반드시 있어야 한다. 없으면 그 자체가 FAIL이다.
-    const missing = [...'ABCDEFGHIJKLMNOPQRSTUVW'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
+    const missing = [...'ABCDEFGHIJKLMNOPQRSTUVWX'].filter((c) => !log.some((l) => l.startsWith(`${c} `)));
     const coverOK = missing.length === 0;
-    log.push(`검사 A~W 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
+    log.push(`검사 A~X 전부 돌았는가${coverOK ? '' : ` — 안 돈 것 ${missing.join('')}`}`
       + ` -> ${coverOK ? 'PASS' : 'FAIL'}`);
 
     const ok = aDevOK && aNanOK && loopOK && bDevOK && bNanOK && covOK && fogOK && colOK
       && walkOK && camOK && hangOK && reachOK && uprightOK && josaOK && toneOK && fgOK && nbOK
-      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && vOK && wOK && coverOK;
+      && tOK && rbOK && pOK && qOK && rOK && sOK && eOK && uOK && vOK && wOK && xOK && coverOK;
     console.log('%c[selftest]\n' + log.join('\n') + '\n=== ' + (ok ? 'ALL PASS ✅' : 'FAIL ❌') + ' ===',
       'font-family:monospace');
 

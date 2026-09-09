@@ -1,0 +1,14 @@
+{
+  "src/data/shadeCourt.js": "9edf1cce180b3109ccf75a3e281bcd53a7f5c417399b15bb64da0b3fe3dad1b5",
+  "src/data/lighting.js": "3dfa751799f6d22a38a61fc7c8f06d56554701635068b9e7a0fa97d8aa24ea3b",
+  "src/shrine/layouts.js": "9c128107fefce48014d67a92b0e3a9f465f246d2853fb1a2bee76601a686486e",
+  "src/shrine/OpenField.js": "cd2984827e8243522b235e94f8c6bdcdabe20d501508d1639dcd1e305a90c94c",
+  "src/shrine/ShadowGates.js": "8802a94e70ca4e19c586b839f02397e48ecf2677bccb74aea32633588854b342",
+  "src/shrine/ShadeProjection.js": "431a3470e2f6e93f2ac12c718bbe1db39edcea8266c4bf3dccb73a61f68d3c7d",
+  "src/shrine/ShadeCourt.js": "1fa5b780b582bd1f2b136dd94e71892260c6d0b026822e97da78de7d7193954e",
+  "src/shrine/Room.js": "244140d7dde2a325d7e0dce62833d841899608102b960b73f65f5413dd49c79a",
+  "src/shrine/RoomActor.js": "2d70b7f1947df650a04d1888b2823c912bf4f83877c702f345f97e47130fc901",
+  "src/shrine/ShrineProgress.js": "8b40a84c75fda1cacb7849512729f041b638195b2b42000ca55cdcfce6aa3d9e",
+  "tools/check-shade-court.cjs": "339406cdda6c70dc477a5c0fe28416b3e7079adc4c3bf27ea18954973ee9f75a",
+  "tools/shade-walk-planner.js": "e60755e3bb844e189e4aa166d39ade165db1f37b61d84935221a0219f42d7fcb"
+}

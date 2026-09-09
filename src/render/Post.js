@@ -17,6 +17,7 @@ import { Pass } from 'three/addons/postprocessing/Pass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { quality } from './Quality.js';
 
 // ★ 씬을 생성 시점에 붙잡지 않고 매 프레임 engine에서 읽는다.
 // 사당 안팎이 서로 다른 Scene이라, 붙잡아 두면 전환해도 바깥 행성만 계속 그린다.
@@ -30,10 +31,18 @@ class OutlineScenePass extends Pass {
   render(renderer, writeBuffer, readBuffer) {
     renderer.setRenderTarget(this.renderToScreen ? null : readBuffer);
     if (this.clear) renderer.clear();
-    this.engine.outline.render(this.engine.scene, this.engine.camera);
+    // 외곽선을 켤지 말지는 화질 단수가 정한다 — engine이 그 분기를 갖는다.
+    this.engine.drawScene();
   }
 }
 
+// ★ 그레이드와 출력을 한 패스로 합쳐 봤다가 **되돌렸다.** 전체화면 패스 하나(3.15 Mpx,
+//   태블릿 한 프레임 픽셀의 19%)를 아끼는 건 맞는데, three가 화면에 그리는 머티리얼에
+//   tonemapping·colorspace 청크를 **스스로 끼워 넣어서** 우리가 같은 것을 include하면
+//   redefinition으로 프래그먼트 셰이더가 통째로 컴파일에 실패한다. 두 번 충돌했고
+//   (톤매핑 한 번, 색공간 한 번) 그건 three 판이 바뀔 때마다 되살아나는 종류다.
+//   무엇보다 **결과 그림을 픽셀로 확인할 수 없는 상태**였다. 못 재는 건 안 넣는다.
+//   해상도 단수(Quality.js)가 이미 픽셀의 69%를 줄이므로 이 조각은 급하지 않다.
 const GradeShader = {
   uniforms: {
     tDiffuse:    { value: null },
@@ -85,9 +94,22 @@ export class Post {
     this.composer.addPass(new OutputPass());
   }
 
+  // w·h는 CSS 픽셀. 컴포저가 자기 픽셀비를 곱해 실제 버퍼 크기를 만든다.
+  // ★ 예전엔 이 함수가 **아무 데서도 안 불렸다.** 창이 바뀌면 후처리 버퍼만
+  //   낡은 크기로 남아 화면이 늘어나거나 흐려졌다(태블릿 회전·주소창 접힘).
   setSize(w, h) {
-    this.composer.setSize(w, h);
-    this.bloom.setSize(w, h);
+    // ★ 컴포저에 픽셀비를 맡기면 안 된다. 렌더러는 floor(w·pr)로 캔버스를 잡는데
+    //   컴포저는 안 깎아서, 배율이 1.4나 0.8처럼 정수가 아니면 버퍼가 819.2 대 819로
+    //   어긋난다. 어긋난 만큼 마지막 blit이 반 픽셀 밀려 화면이 미세하게 흐려진다.
+    //   그래서 **기기 픽셀을 우리가 직접 계산해서** 넘기고, 컴포저 배율은 1로 둔다.
+    const pr = this.renderer.getPixelRatio();
+    const dw = Math.max(1, Math.floor(w * pr)), dh = Math.max(1, Math.floor(h * pr));
+    this.composer.setPixelRatio(1);
+    this.composer.setSize(dw, dh);
+    // 블룸은 흐림이다. 낮은 해상도로 흐려도 눈에 안 띈다 — 단수에 맞춰 더 줄인다.
+    const s = quality.get('bloom');
+    this.bloom.enabled = s > 0;
+    if (s > 0) this.bloom.setSize(Math.max(1, Math.round(dw * s)), Math.max(1, Math.round(dh * s)));
   }
   render() { this.composer.render(); }
 

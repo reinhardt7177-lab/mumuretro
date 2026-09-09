@@ -1,12 +1,4 @@
-// 진입점 — 조립만 한다.
-//
-// 재설계 1주차: 걸어다닐 수 있는 행성 하나. 학습·UI·프롭은 아직 없다.
-// 아트 바이블 §1(삼각형 지형) §2(고정 조명) §3(대기 원근)이 실제로 화면에서 되는지
-// 확인하는 것이 이 빌드의 전부다.
-//
-//   sphere/   구면 보행 — v1에서 검증된 채로 가져왔다(극점 통과 편차 2.84e-14)
-//   render/   조명·하늘·툰·후처리 — 전부 새로
-//   debug/    __dbg / __selftest — 눈이 없으면 또 장님이 된다
+// 무무 행성 — 탐사·실험·기록과 장면 전환을 조립한다.
 import * as THREE from 'three';
 import { Planet, R, PEAKS } from './sphere/Planet.js';
 import { Player } from './sphere/Player.js';
@@ -27,19 +19,31 @@ import { buildDialogue } from './ui/Dialogue.js';
 import { buildNotebook } from './ui/Notebook.js';
 import { KEEPERS, ENDING, ENDING_HOME, nextHint, OPENING } from './shrine/dialogue.js';
 import { buildLab } from './world/Lab.js';
+import { installStarsail } from './world/Starsail.js';
 import { buildLanding } from './world/Landing.js';
 import { buildKitchen } from './world/Kitchen.js';
+import { planFirstTrail, buildFirstTrail } from './world/FirstTrail.js';
+import { buildWaterway } from './world/Waterway.js';
 import { buildFlash } from './ui/Flash.js';
 import { buildTitle } from './ui/Title.js';
 import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildMuteButton } from './ui/MuteButton.js';
+import { buildSettings } from './ui/Settings.js';
+import { buildShipView } from './ui/ShipView.js';
 import * as Audio from './core/Audio.js';
 import { SFX } from './data/sfx.js';
-const { sfx, bgm, startAudio } = Audio;
+const { sfx, sceneBgm, startAudio } = Audio;
 import { buildForage, pickForageSpots, pickLegendSpots, mkRnd } from './world/Forage.js';
 import { KINDS as FORAGE_KINDS, WRONG as FORAGE_WRONG, LEGEND } from './data/forage.js';
+import { hasOpenOverlay } from './ui/overlay.js';
+import { createSaveStore } from './core/SaveGame.js';
 import { installDebug } from './debug/introspect.js';
+import { quality, makeAutoQuality } from './render/Quality.js';
 
+const saveStore = createSaveStore();
+const savedGame = saveStore.read();
+let saveEnabled = false, canPersist = true, debugDepth = 0, resumeFrame = false;
+let saveNoticeTimer = 0;
 const canvas = document.getElementById('c');
 const engine = new Engine(canvas, R);
 const planet = new Planet(engine.scene);
@@ -66,6 +70,8 @@ const SHRINE_CLEAR = 5.6 / R;                     // 기단(3.4u) + 여유
 // 내림판도 같은 규칙이다. 포탈에서 내렸는데 나무 한 그루가 판을 뚫고 서 있으면
 // 그건 첫 화면부터 고장으로 읽힌다 — 나중에 지우는 것보다 처음부터 안 심는 게 싸다.
 const landingDir = player.position.clone().normalize();
+const trailPlan = planFirstTrail(planet);
+planet.paintTrail(trailPlan.pathAt);
 // ★ 처음엔 4.2u였다. 판 위에는 나무가 없었지만 **카메라가 6.5u 뒤에 선다** —
 //   내려서는 첫 화면이 침엽수 **안쪽**이었다(실사용 확인). 이 별에서 처음 보는
 //   장면인데 초록 삼각형 한 장이 화면을 덮고 있었다.
@@ -84,6 +90,7 @@ const legendSpots = pickLegendSpots(planet, landingDir);
 const FORAGE_CLEAR = 10.5 / R;
 const LEGEND_CLEAR = 9.0 / R;
 const nearShrine = (dir) => dir.angleTo(landingDir) < LANDING_CLEAR
+  || trailPlan.excludes(dir)
   || shrineSpots.some(s => dir.angleTo(s.dir) < SHRINE_CLEAR)
   || forageSpots.some(s => dir.angleTo(s.dir) < FORAGE_CLEAR)
   || legendSpots.some(s => dir.angleTo(s.dir) < LEGEND_CLEAR);
@@ -94,18 +101,16 @@ const scatter = buildScatter(engine.scene, planet, {
 
 // 잔디 카펫 — 지면을 덮는 한 장. 풀을 개수로 흩뿌리는 대신 바닥이 통째로 흐물거린다.
 // 산포물과 같은 바이옴 판정을 쓰므로 둘이 어긋날 수 없다.
-const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt });
+const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt, pathAt: trailPlan.pathAt });
 
 // 사당 — 이 세계에서 유일하게 각진 것. 빛기둥이 능선 너머에서도 "저기 뭔가 있다"를 만든다.
 // 겉모습도 사당마다 다르다. 능선 너머에서는 색과 윤곽만 남으므로
 // 그 둘이 같으면 여섯 사당은 아이에게 한 곳이다.
 const shrines = buildShrines(engine.scene, planet, shrineSpots, SHRINES.map((s) => s.theme));
-// 시작 위치를 가장 가까운 사당 쪽으로 돌려 세운다 — 첫 화면에 목표가 보여야 한다.
-(function faceNearestShrine() {
-  const n = shrines.nearest(player.position);
-  if (!n.shrine) return;
+// 첫 언덕의 관측대 쪽을 바라본다. 들길과 능선길은 둘 다 열려 있다.
+(function faceFirstHill() {
   const up = player.position.clone().normalize();
-  const to = n.shrine.pos.clone().sub(player.position);
+  const to = planet.surfaceAt(trailPlan.overlook).sub(player.position);
   to.addScaledVector(up, -to.dot(up));
   if (to.lengthSq() < 1e-9) return;
   player.heading.copy(to.normalize());
@@ -165,10 +170,15 @@ function refreshHint() {
   const extra = [];
   if (notebook.has) extra.push(touch.visible ? '📓 수첩' : 'N 수첩 · 1~5 넘기기');
   if (mapPage.has) extra.push(touch.visible ? '🗺 지도' : 'M 지도');
+  if (player.canGlide && mode === 'planet') extra.push(touch.visible ? '점프 길게 — 활공' : 'Space 유지 — 활공');
   hintEl.textContent = base + (extra.length ? ' · ' + extra.join(' · ') : '');
 }
 
 const promptEl = document.getElementById('prompt');
+// 줄바꿈한 안내의 실제 높이를 따른다. 좁은 화면에서도 알림이 안내문을 덮지 않는다.
+if (promptEl) new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--prompt-height', `${promptEl.offsetHeight}px`);
+}).observe(promptEl);
 function setPrompt(text) {
   if (!promptEl) return;
   if (text) { promptEl.textContent = text; promptEl.classList.add('show'); }
@@ -213,15 +223,20 @@ const segOf = (id) => room.dungeon.rectOf(id);
 function enterShrine(shrine) {
   room = roomFor(shrine);
   lastSeg = null;
-  // 깬 사당 수가 곧 난이도다. 방을 짓는 시점이 아니라 **들어갈 때마다** 매긴다 —
-  // 방은 한 번 짓고 캐시하므로 짓는 시점에 매기면 첫 방문의 난이도로 굳는다.
+  // 첫 입장에 깬 사당 수로 단계를 정한다. 이어하기는 퍼즐 배치와 그 단계를 함께 지킨다.
   // 여섯을 다 깨면 clearedCount가 6이 되는데, 그대로 쓰면 별 문자열이
   // repeat(-1)로 터진다. 단계는 0~5로 묶는다.
-  const tier = Math.min(5, shrines.clearedCount());
+  const tier = room.hasProgress ? room.runTier : Math.min(5, shrines.clearedCount());
   room.applyTier(tier);
   // 이미 깬 사당은 그대로 둔다 — 지나온 곳을 다시 잠그지 않는다.
-  // 아직 못 깬 사당만 처음으로 되돌린다(중간에 나갔다 온 경우).
-  if (!shrine.cleared) room.restart();
+  // 진행 중인 사당은 첫 입장의 난이도와 장치를 함께 이어간다.
+  if (!shrine.cleared) { if (!room.hasProgress) room.restart(); }
+  else {
+    for (const g of room.gates) { g.solved = true; room.dungeon.openDoor(g.room); }
+    room.prize.taken = true; room.prize.group.visible = false;
+    room.finishWater?.();
+    if (!room.hasProgress) room.finishLegacy?.();
+  }
   roomActor.rects = room.dungeon.rects;
   roomActor.obstacles = room.obstacles;
   roomActor.slip = 0;                  // 얼음 방에서 나가다 만 상태가 다음 사당에 묻지 않게
@@ -230,26 +245,33 @@ function enterShrine(shrine) {
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
   activeShrine = shrine;
+  player.resetTraversal();
   mode = 'room';
+  input.reset();
   engine.scene.remove(player.mesh);
   contact.visible = false;
   room.scene.add(player.mesh);
   roomActor.setAt(0, ENTRY_Z, -1);
+  room.resume?.(roomActor); room.hasProgress = true;
   engine.setScene(room.scene);
+  roomActor.updateCamera(engine.camera, input, 0);
   // 들어서면 어디에 왔는지 3초간 알린다. 사당마다 다른 곳이라는 게 첫 정보여야 한다.
   // ★ "난이도 ★☆☆☆☆☆"가 떴다. "틀려도 벌하지 않는다"고 적어 두고 들어가기 전에
   //   겁을 주고 있었다. 게다가 별 수는 깬 개수일 뿐이라 실제 사고량과도 맞지 않았다.
   //   몇 번째인지만 말한다 — 그건 사실이고, 겁이 아니다.
-  bgm(`assets/audio/bgm/${room.spec.id}.mp3`);
+  sceneBgm(room.spec.id);
+  refreshHint();
   noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 여섯 중 ${tier + 1}번째`;
   noteT = 3.4;
   setPrompt(null);
+  saveProgress();
 }
 
 function exitShrine() {
+  room?.captureCheckpoint?.(roomActor);
   brief.hide(); briefWant = null;
   roomActor.freeCam = false;
-  bgm('assets/audio/bgm/planet.mp3');
+  sceneBgm('planet');
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared) shrines.markCleared(activeShrine);
   mode = 'planet';
@@ -259,16 +281,19 @@ function exitShrine() {
   contact.visible = true;
   player.position.copy(savedPlanet.pos);
   player.heading.copy(savedPlanet.heading);
-  player._initFrame(); player.syncMesh();
+  player._initFrame(); player.resetTraversal();
   engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
   engine._camPlaced = false;
   activeShrine = null;
+  refreshHint();
+  input.reset(); saveProgress();
   setPrompt(null);
 }
 
 // 구슬을 주운 순간 — 지킴이가 말하고, 수첩 한 줄이 채워지고, 다음 갈 곳이 나온다.
 // 마지막 사당이면 여기서 이야기가 끝난다.
 function onOrb() {
+  saveProgress();
   const id = room.spec.id;
   const k = KEEPERS[id];
   const last = shrines.clearedCount() >= shrines.shrines.length;  // 이미 이번 것까지 세어져 있다
@@ -280,21 +305,19 @@ function onOrb() {
       if (b) dialogue.play(`next-${id}`, k.who, b);
       else noteMsg = '✨ 수첩 한 줄이 채워졌다 — 이제 나가자', noteT = 2.6;
     } else {
-      // 여섯째 — 반전과 엔딩. 세 뭉치를 이어 붙인다.
-      const chain = (i) => {
-        if (i >= ENDING.length) {
-          // ★ 여기서 끝나고 있었다. "네 것도 내가 부치마"를 듣고도 부칠 장면이 없었다.
-          //   집으로 돌아가면 소포가 "부칠 것"으로 바뀐다(Lab.markDone).
-          gameDone = true; lab.markDone();
-          noteMsg = '✨ 수첩을 다 채웠다 — 집으로 가자'; noteT = 3.4; return;
-        }
-        const [eid, who, lines] = ENDING[i];
-        dialogue.play(eid, who, lines, () => chain(i + 1));
-      };
-      chain(0);
+      playEnding();
     }
   });
   if (!dialogue.active) { noteMsg = '✨ 지혜의 구슬을 얻었다 — 이제 나가자'; noteT = 2.6; }
+}
+
+function playEnding(i = 0) {
+  if (i >= ENDING.length) {
+    gameDone = true; lab.markDone(); saveProgress();
+    noteMsg = '✨ 수첩을 다 채웠다 — 집으로 가자'; noteT = 3.4; return;
+  }
+  const [id, who, lines] = ENDING[i];
+  dialogue.play(id, who, lines, () => playEnding(i + 1));
 }
 
 // 실내 받침등 — 주인공이 실루엣이 되지 않을 만큼만.
@@ -326,27 +349,28 @@ const _cUp = new THREE.Vector3();
 const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
 
 function step(dt) {
-  // 사당 안에서도 E 버튼이 필요하다. 바깥 갱신에만 걸면 실내에서 안 돈다.
+  shipView.update();
   touch.update();
   const intent = input.poll();
-  // 대사창이 열려 있으면 E는 **여기서** 대사창으로 간다. 키보드든 터치 버튼이든
-  // 같은 신호를 쓰므로 한쪽만 되는 일이 없다.
-  // ★ 쓴 신호는 반드시 지운다. 마지막 줄을 넘기면 대사가 닫히는데, 지우지 않으면
-  //   같은 E가 아래로 흘러 상호작용까지 한다 — 그게 바로 피하려던
-  //   "넘기려다 뭘 집었다"다.
-  if (dialogue.active && intent.action) { dialogue.next(); intent.action = false; }
-  // 안내가 떠 있으면 E는 안내를 닫는 데 쓴다. 닫으려다 뭘 집으면 안 된다 —
-  // 대사창과 완전히 같은 규칙이고, 같은 자리에서 처리해야 한 쪽만 고쳐지지 않는다.
+  if (mode === 'lab' && notebook.has && notebook.isOpen) sawNote = true;
+  const reading = hasOpenOverlay() || dialogue.active;
+  if (dialogue.active && intent.action && !notebook.isOpen) { dialogue.next(); intent.action = false; }
   else if (brief.isOpen && intent.action) { brief.hide(); intent.action = false; }
-  // 밖에서는 해가 있다. 받침등은 실내에서만 켠다.
-  fill.intensity = mode === 'planet' ? 0 : (mode === 'lab' ? FILL_LAB : FILL_ROOM);
-  // 알림 시계는 한곳에서 돈다 — 모드마다 따로 깎으면 한쪽만 고쳐지는 날이 온다.
+  fill.intensity = mode === 'planet' ? 0 : mode === 'lab' ? FILL_LAB : FILL_ROOM;
+  if (!debugDepth && (document.hidden || title.isEnding || reading || resumeFrame)) {
+    input.reset();
+    // 닫는 프레임에 남아 있던 점프·이동이 한 번 더 실행되지 않게 한다.
+    resumeFrame = reading;
+    setPrompt(null); setNote(null);
+    return;
+  }
   if (noteT > 0) noteT -= dt;
   setNote(noteT > 0 && !dialogue.active ? noteMsg : null);
   if (mode === 'title') { stepTitle(dt); return; }
-  if (mode === 'lab') { stepLab(dt, intent); return; }
-  if (mode === 'room') { stepRoom(dt, intent); return; }
-  stepPlanet(dt, intent);
+  if (mode === 'lab') stepLab(dt, intent);
+  else if (mode === 'room') stepRoom(dt, intent);
+  else stepPlanet(dt, intent);
+  if (intent.action) saveProgress(true);
 }
 
 // ── 시작 화면 ────────────────────────────────────────────────────────────────
@@ -463,21 +487,29 @@ function stepTitle(dt) {
 }
 
 // 시작 화면 → 지하 연구실. 여기가 실제 게임의 첫 프레임이다.
-function startFromTitle() {
-  bgm('assets/audio/bgm/lab.mp3');     // 없으면 조용할 뿐이다
+function startFromTitle(resume = false) {
+  input.reset();
+  player.resetTraversal();
+  saveEnabled = canPersist;
+  sceneBgm('lab');     // 없으면 조용할 뿐이다
   mode = 'lab';
   roomActor.freeCam = false;
   planetScene.remove(player.mesh);
   contact.visible = false;
   lab.scene.add(player.mesh);
   roomActor.rects = lab.rects;
+  roomActor.freeCam = !!lab.starsail;
   roomActor.obstacles = lab.obstacles;
   roomActor.setAt(0, lab.ENTRY_Z, -1);
   engine.setScene(lab.scene);
   engine.camera.fov = 62; engine.camera.updateProjectionMatrix();   // 실내 화각으로 되돌린다
+  roomActor.updateCamera(engine.camera, input, 0);
   refreshHint();
   flash.play('#e8f6ff', 560);
-  dialogue.play('op-wake', ...OPENING.wake);
+  if (resume && savedGame) restoreProgress(savedGame.progress);
+  else dialogue.play('op-wake', ...OPENING.wake);
+  saveProgress();
+  if (!canPersist) showSaveNotice('이전 기록을 유지했다 · 이번 탐사는 저장되지 않는다');
 }
 
 // ── 지하 연구실 ──────────────────────────────────────────────────────────────
@@ -504,7 +536,9 @@ function stepLab(dt, intent) {
 
   if (!intent.action || dialogue.active) return;
   const did = lab.interact(roomActor.position);
-  if (did === 'parcel') {
+  if (did === 'recover') {
+    noteMsg = '소포를 건져 올렸다'; noteT = 2.5; saveProgress();
+  } else if (did === 'parcel') {
     notebook.setHas(true); refreshHint();
     dialogue.play('op-parcel', ...OPENING.parcel);
     // 프롬프트로 상주시키면 방의 95%에서 같은 문구가 뜬다(감사에서 확인).
@@ -518,12 +552,13 @@ function stepLab(dt, intent) {
   } else if (did === 'send') {
     // 답을 뜯어내고 소포에 넣는다. 말이 끝나면 끝 카드 — 누르면 처음으로.
     setPrompt(null);
-    dialogue.play('ending-home', ...ENDING_HOME, () => { flash.play('#e8f6ff', 900); title.endCard(); });
+    dialogue.play('ending-home', ...ENDING_HOME, () => { flash.play('#e8f6ff', 900); saveProgress(); title.endCard(); });
   }
 }
 
 // 연구실 → 별. 첫 번째만 대사가 붙고, 그 뒤로는 그냥 오간다.
 function landOnPlanet() {
+  input.reset();
   mode = 'planet';
   lab.scene.remove(player.mesh);
   engine.setScene(planetScene);
@@ -531,17 +566,23 @@ function landOnPlanet() {
   contact.visible = true;
   player.position.copy(landing.pos);
   planet.projectToSurface(player.position);
-  player._initFrame(); player.syncMesh();
+  const firstLook = planet.surfaceAt(trailPlan.overlook).sub(player.position);
+  const landingUp = player.position.clone().normalize();
+  player.heading.copy(firstLook.addScaledVector(landingUp, -firstLook.dot(landingUp)).normalize());
+  player._initFrame(); player.resetTraversal();
   engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
   engine._camPlaced = false;
   mapPage.setHas(true); refreshHint();
+  engine.updateCamera(player, input, 0);
+  sky.update(player, engine.camera);
   setPrompt(null);
   // 삼 년을 붙든 장치가 처음 작동한 순간이다. 예전엔 씬만 갈아 끼웠다 —
   // 화면에서는 아무 일도 안 일어났다. 한 번뿐인 장면은 한 번뿐이게 보여야 한다.
   flash.play('#e8f6ff', 720);
-  sfx('portal'); bgm('assets/audio/bgm/planet.mp3');
+  sfx('portal'); sceneBgm('planet');
   landing.arrive();
   dialogue.play('op-arrive', ...OPENING.arrive);
+  saveProgress();
 }
 
 // ★ 검사용 — A·B·C·E는 **행성 위에서만** 뜻이 있다.
@@ -570,19 +611,25 @@ function withPlanetMode(fn) {
 
 // 별 → 연구실. 베이스캠프로 돌아간다.
 function returnToLab() {
+  input.reset();
+  player.resetTraversal();
   mode = 'lab';
   engine.scene.remove(player.mesh);
   contact.visible = false;
   lab.scene.add(player.mesh);
   roomActor.rects = lab.rects;
   roomActor.obstacles = lab.obstacles;
+  roomActor.freeCam = !!lab.starsail;
   roomActor.slip = 0;
   roomActor.setAt(lab.CIRCLE.x, lab.CIRCLE.z + 2.6, 1);   // 포탈에서 방을 보고 선다
   engine.setScene(lab.scene);
+  roomActor.updateCamera(engine.camera, input, 0);
   setPrompt(null);
   flash.play('#e8f6ff', 560);
-  sfx('portal'); bgm('assets/audio/bgm/lab.mp3');
+  sfx('portal'); sceneBgm('lab');
+  refreshHint();
   dialogue.play('op-home', ...OPENING.home);
+  saveProgress();
 }
 
 // 실내 — 관문 셋을 지나 신전으로. 통로 끝을 넘어서면 밖으로 나간다.
@@ -618,19 +665,20 @@ function stepRoom(dt, intent) {
     brief.show(briefWant.name, briefWant.goal, briefWant.act);
     briefWant = null;
   }
+  if (!debugDepth && (brief.isOpen || dialogue.active)) { input.reset(); return; }
 
   // 관문 — 자기 구간에 있을 때만 돈다. 레이저는 방 밖에서도 움직여야 자연스럽지만
   // 판정은 방 안에서만 한다(통로에서 맞으면 부당하다).
   for (const g of gates) {
     const inSeg = seg && seg.id === g.room;
-    const r = g.gate.update(dt, roomActor) || {};
+    const r = cleared ? {} : g.gate.update(dt, roomActor) || {};
     // 헤맨 시간 — 자기 방에 있고 아직 못 풀었으면 쌓인다.
     // 실패는 8초어치로 친다. 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르다.
     if (inSeg && !g.solved) {
       const got = room.nudge(g.room, dt + (r.fail ? 8 : 0));
       if (got) { noteMsg = `💡 오른쪽 벽에 힌트가 켜졌다`; noteT = 2.6; }
     }
-    if (inSeg && r.fail) {
+    if (inSeg && !g.solved && r.fail) {
       // 스스로 자리를 옮기는 관문(타일은 갇혀 있어 되돌릴 곳이 없다)은 그대로 둔다.
       // 나머지는 방 처음으로 보낸다 — 사당 처음이 아니다.
       if (r.stay) { noteMsg = `💫 ${r.fail}`; noteT = 1.6; }
@@ -638,25 +686,29 @@ function stepRoom(dt, intent) {
     }
     if (!g.solved && g.gate.solvedBy(roomActor)) {
       g.solved = true;
+      g.gate.complete?.();
       dungeon.openDoor(g.room);
     }
-    if (inSeg && g.gate.prompt) prompt = g.gate.prompt(roomActor.position) || prompt;
+    if (inSeg && !g.solved && g.gate.prompt) prompt = g.gate.prompt(roomActor.position) || prompt;
   }
 
   // 신전 — 사당마다 다른 물건이 서 있다(저울·거울의 신…). 계약은 관문과 같다.
   final.update(dt, roomActor, room.scene);
-  if (seg && seg.id === 'shrine' && !final.solvedBy(roomActor)) {
+  if (!cleared && seg && seg.id === 'shrine' && !final.solvedBy(roomActor)) {
     const got = room.nudge('shrine', dt);
     if (got) { noteMsg = '💡 오른쪽 벽에 힌트가 켜졌다'; noteT = 2.6; }
   }
   if (final.solvedBy(roomActor)) prize.reveal();
   prize.update(dt);
+  room.court?.update(dt, gates[2].gate.valves, prize.taken);
   if (seg && seg.id === 'shrine') {
     // 구슬이 나와 있으면 그게 최우선이다 — 방에서 가장 밝은 곳이 곧 다음 할 일이다.
-    prompt = prize.prompt(roomActor.position) || final.prompt(roomActor.position) || prompt;
+    prompt = prize.prompt(roomActor.position) || (prize.drop < 0 && !cleared ? final.prompt(roomActor.position) : null) || prompt;
   }
 
   const atExit = roomActor.position.z > EXIT_Z - 0.9;
+  const atReturn = room.court?.prompt(roomActor.position);
+  if (atReturn) prompt = atReturn;
   if (atExit) prompt = 'E — 사당 밖으로';
   setPrompt(prompt);
 
@@ -664,6 +716,7 @@ function stepRoom(dt, intent) {
   // 그건 조작을 뺏는 것보다 나쁘다.
   if (intent.action && !dialogue.active) {
     if (atExit) { exitShrine(); return; }
+    if (atReturn) { roomActor.setAt(0, ENTRY_Z); room.captureCheckpoint(roomActor); saveProgress(); return; }
     if (seg && seg.id === 'shrine') {
       if (prize.interact(roomActor.position)) {
         cleared = true;
@@ -674,11 +727,11 @@ function stepRoom(dt, intent) {
         shrines.markCleared(activeShrine);
         sfx('orb_take');
         onOrb();
-      } else if (final.interact) handSfx(final, () => final.interact(roomActor.position));
+      } else if (!cleared && prize.drop < 0 && final.interact) handSfx(final, () => final.interact(roomActor.position));
     } else {
       // 손으로 만지는 관문은 자기 방 안에서만 반응한다
       const g = gates.find((x) => seg && x.room === seg.id);
-      if (g && g.gate.interact) handSfx(g.gate, () => g.gate.interact(roomActor.position));
+      if (g && !g.solved && g.gate.interact) handSfx(g.gate, () => g.gate.interact(roomActor.position));
     }
   }
 }
@@ -691,16 +744,26 @@ function stepPlanet(dt, intent) {
   player.update(dt, intent, engine.camFwd, engine.camRight);
   // 나무 줄기와 바위를 통과하지 못하게. 이동 직후, 카메라 갱신 전에 밀어낸다 —
   // 순서가 뒤바뀌면 카메라가 한 프레임 늦게 따라와 화면이 튄다.
-  scatter.resolve(player.position, 0.32);
-  shrines.resolve(player.position, 0.32);
-  forage.resolve(player.position, 0.32);
-  kitchen.resolve(player.position, 0.32);
+  const airborne = player.airborne, footRadius = player.position.length() + player.jumpH;
+  scatter.resolve(player.position, 0.32, player.jumpH);
+  if (player.jumpH < 6) shrines.resolve(player.position, 0.32);
+  if (player.jumpH < 0.7) {
+    forage.resolve(player.position, 0.32);
+    kitchen.resolve(player.position, 0.32);
+    if (!debugDepth) waterway.resolve(player.position, 0.32);
+  }
+  if (airborne) {
+    player.jumpH = Math.max(0, footRadius - player.position.length());
+    if (!player.jumpH) player._land();
+  }
+  player._initFrame(); player.syncMesh();
   // 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은 카펫(0.15u 위)이다.
   // 그 차이만큼 시각적으로 올려 세운다. 안 그러면 발이 정확히 카펫 두께만큼 잠긴다.
   _cUp.copy(player.position).normalize();
   player.mesh.position.copy(player.position).addScaledVector(_cUp, carpet.liftAt(_cUp));
   // 접지 자국은 카펫 표면 바로 위에
   contact.position.copy(player.mesh.position).addScaledVector(_cUp, 0.03);
+  contact.visible = player.jumpH < 2;
   contact.quaternion.setFromUnitVectors(_CZ, _cUp);
   engine.updateCamera(player, input, dt);
   sky.update(player, engine.camera);
@@ -716,6 +779,38 @@ function stepPlanet(dt, intent) {
   //   무엇이 있는 곳인지 들어가기 전에 말해 준다.
   mapPage.update();
   landing.update(dt);
+  if (!debugDepth) {
+    const event = waterway.update(dt, player);
+    const message = firstTrail.update(dt, player);
+    if (message) { noteMsg = message; noteT = 5.5; notebook.draw(); saveProgress(true); }
+    else if (event?.message) { noteMsg = event.message; noteT = 5; }
+    if (event?.solvedNow) sfx('door_open');
+  }
+  // 공중에서는 발밑 장치를 만지지 않는다. 열과 물의 움직임은 계속 흐른다.
+  if (player.jumpH > 0.7) { say(player.gliding ? '점프를 놓으면 활공막을 접는다' : null); return; }
+  if (!debugDepth) {
+    const trailPrompt = waterway.held ? null : firstTrail.getPrompt(player.position);
+    if (trailPrompt) {
+      say(trailPrompt);
+      if (intent.action && !dialogue.active) {
+        const result = firstTrail.interact(player.position);
+        if (result?.kind === 'glider') {
+          player.canGlide = true; refreshHint(); notebook.draw();
+          sfx('pick_up'); noteMsg = result.message; noteT = 7; saveProgress(true);
+        } else if (result?.kind === 'water-shrine') enterShrine(shrines.shrines[3]);
+      }
+      return;
+    }
+    const waterPrompt = waterway.getPrompt(player.position);
+    if (waterPrompt) {
+      say(waterPrompt);
+      if (intent.action && !dialogue.active) {
+        const result = waterway.interact(player.position);
+        if (result) { sfx(result.kind === 'pickup' ? 'pick_up' : result.kind === 'place' ? 'put_down' : 'lever'); noteMsg = result.message; noteT = 4; }
+      }
+      return;
+    }
+  }
   // 내림판 — 사당보다 먼저 본다. 판 위에 사당이 겹칠 일은 없지만(사당 자리를 먼저 잡고
   // 그 밖에 스폰한다) 겹치면 **돌아갈 길이 막히는 쪽**이 더 나쁘다.
   if (landing.near(player.position)) {
@@ -793,31 +888,39 @@ function stepPlanet(dt, intent) {
 
 // 지도 — 처음엔 온통 검고, 걸어간 자리만 밝아진다. 길을 알려주는 게 아니라
 // 다녀온 것을 기록한다(M으로 연다).
-const mapPage = buildMapPage(planet, player, shrines, SHRINES, () => landing);
+const mapPage = buildMapPage(planet, player, shrines, SHRINES, () => landing, () => firstTrail.landmarks);
 // 터치 조작 — 터치 기기에서만 나타난다. 이게 없으면 모바일에서는 걷기만 되고
 // 사당에 들어갈 수조차 없다(점검에서 확인).
 // notebook은 아래에서 만들어지므로 게터로 넘긴다 — 순서를 바꾸면 mapPage가 꼬인다.
 const touch = buildTouchControls(input, mapPage, () => notebook);
 // 대사창과 탐사 수첩. 사당이 왜 있는지를 이 둘이 말한다.
 const dialogue = buildDialogue(input);
-const notebook = buildNotebook(shrines, SHRINES, () => forage, mapPage, () => kitchen);
+const notebook = buildNotebook(shrines, SHRINES, () => forage, mapPage, () => kitchen, () => firstTrail);
 
 touch.onShow(refreshHint);
 refreshHint();
 
 // 지하 연구실과, 별 위의 같은 자리. 이 둘이 포탈의 양 끝이다.
 const flash = buildFlash();
-const title = buildTitle(() => startFromTitle());
+const title = buildTitle(resume => startFromTitle(resume), {
+  save: savedGame, saveStatus: saveStore.status,
+  onNew: () => { canPersist = saveStore.archive(); return canPersist; },
+});
 // 방 안내 — 들어서는 순간 한 번, 틀려서 되돌아오면 다시.
 const brief = buildRoomBrief(() => touch.visible);
 buildMuteButton();
-const lab = buildLab();
+// 화면 설정 — 화질을 손으로 고른다. 기본은 자동이라 아무도 안 건드려도 된다.
+const settings = buildSettings(() => engine);
+const lab = await installStarsail(buildLab());
+const shipView = buildShipView({camera:engine.camera,input,available:()=>mode==='lab'&&!dialogue.active&&!title.isEnding});
 const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
 const forage = buildForage(planetScene, planet, forageSpots, legendSpots, carpet);
 // 부엌 — 내림판 옆 모닥불. 채집이 쓰이는 곳(recipes.js 머리말).
 const kitchen = buildKitchen(planetScene, planet, landing, carpet, forage);
+const waterway = buildWaterway(planetScene, planet, trailPlan.waterway, { carpet });
+const firstTrail = buildFirstTrail(planetScene, planet, trailPlan, carpet, waterway);
 
 // 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.
 // 틀린 것은 왜 아닌지만 말한다. 무엇이 맞는지는 말하지 않는다.
@@ -858,12 +961,132 @@ function beckonNearest(from) {
   return best ? nextHint(KEEPERS[best.id].beckon) : null;
 }
 
+function showSaveNotice(text) {
+  const el = document.getElementById('save-status');
+  if (!el) return;
+  el.textContent = text; el.hidden = false;
+  clearTimeout(saveNoticeTimer);
+  saveNoticeTimer = setTimeout(() => { el.hidden = true; }, 3200);
+}
+function captureProgress() {
+  const at = mode === 'room' ? savedPlanet.pos : player.position;
+  const facing = mode === 'room' ? savedPlanet.heading : player.heading;
+  return {
+    mode: mode === 'lab' ? 'lab' : 'planet', inShrine: mode === 'room',
+    position: at.toArray(), heading: facing.toArray(),
+    cleared: shrines.shrines.flatMap((s, i) => s.cleared ? [SHRINES[i].id] : []),
+    lab: lab.exportState(), forage: forage.exportState(), kitchen: kitchen.exportState(),
+    map: mapPage.exportState(), notebook: notebook.exportState(), dialogue: dialogue.exportState(),
+    expedition: { version: 1, trail: firstTrail.exportState(), waterway: waterway.exportState() },
+    waterRoom: rooms.get(3)?.exportState?.(mode === 'room' && room?.court ? roomActor : null) ?? null,
+    waterRoomActive: mode === 'room' && !!room?.court,
+    shrineRuns: { version: 1, active: mode === 'room' && !room?.court ? room.spec.id : null,
+      rooms: Object.fromEntries([...rooms.values()].filter(r => !r.court && r.hasProgress)
+        .map(r => [r.spec.id, r.exportState(mode === 'room' && room === r ? roomActor : null)])) },
+  };
+}
+let saveFailed = false;
+function saveProgress(quiet = false) {
+  if (!saveEnabled || debugDepth || mode === 'title') return false;
+  const ok = saveStore.write(captureProgress());
+  if (!ok && !saveFailed) showSaveNotice('저장하지 못했다 · 브라우저의 저장 공간을 확인하자');
+  else if (ok && (!quiet || saveFailed)) showSaveNotice('탐사 기록 저장됨');
+  saveFailed = !ok;
+  return ok;
+}
+function restoreProgress(p) {
+  const restored = [lab.importState(p.lab), forage.importState(p.forage),
+    kitchen.importState(p.kitchen), mapPage.importState(p.map)];
+  notebook.setHas(lab.state.hasNote);
+  restored.push(notebook.importState(p.notebook));
+  // v1의 기존 기록에는 탐사 구간이 없다. 선택 필드로 읽어 호환성을 지킨다.
+  if (p.expedition) {
+    restored.push(p.expedition.version === 1 && waterway.importState(p.expedition.waterway));
+    restored.push(firstTrail.importState(p.expedition.trail));
+  }
+  player.canGlide = firstTrail.glider;
+  let waterRestored = false;
+  if (p.waterRoom) {
+    waterRestored = p.cleared.includes('water') === p.waterRoom.prize?.taken
+      && roomFor(shrines.shrines[3]).importState(p.waterRoom);
+    restored.push(waterRestored);
+  }
+  let activeRun = null;
+  if (p.shrineRuns) {
+    const runs = p.shrineRuns, ids = SHRINES.filter(s => s.id !== 'water').map(s => s.id);
+    const validEnvelope = runs.version === 1 && runs.rooms && typeof runs.rooms === 'object' && !Array.isArray(runs.rooms)
+      && Object.keys(runs.rooms).every(id => ids.includes(id)) && (runs.active === null || ids.includes(runs.active));
+    restored.push(!!validEnvelope);
+    if (validEnvelope) {
+      for (const [id, snapshot] of Object.entries(runs.rooms)) {
+        const i = SHRINES.findIndex(s => s.id === id);
+        let candidate = null;
+        if (snapshot && Number.isInteger(snapshot.seed) && snapshot.seed >= 0 && snapshot.seed <= 0xffffffff
+          && p.cleared.includes(id) === snapshot.prize?.taken) {
+          candidate = buildRoom(SHRINES[i], snapshot.seed);
+        }
+        const ok = !!candidate && candidate.importState(snapshot);
+        restored.push(ok);
+        if (ok) { rooms.set(i, candidate); if (runs.active === id) activeRun = i; }
+      }
+      if (runs.active !== null && activeRun === null) restored.push(false);
+    }
+  }
+  if (!restored.every(Boolean)) {
+    canPersist = saveStore.archive();
+    saveEnabled = canPersist;
+  }
+  dialogue.importState(p.dialogue);
+  shrines.shrines.forEach((s, i) => { if (p.cleared.includes(SHRINES[i].id)) shrines.markCleared(s); });
+  for (const [id, found] of Object.entries(forage.found)) if (found) lab.fillJar(id);
+  sawNote = lab.state.read;
+  gameDone = shrines.clearedCount() === SHRINES.length;
+  if (gameDone && p.lab.done) lab.markDone();
+  if (p.mode === 'planet' && lab.state.open) {
+    mode = 'planet'; lab.scene.remove(player.mesh); planetScene.add(player.mesh);
+    engine.setScene(planetScene); contact.visible = true;
+    player.position.fromArray(p.position); planet.projectToSurface(player.position);
+    player.heading.fromArray(p.heading); player._initFrame(); player.resetTraversal();
+    engine.camFwd.copy(player.heading); engine.camUp.copy(player.up); engine._camPlaced = false;
+    mapPage.setHas(true); sceneBgm('planet');
+    if (p.inShrine && activeRun !== null) enterShrine(shrines.shrines[activeRun]);
+    else if (waterRestored && p.waterRoomActive === true && p.inShrine) enterShrine(shrines.shrines[3]);
+  } else {
+    roomActor.setAt(0, lab.ENTRY_Z, -1);
+    roomActor.updateCamera(engine.camera, input, 1);
+  }
+  refreshHint(); notebook.draw(); input.reset();
+  if (lab.sent) title.endCard();
+  else {
+    if (gameDone && !p.lab.done) {
+      const k = KEEPERS.strata;
+      dialogue.play('orb-strata', k.who, k.orb, () => playEnding());
+    } else if (mode === 'lab' && !lab.state.hasNote) {
+      dialogue.play('op-wake', ...OPENING.wake);
+    } else if (mode === 'lab' && !lab.state.read) {
+      dialogue.play('op-parcel', ...OPENING.parcel);
+    }
+    noteMsg = restored.every(Boolean) ? (mode === 'room' ? '📓 사당의 장치와 발걸음을 이어 펼쳤다'
+      : p.inShrine ? '📓 기록을 이어 펼쳤다 · 사당은 입구에서 다시 도전한다' : '📓 지난 탐사 기록을 이어 펼쳤다')
+      : '📓 읽을 수 있는 기록을 복원했다 · 일부 장치는 처음 상태다';
+    noteT = 5;
+  }
+}
+
 const loop = new Loop(step, () => engine.render());
+// ── 렉이 나면 스스로 화질을 내린다 ──────────────────────────────────────────
+// ★ 학교 태블릿은 성능이 천차만별이고 이름으로는 못 가른다. 그래서 재고 내린다.
+//   아이에게는 아무 말도 안 한다 — "화질을 낮췄습니다"는 이 게임에 없는 목소리이고,
+//   무엇보다 아이가 할 수 있는 일이 아니다. 콘솔에만 남긴다.
+loop.onFrame = makeAutoQuality((name, med) => {
+  console.log(`[perf] 프레임 중앙값 ${med}ms — 화질을 '${name}'으로 내림`);
+});
 
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
-  brief, kitchen,
+  brief, kitchen, settings, shipView, waterway, firstTrail, save: saveProgress, snapshot: captureProgress,
+  get saveStatus() { return saveStore.status; },
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
   lab, landing, landOnPlanet, returnToLab,
@@ -877,9 +1100,47 @@ installDebug({ planet, player, engine, input, step, sky, scatter, carpet, shrine
   roomActor, roomFor, withPlanetMode, lab, landing, forage, notebook,
   forageText: { FORAGE_KINDS, FORAGE_WRONG }, mkRnd, brief, kitchen, title, endingHome: ENDING_HOME,
   enterShrine, exitShrine, returnToLab, get mode() { return mode; },
-  audio: Audio, sfxTable: SFX,
+  audio: Audio, sfxTable: SFX, quality, settings,
   titleInfo: () => ({ spin: titleSpin, clear: titleClear }),
   dialogue: { KEEPERS, ENDING, OPENING } });
+
+// 검사가 상태를 준비하는 동안 사용자 탐사 기록을 덮어쓰지 않는다.
+const selftest = window.__selftest;
+window.__selftest = () => {
+  const testedProgress = { kitchen: kitchen.exportState(), map: mapPage.exportState() };
+  const runtime = { mode, room, activeShrine, cleared, lastSeg, briefWant, noteMsg, noteT, gameDone,
+    scene: engine.scene, parent: player.mesh.parent, contact: contact.visible,
+    p: player.position.clone(), h: player.heading.clone(), savedP: savedPlanet.pos.clone(), savedH: savedPlanet.heading.clone() };
+  const roomStates = [...rooms.values()].map(r => ({ r, has: r.hasProgress,
+    state: r.exportState?.(mode === 'room' && room === r ? roomActor : null) }));
+  const existingRooms = new Set(rooms.keys());
+  const actorState = { p: roomActor.position.clone(), h: roomActor.heading.clone(), yaw: roomActor.camYaw,
+    rects: roomActor.rects, obstacles: roomActor.obstacles, vy: roomActor.vy, grounded: roomActor.grounded,
+    vel: roomActor.vel.clone(), slip: roomActor.slip, freeCam: roomActor.freeCam };
+  debugDepth++;
+  try { return selftest(); } finally {
+    kitchen.importState(testedProgress.kitchen);
+    mapPage.importState(testedProgress.map);
+    roomStates.forEach(({ r, has, state }) => { if (state) r.importState(state); r.hasProgress = has; });
+    for (const key of rooms.keys()) if (!existingRooms.has(key)) rooms.delete(key);
+    ({ mode, room, activeShrine, cleared, lastSeg, briefWant, noteMsg, noteT, gameDone } = runtime);
+    engine.setScene(runtime.scene); runtime.parent?.add(player.mesh); contact.visible = runtime.contact;
+    savedPlanet.pos.copy(runtime.savedP); savedPlanet.heading.copy(runtime.savedH);
+    player.position.copy(runtime.p); player.heading.copy(runtime.h); player._initFrame();
+    // 정규화의 부동소수점 오차까지 저장 방향에 남기지 않는다.
+    player.heading.copy(runtime.h); player.syncMesh();
+    engine.camFwd.copy(player.heading); engine.camUp.copy(player.up); engine._camPlaced = false;
+    roomActor.rects = actorState.rects; roomActor.obstacles = actorState.obstacles;
+    roomActor.position.copy(actorState.p); roomActor.heading.copy(actorState.h); roomActor.camYaw = actorState.yaw;
+    roomActor.vy = actorState.vy; roomActor.grounded = actorState.grounded; roomActor.vel.copy(actorState.vel);
+    roomActor.slip = actorState.slip; roomActor.freeCam = actorState.freeCam;
+    if (mode === 'room' || mode === 'lab') {
+      roomActor.syncMesh(); roomActor._camPlaced = false; roomActor.updateCamera(engine.camera, input, 0);
+    }
+    sceneBgm(mode === 'room' ? room.spec.id : mode === 'lab' ? 'lab' : mode === 'title' ? 'title' : 'planet');
+    debugDepth--; input.reset();
+  }
+};
 
 // ── 시작 — 먼저 표지, 누르면 집 ─────────────────────────────────────────────
 // 게임은 별이 아니라 **집**에서 시작한다(Lab.js 머리말). 다만 그 앞에 한 화면이
@@ -892,10 +1153,21 @@ placeTitleActor();
 title.show();
 // ★ 소리는 첫 제스처 뒤에만 난다(브라우저 정책). 시작 화면의 "화면을 눌러 시작"이
 //   곧 그 제스처라 자연스럽게 맞아떨어진다 — 그 전에 부르면 조용히 거부될 뿐이다.
-addEventListener('pointerdown', () => {
+const unlockAudio = () => {
   startAudio();
-  if (title.isOpen) bgm('assets/audio/bgm/title.mp3');
-}, { once: true });
+  if (mode === 'title') sceneBgm('title');
+  removeEventListener('pointerdown', unlockAudio, true);
+  removeEventListener('keydown', unlockAudio, true);
+};
+addEventListener('pointerdown', unlockAudio, { capture: true });
+addEventListener('keydown', unlockAudio, { capture: true });
+addEventListener('pagehide', () => saveProgress(true));
+document.addEventListener('visibilitychange', () => {
+  input.reset();
+  if (document.hidden) { saveProgress(true); loop.stop(); }
+  else loop.start();
+});
+setInterval(() => { if (!document.hidden) saveProgress(true); }, 2000);
 
 const load = document.getElementById('load');
 if (load) load.style.display = 'none';

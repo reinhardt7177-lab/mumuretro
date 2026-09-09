@@ -12,6 +12,7 @@ import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle } from '../util/rand.js';
 import { josa } from '../util/josa.js';
+import { SIEVE_PALETTE } from '../data/lighting.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -41,9 +42,9 @@ const SIEVES = [
   { hole: 'small', label: '구멍 작은 체', mm: 1 },
 ];
 const GRAINS = [
-  { size: 0.30, mm: 6, color: 0xc9a06a, name: '굵은 알갱이' },
-  { size: 0.19, mm: 3, color: 0xa8823f, name: '중간 알갱이' },
-  { size: 0.11, mm: 0.6, color: 0x8a6b34, name: '고운 모래' },
+  { size: 0.30, mm: 6, color: SIEVE_PALETTE.coarse, name: '굵은 알갱이' },
+  { size: 0.19, mm: 3, color: SIEVE_PALETTE.medium, name: '중간 알갱이' },
+  { size: 0.11, mm: 0.6, color: SIEVE_PALETTE.fine, name: '고운 모래' },
 ];
 // 주문 셋. keep = 위 접시에 남아야 할 알갱이 종류
 // ★ 셋 다 체 하나로 풀렸다 — 3택1이라 찍어도 평균 두 번이면 넘었다(비평).
@@ -66,6 +67,7 @@ export class SieveGate {
     this.round = 0;             // 지금 주문
     this.solved = false;
     this.mix = new Set([0, 1, 2]);   // 지금 위에 부어 둔 알갱이 — 아래 접시를 올리면 줄어든다
+    this.grainTypes = GRAINS;
     // 주문 순서를 섞는다. 늘 "굵은 것만"으로 시작하면 첫 수는 외워진다.
     this.orders = shuffle(ORDERS);
     const cx = (seg.x0 + seg.x1) / 2;
@@ -167,7 +169,9 @@ export class SieveGate {
   _aboveSet(sv, mix = this.mix) {
     return new Set([...mix].filter((gi) => !sv || GRAINS[gi].mm > sv.mm));
   }
-  _apply() {
+  _apply() { this.workshop?.motion?.cancel(); this._applyState(); this.workshop?.sync(); }
+
+  _applyState() {
     const sv = this.fitted >= 0 ? this.sieves[this.fitted].spec : null;
     const upSet = this._aboveSet(sv);
     for (const gm of this.grainMesh) {
@@ -243,6 +247,7 @@ export class SieveGate {
         actor.position.x + actor.heading.x * 0.7, 1.15, actor.position.z + actor.heading.z * 0.7);
       this.held.grp.rotation.y = Math.atan2(actor.heading.x, actor.heading.z);
     }
+    this.workshop?.update(dt);
     return {};
   }
 
@@ -250,8 +255,8 @@ export class SieveGate {
     if (this.solved) return null;
     const say = `주문 ${this.round + 1}/3 · ${this.orders[this.round].say}`;
     if (this.held) {
-      return this._atFrame(pos)
-        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `${josa(this.held.spec.label, '를')} 들었다 — 틀로`;
+      return this._atFrame(pos) && this.fitted < 0
+        ? `E — ${this.held.spec.label} 끼우기 (${say})` : `E — ${this.held.spec.label} 돌려놓기 · 빈 틀에 가져가면 끼운다`;
     }
     if (this._atTray(pos)) {
       const b = this._belowSet();
@@ -265,14 +270,20 @@ export class SieveGate {
   }
 
   interact(pos) {
+    this.workshop?.motion?.cancel();
+    if (this.solved) return false;
     if (this.held) {
-      if (!this._atFrame(pos)) return false;
-      if (this.fitted >= 0) return false;                    // 먼저 빼야 한다
+      if (!this._atFrame(pos) || this.fitted >= 0) {
+        this.held.grp.position.copy(this.held.home); this.held.grp.rotation.set(0, 0, 0);
+        this.held = null; this.workshop?.sync(); return true;
+      }
+      const sieve = this.held, mix = new Set(this.mix);
       this.fitted = this.sieves.indexOf(this.held);
       this.held.grp.position.set(this.frame.x, 1.75, this.frame.z);
       this.held.grp.rotation.y = 0;
       this.held = null;
       this._apply();
+      this.workshop?.playSifting(sieve, mix);
       return true;
     }
     // 아래 접시 올리기 — 빠진 것만 남기고 체는 선반으로 돌아간다
@@ -379,15 +390,12 @@ export class EvaporateGate {
     this.magnet.mat.color.set(done >= 1 ? 0xffd27a : 0xe0736b);
     this.filter.mat.color.set(done >= 2 ? 0xffd27a : 0x79c0e8);
     this.burner.mat.color.set(done >= 3 ? 0xffd27a : 0xe8a04a);
+    this.workshop?.sync();
   }
 
   _near(pos) {
     const d = (s) => Math.hypot(pos.x - s.x, pos.z - s.z);
-    if (d(this.magnet) < REACH) return 'magnet';
-    if (d(this.filter) < REACH) return 'filter';
-    if (d(this.burner) < REACH) return 'burner';
-    if (d(this.tap) < REACH) return 'tap';
-    return null;
+    return ['magnet', 'filter', 'burner', 'tap'].filter(n => d(this[n]) < REACH).sort((a, b) => d(this[a]) - d(this[b]))[0] || null;
   }
   _atPot(pos) {
     return Math.hypot(pos.x - this.pot.position.x, pos.z - this.pot.position.z) < REACH;
@@ -398,6 +406,7 @@ export class EvaporateGate {
       this.pot.position.set(actor.position.x + actor.heading.x * 0.7, 0.85,
         actor.position.z + actor.heading.z * 0.7);
     }
+    this.workshop?.sync();
     return {};
   }
 
@@ -408,17 +417,24 @@ export class EvaporateGate {
       return this._atPot(pos) ? 'E — 물통 들기' : '🫙 물통을 들고 거름망·화로로';
     }
     const n = this._near(pos);
-    if (n === 'magnet') return 'E — 자석 대기 (쇠가루)';
-    if (n === 'filter') return 'E — 거름망에 붓기 (알갱이)';
+    if (n === 'magnet') return this.state === 'mixed' ? 'E — 자석 대기 (쇠가루)' : 'E — 물통 돌려놓기 · 자석으로 더 나눌 것은 없다';
+    if (n === 'filter') return this.state === 'demag' ? 'E — 거름종이에 붓기 (모래)' : 'E — 물통 돌려놓기 · 쇠가루를 뺀 혼합물을 걸러라';
     if (n === 'burner') return 'E — 화로에 올리기 (물 날리기)';
     if (n === 'tap') return this.state === 'lump' ? 'E — 물 붓고 처음부터' : 'E — 내려놓기';
-    return { mixed: '쇠가루·모래·소금이 물에 섞여 있다 (1/3)',
+    return 'E — 물통 돌려놓기 · ' + ({ mixed: '쇠가루·모래·소금이 물에 섞여 있다 (1/3)',
       demag: '쇠가루는 뺐다 — 다음은 알갱이 (2/3)',
       filtered: '모래도 걸렀다 — 이제 물을 날려라 (3/3)',
-      lump: '순서가 어긋나 굳었다 — 물을 부어 처음부터' }[this.state];
+      lump: '순서가 어긋나 굳었다 — 물을 부어 처음부터' }[this.state]);
   }
 
   interact(pos) {
+    if (this.state === 'salt') return false;
+    const result = this._interact(pos);
+    this.workshop?.sync();
+    return result;
+  }
+
+  _interact(pos) {
     if (!this.held) {
       if (this.state === 'lump' && this._near(pos) === 'tap') { this.state = 'mixed'; this._paint(); return true; }
       if (!this._atPot(pos)) return false;
@@ -426,6 +442,9 @@ export class EvaporateGate {
       return true;
     }
     const n = this._near(pos);
+    if ((n === 'magnet' && this.state !== 'mixed') || (n === 'filter' && this.state !== 'demag')) {
+      this.held = false; this.pot.position.copy(this.potHome); return true;
+    }
     if (n === 'magnet') {
       // 자석 — 쇠가루만 끌려 나온다. 알갱이 크기와 상관없다.
       if (this.state === 'mixed') this.state = 'demag';
@@ -452,7 +471,8 @@ export class EvaporateGate {
       this._paint();
       return true;
     }
-    return false;
+    this.held = false; this.pot.position.copy(this.potHome);
+    return true;
   }
 
   solvedBy() { return this.state === 'salt'; }
@@ -571,6 +591,7 @@ export class SiftGod {
       m.mat.color.set(this._mixDone(m) ? 0xffd27a : (m.done.length ? 0xe0a955 : 0x9c6f2c));
       m.pips.forEach((d, k) => d.material.color.set(k < m.done.length ? 0xffd27a : 0x4a3a22));
     }
+    this.workshop?.sync();
   }
 
   // 도구를 그릇에 댄다. 받아들이면 true, 그대로면 false, 순서를 틀렸으면 'spoil'.
@@ -581,6 +602,11 @@ export class SiftGod {
     m.done.push(tool.id);
     tool.used = m;
     tool.mesh.position.set(m.x, 1.9 + (m.done.length - 1) * 0.55, m.z);
+    // 분리가 끝나면 결과는 그릇에 남고 도구는 돌려준다. 화로 하나를 두
+    // 혼합물에 써야 하므로, 완성한 그릇에 묶으면 사당을 끝낼 수 없었다.
+    if (this._mixDone(m)) for (const t of this.tools) {
+      if (t.used === m) { t.used = null; t.mesh.position.copy(t.home); }
+    }
     return true;
   }
 
@@ -598,24 +624,30 @@ export class SiftGod {
     if (this.held) {
       this.held.mesh.position.set(actor.position.x + actor.heading.x * 0.65, 1.15,
         actor.position.z + actor.heading.z * 0.65);
-      this.held.mesh.rotation.y += dt * 2;
+      this.held.mesh.rotation.set(0, Math.atan2(actor.heading.x, actor.heading.z), 0);
     }
+    this.workshop?.sync();
     return {};
   }
 
   prompt(pos) {
+    const action = this._prompt(pos);
+    return action && this.msgT > 0 ? action + ' · ' + this.msg : action;
+  }
+
+  _prompt(pos) {
     if (this.solved) return null;
-    if (this.msgT > 0) return this.msg;
     const n = this._near(pos);
     if (this.held) {
       if (n && n.kind === 'mix') {
-        return this._mixDone(n.mix) ? `${n.mix.mix}은 다 갈랐다` : `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
+        return this._mixDone(n.mix) ? `E — 도구 돌려놓기 · ${n.mix.mix}은 다 갈랐다` : `E — ${n.mix.mix}에 ${this.held.name} 쓰기`;
       }
-      return `${josa(this.held.name, '를')} 들었다 — 섞인 것에 가져가라`;
+      return 'E — 도구를 선반에 돌려놓기';
     }
     if (n && n.kind === 'tool') return `E — ${n.tool.name} 들기`;
     if (n && n.kind === 'mix') {
       const m = n.mix;
+      if (this._mixDone(m)) return `${m.mix}은 다 갈랐다 — 도구는 선반에 돌려두었다`;
       if (m.done.length) return `E — ${m.mix}에서 마지막 도구 되가져오기 (${m.done.length}/${m.need.length})`;
       return `${m.mix} — 무엇으로 가르지? (${m.need.length}번)`;
     }
@@ -623,7 +655,17 @@ export class SiftGod {
   }
 
   interact(pos) {
+    if (this.solved) return false;
+    const result = this._interact(pos);
+    this.workshop?.sync();
+    return result;
+  }
+
+  _interact(pos) {
     const n = this._near(pos);
+    if (this.held && (!n || n.kind !== 'mix' || this._mixDone(n.mix))) {
+      this.held.mesh.position.copy(this.held.home); this.held.mesh.rotation.set(0, 0, 0); this.held = null; return true;
+    }
     if (!n) return false;
     if (this.held) {
       if (n.kind !== 'mix' || this._mixDone(n.mix)) return false;
@@ -642,7 +684,7 @@ export class SiftGod {
       return true;
     }
     if (n.kind === 'tool') { this.held = n.tool; return true; }
-    if (n.mix.done.length) {                                   // 마지막 도구 되가져오기
+    if (!this._mixDone(n.mix) && n.mix.done.length) {           // 진행 중인 그릇에서 마지막 도구 되가져오기
       const id = n.mix.done.pop();
       const t = this.tools.find((x) => x.id === id);
       t.used = null;

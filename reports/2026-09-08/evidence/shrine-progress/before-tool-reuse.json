@@ -1,0 +1,384 @@
+{
+  "date": "2026-09-08T09:17:11.724Z",
+  "checks": [
+    {
+      "name": "Fresh seeded room roundtrip: balance",
+      "pass": true,
+      "details": {
+        "id": "balance",
+        "imported": true,
+        "bytes": 1268,
+        "same": true
+      }
+    },
+    {
+      "name": "Fresh seeded room roundtrip: shadow",
+      "pass": true,
+      "details": {
+        "id": "shadow",
+        "imported": true,
+        "bytes": 1673,
+        "same": true
+      }
+    },
+    {
+      "name": "Fresh seeded room roundtrip: sift",
+      "pass": true,
+      "details": {
+        "id": "sift",
+        "imported": true,
+        "bytes": 997,
+        "same": true
+      }
+    },
+    {
+      "name": "Fresh seeded room roundtrip: fire",
+      "pass": true,
+      "details": {
+        "id": "fire",
+        "imported": true,
+        "bytes": 1771,
+        "same": true
+      }
+    },
+    {
+      "name": "Fresh seeded room roundtrip: strata",
+      "pass": true,
+      "details": {
+        "id": "strata",
+        "imported": true,
+        "bytes": 1168,
+        "same": true
+      }
+    },
+    {
+      "name": "All five saves fit below storage size limit",
+      "pass": true,
+      "details": [
+        {
+          "id": "balance",
+          "imported": true,
+          "bytes": 1268,
+          "same": true
+        },
+        {
+          "id": "shadow",
+          "imported": true,
+          "bytes": 1673,
+          "same": true
+        },
+        {
+          "id": "sift",
+          "imported": true,
+          "bytes": 997,
+          "same": true
+        },
+        {
+          "id": "fire",
+          "imported": true,
+          "bytes": 1771,
+          "same": true
+        },
+        {
+          "id": "strata",
+          "imported": true,
+          "bytes": 1168,
+          "same": true
+        }
+      ]
+    },
+    {
+      "name": "Partial device state: balance",
+      "pass": true,
+      "details": {
+        "id": "balance",
+        "imported": true,
+        "same": true,
+        "bytes": 1543,
+        "held": [
+          1,
+          1
+        ],
+        "finalHeld": 0
+      }
+    },
+    {
+      "name": "Partial device state: balance atomic corrupt",
+      "pass": true,
+      "details": {
+        "id": "balance atomic corrupt",
+        "imported": true,
+        "same": true
+      }
+    },
+    {
+      "name": "Partial device state: shadow",
+      "pass": true,
+      "details": {
+        "id": "shadow",
+        "imported": true,
+        "same": true,
+        "bytes": 2351,
+        "held": [
+          null,
+          null,
+          true
+        ]
+      }
+    },
+    {
+      "name": "Partial device state: shadow atomic corrupt",
+      "pass": true,
+      "details": {
+        "id": "shadow atomic corrupt",
+        "imported": true,
+        "same": true
+      }
+    },
+    {
+      "name": "Partial device state: sift",
+      "pass": true,
+      "details": {
+        "id": "sift",
+        "imported": true,
+        "same": true,
+        "bytes": 1395,
+        "held": [
+          0,
+          1,
+          true
+        ],
+        "finalHeld": -1
+      }
+    },
+    {
+      "name": "Partial device state: sift atomic corrupt",
+      "pass": true,
+      "details": {
+        "id": "sift atomic corrupt",
+        "imported": true,
+        "same": true
+      }
+    },
+    {
+      "name": "Partial device state: fire",
+      "pass": true,
+      "details": {
+        "id": "fire",
+        "imported": true,
+        "same": true,
+        "bytes": 2066,
+        "held": [
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "name": "Partial device state: fire atomic corrupt",
+      "pass": true,
+      "details": {
+        "id": "fire atomic corrupt",
+        "imported": true,
+        "same": true
+      }
+    },
+    {
+      "name": "Partial device state: strata",
+      "pass": true,
+      "details": {
+        "id": "strata",
+        "imported": true,
+        "same": true,
+        "bytes": 1731,
+        "held": [
+          1,
+          null,
+          null
+        ],
+        "finalHeld": 1
+      }
+    },
+    {
+      "name": "Partial device state: strata atomic corrupt",
+      "pass": true,
+      "details": {
+        "id": "strata atomic corrupt",
+        "imported": true,
+        "same": true
+      }
+    },
+    {
+      "name": "Walk, interact, restart browser and resume balance",
+      "pass": true,
+      "details": {
+        "frames": 86,
+        "heldBefore": true,
+        "heldAfter": true,
+        "id": "balance"
+      }
+    },
+    {
+      "name": "Held object remains usable balance",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Exit and reenter preserves balance",
+      "pass": true,
+      "details": {
+        "same": true,
+        "tier": 0
+      }
+    },
+    {
+      "name": "Restored object can be walked to device and placed balance",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Walk, interact, restart browser and resume shadow",
+      "pass": true,
+      "details": {
+        "frames": 61,
+        "heldBefore": false,
+        "heldAfter": false,
+        "id": "shadow"
+      }
+    },
+    {
+      "name": "Exit and reenter preserves shadow",
+      "pass": true,
+      "details": {
+        "same": true,
+        "tier": 0
+      }
+    },
+    {
+      "name": "Walk, interact, restart browser and resume sift",
+      "pass": true,
+      "details": {
+        "frames": 77,
+        "heldBefore": true,
+        "heldAfter": true,
+        "id": "sift"
+      }
+    },
+    {
+      "name": "Held object remains usable sift",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Exit and reenter preserves sift",
+      "pass": true,
+      "details": {
+        "same": true,
+        "tier": 0
+      }
+    },
+    {
+      "name": "Restored object can be walked to device and placed sift",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Walk, interact, restart browser and resume fire",
+      "pass": true,
+      "details": {
+        "frames": 51,
+        "heldBefore": false,
+        "heldAfter": false,
+        "id": "fire"
+      }
+    },
+    {
+      "name": "Exit and reenter preserves fire",
+      "pass": true,
+      "details": {
+        "same": true,
+        "tier": 0
+      }
+    },
+    {
+      "name": "Walk, interact, restart browser and resume strata",
+      "pass": true,
+      "details": {
+        "frames": 99,
+        "heldBefore": true,
+        "heldAfter": true,
+        "id": "strata"
+      }
+    },
+    {
+      "name": "Held object remains usable strata",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Exit and reenter preserves strata",
+      "pass": true,
+      "details": {
+        "same": true,
+        "tier": 0
+      }
+    },
+    {
+      "name": "Restored object can be walked to device and placed strata",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Fault injection: missing held-object restoration is detected",
+      "pass": true,
+      "details": null
+    },
+    {
+      "name": "Later rounds, intermediate mixtures, all finale types and reward transitions restore",
+      "pass": false,
+      "details": [
+        "weigh slot 0",
+        "weigh slot 1",
+        "weigh slot 2",
+        "weigh slot 3",
+        "weigh slot 4",
+        "plate round 1",
+        "plate round 2",
+        "plate round 3",
+        "scale held",
+        "scale prize falling",
+        "balance collected prize",
+        "silhouette round 1",
+        "silhouette round 2",
+        "silhouette round 3",
+        "shadow reward",
+        "sieve round 1",
+        "sieve round 2",
+        "sieve intermediate fitted",
+        "sieve repoured",
+        "sieve round 3",
+        "magnet round 1",
+        "magnet round 2",
+        "magnet round 3",
+        "evaporate salt",
+        "sift final solvable=false",
+        "fire reward",
+        "fossil slot 0",
+        "fossil slot 1",
+        "fossil slot 2",
+        "fossil slot 3",
+        "five color doors",
+        "grand altar 0",
+        "grand altar 1",
+        "grand altar 2",
+        "grand altar 3",
+        "grand altar 4",
+        "grand awakening",
+        "grand reward"
+      ]
+    }
+  ],
+  "errors": [],
+  "failure": "AssertionError [ERR_ASSERTION]: Later rounds, intermediate mixtures, all finale types and reward transitions restore: [\"weigh slot 0\",\"weigh slot 1\",\"weigh slot 2\",\"weigh slot 3\",\"weigh slot 4\",\"plate round 1\",\"plate round 2\",\"plate round 3\",\"scale held\",\"scale prize falling\",\"balance collected prize\",\"silhouette round 1\",\"silhouette round 2\",\"silhouette round 3\",\"shadow reward\",\"sieve round 1\",\"sieve round 2\",\"sieve intermediate fitted\",\"sieve repoured\",\"sieve round 3\",\"magnet round 1\",\"magnet round 2\",\"magnet round 3\",\"evaporate salt\",\"sift final solvable=false\",\"fire reward\",\"fossil slot 0\",\"fossil slot 1\",\"fossil slot 2\",\"fossil slot 3\",\"five color doors\",\"grand altar 0\",\"grand altar 1\",\"grand altar 2\",\"grand altar 3\",\"grand altar 4\",\"grand awakening\",\"grand reward\"]\n    at check (D:\\mumumetro\\tools\\check-shrine-progress.cjs:6:101)\n    at D:\\mumumetro\\tools\\check-shrine-progress.cjs:200:5"
+}

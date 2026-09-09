@@ -1,0 +1,14 @@
+{
+  "src/data/mirrorGallery.js": "9d5f2673ce255d70093a3989a553a1d6c748f56472797b713066d94c41381d91",
+  "src/data/lighting.js": "33844d8691ad65fc6e7f6f2ba31374277d5ae0a05f6bc7def3443aa6140dc605",
+  "src/shrine/layouts.js": "25f052b5b8961e0f940dfd069f8c9e6058e0670b9dcb11a5211b9d231f27406c",
+  "src/shrine/Room.js": "43d6b389007bd25dbd0a0e9bfab6d6d3281e23d84423666c74eeb049b6073999",
+  "src/shrine/OpenField.js": "56374c15d8fe0e0ce0af2448746168bb612522b0a4b0dc51e8cddecdfe71a63d",
+  "src/shrine/ShadowGates.js": "027b2cb59ceadb4d6c22f3d76f4d37ea36e36ac231a1a63a1a841c6c76e02e30",
+  "src/shrine/MirrorGallery.js": "ff3f2222c8cec4958d4acd277b42eead013351d296c76516b3ca554a01b30cfd",
+  "src/shrine/MirrorOptics.js": "bfb62eaaac995005321c131bbb3f4875c9646dd3ed10c1451b8786cd62df370b",
+  "src/shrine/RoomActor.js": "9d951cc2ab273d8e05514205ee35c04ca37a765e554a8d40f557980fcf3ded0b",
+  "src/shrine/DeviceProgress.js": "fb08fc1cc5a7312b08ec61eb352df955d31ba3db6d6d9f8089745e2645a99073",
+  "src/shrine/ShrineProgress.js": "175f86393c1639f2812ff56afe435d6cae35a3a3628e32475f87be1ea98087d3",
+  "tools/check-mirror-gallery.cjs": "fcd4219b7eeb6ebffb87a3d4745f19ef01c1f085bf9c025cf48c4793e9cb6f1a"
+}

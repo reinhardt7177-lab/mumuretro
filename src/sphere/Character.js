@@ -245,15 +245,17 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   function limb(s, hy, rU0, rU1, hU, cU, rL0, rL1, hL, cL, foot) {
     const p = new THREE.Group(); p.position.set(s, hy, 0);
     const u = prism(rU0, rU1, hU, cU, 6); u.position.y = -hU / 2; p.add(u);
-    const lo = prism(rL0, rL1, hL, cL, 6); lo.position.y = -hU - hL / 2 + 0.02; p.add(lo);
+    const knee = new THREE.Group(); knee.position.y = -hU; p.add(knee);
+    const lo = prism(rL0, rL1, hL, cL, 6); lo.position.y = -hL / 2 + 0.02; knee.add(lo);
+    p.userData.lower = knee;
     if (foot) {
       const ff = box(0.15, 0.10, 0.26, foot);
-      ff.position.set(0, -hU - hL - 0.01, 0.05); p.add(ff);
+      ff.position.set(0, -hL - 0.01, 0.05); knee.add(ff);
       const cuff = prism(0.095, 0.085, 0.12, foot, 6);
-      cuff.position.set(0, -hU - hL + 0.09, 0); p.add(cuff);
+      cuff.position.set(0, -hL + 0.09, 0); knee.add(cuff);
     } else {
       const hand = prism(0.058, 0.052, 0.11, cL, 6);
-      hand.position.y = -hU - hL - 0.04; p.add(hand);
+      hand.position.y = -hL - 0.04; knee.add(hand);
     }
     k.add(p); return p;
   }
@@ -262,27 +264,81 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
   const legL = limb( 0.105, 0.74, 0.085, 0.073, 0.36, pants,  0.068, 0.060, 0.32, pants, shoe);
   const legR = limb(-0.105, 0.74, 0.085, 0.073, 0.36, pants,  0.068, 0.060, 0.32, pants, shoe);
 
+  // 측량봉을 펼쳐 만든 씨앗 모양 활공막. 천 세 장과 가는 살대만으로 실루엣을 만든다.
+  // 접힌 동안은 숨겨 두므로 땅 위의 원래 탐사자 실루엣을 유지한다.
+  const glider = new THREE.Group(); glider.name = 'seed-sail';
+  const canvas = toon(0xe8e2d4), leaf = toon(0x8fc4a8);
+  canvas.side = THREE.DoubleSide; leaf.side = THREE.DoubleSide;
+  const ridge = new THREE.Vector3(0, 2.57, 0.05);
+  const rim = [
+    [-1.35, 2.06, -0.12], [-0.82, 2.27, 0.69], [0, 2.36, 0.94],
+    [0.82, 2.27, 0.69], [1.35, 2.06, -0.12], [0, 2.14, -0.80],
+  ].map(v => new THREE.Vector3(...v));
+  function spar(a, b, radius = 0.018) {
+    const delta = b.clone().sub(a);
+    const m = prism(radius, radius, delta.length(), belt, 5);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+    glider.add(m);
+  }
+  for (let i = 0; i < rim.length; i++) {
+    const next = rim[(i + 1) % rim.length];
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute([...ridge, ...rim[i], ...next], 3));
+    geo.computeVertexNormals();
+    glider.add(new THREE.Mesh(geo, i % 3 ? canvas : leaf));
+    spar(ridge, rim[i]); spar(rim[i], next, 0.012);
+  }
+  for (const s of [-1, 1]) {
+    const grip = new THREE.Vector3(s * 0.55, 1.72, 0.11);
+    spar(grip, new THREE.Vector3(s * 1.05, 2.17, 0.29), 0.011);
+    spar(grip, new THREE.Vector3(s * 0.42, 2.23, -0.51), 0.011);
+  }
+  glider.visible = false; k.add(glider);
+
   k.traverse(o => { if (o.isMesh) o.castShadow = true; });
   k.scale.setScalar(KID_H / 1.86);      // 모자 꼭대기 1.86 → 키 1.5로 정규화
   k.userData = { armL, armR, legL, legR, head, scarfTail: tail, skirt, plumb: bobG,
-    walkPhase: 0, anim: 0, bob: 0 };
+    glider, airBlend: 0, glideBlend: 0, breath: 0, walkPhase: 0, anim: 0, bob: 0 };
   return k;
 }
 
 // 사인파 팔다리 애니메이션. 로컬 회전이라 구면 정렬과 무관. bob은 up 방향 → SurfaceActor가 적용.
-export function animateLimbs(k, dt, moving, running) {
+export function animateLimbs(k, dt, moving, running, pose = {}) {
   const u = k.userData;
+  const blend = 1 - Math.exp(-dt * 14);
+  u.airBlend = THREE.MathUtils.lerp(u.airBlend || 0, pose.airborne ? 1 : 0, blend);
+  u.glideBlend = THREE.MathUtils.lerp(u.glideBlend || 0, pose.gliding ? 1 : 0, blend);
+  u.breath = (u.breath || 0) + dt;
   u.anim = THREE.MathUtils.lerp(u.anim, moving ? 1 : 0, Math.min(1, dt * 8));
   u.walkPhase += dt * (running ? 16 : 11) * (moving ? 1 : 0);
   const A = u.anim, sw = Math.sin(u.walkPhase);
   u.legL.rotation.x = sw * 0.7 * A; u.legR.rotation.x = -sw * 0.7 * A;
   u.armL.rotation.x = -sw * 0.55 * A; u.armR.rotation.x = sw * 0.55 * A;
   u.bob = Math.abs(sw) * 0.06 * A;
+  const air = u.airBlend, glide = u.glideBlend, land = pose.landing || 0;
+  const rising = (pose.vy || 0) > 0;
+  u.legL.rotation.x = u.legL.rotation.x * (1 - air) + air * (rising ? -0.52 : 0.17) - land * 0.42;
+  u.legR.rotation.x = u.legR.rotation.x * (1 - air) + air * (rising ? 0.12 : 0.30) - land * 0.42;
+  u.legL.userData.lower.rotation.x = air * 0.5 + land * 0.84;
+  u.legR.userData.lower.rotation.x = air * 0.36 + land * 0.84;
+  u.armL.rotation.x = u.armL.rotation.x * (1 - air) - air * 0.36;
+  u.armR.rotation.x = u.armR.rotation.x * (1 - air) - air * 0.36;
+  u.armL.rotation.z = air * 0.43 + glide * 2.06;
+  u.armR.rotation.z = -u.armL.rotation.z;
+  u.armL.userData.lower.rotation.x = -glide * 0.18;
+  u.armR.userData.lower.rotation.x = -glide * 0.18;
+  u.bob = u.bob * (1 - air) - land * 0.045;
+  k.rotation.x = air * 0.025 + glide * 0.045;
+  u.head.rotation.z = Math.sin(u.breath * 1.8) * 0.012 * (1 - A) * (1 - air);
+  u.glider.visible = !!pose.gliding;
+  u.glider.scale.x = 0.78 + glide * 0.22;
+  u.glider.rotation.z = Math.sin(u.breath * 2.3) * 0.018 * glide;
 
   // 코트 자락 — 달릴수록 뒤로 들린다. 앞자락과 뒷자락이 반대로 움직여야
   // 옷이 몸을 따라오는 것처럼 보인다. 한 방향으로 같이 흔들면 치마가 된다.
   if (u.skirt) {
-    const lift = A * (running ? 0.34 : 0.18);
+    const lift = A * (running ? 0.34 : 0.18) + glide * 0.28;
     for (let i = 0; i < u.skirt.length; i++) {
       const s = u.skirt[i];
       const dir = i === 0 ? 1 : -1;                    // 뒤자락은 뒤로, 앞자락은 앞으로
@@ -306,7 +362,7 @@ export function animateLimbs(k, dt, moving, running) {
   //   “고쳐졌다”고 적을 뻔했다. 자락(skirt)은 뒷자락에 **+lift**를 쓰고 있었다 —
   //   같은 파일 안에 이미 답이 있었다.
   if (u.scarfTail) {
-    const f = A * (running ? 0.26 : 0.13);
+    const f = A * (running ? 0.26 : 0.13) + glide * 0.40;
     const base = [0.46, -0.14, 0.04];             // 누적 0.46 → 0.32 → 0.36
     //   첫 마디로 어깨 두께(뒤 z −0.224)를 넘고, 아래 둘은 다시 세워
     //   등을 타고 흘러내리게 한다. 셋 다 같은 값이면 뻣뻣한 널빤지가 된다.

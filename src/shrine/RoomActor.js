@@ -1,8 +1,8 @@
-// 사당 실내 컨트롤러 — 평면 이동 + 3인칭 카메라.
+// 사당 실내 컨트롤러 — XZ 이동, 선택적인 바닥 높이와 3인칭 카메라.
 //
 // 구면 보행(sphere/)을 실내에 쓰지 않는다. 그건 대원 이동과 평행수송으로 짜여 있어서
 // 평평한 방에서는 전부 낭비이고, 무엇보다 **검증된 코드를 건드리게 된다.**
-// 실내는 XZ 평면 이동이면 충분하다 — 40줄이면 끝난다.
+// 기본 바닥은 y=0이며, 물 회랑은 rects.floorAt/ceilingAt으로 높이를 제공한다.
 import * as THREE from 'three';
 import { animateLimbs } from '../sphere/Character.js';
 import { smoothK } from '../util/math.js';
@@ -33,6 +33,7 @@ export class RoomActor {
     this.camYaw = Math.PI;
     this.freeCam = false;                // 열린 사당 — boot이 켠다
     this._camPlaced = false;
+    this._cameraLookHeight = 1.25;
     // 방 안 장애물(석상 등). 원기둥 하나면 충분하다 — 실내엔 몇 개 없다.
     this.obstacles = [];
     // 얼음 바닥 — 0이면 보통 바닥, 1이면 완전히 미끄럽다. 관문이 켜고 끈다.
@@ -46,8 +47,10 @@ export class RoomActor {
     this.shake = 0;
   }
 
-  setAt(x, z, headingZ = -1) {
-    this.position.set(x, 0, z);
+  floorAt(x, z, y = this.position.y) { return this.rects.floorAt?.(x, z, y) ?? 0; }
+
+  setAt(x, z, headingZ = -1, floorY = 0) {
+    this.position.set(x, this.floorAt(x, z, floorY), z);
     this.vy = 0; this.grounded = true;
     if (this.vel) this.vel.set(0, 0);
     this.heading.set(0, 0, headingZ).normalize();
@@ -82,17 +85,43 @@ export class RoomActor {
   // 벽에 부딪히면 멈추지 않고 **미끄러진다.** 정면으로 막히면 옆으로 흐르게 —
   // 안 그러면 좁은 통로 입구에서 걸려 아이가 "못 지나간다"고 느낀다.
   _move(from, dx, dz) {
-    if (this._walkable(from.x + dx, from.z + dz)) { from.x += dx; from.z += dz; return; }
-    if (this._walkable(from.x + dx, from.z)) { from.x += dx; return; }
-    if (this._walkable(from.x, from.z + dz)) { from.z += dz; return; }
+    const can = (x, z) => this._walkable(x, z) && this.floorAt(x, z, from.y) <= from.y + 0.26;
+    if (can(from.x + dx, from.z + dz)) { from.x += dx; from.z += dz; return; }
+    if (can(from.x + dx, from.z)) { from.x += dx; return; }
+    if (can(from.x, from.z + dz)) { from.z += dz; return; }
   }
 
   // 장애물 밀어내기 — 석상 안으로 걸어 들어가면 즉시 고장으로 읽힌다.
+  //
+  // 모양은 둘이다. 원 하나 `{x,z,r}`, 또는 두 점을 잇는 **캡슐** `{x,z,x2,z2,r}` —
+  // 스핀에서 r 안쪽 전부. 캡슐은 "같은 원을 줄지어 놓은 것"과 바깥 경계가 같다.
+  //
+  // ★ 왜 캡슐이 필요한가. 가로로 긴 콘솔(4.2u)을 원 하나로 막으면 밀려나는 거리가
+  //   손 닿는 거리보다 멀어지므로 **원 셋으로 나눠** 놨었다(간격 1.5, 반지름 0.9).
+  //   그런데 반지름 0.9짜리 둘을 1.5 간격으로 두면 0.3만큼 겹치고, 겹친 자리에는
+  //   바깥쪽으로 **V자 홈**이 생긴다. 그 홈이 이 밀어내기의 **고정점**이다 —
+  //   앞의 원이 뒤의 원 안으로 밀어 넣고 뒤의 원이 도로 제자리로 밀어내서
+  //   한 프레임에 한 번씩만 도는 이 반복문은 **알짜 이동이 정확히 0**이 된다.
+  //   실제로 연구실에서 다이얼 1과 2 사이(x=-0.7693, z=-5.3328)에 끼면 좌표가
+  //   소수점까지 매 프레임 똑같았다. 아이는 다이얼 하나를 맞춘 뒤 옆 다이얼로
+  //   **한 픽셀도 못 갔다.** 홈을 메우는 것이 아니라 **홈이 안 생기게** 해야 한다.
+  //   스핀이 직선인 캡슐은 볼록해서 홈이 없다.
+  //
+  //   반복을 늘리는 것으로는 안 고쳐진다. 두 원이 만나는 점은 자유 공간의 진짜
+  //   오목 모서리라서, 몇 번을 돌려도 거기로 수렴할 뿐이다. 모양을 고쳐야 한다.
   _pushOut(p) {
     for (const o of this.obstacles) {
-      const dx = p.x - o.x, dz = p.z - o.z;
+      let cx = o.x, cz = o.z;
+      if (o.x2 !== undefined) {                     // 캡슐 — 스핀 위 가장 가까운 점
+        const vx = o.x2 - o.x, vz = o.z2 - o.z;
+        const L2 = vx * vx + vz * vz;
+        const t = L2 > 1e-9
+          ? Math.max(0, Math.min(1, ((p.x - o.x) * vx + (p.z - o.z) * vz) / L2)) : 0;
+        cx = o.x + vx * t; cz = o.z + vz * t;
+      }
+      const dx = p.x - cx, dz = p.z - cz;
       const d = Math.hypot(dx, dz);
-      if (d < o.r && d > 1e-6) { p.x = o.x + dx / d * o.r; p.z = o.z + dz / d * o.r; }
+      if (d < o.r && d > 1e-6) { p.x = cx + dx / d * o.r; p.z = cz + dz / d * o.r; }
     }
   }
 
@@ -137,14 +166,23 @@ export class RoomActor {
 
     // 점프 — 레이저 관문에서만 쓰지만 어디서든 뛸 수 있어야 한다.
     // 아이가 "뛰어 보는" 행동을 막으면 세계가 죽은 것처럼 느껴진다.
+    const floor = this.floorAt(this.position.x, this.position.z);
+    if (this.grounded) {
+      if (this.position.y - floor > 0.3) { this.grounded = false; this.vy = 0; }
+      else this.position.y = floor;
+    }
     if (intent.jump && this.grounded) { this.vy = JUMP_V; this.grounded = false; }
     if (!this.grounded) {
       this.vy -= GRAVITY * dt;
       this.position.y += this.vy * dt;
-      if (this.position.y <= 0) { this.position.y = 0; this.vy = 0; this.grounded = true; }
+      const ceiling = this.rects.ceilingAt?.(this.position.x, this.position.z, this.position.y) ?? Infinity;
+      if (this.vy > 0 && this.position.y + 1.65 >= ceiling) {
+        this.position.y = Math.max(floor, ceiling - 1.65); this.vy = 0;
+      }
+      if (this.position.y <= floor) { this.position.y = floor; this.vy = 0; this.grounded = true; }
     }
 
-    animateLimbs(this.body, dt, this.moving, this.running);
+    animateLimbs(this.body, dt, this.moving, this.running, { airborne: !this.grounded, vy: this.vy });
     this.syncMesh();
   }
 
@@ -197,16 +235,26 @@ export class RoomActor {
         if (x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1 && ch > best) best = ch;
       }
       if (best > 0 && best < lo) lo = best;
+      const deck = this.rects.ceilingAt?.(x, z, this.position.y) ?? Infinity;
+      lo = Math.min(lo, deck);
       if (best === 0) break;                      // 밖이면 더 볼 것 없다
     }
     return lo === Infinity ? 0 : lo;
+  }
+
+  lookHeight() {
+    const p = this.position, zone = this.rects.cameraLookHeightZones?.find(r => p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1);
+    return zone?.lookHeight ?? 1.25;
   }
 
   updateCamera(camera, input, dt) {
     this.camYaw += input.consumeYaw();
     let pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
     const dist = Math.max(3.2, Math.min(6.5, input.camDist));
-    const target = _tgt.copy(this.position).setY(this.position.y + 1.25);
+    const wantedHeight = this.lookHeight();
+    this._cameraLookHeight = this._camPlaced
+      ? this._cameraLookHeight + (wantedHeight - this._cameraLookHeight) * smoothK(0.0009, dt) : wantedHeight;
+    const target = _tgt.copy(this.position).setY(this.position.y + this._cameraLookHeight);
 
     // ★ 천장이 낮으면 **거리를 줄이지 말고 각도를 낮춘다.**
     //
@@ -223,7 +271,7 @@ export class RoomActor {
     const hx = Math.sin(this.camYaw), hz = Math.cos(this.camYaw);
     const ceil = this._ceilBehind(target, hx, hz, dist);
     if (ceil > 0) {
-      const room = ceil - CEIL_PAD - (target.y - this.position.y);
+      const room = ceil - CEIL_PAD - target.y;
       const maxSin = Math.max(0, room) / dist;
       if (maxSin < Math.sin(pitch)) pitch = Math.max(0.12, Math.asin(Math.min(1, maxSin)));
     }
@@ -241,8 +289,38 @@ export class RoomActor {
     const camDist = Math.max(1.4, dist * t);      // 너무 붙으면 캐릭터 안이 보인다
     const desired = _des.copy(target).addScaledVector(dir, camDist);
 
+    // 입체 회랑의 옆면은 기존 사각형 경계만으로 알 수 없다. 실제 메시로 시선 충돌을 푼다.
+    const occluders = this.rects.cameraOccluders;
+    const avoid = p => {
+      if (!occluders) return;
+      _rayDir.subVectors(p, target); const length = _rayDir.length();
+      if (length < 0.01) return;
+      _ray.set(target, _rayDir.divideScalar(length)); _ray.far = length + 0.25;
+      const visible = occluders.filter(m => { for (let o = m; o; o = o.parent) if (!o.visible) return false; return true; });
+      for (const m of visible) m.updateWorldMatrix(true, false);
+      const hit = _ray.intersectObjects(visible, false)[0];
+      // 벽 바로 앞에서는 0.6u 최소 거리도 벽 너머가 된다. 충돌면 앞의 여유를 우선한다.
+      if (hit) p.copy(target).addScaledVector(_rayDir, Math.max(0.12, hit.distance - 0.35));
+    };
+    avoid(desired);
+    // 열린 회랑과 그 연결 다리에서는 장치 뒤로 카메라가 끼면 위로 돌아본다.
+    // 이동 등불이 다리의 시선을 가릴 때도 같은 후퇴 거리를 확보한다.
+    const lift = [...(this.rects.cameraLiftZones || []), this.rects.cameraLiftZone].find(zone => zone
+      && this.position.x >= zone.x0 - dist && this.position.x <= zone.x1 + dist
+      && this.position.z >= zone.z0 - dist && this.position.z <= zone.z1 + dist);
+    if (lift && desired.distanceTo(target) < dist * 0.85) {
+      for (const angle of [0.72, 0.95, 1.2]) {
+        _lift.copy(target).add(new THREE.Vector3(hx * Math.cos(angle), Math.sin(angle), hz * Math.cos(angle)).multiplyScalar(dist));
+        if (!this._inside(_lift)) continue;
+        avoid(_lift);
+        if (_lift.distanceTo(target) > desired.distanceTo(target)) desired.copy(_lift);
+        if (desired.distanceTo(target) >= dist * 0.85) break;
+      }
+    }
+
     if (!this._camPlaced) { camera.position.copy(desired); this._camPlaced = true; }
     else camera.position.lerp(desired, smoothK(0.0009, dt));
+    avoid(camera.position);
 
     if (this.shake > 0.001) {
       const a = this.shake;
@@ -264,3 +342,5 @@ const _Y = new THREE.Vector3(0, 1, 0);
 const _fwd = new THREE.Vector3(), _right = new THREE.Vector3(), _move = new THREE.Vector3();
 const _dir = new THREE.Vector3(), _tgt = new THREE.Vector3(), _des = new THREE.Vector3();
 const _probe = new THREE.Vector3();
+const _lift = new THREE.Vector3();
+const _ray = new THREE.Raycaster(), _rayDir = new THREE.Vector3();

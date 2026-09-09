@@ -2,6 +2,7 @@
 // 카메라는 자체 접선 forward(camFwd)를 유지: 플레이어 이동 시 평행수송, 드래그 시 up축 회전. 극점에서도 롤 없음.
 import * as THREE from 'three';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
+import { quality } from '../render/Quality.js';
 import { orthonormalizeHeading } from '../sphere/SurfaceTransform.js';
 import { smoothK } from '../util/math.js';
 import { LIGHT, SKY as SKY_C, INTENSITY, FOG_DENSITY, SUN_ELEV_DEG, SUN_AZIM_DEG } from '../data/lighting.js';
@@ -9,6 +10,7 @@ import { LIGHT, SKY as SKY_C, INTENSITY, FOG_DENSITY, SUN_ELEV_DEG, SUN_AZIM_DEG
 const SKY = SKY_C.horizon;   // 배경·안개는 반드시 하늘 지평선 색과 같아야 한다(§3)
 const _ray = new THREE.Raycaster();
 const _camOff = new THREE.Vector3();
+const _ground = new THREE.Vector3();
 // 태양 방향 계산용 — 매 프레임 할당하지 않는다
 const _WY = new THREE.Vector3(0, 1, 0), _WX = new THREE.Vector3(1, 0, 0);
 const _east = new THREE.Vector3(), _north = new THREE.Vector3(), _sunDir = new THREE.Vector3();
@@ -26,8 +28,12 @@ const horizonDist = (R, h = CAM_HEIGHT) => Math.sqrt(2 * R * h);
 
 export class Engine {
   constructor(canvas, planetR) {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    // ★ antialias를 껐다. **켜도 아무 데도 안 쓰인다** — 이 게임은 항상 컴포저를
+    //   거치므로 씬은 렌더 타깃(samples=0)에 그려지고, 기본 프레임버퍼에는 마지막
+    //   전체화면 사각형 하나만 그린다. 사각형에 MSAA를 걸어 봐야 얻는 게 없다.
+    //   태블릿에서는 그 MSAA 버퍼 자체가 대역폭과 메모리를 먹는다.
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    renderer.setPixelRatio(quality.pixelRatio);
     renderer.setSize(innerWidth, innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     // 톤매핑 — NoToneMapping이면 밝은 곳이 그냥 잘려서(clip) 색이 물 빠져 보인다.
@@ -39,8 +45,9 @@ export class Engine {
     // 노출 1.0 — 구버전 1.1은 평균 휘도를 0.519까지 밀어 화면이 떠 보였다(§2 표).
     // 대신 광원 강도를 올려 형태 대비는 유지한다.
     renderer.toneMappingExposure = 1.0;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = quality.get('shadow') > 0;
+    // PCFSoft는 그림자 한 점마다 표본을 여러 번 뜬다. 낮은 단수에서는 PCF로 내린다.
+    renderer.shadowMap.type = quality.get('soft') ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.renderer = renderer;
     // 외곽선 — 굵으면 화면이 색칠공부처럼 된다. 레퍼런스(로우폴리 툰)는 외곽선이 아예 없고
     // 평면 셰이딩과 조명만으로 형태를 읽힌다. 완전히 빼면 실루엣이 뭉개지므로
@@ -72,8 +79,9 @@ export class Engine {
     this.hemi = new THREE.HemisphereLight(LIGHT.air, 0x8a8560, INTENSITY.hemi);
     scene.add(this.hemi);
     const sun = new THREE.DirectionalLight(LIGHT.sun, INTENSITY.sun);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.castShadow = quality.get('shadow') > 0;
+    const sm = quality.get('shadow') || 1024;
+    sun.shadow.mapSize.set(sm, sm);
     // 범위를 절대값으로 상한 → 2048맵 기준 텍셀 밀도가 R과 무관하게 최소 25 texel/u 유지.
     // (planetR*0.8을 그대로 쓰면 R=136에서 9 texel/u로 떨어져 근거리 그림자가 뭉갠다.)
     const s = Math.min(planetR * 0.8, SHADOW_EXTENT_MAX);
@@ -99,11 +107,31 @@ export class Engine {
     this.camColliders = [];   // 카메라가 파고들지 않게 raycast할 근처 건물 메시(boot가 매 틱 갱신)
     this._inited = false;
 
-    addEventListener('resize', () => {
-      renderer.setSize(innerWidth, innerHeight);
-      this.camera.aspect = innerWidth / innerHeight;
-      this.camera.updateProjectionMatrix();
+    // ★ 여기서 **후처리 크기를 안 맞춰 주고 있었다.** 컴포저 렌더 타깃은 만들 때
+    //   크기로 굳으므로, 창이 바뀌면(태블릿 회전·주소창 접힘·전체 화면) 화면과
+    //   버퍼 크기가 어긋난 채로 남는다. 늘어나거나 흐려 보이는 것이 그것이다.
+    addEventListener('resize', () => this.applySize());
+    // 화질 단수가 바뀌면 픽셀비·그림자를 다시 건다(스스로 내려갈 때 쓴다).
+    quality.onChange((t) => {
+      renderer.shadowMap.enabled = t.shadow > 0;
+      renderer.shadowMap.type = t.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+      this.sun.castShadow = t.shadow > 0;
+      if (t.shadow > 0) this.sun.shadow.mapSize.set(t.shadow, t.shadow);
+      // 그림자맵 크기를 바꾸면 이미 만든 타깃을 버려야 새 크기로 다시 만든다.
+      if (this.sun.shadow.map) { this.sun.shadow.map.dispose(); this.sun.shadow.map = null; }
+      this.applySceneShadows();
+      this.applySize();
     });
+  }
+
+  // 픽셀비 · 캔버스 · 카메라 · 후처리 버퍼를 한 자리에서 맞춘다.
+  // 넷이 따로 놀면 반드시 하나가 낡은 채로 남는다.
+  applySize() {
+    this.renderer.setPixelRatio(quality.pixelRatio);
+    this.renderer.setSize(innerWidth, innerHeight);
+    this.camera.aspect = innerWidth / innerHeight;
+    this.camera.updateProjectionMatrix();
+    if (this.post) this.post.setSize(innerWidth, innerHeight);
   }
 
   // 플레이어 이동/시점에 맞춰 카메라 + camFwd 갱신. step 내부에서 호출(결정론 보장).
@@ -118,10 +146,13 @@ export class Engine {
     orthonormalizeHeading(this.camFwd, up);
     this.camRight.crossVectors(up, this.camFwd).normalize();   // 화면 오른쪽 = up × forward
 
-    const pitch = input.camPitch, dist = input.camDist;
+    const pitch = input.camPitch, dist = input.camDist + (player.gliding ? 1.0 : 0);
     // 플레이어→카메라 방향: camFwd 뒤쪽 + up 방향으로 들어올림
     const dir = this.camFwd.clone().multiplyScalar(-Math.cos(pitch)).addScaledVector(up, Math.sin(pitch)).normalize();
-    const target = player.position.clone().addScaledVector(up, this.lookHeight);
+    const foot = player.getFootPosition ? player.getFootPosition(_ground) : _ground.copy(player.position);
+    const lift = foot.length() - player.position.length();
+    this._cameraLift = this._camPlaced ? THREE.MathUtils.lerp(this._cameraLift || 0, lift, 1 - Math.exp(-12 * dt)) : lift;
+    const target = player.position.clone().addScaledVector(up, this.lookHeight + this._cameraLift);
     let camDist = dist;
 
     // 카메라 충돌 — 시선표적→희망카메라 사이에 건물이 있으면 그 앞으로 당김(파고듦 방지). town.html:294 패턴.
@@ -132,9 +163,20 @@ export class Engine {
       if (hit.length) camDist = Math.max(2.5, hit[0].distance - 0.5);
     }
     const desired = target.clone().addScaledVector(dir, camDist);
+    // 능선을 등지고 활공할 때 카메라가 뒤쪽 언덕 속으로 들어가지 않게 한다.
+    if (player.planet?.surfaceAt) {
+      player.planet.surfaceAt(_ground.copy(desired).normalize(), _ground);
+      if (desired.length() < _ground.length() + 0.8) desired.setLength(_ground.length() + 0.8);
+    }
 
     if (!this._camPlaced) { this.camera.position.copy(desired); this._camPlaced = true; }
     else this.camera.position.lerp(desired, smoothK(0.0008, dt));
+    if (player.planet?.surfaceAt) {
+      player.planet.surfaceAt(_ground.copy(this.camera.position).normalize(), _ground);
+      if (this.camera.position.length() < _ground.length() + 0.8) this.camera.position.setLength(_ground.length() + 0.8);
+    }
+    const fov = THREE.MathUtils.lerp(this.camera.fov, player.gliding ? 68 : 62, 1 - Math.exp(-3 * dt));
+    if (Math.abs(fov - this.camera.fov) > 0.001) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
     this.camUp.lerp(up, smoothK(0.0001, dt));
     if (this.camUp.lengthSq() > 1e-9) this.camUp.normalize();
@@ -163,13 +205,33 @@ export class Engine {
   }
 
   // 후처리를 붙이면 컴포저가 외곽선 패스까지 감싸서 그린다. 없으면 기존 경로 그대로.
-  attachPost(post) { this.post = post; }
+  attachPost(post) { this.post = post; this.applySize(); }
 
   // 사당 안팎 전환. 배경·안개는 씬마다 다르므로 씬 자신이 들고 있고, 여기선 갈아 끼우기만 한다.
-  setScene(scene) { this.scene = scene; }
+  setScene(scene) { this.scene = scene; this.applySceneShadows(); }
+
+  // 사당의 태양도 현재 화질을 따른다. 아직 방문하지 않은 씬은 입장할 때 맞춘다.
+  applySceneShadows() {
+    const size = quality.get('shadow');
+    if (!size) return;
+    this.scene.traverse(light => {
+      if (!light.isLight || !light.castShadow || !light.shadow) return;
+      if (light.shadow.mapSize.x === size && light.shadow.mapSize.y === size) return;
+      light.shadow.mapSize.set(size, size);
+      if (light.shadow.map) { light.shadow.map.dispose(); light.shadow.map = null; }
+    });
+  }
+
+  // 외곽선은 씬을 **한 번 더** 그린다(안쪽 껍데기를 뒤집어 키운 것). 태블릿 실측으로
+  // 그리기 호출 151번·삼각형 104k·화면 한 장어치 픽셀이 여기서 나간다.
+  // 가장 낮은 단수에서만 뺀다 — 실루엣이 뭉개지므로 마지막에 버릴 것이다.
+  drawScene() {
+    if (quality.get('outline')) this.outline.render(this.scene, this.camera);
+    else this.renderer.render(this.scene, this.camera);
+  }
 
   render() {
     if (this.post && this.post.enabled) this.post.render();
-    else this.outline.render(this.scene, this.camera);
+    else this.drawScene();
   }
 }

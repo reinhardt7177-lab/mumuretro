@@ -721,16 +721,52 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
     sites.push(site);
   }
 
-  // 다시 난다 — 자리는 그대로, **문제만 새로 섞인다.**
-  const regrow = (site) => {
+  // 저장된 씨앗으로도 같은 채집 문제를 재구성할 수 있다.
+  const replaceSite = (site, seed) => {
     const i = sites.indexOf(site);
     if (i < 0) return;
     scene.remove(site.group);
     site.group.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
     for (let k = blocks.length - 1; k >= 0; k--) if (blocks[k].site === site.id) blocks.splice(k, 1);
-    // 새 씨앗 — 같은 자리라도 답이 달라진다
-    const seed = (site.seed * 7919 + seedTick++ * 104729) % 2147483647;
     sites[i] = raise(site.kind, site.dir, seed, site.id, site.beastId);
+    return sites[i];
+  };
+  // 다시 난다 — 자리는 그대로, **문제만 새로 섞인다.**
+  const regrow = (site) => {
+    const seed = (site.seed * 7919 + seedTick++ * 104729) % 2147483647;
+    replaceSite(site, seed);
+  };
+
+  const foundKeys = [...KINDS.map((k) => k.id), ...LEGEND.map((k) => k.id)];
+  const bagKeys = [...foundKeys, ...BEASTS.map((b) => `meat_${b.id}`)];
+  const count = (v) => Number.isInteger(v) && v >= 0 && v <= 999999 ? v : 0;
+  const record = (keys, source, read) => Object.fromEntries(keys.map((key) => [key, read(source?.[key])]));
+  const updateTrap = (s, dt) => {
+    const t = s.trap;
+    if (!t.set) return;
+    t.t += dt;
+    const right = t.set === s.beast.eats;
+    if (right && !t.caught && t.t >= TRAP_WAIT - APPROACH) {
+      const k = Math.min(1, (t.t - (TRAP_WAIT - APPROACH)) / APPROACH);
+      const p2 = s.at(-6.0 + k * 8.7, 0);
+      t.beastG.visible = true;
+      const gy = groundY(s.group, p2.x, p2.z);
+      const hop = s.beast.id === 'rabbit' ? 0.24 : s.beast.id === 'chicken' ? 0.07 : 0.09;
+      const rate = s.beast.id === 'rabbit' ? 15 : s.beast.id === 'chicken' ? 34 : 22;
+      t.beastG.position.set(p2.x, gy + Math.abs(Math.sin(k * rate)) * hop, p2.z);
+      t.beastG.rotation.y = s.A + Math.PI;
+    }
+    if (t.t >= TRAP_WAIT && !t.done) {
+      t.done = true; t.caught = right;
+      t.crate.rotation.x = 0;
+      t.stick.rotation.set(0.16, 0, 1.45); t.stick.position.set(0.85, 0.24, 0.5);
+      t.baitM.visible = false; t.beastG.visible = false; t.stuck.visible = right;
+    }
+    if (t.caught) {
+      t.wob += dt * 5.5;
+      t.crate.rotation.z = Math.sin(t.wob) * 0.045;
+      t.crate.rotation.x = Math.abs(Math.sin(t.wob * 0.7)) * 0.05;
+    }
   };
 
   // ── 판정 ─────────────────────────────────────────────────────────────────
@@ -795,6 +831,63 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
 
   return {
     sites, bag, found, caught, blocks, resolve,
+    exportState() {
+      return {
+        version: 1,
+        bag: record(bagKeys, bag, count),
+        found: record(foundKeys, found, (v) => v === true),
+        caught: record(BEASTS.map((b) => b.id), caught, count),
+        seedTick,
+        sites: sites.map((s) => ({
+          id: s.id, seed: s.seed, regrowT: s.regrowT,
+          ...(s.trap ? { trap: { set: s.trap.set, t: Math.min(TRAP_WAIT, s.trap.t),
+            done: s.trap.done, caught: s.trap.caught } }
+            : { taken: s.cands.map((c) => !!c.taken) }),
+        })),
+      };
+    },
+    importState(saved) {
+      if (!saved || saved.version !== 1 || Array.isArray(saved)) return false;
+      for (const key of bagKeys) bag[key] = count(saved.bag?.[key]);
+      for (const key of foundKeys) found[key] = saved.found?.[key] === true;
+      for (const b of BEASTS) caught[b.id] = count(saved.caught?.[b.id]);
+      seedTick = Number.isInteger(saved.seedTick) && saved.seedTick >= 1 && saved.seedTick <= 2147483646
+        ? saved.seedTick : 1;
+      const knownIds = new Set(sites.map((s) => s.id));
+      const entries = new Map();
+      for (const entry of Array.isArray(saved.sites) ? saved.sites.slice(0, sites.length) : []) {
+        if (entry && typeof entry.id === 'string' && knownIds.has(entry.id) && !entries.has(entry.id))
+          entries.set(entry.id, entry);
+      }
+      for (let site of [...sites]) {
+        const entry = entries.get(site.id);
+        if (!entry) continue;
+        if (Number.isInteger(entry.seed) && entry.seed >= 0 && entry.seed <= 2147483646 && entry.seed !== site.seed)
+          site = replaceSite(site, entry.seed);
+        if (!site.trap) {
+          const taken = Array.isArray(entry.taken) && entry.taken.length === site.cands.length ? entry.taken : [];
+          site.cands.forEach((c, i) => {
+            c.taken = c.ok && taken[i] === true;
+            if (c.grp) c.grp.visible = !c.taken;
+          });
+          site.regrowT = site.cands.some((c) => c.taken)
+            ? (Number.isFinite(entry.regrowT) && entry.regrowT > 0 && entry.regrowT <= REGROW ? entry.regrowT : REGROW) : -1;
+          continue;
+        }
+        const t = site.trap, savedTrap = entry.trap;
+        t.set = typeof savedTrap?.set === 'string' && site.dishes.some((d) => d.kind === savedTrap.set) ? savedTrap.set : null;
+        t.t = t.set && Number.isFinite(savedTrap?.t) ? Math.max(0, Math.min(TRAP_WAIT, savedTrap.t)) : 0;
+        if (t.set && savedTrap.done === true) t.t = TRAP_WAIT;
+        t.done = false; t.caught = false; t.wob = 0;
+        t.crate.rotation.set(-0.62, 0, 0);
+        t.stick.rotation.set(0.16, 0, 0); t.stick.position.set(0, 0.7, 0.62);
+        t.stuck.visible = false; t.beastG.visible = false; t.baitM.visible = !!t.set;
+        if (t.set) t.baitM.material.color.set({ fruit: 0xb8402c, mushroom: 0xb9663f, herb: 0x6f9c52, salt: 0xcfe3ea }[t.set]);
+        for (const d of site.dishes) d.mark.visible = d.kind !== t.set;
+        updateTrap(site, 0);       // 경과시간에 맞춰 오는 짐승·내려앉은 상자까지 복구한다.
+      }
+      return true;
+    },
     at: siteAt,
     // ★ 검사용 — 만질 것과 그 손 닿는 거리. 연구실이 검사 I에서 쓰는 것과 같은 꼴이다.
     //   덫에 충돌체를 다는 순간 밀려나는 거리(1.15+0.32)가 손(1.4)보다 커져
@@ -816,41 +909,7 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
           s.regrowT -= dt;
           if (s.regrowT <= 0) { regrow(s); continue; }
         }
-        if (s.kind !== 'meat' || !s.trap.set) continue;
-        const t = s.trap;
-        t.t += dt;
-        const right = t.set === s.beast.eats;
-        // ★ 시간만 흐르고 결과만 바뀌면 그건 타이머지 사냥이 아니다.
-        //   맞는 미끼면 마지막 7초 동안 **길을 따라 걸어 들어온다.**
-        if (right && !t.caught && t.t >= TRAP_WAIT - APPROACH) {
-          const k = Math.min(1, (t.t - (TRAP_WAIT - APPROACH)) / APPROACH);
-          const u = -6.0 + k * 8.7;                   // 길 밖에서 제단까지
-          const p2 = s.at(u, 0);
-          t.beastG.visible = true;
-          // 상자 밑으로 들어가는 것이므로 끝까지 땅을 걷는다. 마지막엔 상자 그늘로.
-          const gy = groundY(s.group, p2.x, p2.z);
-          // 짐승마다 걸음이 다르다 — 토끼는 뛰고, 닭은 종종거리고, 나머지는 걷는다
-          const hop = s.beast.id === 'rabbit' ? 0.24 : s.beast.id === 'chicken' ? 0.07 : 0.09;
-          const rate = s.beast.id === 'rabbit' ? 15 : s.beast.id === 'chicken' ? 34 : 22;
-          t.beastG.position.set(p2.x, gy + Math.abs(Math.sin(k * rate)) * hop, p2.z);
-          t.beastG.rotation.y = s.A + Math.PI;
-        }
-        if (t.t >= TRAP_WAIT && !t.done) {
-          t.done = true;
-          t.caught = right;
-          // ★ 발동은 **모양으로** 보여야 한다. 상자가 내려앉고 받침이 쓰러진다.
-          t.crate.rotation.x = 0;
-          t.stick.rotation.set(0.16, 0, 1.45); t.stick.position.set(0.85, 0.24, 0.5);
-          t.baitM.visible = false;
-          t.beastG.visible = false;
-          t.stuck.visible = right;                    // 꼬리와 귀만 삐져나온다
-        }
-        // 걸린 상자는 조금씩 흔들린다 — 안에 살아 있는 게 있다는 유일한 신호다
-        if (t.caught) {
-          t.wob += dt * 5.5;
-          t.crate.rotation.z = Math.sin(t.wob) * 0.045;
-          t.crate.rotation.x = Math.abs(Math.sin(t.wob * 0.7)) * 0.05;
-        }
+        if (s.kind === 'meat') updateTrap(s, dt);
       }
     },
 

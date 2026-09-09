@@ -11,7 +11,7 @@
 //     여기서는 구를 셀로 나눠 셀마다 인스턴스를 만든다 — 등 뒤 셀은 통째로 빠진다.
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
-import { LIGHT } from '../data/lighting.js';
+import { LIGHT, FOLIAGE as PALETTE } from '../data/lighting.js';
 import { fbm } from '../util/noise.js';
 
 // 구를 나누는 셀 — 위도 4띠 × 경도 6구간 = 24셀.
@@ -59,19 +59,11 @@ const DENSITY = {
   bare:   { tree: 0,     rock: 0,     bush: 0 },
 };
 
-const PALETTE = {
-  trunk:     0x6b5138,
-  canopy:    [0x5f8a45, 0x6d9a4c, 0x537a3d, 0x7aa455],
-  canopyDry: [0x8a9450, 0x9aa05c],
-  rock:      [0x8a8b90, 0x7a7b82, 0x9a9aa0],
-  bush:      [0x5a7f42, 0x66894a, 0x4e7038],
-};
-
 // ── 지오메트리 ──────────────────────────────────────────────────────────────
 // 전부 한 번만 만들어 모든 셀이 공유한다. 로우폴리라 하나하나가 20~60삼각형이다.
 
-// 나무 — 원기둥 줄기 + 원뿔 3단. 실루엣이 이 게임에서 가장 큰 식생 요소다.
-// 3단으로 나누는 이유: 원뿔 하나는 크리스마스 트리로 읽히고, 3단이면 수관이 된다.
+// 나무 — 원뿔 층 대신 서로 포개진 세 덩어리. 넓은 수관/위로 자란 수관 두 벌을 공유한다.
+// 덩어리는 각 20삼각형이고 부드러운 법선만 사용하므로 인스턴스나 셀 수는 늘지 않는다.
 // ★ 줄기가 1.5u뿐이라 수관 밑동이 y=0.88이었다. 캐릭터 키가 1.5u이므로
 //   **나무 밑을 지나갈 수 없었다** — 숲이 통과 불가능한 벽이 됐다(실사용 확인).
 //   줄기를 3.0u로 늘려 수관 밑동을 y=2.2로 올린다. 머리 위로 지나간다.
@@ -82,12 +74,20 @@ function treeGeo(seed) {
   const trunk = new THREE.CylinderGeometry(0.16, 0.26, 3.0, 5);
   trunk.translate(0, 1.5, 0);
   parts.push({ geo: trunk, kind: 'trunk' });
-  const tiers = seed % 2
-    ? [{ r: 1.30, h: 1.80, y: 3.10 }, { r: 1.00, h: 1.50, y: 4.20 }, { r: 0.62, h: 1.20, y: 5.10 }]
-    : [{ r: 1.45, h: 1.60, y: 2.90 }, { r: 1.08, h: 1.40, y: 3.90 }, { r: 0.60, h: 1.10, y: 4.80 }];
-  for (const t of tiers) {
-    const g = new THREE.ConeGeometry(t.r, t.h, 6);
-    g.translate(0, t.y, 0);
+  const lobes = seed % 2
+    ? [{ x: -0.55, y: 3.35, z: 0.05, r: 1.38, h: 0.96, d: 1.18 },
+       { x: 0.60, y: 3.70, z: -0.18, r: 1.42, h: 1.04, d: 1.25 },
+       { x: -0.08, y: 4.48, z: 0.10, r: 1.28, h: 1.12, d: 1.14 }]
+    : [{ x: -0.35, y: 3.34, z: -0.10, r: 1.26, h: 0.94, d: 1.12 },
+       { x: 0.38, y: 4.00, z: 0.14, r: 1.25, h: 1.08, d: 1.05 },
+       { x: -0.15, y: 4.80, z: -0.02, r: 0.95, h: 1.00, d: 0.91 }];
+  for (const t of lobes) {
+    const g = new THREE.IcosahedronGeometry(1, 0);
+    // 같은 좌표는 같은 법선. 면 수를 늘리지 않고 둥근 잎 덩어리로 빛을 받는다.
+    g.attributes.normal.copy(g.attributes.position);
+    g.normalizeNormals();
+    g.scale(t.r, t.h, t.d);
+    g.translate(t.x, t.y, t.z);
     parts.push({ geo: g, kind: 'canopy' });
   }
   return parts;
@@ -197,6 +197,23 @@ export function buildScatter(scene, planet, opts = {}) {
     rockA: rockGeo(3), rockB: rockGeo(11),
     bush: bushGeo(),
   };
+  // 시각 메시의 윗부분에 기울기 여유를 더한 보수적인 충돌 높이.
+  // 지상 반경은 이전과 같고, 발이 이 높이보다 위에 있을 때만 지나갈 수 있다.
+  const heightOf = (keys, tilt) => {
+    let height = 0;
+    for (const key of keys) {
+      geos[key].computeBoundingBox();
+      const b = geos[key].boundingBox;
+      const radius = Math.hypot(Math.max(Math.abs(b.min.x), Math.abs(b.max.x)),
+        Math.max(Math.abs(b.min.z), Math.abs(b.max.z)));
+      height = Math.max(height, b.max.y + radius * Math.sin(tilt / 2));
+    }
+    return height;
+  };
+  const collisionHeights = {
+    tree: heightOf(['trunk', 'canopyA', 'canopyB'], 0.10),
+    rockA: heightOf(['rockA'], 0.6), rockB: heightOf(['rockB'], 0.6),
+  };
 
   // ★ toonShared를 쓰면 안 된다. 캐시 키가 색+옵션이라 0xffffff를 세 번 부르면
   //   수관·바위·덤불이 **같은 머티리얼 인스턴스**를 받는다. 거기에 종류별로 다른 바람을
@@ -205,9 +222,9 @@ export function buildScatter(scene, planet, opts = {}) {
   //   갈색 머티리얼 × 갈색 인스턴스색 = 거의 검정이 된다(줄기가 새까맣게 나온 원인).
   const mats = {
     trunk:  toon(0xffffff),
-    canopy: toon(0xffffff),
-    rock:   toon(0xffffff),
-    bush:   toon(0xffffff),
+    canopy: toon(0xffffff, { rim: 0.10 }),
+    rock:   toon(0xffffff, { rim: 0.05 }), // 바위 지오메트리의 면 법선을 쓴다.
+    bush:   toon(0xffffff, { rim: 0.06 }),
   };
   mats.bush.userData.outlineParameters = { visible: false };
   injectWind(mats.canopy, 0.16, uTime);   // 수관도 흔들려야 한다. 풀만 흔들리면 나무가 말뚝이 된다
@@ -272,16 +289,17 @@ export function buildScatter(scene, planet, opts = {}) {
       const b = rnd() < 0.5;
       const sz = 0.80 + rnd() * 0.60;   // 전체 4.6~8.4u = 캐릭터(1.5u)의 3~5.6배
       place(cell, 'trunk', sz, 0.10, col.set(PALETTE.trunk));
-      colliders.push({ dir: dir.clone(), r: 0.26 * sz + 0.06 });   // 줄기 밑동 반경
+      colliders.push({ dir: dir.clone(), r: 0.26 * sz + 0.06, height: collisionHeights.tree * sz });
       const pal = h > 5.5 ? PALETTE.canopyDry : PALETTE.canopy;
       place(cell, b ? 'canopyA' : 'canopyB', sz, 0.10,
         col.set(pal[Math.floor(rnd() * pal.length)]).multiplyScalar(0.88 + rnd() * 0.24));
       counts.tree++;
     } else if (roll < d.tree + d.rock) {
       const rsz = 0.5 + rnd() * 1.5;
-      place(cell, rnd() < 0.5 ? 'rockA' : 'rockB', rsz, 0.6,
+      const rockKind = rnd() < 0.5 ? 'rockA' : 'rockB';
+      place(cell, rockKind, rsz, 0.6,
         col.set(PALETTE.rock[Math.floor(rnd() * PALETTE.rock.length)]).multiplyScalar(0.85 + rnd() * 0.3));
-      colliders.push({ dir: dir.clone(), r: 0.52 * rsz });
+      colliders.push({ dir: dir.clone(), r: 0.52 * rsz, height: collisionHeights[rockKind] * rsz });
       counts.rock++;
     } else if (roll < d.tree + d.rock + d.bush) {
       place(cell, 'bush', 0.6 + rnd() * 0.8, 0.15,
@@ -336,11 +354,12 @@ export function buildScatter(scene, planet, opts = {}) {
   // 셀프테스트가 구면 보행 코어만 재려면 충돌을 잠깐 꺼야 한다 —
   // 충돌이 있는 세계에서 "직진하면 제자리로 돌아온다"는 성립하지 않는다.
   const api = { enabled: true };
-  const resolve = (position, playerR = 0.32) => {
+  const resolve = (position, playerR = 0.32, footHeight = 0) => {
     if (!api.enabled) return 0;
     _up.copy(position).normalize();
     let hit = 0;
     for (const c of colliders) {
+      if (footHeight > c.height + 0.10) continue;
       const cosA = _up.dot(c.dir);
       if (cosA <= 0) continue;                       // 행성 반대편
       const need = (c.r + playerR) / R;

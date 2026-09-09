@@ -33,7 +33,8 @@ export class SurfaceActor {
     // ── 점프 ──────────────────────────────────────────────────────────────
     // position은 항상 "지면 위 점"으로 유지하고, 점프 높이는 별도로 들고 간다.
     // 이렇게 하면 배달 사거리·구역 판정·수평선 컬링 등 각도 기반 로직이 점프에 흔들리지 않고,
-    // 시각적으로만 body가 up 방향으로 떠오른다(카메라도 따라 튀지 않아 3인칭에서 자연스럽다).
+    // 지면의 반지름이 바뀌어도 실제 발 고도(position.length + jumpH)는 보존한다.
+    // 계곡 위에서 지형을 따라 내려앉지 않으며 카메라는 getFootPosition을 따른다.
     this.jumpH = 0;                // 지면 위 높이(월드 단위)
     this.vy = 0;                   // 반지름 방향 속도
     this.jumpSpeed = 8.2;          // 도약 초속 → 최고점 ≈ vy²/(2g) ≈ 1.5u(플레이어 키만큼)
@@ -48,6 +49,10 @@ export class SurfaceActor {
     this.canClimb = false;         // 벽 오르기 해금 시 true → 제한 무시
     this.canGlide = false;         // 활공 해금
     this.gliding = false;
+    this.glideSpeed = 8.4;
+    this.glideFallSpeed = 1.65;
+    this.landingImpact = 0;
+    this.landed = false;
 
     // 건물 충돌 — [{pos, r}]. boot이 근처 것만 주기적으로 채운다(전체 검사는 낭비).
     this.colliders = [];
@@ -80,6 +85,7 @@ export class SurfaceActor {
   }
 
   setLatLon(latDeg, lonDeg) {
+    this.resetTraversal();
     this.position.copy(this.planet.latLonToPos(latDeg, lonDeg));
     this.planet.projectToSurface(this.position);
     this._initFrame();
@@ -96,7 +102,8 @@ export class SurfaceActor {
 
   // moveDir: 접선 단위벡터(월드). 이동 후 heading을 moveDir로 회전.
   move(moveDir, dt) {
-    const dist = (this.running ? this.speed * this.runMul : this.speed) * dt;
+    const dist = (this.gliding ? this.glideSpeed : this.running ? this.speed * this.runMul : this.speed) * dt;
+    const airborne = this.airborne, footRadius = this.position.length() + this.jumpH;
     this.up.copy(this.position).normalize();
 
     let dir = moveDir;
@@ -117,6 +124,10 @@ export class SurfaceActor {
     moveOnSphere(this.position, this.heading, dir, dist, this.planet, this);
     this.up.copy(this.position).normalize();
     this.resolveCollisions();
+    if (airborne) {
+      this.jumpH = footRadius - this.position.length();
+      if (this.jumpH <= 0) this._land();
+    }
     turnHeading(this.heading, dir, this.up, this.turnRate * dt);
   }
 
@@ -145,6 +156,7 @@ export class SurfaceActor {
     this.jumpsLeft--;
     this.vy = this.jumpSpeed;
     this.gliding = false;         // 점프하면 활공 해제
+    this.landingImpact = 0;
     return true;
   }
 
@@ -158,17 +170,46 @@ export class SurfaceActor {
 
   // 중력 적분. 매 프레임 update에서 호출.
   updateVertical(dt) {
+    this.landed = false;
+    this.landingImpact = Math.max(0, this.landingImpact - dt * 3.8);
     if (this.grounded && this.vy === 0) { this.jumpsLeft = this.maxJumps; this.gliding = false; return; }
     // 활공 중에는 중력을 크게 줄이고 하강 속도에 상한을 둔다.
     const g = this.gliding ? this.gravity * 0.12 : this.gravity;
     this.vy -= g * dt;
-    if (this.gliding && this.vy < -2.2) this.vy = -2.2;
+    if (this.gliding && this.vy < -this.glideFallSpeed) this.vy = -this.glideFallSpeed;
     this.jumpH += this.vy * dt;
     if (this.jumpH <= 0) {
-      this.jumpH = 0; this.vy = 0;
-      this.jumpsLeft = this.maxJumps;    // 착지 시 점프 회복
-      this.gliding = false;
+      this._land();
     }
+  }
+
+  _land() {
+    this.landingImpact = Math.min(1, Math.max(0, -this.vy) / 10);
+    this.landed = true;
+    this.jumpH = 0; this.vy = 0;
+    this.jumpsLeft = this.maxJumps;
+    this.gliding = false;
+  }
+
+  // 실내/행성 전환 및 저장 지점 복귀 시 이전 장면의 낙하를 가져오지 않는다.
+  resetTraversal() {
+    this.jumpH = 0; this.vy = 0;
+    this.gliding = false; this.landed = false; this.landingImpact = 0;
+    this.moving = false; this.running = false;
+    this.jumpsLeft = this.maxJumps;
+    this._jumpBuffer = 0;
+    this.lastArc = 0;
+    if (this.body?.userData) {
+      this.body.userData.airBlend = 0; this.body.userData.glideBlend = 0;
+      this.body.userData.bob = 0;
+      if (this.body.userData.glider) this.body.userData.glider.visible = false;
+    }
+    return this;
+  }
+
+  // 세계의 물건은 position(지면점), 시선·공중 거리 판정은 실제 발 위치를 쓴다.
+  getFootPosition(out = new THREE.Vector3()) {
+    return out.copy(this.position).setLength(this.position.length() + this.jumpH);
   }
 
   syncMesh() {

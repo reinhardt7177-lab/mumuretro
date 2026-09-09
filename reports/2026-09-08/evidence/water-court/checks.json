@@ -1,0 +1,508 @@
+{
+  "date": "2026-09-08T08:11:15.033Z",
+  "checks": [
+    {
+      "name": "Freezing timer restores and temporary ice saves a safe island checkpoint",
+      "pass": true,
+      "details": {
+        "okFreezing": true,
+        "sameTime": true,
+        "phase": "freezing",
+        "okIce": true,
+        "safe": true
+      }
+    },
+    {
+      "name": "Walk from entrance, freeze three bands and cross slippery room",
+      "pass": true,
+      "details": {
+        "walks": [
+          {
+            "frames": 70,
+            "peak": 0,
+            "position": [
+              -2.971037133615042,
+              0,
+              3.6617874482879103
+            ]
+          },
+          {
+            "frames": 42,
+            "peak": 0,
+            "position": [
+              -2.9995794368937583,
+              0,
+              -0.5381155668927454
+            ]
+          },
+          {
+            "frames": 42,
+            "peak": 0,
+            "position": [
+              -2.9999938932370354,
+              0,
+              -4.738115546443453
+            ]
+          },
+          {
+            "frames": 45,
+            "peak": 0,
+            "position": [
+              -2.999999917158426,
+              0,
+              -9.23811554643944
+            ]
+          },
+          {
+            "frames": 29,
+            "peak": 0,
+            "position": [
+              -0.10061672525206068,
+              0,
+              -9.297924462922262
+            ]
+          },
+          {
+            "frames": 56,
+            "peak": 0,
+            "position": [
+              -0.0018165677624037303,
+              0,
+              -14.897052835167338
+            ]
+          },
+          {
+            "frames": 264,
+            "peak": 0,
+            "position": [
+              -0.000004447661866332974,
+              0,
+              -29.464246326184302
+            ]
+          },
+          {
+            "frames": 40,
+            "peak": 0,
+            "position": [
+              -3.940286362218403e-8,
+              0,
+              -33.46424632618189
+            ]
+          }
+        ],
+        "solved": [
+          true,
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "name": "Terrace wall blocks side entry and elevated valve cannot be operated from below",
+      "pass": true,
+      "details": {
+        "before": [
+          -5.399302629313366,
+          0,
+          -47.89899392439539
+        ],
+        "after": [
+          -5.9993026293133624,
+          0,
+          -47.89899392439539
+        ],
+        "near": null,
+        "bridge": 0
+      }
+    },
+    {
+      "name": "Walking the left ramp reaches 3m gallery and first valve opens bridge",
+      "pass": true,
+      "details": {
+        "version": 1,
+        "tier": 0,
+        "solved": [
+          true,
+          true,
+          false
+        ],
+        "freeze": [
+          {
+            "base": 4.578182788987479,
+            "phase": "ice",
+            "t": 0
+          },
+          {
+            "base": 4.63324158830155,
+            "phase": "ice",
+            "t": 0
+          },
+          {
+            "base": 3.7888054864441214,
+            "phase": "ice",
+            "t": 0
+          }
+        ],
+        "holes": [
+          {
+            "x": -1.99305762363079,
+            "z": -17.802784768833213,
+            "r": 1.3898642655300921
+          },
+          {
+            "x": 2.7234036719280468,
+            "z": -20.473477173896306,
+            "r": 1.3653732070966227
+          },
+          {
+            "x": -2.4575419625907555,
+            "z": -23.40283704161957,
+            "r": 1.3848012887018188
+          },
+          {
+            "x": 2.2089383118032635,
+            "z": -26.48142515282651,
+            "r": 1.6946917033715274
+          }
+        ],
+        "steam": {
+          "ti": 0,
+          "wants": [
+            "ice",
+            "water",
+            "steam"
+          ],
+          "filled": [
+            true,
+            false,
+            false
+          ],
+          "bridge": 1
+        },
+        "final": {
+          "si": 0,
+          "got": 0,
+          "want": 2,
+          "flash": 0
+        },
+        "prize": {
+          "taken": false,
+          "drop": -1,
+          "t": 0
+        },
+        "hints": {
+          "r1": {
+            "level": 0,
+            "t": 6.333333333333316
+          },
+          "r2": {
+            "level": 0,
+            "t": 3.983333333333324
+          },
+          "r3": {
+            "level": 1,
+            "t": 57.53333333333349
+          },
+          "shrine": {
+            "level": 0,
+            "t": 0
+          }
+        },
+        "checkpoint": {
+          "x": -7.9999789517525235,
+          "y": 3,
+          "z": -47.90374031299978,
+          "yaw": 0
+        }
+      }
+    },
+    {
+      "name": "Invalid checkpoint is rejected without partially changing devices",
+      "pass": true
+    },
+    {
+      "name": "Notebook pauses shrine movement and puzzle state",
+      "pass": true
+    },
+    {
+      "name": "Reload resumes upper gallery, valve order, holes, tier and hint",
+      "pass": true,
+      "details": {
+        "mode": "room",
+        "state": {
+          "version": 1,
+          "tier": 0,
+          "solved": [
+            true,
+            true,
+            false
+          ],
+          "freeze": [
+            {
+              "base": 4.578182788987479,
+              "phase": "ice",
+              "t": 0
+            },
+            {
+              "base": 4.63324158830155,
+              "phase": "ice",
+              "t": 0
+            },
+            {
+              "base": 3.7888054864441214,
+              "phase": "ice",
+              "t": 0
+            }
+          ],
+          "holes": [
+            {
+              "x": -1.99305762363079,
+              "z": -17.802784768833213,
+              "r": 1.3898642655300921
+            },
+            {
+              "x": 2.7234036719280468,
+              "z": -20.473477173896306,
+              "r": 1.3653732070966227
+            },
+            {
+              "x": -2.4575419625907555,
+              "z": -23.40283704161957,
+              "r": 1.3848012887018188
+            },
+            {
+              "x": 2.2089383118032635,
+              "z": -26.48142515282651,
+              "r": 1.6946917033715274
+            }
+          ],
+          "steam": {
+            "ti": 0,
+            "wants": [
+              "ice",
+              "water",
+              "steam"
+            ],
+            "filled": [
+              true,
+              false,
+              false
+            ],
+            "bridge": 1
+          },
+          "final": {
+            "si": 0,
+            "got": 0,
+            "want": 2,
+            "flash": 0
+          },
+          "prize": {
+            "taken": false,
+            "drop": -1,
+            "t": 0
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 6.333333333333316
+            },
+            "r2": {
+              "level": 0,
+              "t": 3.983333333333324
+            },
+            "r3": {
+              "level": 1,
+              "t": 57.53333333333349
+            },
+            "shrine": {
+              "level": 0,
+              "t": 0
+            }
+          },
+          "checkpoint": {
+            "x": -7.9999789517525235,
+            "y": 3,
+            "z": -47.90374031299978,
+            "yaw": 0
+          }
+        },
+        "p": [
+          -7.9999789517525235,
+          3,
+          -47.90374031299978
+        ]
+      }
+    },
+    {
+      "name": "Leaving and re-entering preserves an unfinished water run",
+      "pass": true
+    },
+    {
+      "name": "Walk across raised bridge, down other ramp and under bridge to third valve",
+      "pass": true,
+      "details": {
+        "bridge": {
+          "frames": 160,
+          "peak": 3,
+          "position": [
+            7.899733304823541,
+            3,
+            -47.99939677166306
+          ]
+        },
+        "below": [
+          0.01640280130978113,
+          0,
+          -47.91940367708746
+        ],
+        "cam": [
+          0.01640280130978113,
+          2.3699999999999997,
+          -41.51662303114932
+        ],
+        "solved": [
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "name": "Complete final temperature puzzle, collect orb and use return shortcut",
+      "pass": true,
+      "details": {
+        "got": 3,
+        "taken": true,
+        "p": [
+          0,
+          0,
+          10
+        ],
+        "cleared": true
+      }
+    },
+    {
+      "name": "Completed water shrine remains open on re-entry",
+      "pass": true,
+      "details": {
+        "solved": [
+          true,
+          true,
+          true
+        ],
+        "open": true,
+        "final": 3
+      }
+    },
+    {
+      "name": "Camera audit distinguishes instance gaps and detects a solid moved into the camera",
+      "pass": true,
+      "details": {
+        "clear": true,
+        "occupied": true,
+        "detectsMovedSolid": true
+      }
+    },
+    {
+      "name": "Existing A–W selftests pass and preserve active water run",
+      "pass": true,
+      "details": {
+        "ok": true,
+        "restored": true,
+        "pos": [
+          0,
+          0,
+          10
+        ],
+        "after": [
+          0,
+          0,
+          10
+        ]
+      }
+    },
+    {
+      "name": "Regression probe detects intentionally removed elevation",
+      "pass": true
+    },
+    {
+      "name": "Highest tier and right gallery first also open a traversable bridge",
+      "pass": true,
+      "details": {
+        "first": [
+          false,
+          true,
+          false
+        ],
+        "crossed": {
+          "frames": 159,
+          "peak": 3,
+          "position": [
+            -7.899707393462892,
+            3,
+            -47.99936740525667
+          ]
+        },
+        "tier": 5,
+        "filled": [
+          true,
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "name": "Regression probe detects intentionally lost valve restoration",
+      "pass": true
+    },
+    {
+      "name": "Older saves without water progress resume outside safely",
+      "pass": true
+    },
+    {
+      "name": "Corrupt water snapshot is backed up and other progress survives",
+      "pass": true
+    },
+    {
+      "name": "Mobile notebook icon opens above the gallery",
+      "pass": true
+    },
+    {
+      "name": "Mobile E operates elevated temperature control",
+      "pass": true
+    },
+    {
+      "name": "Browser has no uncaught JavaScript errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "sceneMetrics": {
+    "meshes": 505,
+    "draw": {
+      "frame": 340,
+      "calls": 681,
+      "triangles": 18863,
+      "points": 0,
+      "lines": 0
+    },
+    "position": [
+      0.0000012714532717100466,
+      0,
+      -33.61938184779343
+    ],
+    "camera": [
+      0.0000012714532717100466,
+      3.0463117156667394,
+      -27.372521498773416
+    ],
+    "court": {
+      "width": 26,
+      "length": 26,
+      "galleryHeight": 3,
+      "bridgeWidth": 12,
+      "bridgeDepth": 4
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "seed": 2199462457,
+  "checkpoint": {
+    "x": 0,
+    "y": 0,
+    "z": -17.8,
+    "yaw": 0,
+    "resetHazard": -1
+  },
+  "layout": {
+    "id": "r2",
+    "kind": "room",
+    "x0": -4.5,
+    "x1": 4.5,
+    "z0": -31,
+    "z1": -17,
+    "h": 6,
+    "camH": 80,
+    "open": true,
+    "glow": 12301729,
+    "name": "거울 세 장",
+    "gate": "mirror",
+    "act": "turn",
+    "field": true
+  },
+  "fields": {
+    "a.0": 0.7853981633974483,
+    "a.1": 0,
+    "a.2": 0,
+    "hit": false
+  },
+  "metrics": {
+    "calls": 1,
+    "triangles": 1
+  }
+}

@@ -18,6 +18,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { josa } from '../util/josa.js';
+import { random } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -48,7 +49,7 @@ export class StrataOrderGate {
     // 어느 화석이 몇 층인지는 **판마다 섞는다.** 고정이면 한 번 풀고 외우면 끝이다.
     this.order = [0, 1, 2, 3];
     for (let i = 3; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(random() * (i + 1));
       [this.order[i], this.order[j]] = [this.order[j], this.order[i]];
     }
 
@@ -103,7 +104,7 @@ export class StrataOrderGate {
     //   말한다 — 시추는 위에서 아래로 뚫으니 날이 박힌 쪽이 땅 위, 반대쪽이
     //   가장 깊은 곳이다. 그 한 번의 추론이 이 방의 문제다. 눕힌 방향도 판마다
     //   섞는다(왼쪽이 늘 위면 외운다).
-    const flip = Math.random() < 0.5 ? 1 : -1;       // +1: 드릴 날이 +x쪽(오른쪽)
+    const flip = random() < 0.5 ? 1 : -1;       // +1: 드릴 날이 +x쪽(오른쪽)
     for (const dz of [-1.0, 1.0]) {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.5), dark);
       leg.position.set(coreX + dz * 1.5, 0.35, coreZ); g.add(leg);

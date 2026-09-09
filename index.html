@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>무무 행성</title>
 
 <!-- ── 링크로 보냈을 때 보이는 것 ────────────────────────────────────────────
@@ -69,15 +69,14 @@
        프롬프트가 'E '로 시작할 때만 뜨므로 **버튼째 없어졌다**(폰에서 확인).
        방금 무슨 일이 있었는지와 지금 무엇을 누를 수 있는지는 다른 정보다.
      색도 다르다 — 프롬프트는 청록(누를 것), 알림은 잉크(일어난 일). */
-  #note{position:fixed;bottom:106px;left:50%;transform:translateX(-50%) translateY(6px);
+  #note{position:fixed;bottom:calc(64px + var(--prompt-height,34px) + 8px);left:50%;transform:translateX(-50%) translateY(6px);
     background:rgba(24,38,44,.88);color:#eef4f5;font-size:13.5px;font-weight:600;
     letter-spacing:.4px;padding:8px 18px;border-radius:18px;z-index:23;
     opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
     max-width:min(86vw,520px);text-align:center;word-break:keep-all;
     backdrop-filter:blur(3px);}
   #note.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  @media (max-width:640px){#note{bottom:112px;font-size:12.5px;padding:7px 14px;}}
-  @media (max-height:520px){#note{bottom:96px;}}
+  @media (max-width:640px){#note{font-size:12.5px;padding:7px 14px;}}
   #hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
     background:rgba(40,70,80,.5);color:#fff;font-size:12px;padding:7px 16px;border-radius:18px;
     letter-spacing:1px;z-index:20;white-space:nowrap;
@@ -85,28 +84,27 @@
   @keyframes fade{to{opacity:0;visibility:hidden;}}
   @media (max-width:640px){#hint{font-size:11px;white-space:normal;text-align:center;
     left:14px;transform:none;max-width:264px;}}
+#load.failed{flex-direction:column;gap:18px;padding:28px;text-align:center;letter-spacing:0;line-height:1.7}#load.failed p{max-width:460px;font-size:14px}#load button{border:0;border-radius:28px;padding:14px 28px;background:#17695f;color:white;font:inherit;cursor:pointer}#save-status{position:fixed;left:16px;top:14px;z-index:25;background:#f4faf0e8;color:#27453e;padding:6px 12px;border-radius:18px;font-size:11px;pointer-events:none}#save-status[hidden]{display:none}body.titling #save-status{display:none}
 </style>
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div id="load">행성을 빚는 중…</div>
+  <div id="load" role="status" aria-live="polite">행성을 빚는 중…</div>
   <div id="prompt"></div>
   <div id="note"></div>
   <div id="hint"></div>
+  <div id="save-status" role="status" aria-live="polite" hidden></div>
+  <noscript>무무 행성은 JavaScript를 켠 브라우저에서 실행할 수 있다.</noscript>
 
-<!-- 모듈/런타임 오류를 로딩 화면에 스택과 함께 띄운다 -->
-<script>
-window.addEventListener('error',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.fontSize='12px';el.style.padding='24px';el.style.whiteSpace='pre-wrap';el.style.textAlign='left';el.style.lineHeight='1.5';el.style.alignItems='flex-start';el.textContent='⚠ 오류:\n'+(e.message||'')+'\n'+((e.error&&e.error.stack)||'')+'\n@'+(e.filename||'')+':'+(e.lineno||'');}console.error('CAUGHT',e.message,e.error&&e.error.stack);});
-window.addEventListener('unhandledrejection',function(e){var el=document.getElementById('load');if(el){el.style.display='flex';el.style.color='#b00020';el.style.whiteSpace='pre-wrap';el.style.padding='24px';el.style.alignItems='flex-start';el.textContent='⚠ Promise 오류:\n'+(e.reason&&(e.reason.stack||e.reason.message)||e.reason);}});
-</script>
+
 
 <script type="importmap">
 { "imports": {
-  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three": "./vendor/three/build/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
 }}
 </script>
 
-<script type="module" src="src/boot.js"></script>
+<script type="module" src="src/core/loader.js"></script>
 </body>
 </html>

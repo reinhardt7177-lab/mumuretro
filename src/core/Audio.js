@@ -14,18 +14,22 @@
 //   4. **한 프레임에 같은 소리가 겹치지 않는다.** cool(ms)로 막는다 — 안 막으면
 //      판정이 매 프레임 도는 곳에서 소리가 톱니처럼 쌓인다.
 import { SFX } from '../data/sfx.js';
+import { SCENE_MUSIC } from '../data/music.js';
 
 let ac = null, master = null, sfxGain = null, bgmGain = null;
+export const AUDIO_SETTINGS_KEY = 'mumuplanet.audio.muted.v1';
 let muted = false, ready = false;
+try { muted = localStorage.getItem(AUDIO_SETTINGS_KEY) === 'true'; } catch (e) { /* 저장이 막혀도 재생 가능 */ }
 const last = {};                 // 소리별 마지막 재생 시각(ms)
-let bgmEl = null, bgmUrl = null, bgmFade = 0;
+let bgmTrack = null, bgmUrl = null;
+const tracks = new Set();        // 전환 중인 이전 음악도 음소거를 함께 적용한다.
 
 // 첫 제스처에서 부른다. 그 전에는 아무것도 만들지 않는다.
 export function startAudio() {
-  if (ready) return;
+  if (ready) { resume(); retryMusic(); return; }
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
+    if (!AC) { retryMusic(); return; }
     ac = new AC();
     master = ac.createGain(); master.gain.value = muted ? 0 : 1;
     sfxGain = ac.createGain(); sfxGain.gain.value = 0.9;
@@ -34,10 +38,13 @@ export function startAudio() {
     ready = true;
   } catch (e) { /* 오디오 없는 기기 — 조용히 넘어간다 */ }
   resume();
+  retryMusic();
 }
 
 function resume() {
-  if (ac && ac.state === 'suspended') { try { ac.resume(); } catch (e) { /* 무시 */ } }
+  if (ac && ac.state === 'suspended') {
+    try { ac.resume()?.catch(() => {}); } catch (e) { /* 무시 */ }
+  }
 }
 
 // ── 잡음 — 종이·모래·물·바위는 전부 여기서 나온다 ──────────────────────────
@@ -98,46 +105,81 @@ export function sfx(name, gain = 1) {
 // ★ <audio>로 스트리밍한다. decodeAudioData로 통째로 받으면 2MB짜리가 다 받아질
 //   때까지 소리가 안 나고, 그 사이 시작 화면은 이미 지나간다.
 export function bgm(url, vol = 1) {
-  if (bgmUrl === url) return;
-  bgmUrl = url;
-  const old = bgmEl;
-  if (!url) { fadeOut(old); bgmEl = null; return; }
-  const el = new Audio(url);
-  el.loop = true; el.preload = 'auto'; el.volume = 0;
-  el.addEventListener('error', () => { if (bgmEl === el) { bgmEl = null; bgmUrl = null; } });
-  bgmEl = el;
-  const p = el.play();
-  if (p && p.catch) p.catch(() => { /* 제스처 전이면 조용히 — 시작 화면에서 다시 부른다 */ });
-  fadeIn(el, muted ? 0 : 0.5 * vol);
-  fadeOut(old);
+  const volume = Math.max(0, Math.min(1, Number.isFinite(vol) ? 0.5 * vol : 0.5));
+  if (bgmUrl === url && bgmTrack) {
+    bgmTrack.volume = volume;
+    applyVolume(bgmTrack);
+    retryMusic();
+    return;
+  }
+  const old = bgmTrack;
+  bgmTrack = null; bgmUrl = null;
+  if (old) fade(old, 0, 700);
+  if (!url) return;
+  try {
+    const el = new Audio(url);
+    const track = { el, volume, level: 0, frame: 0, onError: null };
+    el.loop = true; el.preload = 'auto';
+    track.onError = () => release(track);
+    el.addEventListener('error', track.onError);
+    tracks.add(track);
+    bgmTrack = track; bgmUrl = url;
+    applyVolume(track);
+    play(track);
+    fade(track, 1, 1400);
+  } catch (e) { /* 오디오 생성 실패도 게임을 막지 않는다. */ }
 }
 
-function fadeIn(el, to, ms = 1400) {
-  const t0 = performance.now(), id = ++bgmFade;
-  const step = () => {
-    if (!el || bgmFade !== id) return;
-    const k = Math.min(1, (performance.now() - t0) / ms);
-    try { el.volume = to * k; } catch (e) { return; }
-    if (k < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
+// 파일명을 장면 이름으로 추측하지 않는다. 아직 전용 음악이 없는 사당은 표에서 고른다.
+export function sceneBgm(id, vol = 1) {
+  const url = Object.hasOwn(SCENE_MUSIC, id) ? SCENE_MUSIC[id] : SCENE_MUSIC.planet;
+  bgm(id == null ? null : url, vol);
 }
-function fadeOut(el, ms = 700) {
-  if (!el) return;
-  const v0 = el.volume, t0 = performance.now();
+
+function play(track) {
+  try { track.el.play()?.catch(() => {}); } catch (e) { /* 첫 제스처에서 재시도 가능 */ }
+}
+function retryMusic() {
+  if (bgmTrack?.el.paused) play(bgmTrack);
+}
+function applyVolume(track) {
+  try {
+    // muted는 브라우저의 실제 차단 장치, volume도 0으로 유지해 상태와 재생을 일치시킨다.
+    track.el.muted = muted;
+    track.el.volume = muted ? 0 : track.volume * track.level;
+  } catch (e) { /* 재생할 수 없는 미디어는 조용히 */ }
+}
+function release(track) {
+  if (track.frame) cancelAnimationFrame(track.frame);
+  tracks.delete(track);
+  if (bgmTrack === track) { bgmTrack = null; bgmUrl = null; }
+  try {
+    track.el.removeEventListener('error', track.onError);
+    track.el.pause();
+    track.el.removeAttribute('src');
+    track.el.load();
+  } catch (e) { /* 정리 실패는 무시 */ }
+}
+function fade(track, to, ms) {
+  if (track.frame) cancelAnimationFrame(track.frame);
+  const from = track.level, t0 = performance.now();
   const step = () => {
+    if (!tracks.has(track)) return;
     const k = Math.min(1, (performance.now() - t0) / ms);
-    try { el.volume = v0 * (1 - k); } catch (e) { return; }
-    if (k < 1) requestAnimationFrame(step);
-    else { try { el.pause(); el.src = ''; } catch (e) { /* 무시 */ } }
+    track.level = from + (to - from) * k;
+    applyVolume(track);             // 매 프레임 현재 음소거 상태를 적용한다.
+    if (k < 1) track.frame = requestAnimationFrame(step);
+    else if (to === 0) release(track);
+    else track.frame = 0;
   };
-  requestAnimationFrame(step);
+  track.frame = requestAnimationFrame(step);
 }
 
 export function setMuted(v) {
   muted = !!v;
   if (master) master.gain.value = muted ? 0 : 1;
-  if (bgmEl) { try { bgmEl.volume = muted ? 0 : 0.5; } catch (e) { /* 무시 */ } }
+  for (const track of tracks) applyVolume(track);
+  try { localStorage.setItem(AUDIO_SETTINGS_KEY, String(muted)); } catch (e) { /* 현재 세션에서는 적용 */ }
   return muted;
 }
 export function isMuted() { return muted; }

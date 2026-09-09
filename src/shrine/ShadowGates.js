@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt, pick } from '../util/rand.js';
+import { SHADOW_WALK } from '../data/shadowWalk.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -34,11 +35,11 @@ const flatMat = (c, op) => {
 // 한 자리에 머물 수 없다 — 계속 따라다녀야 한다.
 //
 // 즉사가 아니라 **노출 시간**으로 판정한다. 그림자가 움직이는데 즉사면 운이 되고,
-// 운으로 지면 아이는 배우지 못한다. 0.75초의 여유를 주고, 그동안 벽의 눈이
+// 운으로 지면 아이는 배우지 못한다. 1.8초의 여유를 주고, 그동안 벽의 눈이
 // 밝아지므로 "지금 위험하다"가 눈에 보인다.
 // ══════════════════════════════════════════════════════════════════════════
-const EXPOSE = 0.75;          // 이만큼 빛에 서 있으면 발각
-const SH_LEN = 9.0;           // 그림자 길이
+const EXPOSE = SHADOW_WALK.exposure;
+const SH_LEN = SHADOW_WALK.length;
 const LAMP_Y = 4.6;
 
 export class ShadeGate {
@@ -51,8 +52,8 @@ export class ShadeGate {
     this.safeIn = seg.z1 - 2.2;
     this.safeOut = seg.z0 + 2.2;
     this.expose = 0;
-    this.a = 0;
-    this.speed = 0.42;
+    this.a = SHADOW_WALK.startAngle;
+    this.speed = SHADOW_WALK.speed;
     this.exposeMax = EXPOSE;
 
     const g = new THREE.Group();
@@ -70,7 +71,7 @@ export class ShadeGate {
       m.castShadow = true;
       g.add(m);
       // 그림자 — 바닥에 직접 그린다. 이게 곧 판정의 근거다.
-      const sh = new THREE.Mesh(new THREE.PlaneGeometry(r * 2.15, SH_LEN), flatMat(0x000000, 0.86));
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(SHADOW_WALK.width, SH_LEN), flatMat(0x000000, 0.86));
       sh.rotation.x = -Math.PI / 2;
       sh.position.y = 0.02;
       sh.renderOrder = 1;
@@ -92,12 +93,14 @@ export class ShadeGate {
   }
 
   _lampPos() {
-    const r = 3.6;
-    return { x: this.cx + Math.cos(this.a) * r, z: this.cz + Math.sin(this.a) * r * 1.5 };
+    if (this.court) return this.court.lampAt(this.a);
+    return { x: this.cx + Math.cos(this.a) * SHADOW_WALK.orbitX,
+      z: this.cz + Math.sin(this.a) * SHADOW_WALK.orbitZ };
   }
 
   // 이 점이 어느 기둥의 그림자 안인가. 등불에서 기둥을 지나 뻗는 띠 안이면 그늘이다.
   inShadow(x, z, L) {
+    if (this.court) return this.court.inShadow(x, z, L);
     for (const p of this.pillars) {
       const wx = p.x - L.x, wz = p.z - L.z;
       const wl = Math.hypot(wx, wz);
@@ -106,7 +109,7 @@ export class ShadeGate {
       const vx = x - L.x, vz = z - L.z;
       const t = vx * ux + vz * uz;                  // 등불에서 잰 거리
       if (t < wl || t > wl + SH_LEN) continue;      // 기둥 앞이거나 그림자 끝 너머
-      if (Math.abs(vx * uz - vz * ux) < p.r + 0.16) return true;
+      if (Math.abs(vx * uz - vz * ux) <= SHADOW_WALK.width / 2) return true;
     }
     return false;
   }
@@ -115,22 +118,25 @@ export class ShadeGate {
     const p = actor.position;
     this.a += dt * this.speed;
     const L = this._lampPos();
-    this.lampBall.position.set(L.x, LAMP_Y, L.z);
-    this.lamp.position.set(L.x, LAMP_Y, L.z);
+    this.lampBall.position.set(L.x, L.y ?? LAMP_Y, L.z);
+    this.lamp.position.set(L.x, L.y ?? LAMP_Y, L.z);
 
     // 그림자를 등불 반대쪽으로 눕힌다
-    for (const q of this.pillars) {
+    if (this.court) this.court.updateVisual(L);
+    else for (const q of this.pillars) {
       const dx = q.x - L.x, dz = q.z - L.z;
       const d = Math.hypot(dx, dz) || 1;
       const ux = dx / d, uz = dz / d;
       q.shadow.position.set(q.x + ux * SH_LEN / 2, 0.02, q.z + uz * SH_LEN / 2);
-      q.shadow.rotation.z = -Math.atan2(ux, uz);
+      // X축으로 바닥에 눕힌 뒤 로컬 Y축은 −Z다. 반대 부호면 그림과 판정이 뒤집힌다.
+      q.shadow.rotation.z = Math.atan2(ux, uz);
     }
 
     const inRoom = p.z < this.safeIn && p.z > this.safeOut;
-    const safe = !inRoom || this.inShadow(p.x, p.z, L);
+    const safe = this.court?.completed || !inRoom || this.inShadow(p.x, p.z, L);
     this.expose = safe ? Math.max(0, this.expose - dt * 2.2) : this.expose + dt;
-    this.eyeMat.opacity = Math.min(1, this.expose / this.exposeMax) * 0.95;
+    this.eyeMat.opacity = this.court?.completed ? 0 : Math.min(1, this.expose / this.exposeMax) * 0.95;
+    this.court?.warning(actor, this.court.completed ? 0 : this.expose / this.exposeMax);
 
     if (this.expose >= this.exposeMax) {
       this.expose = 0;
@@ -146,12 +152,14 @@ export class ShadeGate {
     return this.expose > 0.1 ? '⚠ 들키는 중! 그림자로!' : '🕯 그림자를 따라가라';
   }
 
-  // 등불이 빨라지고 들키기까지의 여유가 짧아진다.
-  setTier(t) { this.speed = 0.42 * (1 + t * 0.12); this.exposeMax = EXPOSE - t * 0.055; }
+  // 사당을 깬 순서와 관계없이 관찰하고 걸어서 건널 여유를 보장한다.
+  setTier() { this.speed = SHADOW_WALK.speed; this.exposeMax = EXPOSE; }
 
   solvedBy(actor) { return actor.position.z < this.safeOut; }
-  reset() { this.expose = 0; this.eyeMat.opacity = 0; }
-  restart() { this.reset(); this.a = 0; }
+  complete() { this.court?.setCompleted(true); }
+  restoreSolved(value) { this.court?.setCompleted(value); }
+  reset() { this.expose = 0; this.eyeMat.opacity = 0; this.court?.clearWarning(); }
+  restart() { this.reset(); this.a = SHADOW_WALK.startAngle; this.court?.setCompleted(false); this.court?.updateVisual(this._lampPos()); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -238,6 +246,7 @@ export class MirrorGate {
 
   // 빛줄기를 따라가며 거울에 맞으면 꺾는다. 반사: d' = d − 2(d·n)n
   _trace() {
+    if (this.galleryOptics) return this.galleryOptics.renderTrace();
     let px = this.src.x, pz = this.src.z;
     let dx = 0, dz = -1;
     let used = 0;
@@ -306,7 +315,7 @@ export class MirrorGate {
     const m = this._near(pos);
     if (!m) return false;
     m.a = (m.a + STEP) % (Math.PI * 2);
-    m.grp.rotation.y = -m.a;
+    m.grp.rotation.y = -(m.a + (this.angleOffset || 0));
     this._trace();
     return true;
   }
@@ -323,7 +332,7 @@ export class MirrorGate {
   solvedBy() { return this.hit; }
   reset() {}
   restart() {
-    for (const m of this.mirrors) { m.a = 0; m.grp.rotation.y = 0; }
+    for (const m of this.mirrors) { m.a = 0; m.grp.rotation.y = -(this.angleOffset || 0); }
     this._trace();
   }
 }
@@ -413,6 +422,7 @@ export class SilhouetteGate {
   }
 
   _resize() {
+    if (this.theatre) return this.theatre.resize();
     const s = this._size();
     this.shadow.scale.set(s, s, 1);
     if (this.solved) return;
@@ -431,6 +441,7 @@ export class SilhouetteGate {
   }
 
   update(dt, actor) {
+    if (this.theatre) return this.theatre.update(actor);
     if (this.held) {
       // 물체는 등불–벽 축을 따라서만 움직인다. 좌우로 흔들면 원리가 흐려진다.
       this.objZ = Math.max(this.wallZ + 1.2, Math.min(this.lampZ - 1.2, actor.position.z));
@@ -440,9 +451,13 @@ export class SilhouetteGate {
     return {};
   }
 
-  _near(pos) { return Math.hypot(pos.x - this.objX, pos.z - this.objZ) < this.REACH; }
+  _near(pos) {
+    const p = this.theatre ? this.theatre.handle() : { x: this.objX, z: this.objZ };
+    return Math.hypot(pos.x - p.x, pos.z - p.z) < this.REACH;
+  }
 
   interact(pos) {
+    if (this.theatre) return this.theatre.interact(pos);
     if (this.held) { this.held = false; return true; }
     if (!this._near(pos)) return false;
     this.held = true;
@@ -450,18 +465,19 @@ export class SilhouetteGate {
   }
 
   prompt(pos) {
-    if (this.solved) return null;
+    if (this.solved || this.theatre?.completed) return null;
     const n = `${this.round + 1}/3`;
     const gap = this._size() > this.holeW
       ? '그림자가 크다 — 등불에서 멀리' : '그림자가 작다 — 등불 가까이';
-    if (this.held) return `${n} · ${gap} (E로 놓기)`;
-    return this._near(pos) ? `E — 물체 밀기 (${n})` : `🔦 ${n} · ${gap}`;
+    if (this.held) return `E — 놓기 · ${n} · ${gap}`;
+    return this._near(pos) ? `E — 가림판 손잡이 잡기 (${n})` : `🔦 ${n} · ${gap}`;
   }
 
   // 맞다고 인정하는 폭이 좁아진다. 눈대중이 아니라 눈금이 필요해진다.
   setTier(t) { this.tol = 0.09 - t * 0.008; }
 
   solvedBy() { return this.solved; }
+  restoreSolved(value) { if (this.theatre) { this.theatre.completed = value; this.theatre.resize(); } }
   reset() {}
   restart() {
     this.held = false;
@@ -470,6 +486,7 @@ export class SilhouetteGate {
     this.answers = shuffle(this.answers);       // 다시 도전하면 순서도 새로
     for (const p of this.pips) p.material.color.set(0x3a3730);
     this.holeW = this._holeAt(this.answers[0]);
+    if (this.theatre) { this.objZ = this.homeZ; this.theatre.restart(); return; }
     this.hole.scale.set(this.holeW, this.holeW, 1);
     this.objZ = this.homeZ;
     this.obj.position.z = this.objZ;
@@ -566,7 +583,7 @@ export class MirrorGod {
   }
 
   _dir(i) { const a = (i / ANGLES) * Math.PI * 2; return { x: Math.cos(a), z: Math.sin(a) }; }
-  _len(i) { return SH_BASE / HEIGHTS[i]; }
+  _len(i) { return this.sanctum ? this.sanctum.lengthAt(this.ai, i) : SH_BASE / HEIGHTS[i]; }
 
   _placeMark() {
     const d = this._dir(this.answer.a), L = this._len(this.answer.h);
@@ -576,6 +593,7 @@ export class MirrorGod {
   }
 
   _apply() {
+    if (this.sanctum) return this.sanctum.apply();
     const d = this._dir(this.ai), L = this._len(this.hi), H = HEIGHTS[this.hi];
     // 등불은 그림자 **반대쪽**에 있어야 한다
     const lx = this.gx - d.x * 3.2, lz = this.gz - d.z * 3.2;
@@ -598,19 +616,21 @@ export class MirrorGod {
   }
 
   update(dt) {
-    if (this.eyes) this.eyes.tick(dt, this.solvedBy());
+    if (this.eyes) this.eyes.tick(dt, this.solvedBy() || this.sanctum?.legacyCompleted);
+    this.sanctum?.update();
     return {};
   }
 
   prompt(pos) {
-    if (this.solved) return null;
+    if (this.solved || this.sanctum?.legacyCompleted) return null;
     const n = this._near(pos);
-    if (n === 'a') return `E — 등불 돌리기 (그림자 방향) ${this.ai + 1}/${ANGLES}`;
-    if (n === 'b') return `E — 등불 높이 (그림자 길이) ${this.hi + 1}/${HEIGHTS.length}`;
+    if (n === 'a') return `E — 등불 회전 ${this.ai + 1}/${ANGLES}`;
+    if (n === 'b') return `E — 등불 높이 ${this.hi + 1}/${HEIGHTS.length}`;
     return '🕯 신의 그림자를 바닥의 자리에 맞춰라';
   }
 
   interact(pos) {
+    if (this.sanctum && (this.solved || this.sanctum.legacyCompleted)) return false;
     const n = this._near(pos);
     if (!n) return false;
     if (n === 'a') this.ai = (this.ai + 1) % ANGLES;
@@ -621,5 +641,6 @@ export class MirrorGod {
 
   solvedBy() { return this.solved; }
   reset() {}
-  restart() { if (this.eyes) this.eyes.reset(); this.ai = 0; this.hi = 0; this._apply(); }
+  restoreCompleted() { this.sanctum?.completeLegacy(); }
+  restart() { this.sanctum?.restart(); if (this.eyes) this.eyes.reset(); this.ai = 0; this.hi = 0; this._apply(); }
 }

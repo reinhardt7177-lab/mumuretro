@@ -1,0 +1,124 @@
+{
+  "seed": 4171220906,
+  "state": {
+    "version": 1,
+    "id": "shadow",
+    "seed": 4171220906,
+    "tier": 0,
+    "legacyCompleted": false,
+    "solved": [
+      false,
+      false,
+      false
+    ],
+    "devices": [
+      {
+        "version": 2,
+        "fields": {
+          "a": 0.7,
+          "expose": 0
+        }
+      },
+      {
+        "version": 2,
+        "fields": {
+          "a.0": 0,
+          "a.1": 0,
+          "a.2": 0,
+          "hit": false
+        }
+      },
+      {
+        "fields": {
+          "held": false,
+          "solved": false,
+          "round": 0,
+          "answers": [
+            -44.75956493355334,
+            -47.337217145785694,
+            -41.6620501303114
+          ],
+          "objZ": -42.2,
+          "holeW": 1.433784114536583
+        },
+        "visual": {
+          "layout": 1358353922,
+          "nodes": [
+            [
+              4,
+              [
+                0,
+                0,
+                1.5,
+                -48.589999999999996,
+                0,
+                0,
+                0,
+                1,
+                1.433784114536583,
+                1.433784114536583,
+                1,
+                true,
+                [
+                  2
+                ],
+                null,
+                null
+              ]
+            ]
+          ],
+          "materials": []
+        }
+      }
+    ],
+    "final": {
+      "fields": {
+        "ai": 0,
+        "hi": 0,
+        "solved": false,
+        "eyes": 0
+      },
+      "visual": {
+        "layout": 2990369503,
+        "nodes": [],
+        "materials": []
+      }
+    },
+    "prize": {
+      "taken": false,
+      "drop": -1,
+      "t": 0
+    },
+    "hints": {
+      "r1": {
+        "level": 1,
+        "t": 60
+      },
+      "r2": {
+        "level": 0,
+        "t": 0
+      },
+      "r3": {
+        "level": 0,
+        "t": 0
+      },
+      "shrine": {
+        "level": 0,
+        "t": 0
+      }
+    },
+    "checkpoint": {
+      "x": 0,
+      "y": 0,
+      "z": 4,
+      "yaw": 0,
+      "resetHazard": -1
+    }
+  },
+  "position": [
+    0,
+    0,
+    4
+  ],
+  "width": 14
+}

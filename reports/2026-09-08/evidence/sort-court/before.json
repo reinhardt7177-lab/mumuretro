@@ -1,0 +1,196 @@
+{
+  "seed": 2109066131,
+  "state": {
+    "version": 1,
+    "id": "sift",
+    "seed": 2109066131,
+    "tier": 0,
+    "legacyCompleted": false,
+    "solved": [
+      true,
+      false,
+      false
+    ],
+    "devices": [
+      {
+        "version": 2,
+        "fields": {
+          "orders": [
+            2,
+            1,
+            0
+          ],
+          "held": -1,
+          "fitted": -1,
+          "round": 0,
+          "solved": false,
+          "mix": [
+            0,
+            1,
+            2
+          ]
+        }
+      },
+      {
+        "fields": {
+          "crits": [
+            0,
+            1,
+            2
+          ],
+          "held": -1,
+          "testItem": 1,
+          "testT": 0.4,
+          "round": 0,
+          "solved": false,
+          "bin.0": -1,
+          "bin.1": -1,
+          "bin.2": -1,
+          "bin.3": -1,
+          "bin.4": -1,
+          "bin.5": -1,
+          "got.0": [],
+          "got.1": []
+        },
+        "visual": {
+          "layout": 928322721,
+          "nodes": [
+            [
+              15,
+              [
+                0,
+                4.8,
+                0.73,
+                -16.2,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                true,
+                [
+                  4
+                ],
+                null,
+                null
+              ]
+            ],
+            [
+              20,
+              [
+                0,
+                -3.3,
+                0.31,
+                -13,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1,
+                false,
+                [
+                  8
+                ],
+                null,
+                null
+              ]
+            ],
+            [
+              25,
+              [
+                0,
+                0,
+                1,
+                -11.6,
+                0,
+                1,
+                0,
+                6.123233995736766e-17,
+                1,
+                1,
+                1,
+                true,
+                [],
+                null,
+                null
+              ]
+            ]
+          ],
+          "materials": []
+        }
+      },
+      {
+        "fields": {
+          "held": false,
+          "state": "mixed"
+        },
+        "visual": {
+          "layout": 129384697,
+          "nodes": [],
+          "materials": []
+        }
+      }
+    ],
+    "final": {
+      "fields": {
+        "held": -1,
+        "solved": false,
+        "used.0": -1,
+        "used.1": -1,
+        "used.2": -1,
+        "used.3": -1,
+        "done.0": [],
+        "done.1": [],
+        "done.2": [],
+        "done.3": [],
+        "eyes": 0
+      },
+      "visual": {
+        "layout": 200281589,
+        "nodes": [],
+        "materials": []
+      }
+    },
+    "prize": {
+      "taken": false,
+      "drop": -1,
+      "t": 0
+    },
+    "hints": {
+      "r1": {
+        "level": 0,
+        "t": 0
+      },
+      "r2": {
+        "level": 1,
+        "t": 60
+      },
+      "r3": {
+        "level": 0,
+        "t": 0
+      },
+      "shrine": {
+        "level": 0,
+        "t": 0
+      }
+    },
+    "checkpoint": {
+      "x": 0,
+      "y": 0,
+      "z": -11,
+      "yaw": 0,
+      "resetHazard": -1
+    }
+  },
+  "metrics": {
+    "frame": 833,
+    "calls": 642,
+    "triangles": 16877,
+    "points": 0,
+    "lines": 0
+  }
+}

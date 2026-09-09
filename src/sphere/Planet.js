@@ -11,7 +11,7 @@
 // 노이즈는 완전히 버리지 않고 **표면 잔결**로 강등한다(±0.8u). 실루엣은 절대 건드리지 않는다.
 import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
-import { GROUND } from '../data/lighting.js';
+import { GROUND, PATH } from '../data/lighting.js';
 
 // 고도와 경사로 지면 색을 고른다.
 // ★ 지도(ui/MapPage.js)가 이 함수를 그대로 쓴다. 지도용 색을 따로 적으면
@@ -120,6 +120,25 @@ export class Planet {
     if (scene) scene.add(this.mesh);
   }
 
+  // 지형 위에 별도 판을 놓지 않고 발길이 닿은 흙색을 지형 자신에 칠한다.
+  // 원본 색에서 매번 시작하므로 같은 길을 다시 적용해도 색이 짙어지지 않는다.
+  paintTrail(pathAt) {
+    const geo = this.mesh.geometry, p = geo.attributes.position, c = geo.attributes.color;
+    if (!this._unpaintedColors) this._unpaintedColors = c.array.slice();
+    const dir = new THREE.Vector3(), color = new THREE.Color(), soil = new THREE.Color(PATH.soil);
+    let painted = 0;
+    for (let i = 0; i < p.count; i++) {
+      dir.set(p.getX(i), p.getY(i), p.getZ(i)).normalize();
+      const amount = THREE.MathUtils.clamp(Number(pathAt?.(dir)) || 0, 0, 1);
+      if (amount > 0) painted++;
+      color.setRGB(this._unpaintedColors[i * 3], this._unpaintedColors[i * 3 + 1], this._unpaintedColors[i * 3 + 2]);
+      color.lerp(soil, amount);
+      c.setXYZ(i, color.r, color.g, color.b);
+    }
+    c.needsUpdate = true;
+    return painted;
+  }
+
   // ── 높이장 ────────────────────────────────────────────────────────────────
   // dir은 단위벡터. 반환값은 기준 R로부터의 높이(월드 단위).
   //
@@ -200,9 +219,8 @@ export class Planet {
   }
 
   // ── 메시 ──────────────────────────────────────────────────────────────────
-  // 플랫 셰이딩 + 면 단위 색. 텍스처를 쓰지 않는다(§"정점 색").
-  // IcosahedronGeometry는 인덱스 없는 지오메트리라 정점 3개가 곧 한 면이다 —
-  // 같은 색을 세 번 쓰면 면 전체가 단색이 되어 로우폴리 면이 또렷하게 읽힌다.
+  // 지형 모양은 그대로 두고 공유 꼭짓점의 색·법선만 이어 준다.
+  // 풀밭의 면 경계가 먼저 읽히던 현상을 줄이고, 돌 소품의 각진 면과 구분한다.
   _build() {
     const geo = new THREE.IcosahedronGeometry(R, DETAIL);
     const pos = geo.attributes.position;
@@ -251,7 +269,8 @@ export class Planet {
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geo.computeVertexNormals();
 
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+    softenTerrainSurface(geo);
+    const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
     mat.userData.outlineParameters = { visible: false };   // 지형에 외곽선은 그물망이 된다
     const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;
@@ -261,6 +280,26 @@ export class Planet {
 
   // 봉우리 방향 목록 — 카메라·배치·검증에서 "랜드마크가 보이는가"를 물을 때 쓴다.
   peakDirs() { return _peaks.map(p => p.dir.clone()); }
+}
+
+// 비인덱스 지형의 겹치는 꼭짓점만 묶어 음영을 부드럽게 한다.
+// 좌표·인덱스·높이장에는 손대지 않으므로 보행/지도/산포의 표면 계약이 유지된다.
+function softenTerrainSurface(geo) {
+  const p = geo.attributes.position, n = geo.attributes.normal, c = geo.attributes.color;
+  const shared = new Map(), keys = new Array(p.count);
+  for (let i = 0; i < p.count; i++) {
+    const key = `${Math.round(p.getX(i) * 10000)},${Math.round(p.getY(i) * 10000)},${Math.round(p.getZ(i) * 10000)}`;
+    keys[i] = key;
+    let s = shared.get(key);
+    if (!s) { s = [0, 0, 0, 0, 0, 0, 0]; shared.set(key, s); }
+    s[0] += n.getX(i); s[1] += n.getY(i); s[2] += n.getZ(i);
+    s[3] += c.getX(i); s[4] += c.getY(i); s[5] += c.getZ(i); s[6]++;
+  }
+  for (let i = 0; i < p.count; i++) {
+    const s = shared.get(keys[i]), len = Math.hypot(s[0], s[1], s[2]) || 1;
+    n.setXYZ(i, s[0] / len, s[1] / len, s[2] / len);
+    c.setXYZ(i, s[3] / s[6], s[4] / s[6], s[5] / s[6]);
+  }
 }
 
 const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);

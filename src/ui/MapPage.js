@@ -32,7 +32,7 @@ const latLonOf = (d) => ({
 const dirOf = (lat, lon, out) => out.set(
   Math.cos(lat) * Math.sin(lon), Math.sin(lat), Math.cos(lat) * Math.cos(lon));
 
-export function buildMapPage(planet, player, shrines, specs, getLanding) {
+export function buildMapPage(planet, player, shrines, specs, getLanding, getLandmarks) {
   const R = planet.R;
 
   // ── 바탕 그림 — 행성 전체를 한 번만 그려 둔다 ──────────────────────────
@@ -174,6 +174,17 @@ export function buildMapPage(planet, player, shrines, specs, getLanding) {
       });
     }
 
+    // 탐사 기록으로 확인한 두 장소만 이름을 적는다. 미방문 목적지는 노출하지 않는다.
+    for (const landmark of getLandmarks?.() || []) {
+      if (!isSeenDir(landmark.dir)) continue;
+      mark(landmark.dir, (x, y) => {
+        vctx.save(); vctx.fillStyle = landmark.done ? '#ffd27a' : '#e8e2bc';
+        vctx.strokeStyle = '#162629'; vctx.lineWidth = 3;
+        vctx.beginPath(); vctx.arc(x, y, 4, 0, Math.PI * 2); vctx.stroke(); vctx.fill();
+        vctx.font = '13px sans-serif'; vctx.textAlign = 'center';
+        vctx.strokeText(landmark.label, x, y - 10); vctx.fillText(landmark.label, x, y - 10); vctx.restore();
+      });
+    }
     // 나 — 흰 점과 바라보는 방향
     const up = player.position.clone().normalize();
     mark(up, (x, y) => {
@@ -207,6 +218,24 @@ export function buildMapPage(planet, player, shrines, specs, getLanding) {
     },
     canvas: view,
     draw,
+    exportState() { return { version: 1, has, seen: Array.from(seen) }; },
+    importState(saved) {
+      if (!saved || saved.version !== 1 || !Array.isArray(saved.seen) || saved.seen.length !== seen.length
+        || !saved.seen.every((v) => v === 0 || v === 1)) return false;
+      seen.set(saved.seen);
+      seenCount = 0;
+      lctx.clearRect(0, 0, CW, CH);
+      for (let i = 0; i < seen.length; i++) {
+        if (!seen[i]) continue;
+        seenCount++;
+        const x = (i % GX) * CELL_W, y = Math.floor(i / GX) * CELL_H;
+        lctx.drawImage(base, x, y, CELL_W, CELL_H, x, y, CELL_W, CELL_H);
+      }
+      has = saved.has === true;
+      lastAt.set(1e9, 0, 0);
+      draw();
+      return true;
+    },
     exploredPct: () => Math.round((seenCount / (GX * GY)) * 100),
     get has() { return has; },
     setHas(v) { has = v; },

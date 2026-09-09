@@ -105,7 +105,7 @@ export function buildKitchen(scene, planet, landing, carpet, forage) {
     item.position.set(x, groundY(x, z) + 0.3, z);
     item.visible = false;
     g.add(item);
-    return { i: k + 1, x, z, key: null, ringMat, item, itemMat };
+    return { i: k + 2, x, z, key: null, ringMat, item, itemMat };
   });
 
   const COLORS = {
@@ -173,6 +173,29 @@ export function buildKitchen(scene, planet, landing, carpet, forage) {
 
   return {
     group: g, plates, made, dir: kdir,
+    exportState() {
+      return { version: 1, made: [...made], plates: plates.map((p) => p.key),
+        lastCook: lastCook?.id || null };
+    },
+    importState(saved) {
+      if (!saved || saved.version !== 1 || Array.isArray(saved)) return false;
+      const recipeIds = new Set(RECIPES.map((r) => r.id));
+      made.clear();
+      for (const id of Array.isArray(saved.made) ? saved.made.slice(0, RECIPES.length) : []) {
+        if (typeof id === 'string' && recipeIds.has(id)) made.add(id);
+      }
+      const selected = Array.isArray(saved.plates) && saved.plates.length === 3 ? saved.plates : [];
+      for (const p of plates) {
+        const key = selected[p.i - 1];
+        p.key = typeof key === 'string' && Object.hasOwn(INGREDIENTS, key) && forage.bag[key] > 0 ? key : null;
+      }
+      lastCook = typeof saved.lastCook === 'string' && made.has(saved.lastCook)
+        ? RECIPES.find((r) => r.id === saved.lastCook) : null;
+      brothMat.color.set(lastCook ? COLORS[lastCook.needs[0]] || 0x8a5a3a : 0x5a4a3a);
+      msg = null; msgT = 0;
+      paint();
+      return true;
+    },
     resolve, at,
     update(dt) {
       flame.scale.y = 1 + Math.sin(performance.now() * 0.012) * 0.12;

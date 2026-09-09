@@ -56,8 +56,8 @@ export function buildLanding(scene, planet, dir) {
   }
 
   // 기둥 — 사당 빛기둥보다 낮고 가늘다. 여긴 목표가 아니라 돌아가는 문이다.
-  const colMat = basic(LAB.glow, 0.28);
-  colMat.side = THREE.DoubleSide;
+  const colMat = basic(LAB.glow, 0.035);
+  colMat.side = THREE.FrontSide;
   colMat.depthWrite = false;
   const col = new THREE.Mesh(new THREE.CylinderGeometry(PAD_R * 0.7, PAD_R * 0.55, 9, 14, 1, true),
     colMat);
@@ -84,8 +84,9 @@ export function buildLanding(scene, planet, dir) {
       up: 2.4 + Math.random() * 2.2 });
   }
 
-  const light = new THREE.PointLight(LAB.glow, 4, 12, 1.7);
-  light.position.y = 1.2; group.add(light);
+  // 빛은 바닥 눈금에 머문다. 평상시 주인공의 옷을 청록으로 칠하지 않는다.
+  const light = new THREE.PointLight(LAB.glow, 0.7, 5, 1.7);
+  light.position.y = 0.45; group.add(light);
 
   let t = 0, bt = -1;                       // bt >= 0이면 착지 연출 진행 중
   const _up = new THREE.Vector3();
@@ -102,8 +103,8 @@ export function buildLanding(scene, planet, dir) {
       col.rotation.y += dt * 0.22;
 
       if (bt < 0) {
-        colMat.opacity = 0.22 + Math.sin(t * 1.8) * 0.07;
-        light.intensity = 4;
+        colMat.opacity = 0.035 + Math.sin(t * 1.8) * 0.01;
+        light.intensity = 0.7;
         return;
       }
       bt += dt;
@@ -115,8 +116,8 @@ export function buildLanding(scene, planet, dir) {
       burst.scale.set(s, s, 1);
       burstMat.opacity = 0.8 * fade * fade;
       // 기둥이 확 밝아졌다 가라앉는다
-      colMat.opacity = 0.22 + fade * 0.55;
-      light.intensity = 4 + fade * 30;
+      colMat.opacity = 0.035 + fade * fade * 0.38;
+      light.intensity = 0.7 + fade * fade * 15;
       // 불티는 위로 솟았다 떨어진다
       for (const sp of sparks) {
         sp.mesh.visible = true;

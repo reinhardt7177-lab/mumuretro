@@ -11,6 +11,7 @@ import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt } from '../util/rand.js';
 import { josa } from '../util/josa.js';
+import { WATER_COURT } from '../data/waterCourt.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -96,6 +97,7 @@ export class FreezeGate {
   _bandAt(z) { return this.bands.find((b) => z < b.z1 && z > b.z0); }
 
   update(dt, actor) {
+    if (this.completed) return {};
     const p = actor.position;
     let fail = null;
     for (const b of this.bands) {
@@ -126,6 +128,7 @@ export class FreezeGate {
   }
 
   prompt(pos) {
+    if (this.completed) return null;
     if (pos.z < this.zOut) return null;
     const done = this.bands.filter((b) => pos.z < b.z0).length;
     const n = `${Math.min(3, done + 1)}/3`;
@@ -151,7 +154,12 @@ export class FreezeGate {
   setTier(t) { for (const b of this.bands) b.solid = b.base * (1 - t * 0.055); }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
+  complete() {
+    this.completed = true;
+    for (const b of this.bands) { b.phase = 'ice'; b.t = 0; b.rect.open = true; b.mat.opacity = 0.9; }
+  }
   restart() {
+    this.completed = false;
     for (const b of this.bands) { b.phase = 'water'; b.t = 0; b.rect.open = false; b.mat.opacity = 0; }
   }
 }
@@ -203,13 +211,13 @@ export class SlideGate {
       rim.rotation.x = -Math.PI / 2;
       rim.position.set(x, 0.13, z);
       g.add(rim);
-      this.holes.push({ x, z, r });
+      this.holes.push({ x, z, r, mesh: m, rim, initialR: r });
     }
   }
 
   update(dt, actor) {
     const p = actor.position;
-    const on = p.z < this.zIn && p.z > this.zOut;
+    const on = !this.completed && p.z < this.zIn && p.z > this.zOut;
     actor.slip = on ? 1 : 0;                    // 이 방 안에서만 미끄럽다
     if (!on) return {};
     for (const h of this.holes) {
@@ -222,6 +230,7 @@ export class SlideGate {
   }
 
   prompt(pos) {
+    if (this.completed) return null;
     if (pos.z < this.zOut) return null;
     if (pos.z >= this.zIn) return '🧊 여기부터 미끄럽다 — 미리 멈춰야 한다';
     return '🧊 미끄럽다! 구멍을 피해라';
@@ -231,7 +240,8 @@ export class SlideGate {
   setTier(t) { this.grow = 1 + t * 0.055; }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
-  restart() {}
+  complete() { this.completed = true; this.holes.forEach(h => { h.mesh.visible = false; h.rim.visible = false; }); }
+  restart() { this.completed = false; this.holes.forEach(h => { h.mesh.visible = true; h.rim.visible = true; }); }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -241,11 +251,44 @@ export class SlideGate {
 // 문에 달린 세 밸브가 각각 다른 모습을 요구한다. 온도를 맞춰 놓고 밸브를 누른다.
 // 순서는 없다 — 온도와 모습의 **짝**만 알면 된다.
 // ══════════════════════════════════════════════════════════════════════════
-const TEMPS = [
+export const TEMPS = [
   { c: -10, state: 'ice', name: '얼음', color: 0xbfe4f5 },
   { c: 20, state: 'water', name: '물', color: 0x3d8fc4 },
   { c: 110, state: 'steam', name: '수증기', color: 0xdfeef4 },
 ];
+
+// 온도 설정은 세 단계를 순환한다. 마지막 다음은 냉각이므로 '올리기'라고 하지 않는다.
+const temperaturePrompt = (i) =>
+  `E — 온도 단계 바꾸기 (${TEMPS[i].c}°C → ${TEMPS[(i + 1) % TEMPS.length].c}°C)`;
+
+// 상태는 색뿐 아니라 모양으로도 읽힌다. 온도와 연결되는 세 문양을 같은 판에 그린다.
+function stateBadge(initial, theme) {
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 128;
+  const ctx = canvas.getContext('2d'), texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const mat = glowMat(theme.glow, { map: texture, transparent: true });
+  mat.color.setHex(0xffffff);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.86, 0.86), mat);
+  let state;
+  mesh.userData.setState = value => {
+    if (state === value) return; state = value;
+    ctx.clearRect(0, 0, 128, 128); ctx.fillStyle = '#' + new THREE.Color(theme.stoneDark).getHexString();
+    ctx.beginPath(); ctx.arc(64, 64, 60, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#' + new THREE.Color(theme.glow).getHexString(); ctx.lineWidth = 6; ctx.lineCap = 'round';
+    if (state === 'ice') {
+      for (let i = 0; i < 6; i++) { ctx.save(); ctx.translate(64, 64); ctx.rotate(i * Math.PI / 3);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -39); ctx.moveTo(-10, -22); ctx.lineTo(0, -30); ctx.lineTo(10, -22); ctx.stroke(); ctx.restore(); }
+    } else if (state === 'water') {
+      ctx.beginPath(); ctx.moveTo(64, 24); ctx.bezierCurveTo(50, 47, 32, 62, 39, 83);
+      ctx.bezierCurveTo(47, 108, 85, 108, 91, 82); ctx.bezierCurveTo(96, 61, 77, 43, 64, 24); ctx.stroke();
+    } else {
+      for (const x of [37, 64, 91]) { ctx.beginPath(); ctx.moveTo(x, 99);
+        ctx.bezierCurveTo(x + 19, 72, x - 19, 62, x, 28); ctx.stroke(); }
+    }
+    texture.needsUpdate = true;
+  };
+  mesh.userData.setState(initial); return mesh;
+}
 
 export class SteamGate {
   constructor(scene, seg, opts = {}) {
@@ -259,13 +302,13 @@ export class SteamGate {
     const dark = toon(th.stoneDark), lite = toon(th.stoneLite);
 
     // 가마솥
-    this.pot = { x: cx, z: seg.z1 - 3.4 };
+    this.pot = { x: opts.court ? cx - 2.8 : cx, z: seg.z1 - 3.4 };
     const body = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.9, 1.2, 10), dark);
     body.position.set(this.pot.x, 0.6, this.pot.z); g.add(body);
     this.brewMat = glowMat(TEMPS[1].color);
     this.brew = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.2, 10), this.brewMat);
     this.brew.position.set(this.pot.x, 1.22, this.pot.z); g.add(this.brew);
-    // 김 — 수증기일 때만 뜬다
+    // 수증기 상태 표시용 김. 실제로 보이는 김은 수증기가 식어 생긴 작은 물방울이다.
     this.steam = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 6),
       glowMat(0xdfeef4, { transparent: true, opacity: 0.4 }));
     this.steam.position.set(this.pot.x, 2.3, this.pot.z);
@@ -273,26 +316,35 @@ export class SteamGate {
     g.add(this.steam);
 
     // 온도 손잡이
-    this.lever = { x: cx + 2.6, z: seg.z1 - 3.4 };
-    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 1.4, 6), dark);
-    st.position.set(this.lever.x, 0.7, this.lever.z); g.add(st);
+    this.levers = opts.court ? WATER_COURT.controls.map(p => ({ x: p.x, y: p.y, z: seg.z1 - p.back }))
+      : [{ x: cx + 2.6, y: 0, z: seg.z1 - 3.4 }];
+    this.lever = this.levers[0];
     this.knobMat = glowMat(TEMPS[1].color);
-    const kn = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), this.knobMat);
-    kn.position.set(this.lever.x, 1.6, this.lever.z); g.add(kn);
+    for (const p of this.levers) {
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.32, 1.4, 8), dark);
+      st.position.set(p.x, p.y + 0.7, p.z); g.add(st);
+      const kn = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), this.knobMat);
+      kn.position.set(p.x, p.y + 1.6, p.z); g.add(kn);
+    }
 
     // 밸브 셋 — 각자 다른 모습을 요구한다
     // 어느 밸브가 무엇을 원하는지 판마다 섞는다.
     this.valves = shuffle(['steam', 'ice', 'water'])
-      .map((want, i) => ({ want, x: cx - 3.4 + i * 3.4 })).map((v) => {
-      const z = seg.z0 + 2.2;
+      .map((want, i) => ({ want, x: opts.court ? WATER_COURT.valves[i].x : cx - 3.4 + i * 3.4,
+        y: opts.court ? WATER_COURT.valves[i].y : 0,
+        z: opts.court ? seg.z1 - WATER_COURT.valves[i].back : seg.z0 + 2.2 })).map((v) => {
+      const z = v.z;
       const mat = glowMat(TEMPS.find((t) => t.state === v.want).color,
         { transparent: true, opacity: 0.45 });
       const m = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.16, 6, 14), mat);
-      m.position.set(v.x, 1.5, z);
+      m.position.set(v.x, v.y + 1.5, z);
       g.add(m);
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.5, 0.2), lite);
-      post.position.set(v.x, 0.75, z); g.add(post);
-      return { ...v, z, mat, filled: false };
+      post.position.set(v.x, v.y + 0.75, z); g.add(post);
+      const badge = stateBadge(v.want, th); badge.position.set(v.x, v.y + 1.5, z + 0.05); g.add(badge);
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.72, 0.3, 12), lite);
+      bowl.position.set(v.x, v.y + 0.4, z + 0.3); g.add(bowl);
+      return { ...v, z, mat, badge, filled: false };
     });
     this._paint();
   }
@@ -305,36 +357,45 @@ export class SteamGate {
     this.knobMat.color.set(t.color);
     this.brew.scale.y = t.state === 'steam' ? 0.4 : 1;
     this.steam.visible = t.state === 'steam';
-    for (const v of this.valves) v.mat.opacity = v.filled ? 0.95 : 0.45;
+    for (const v of this.valves) {
+      v.mat.color.set(TEMPS.find(t => t.state === v.want).color);
+      v.mat.opacity = v.filled ? 0.95 : 0.45;
+      v.badge?.userData.setState(v.want);
+    }
   }
 
   update(dt) {
-    if (this.steam.visible) this.steam.position.y = 2.3 + Math.sin(performance.now() / 400) * 0.12;
+    this.time = (this.time || 0) + dt;
+    if (this.steam.visible) this.steam.position.y = 2.3 + Math.sin(this.time * 2.5) * 0.12;
     return {};
   }
 
   _near(pos) {
-    if (Math.hypot(pos.x - this.lever.x, pos.z - this.lever.z) < REACH) return { kind: 'lever' };
-    for (const v of this.valves) {
-      if (Math.hypot(pos.x - v.x, pos.z - v.z) < REACH) return { kind: 'valve', valve: v };
+    const candidates = this.levers.map(p => ({ kind: 'lever', p }))
+      .concat(this.valves.map(p => ({ kind: 'valve', valve: p, p })));
+    let nearest = null, distance = REACH;
+    for (const c of candidates) {
+      const d = Math.hypot(pos.x - c.p.x, (pos.y || 0) - c.p.y, pos.z - c.p.z);
+      if (d < distance) { distance = d; nearest = c; }
     }
-    return null;
+    return nearest;
   }
 
   prompt(pos) {
     if (this.solvedBy()) return null;
     const t = TEMPS[this.ti];
     const n = this._near(pos);
-    if (n && n.kind === 'lever') return `E — 온도 바꾸기 (지금 ${t.c}° · ${t.name})`;
+    if (n && n.kind === 'lever') return temperaturePrompt(this.ti);
     if (n && n.kind === 'valve') {
       const want = TEMPS.find((x) => x.state === n.valve.want).name;
       if (n.valve.filled) return `${want} 밸브는 채웠다`;
       return t.state === n.valve.want ? `E — ${want} 넣기` : `이 밸브는 ${josa(want, '를')} 원한다 (지금 ${t.name})`;
     }
-    return `🫖 지금 ${t.c}° · ${t.name} — 밸브 셋을 채워라`;
+    return `🫖 지금 ${t.c}°C · ${t.name} — 밸브 셋을 채워라`;
   }
 
   interact(pos) {
+    if (this.solvedBy()) return false;
     const n = this._near(pos);
     if (!n) return false;
     if (n.kind === 'lever') { this.ti = (this.ti + 1) % TEMPS.length; this._paint(); return true; }
@@ -351,11 +412,9 @@ export class SteamGate {
 // ══════════════════════════════════════════════════════════════════════════
 // 신전 — 세 모습이 바뀌는 신
 //
-// 신이 스스로 얼음 → 물 → 수증기로 바뀐다. 벽의 표지가 한 모습을 가리키고,
-// 신이 그 모습일 때 제단을 눌러야 한다. 세 번 맞히면 구슬이 내려온다.
-// 관문 셋이 "만드는" 것이었다면 여기는 **알아보고 기다리는** 자리다.
+// 제단 옆 손잡이로 온도를 설정한다. 표지가 요구하는 상태로 만든 뒤 제단을 누른다.
+// 기다려도 상태는 바뀌지 않는다. 앞 방에서 배운 온도와 상태의 짝을 세 번 적용한다.
 // ══════════════════════════════════════════════════════════════════════════
-const CYCLE = 2.6;              // 한 모습이 유지되는 시간
 const NEED = 3;
 
 export class WaterGod {
@@ -387,7 +446,7 @@ export class WaterGod {
     halo.position.set(cx, 3.0, this.gz);
     g.add(halo);
 
-    // 표지 — 지금 무엇을 기다리는지. 신 위에 떠 있다.
+    // 표지 — 지금 만들어야 할 상태. 신 위에 떠 있다.
     this.signMat = glowMat(TEMPS[this.want].color);
     this.sign = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 0.2), this.signMat);
     this.sign.position.set(cx, 6.4, this.gz);
@@ -404,7 +463,7 @@ export class WaterGod {
     // ★ 예전엔 신이 저절로 2.6초마다 바뀌었고 아이는 표지와 같아지는 **순간을 기다려
     //   눌렀다.** 반응 게임이지 단원(온도가 상태를 정한다)이 아니었다. 셋째 방에서
     //   손잡이로 온도를 바꿔 밸브를 채웠는데, 신전에 오면 그 배움이 쓰이지 않았다.
-    //   이제 신은 저절로 안 바뀐다. **제단 옆 손잡이로 온도를 올리고 내려** 신을
+    //   이제 신은 저절로 안 바뀐다. **제단 옆 손잡이로 온도 단계를 바꿔** 신을
     //   표지의 모습으로 만든 뒤 누른다. 앞 방의 배움이 곧 마지막 문제다(젤다).
     this.lever = { x: cx - 2.6, z: this.gz + 4.6 };
     const lp = new THREE.Mesh(new THREE.BoxGeometry(0.36, 1.3, 0.36), dark);
@@ -456,8 +515,8 @@ export class WaterGod {
   prompt(pos) {
     if (this.solvedBy()) return null;
     const w = TEMPS[this.want].name, now = TEMPS[this.si];
-    if (this._atLever(pos)) return `E — 온도 올리기 (지금 ${now.c}° · ${now.name})`;
-    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 손잡이로 신을 ${w}로 만들고 제단을 눌러라`;
+    if (this._atLever(pos)) return temperaturePrompt(this.si);
+    if (!this._atAltar(pos)) return `💧 표지는 ${w} — 손잡이로 신을 ${josa(w, '로')} 만들고 제단을 눌러라`;
     if (this.flash > 0) return `${now.name}였다 — 표지는 ${w}. 온도를 바꿔라 (${this.got}/${NEED})`;
     return `E — 지금 신은 ${now.name} · 표지는 ${w} (${this.got}/${NEED})`;
   }

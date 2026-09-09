@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-08T04:32:30.334Z",
+  "boots": [
+    {
+      "label": "fresh",
+      "ms": 3402
+    },
+    {
+      "label": "completed-save",
+      "ms": 2902
+    },
+    {
+      "label": "new-game-choice",
+      "ms": 3352
+    },
+    {
+      "label": "storage-blocked",
+      "ms": 3356
+    },
+    {
+      "label": "corrupted-json",
+      "ms": 3615
+    },
+    {
+      "label": "backup-write-blocked",
+      "ms": 3509
+    },
+    {
+      "label": "partial-map-restore",
+      "ms": 2905
+    },
+    {
+      "label": "unfinished-ending-dialogue",
+      "ms": 2646
+    }
+  ],
+  "checks": [
+    {
+      "name": "completed save prepared in real game state",
+      "pass": true
+    },
+    {
+      "name": "finished record offered",
+      "pass": true
+    },
+    {
+      "name": "end card remains on after 800ms",
+      "pass": true
+    },
+    {
+      "name": "cancel preserves exact primary record",
+      "pass": true
+    },
+    {
+      "name": "new game stores exact previous record in backup",
+      "pass": true
+    },
+    {
+      "name": "new game starts with empty progression",
+      "pass": true
+    },
+    {
+      "name": "blocked storage is explained before starting",
+      "pass": true
+    },
+    {
+      "name": "storage exceptions still allow a fresh lab session",
+      "pass": true
+    },
+    {
+      "name": "corrupt JSON is explained before starting",
+      "pass": true
+    },
+    {
+      "name": "corrupt source is kept verbatim in backup",
+      "pass": true
+    },
+    {
+      "name": "failed backup leaves original save untouched and disables new saves",
+      "pass": true
+    },
+    {
+      "name": "partial restore backs up original and continues with a valid map",
+      "pass": true
+    },
+    {
+      "name": "unfinished ending resumes its dialogue",
+      "pass": true
+    },
+    {
+      "name": "finishing resumed dialogue marks lab done and persists",
+      "pass": true
+    },
+    {
+      "name": "no page errors",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "ending": {
+    "ending": true,
+    "className": "on end",
+    "visible": true,
+    "text": "무무 행성\n\n끝\n\n답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.\n\n여섯 개의 물음이 한 권의 기록이 되었다.\n\n시작 화면으로\n\n완성한 기록은 이 브라우저에 남아 있다.\n\nmade by mumuclass.kr"
+  },
+  "resumedDialogue": {
+    "steps": 11,
+    "active": false,
+    "done": true,
+    "save": true
+  },
+  "pass": true
+}

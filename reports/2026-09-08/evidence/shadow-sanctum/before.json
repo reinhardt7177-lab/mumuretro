@@ -1,0 +1,83 @@
+{
+  "seed": 3065223911,
+  "answer": {
+    "a": 4,
+    "h": 1
+  },
+  "partial": {
+    "ai": 5,
+    "hi": 1
+  },
+  "samples": [
+    {
+      "ai": 0,
+      "hi": 0,
+      "lampY": 2.6,
+      "count": 2657,
+      "mismatch": 122
+    },
+    {
+      "ai": 0,
+      "hi": 1,
+      "lampY": 4.4,
+      "count": 2657,
+      "mismatch": 211
+    },
+    {
+      "ai": 0,
+      "hi": 2,
+      "lampY": 6.6,
+      "count": 2657,
+      "mismatch": 341
+    },
+    {
+      "ai": 2,
+      "hi": 0,
+      "lampY": 2.6,
+      "count": 2657,
+      "mismatch": 317
+    },
+    {
+      "ai": 2,
+      "hi": 1,
+      "lampY": 4.4,
+      "count": 2657,
+      "mismatch": 525
+    },
+    {
+      "ai": 2,
+      "hi": 2,
+      "lampY": 6.6,
+      "count": 2657,
+      "mismatch": 658
+    },
+    {
+      "ai": 5,
+      "hi": 0,
+      "lampY": 2.6,
+      "count": 2657,
+      "mismatch": 213
+    },
+    {
+      "ai": 5,
+      "hi": 1,
+      "lampY": 4.4,
+      "count": 2657,
+      "mismatch": 219
+    },
+    {
+      "ai": 5,
+      "hi": 2,
+      "lampY": 6.6,
+      "count": 2657,
+      "mismatch": 242
+    }
+  ],
+  "metrics": {
+    "frame": 765,
+    "calls": 337,
+    "triangles": 7919,
+    "points": 640,
+    "lines": 0
+  }
+}

@@ -1,0 +1,291 @@
+{
+  "date": "2026-09-08T04:27:02.622Z",
+  "checks": [
+    {
+      "name": "Energy warms ice before melting",
+      "pass": true
+    },
+    {
+      "name": "Melting holds 0 Celsius",
+      "pass": true
+    },
+    {
+      "name": "Heat decreases continuously with distance",
+      "pass": true
+    },
+    {
+      "name": "Wrong aim and distant heater do not thaw ice",
+      "pass": true,
+      "details": {
+        "phase": "ice",
+        "temperatureC": -8,
+        "meltFraction": 0,
+        "heaterWatts": 0,
+        "lightWatts": 0,
+        "beamHit": false,
+        "energyJ": 0,
+        "flow": 0
+      }
+    },
+    {
+      "name": "Approach discovers site without solving",
+      "pass": true
+    },
+    {
+      "name": "Heater has an E action",
+      "pass": true
+    },
+    {
+      "name": "Heater can be picked up",
+      "pass": true
+    },
+    {
+      "name": "Heater can be put beside ice",
+      "pass": true
+    },
+    {
+      "name": "Heater route gradually melts at 0 Celsius",
+      "pass": true,
+      "details": {
+        "phase": "melting",
+        "temperatureC": 0,
+        "meltFraction": 0.19478074787338995,
+        "heaterWatts": 13599.419298109022,
+        "lightWatts": 0,
+        "beamHit": false,
+        "energyJ": 81856.76978971224,
+        "flow": 0
+      }
+    },
+    {
+      "name": "Mid-thaw state restores",
+      "pass": true
+    },
+    {
+      "name": "Mid-thaw position angle temperature restored exactly",
+      "pass": true
+    },
+    {
+      "name": "Heater alone opens waterway",
+      "pass": true,
+      "details": {
+        "phase": "water",
+        "temperatureC": 0,
+        "meltFraction": 1,
+        "heaterWatts": 13599.419298109022,
+        "lightWatts": 0,
+        "beamHit": false,
+        "energyJ": 350800,
+        "flow": 1
+      }
+    },
+    {
+      "name": "Restored simulation continues identically",
+      "pass": true
+    },
+    {
+      "name": "Completion records the heat route",
+      "pass": true
+    },
+    {
+      "name": "Opened channel has a clear walking line to its outlet",
+      "pass": true
+    },
+    {
+      "name": "Geometry offers working and missing beam directions",
+      "pass": true,
+      "details": [
+        {
+          "angle": 180,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 195,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 210,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 225,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 240,
+          "hit": true,
+          "watts": 14806.196714222122
+        },
+        {
+          "angle": 255,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 270,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 285,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 300,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 315,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 330,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 345,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 0,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 15,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 30,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 45,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 60,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 75,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 90,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 105,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 120,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 135,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 150,
+          "hit": false,
+          "watts": 0
+        },
+        {
+          "angle": 165,
+          "hit": false,
+          "watts": 0
+        }
+      ]
+    },
+    {
+      "name": "Turning mirror moves visible beam onto receiver",
+      "pass": true
+    },
+    {
+      "name": "Light route also melts at 0 Celsius",
+      "pass": true,
+      "details": {
+        "phase": "melting",
+        "temperatureC": 0,
+        "meltFraction": 0.1713502502129059,
+        "heaterWatts": 0,
+        "lightWatts": 14806.196714222122,
+        "beamHit": true,
+        "energyJ": 74030.98357111057,
+        "flow": 0
+      }
+    },
+    {
+      "name": "Mirror aim and optical power restore mid-thaw",
+      "pass": true
+    },
+    {
+      "name": "Light alone opens waterway with stationary distant heater",
+      "pass": true,
+      "details": {
+        "phase": "water",
+        "temperatureC": 0,
+        "meltFraction": 1,
+        "heaterWatts": 0,
+        "lightWatts": 14806.196714222122,
+        "beamHit": true,
+        "energyJ": 350800,
+        "flow": 1
+      }
+    },
+    {
+      "name": "Completion records the light route",
+      "pass": true
+    },
+    {
+      "name": "Carried apparatus is saved and restored",
+      "pass": true
+    },
+    {
+      "name": "Leaving with heater returns it without consuming it",
+      "pass": true
+    },
+    {
+      "name": "Inconsistent thermal save rejected atomically",
+      "pass": true
+    },
+    {
+      "name": "Structure anchors follow curved ground",
+      "pass": true,
+      "details": {
+        "maxGroundError": 2.842170943040401e-14,
+        "maxTilt": 1.4901161193847656e-8
+      }
+    },
+    {
+      "name": "Collision resolves to walkable terrain within reach",
+      "pass": true
+    },
+    {
+      "name": "Deliberately broken phase-change rule is detected",
+      "pass": true
+    }
+  ],
+  "pageErrors": [],
+  "passed": true
+}

@@ -1,0 +1,349 @@
+{
+  "date": "2026-09-09T01:26:42.479Z",
+  "checks": [
+    {
+      "name": "Pre-upgrade shade save restores lamp phase, hint and safe entry",
+      "pass": true,
+      "details": {
+        "pos": [
+          0,
+          0,
+          4
+        ],
+        "device": {
+          "version": 2,
+          "fields": {
+            "a": 0.7,
+            "expose": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Rendered shadow triangles agree with safety at five lamp phases",
+      "pass": true,
+      "details": [
+        {
+          "a": 0,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 598
+        },
+        {
+          "a": 0.7,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 394
+        },
+        {
+          "a": 1.4,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 364
+        },
+        {
+          "a": 2.1,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 601
+        },
+        {
+          "a": 3.141592653589793,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 242
+        }
+      ]
+    },
+    {
+      "name": "Actual pillar meshes block every safe ray and no lit ray",
+      "pass": true,
+      "details": [
+        {
+          "a": 0,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 598
+        },
+        {
+          "a": 0.7,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 394
+        },
+        {
+          "a": 1.4,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 364
+        },
+        {
+          "a": 2.1,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 601
+        },
+        {
+          "a": 3.141592653589793,
+          "count": 1918,
+          "renderMismatch": 0,
+          "geometryMismatch": 0,
+          "shadowed": 242
+        }
+      ]
+    },
+    {
+      "name": "Lit floor gives visible warning then returns player to safe entry",
+      "pass": true,
+      "details": {
+        "warning": true,
+        "phase": 1.6087963267948966,
+        "exposure": 0.31666666666666665,
+        "reset": true,
+        "resetPosition": [
+          0,
+          0,
+          3.6
+        ],
+        "hint": 10.450000000000031
+      }
+    },
+    {
+      "name": "Partial exposure and phase restore safely, then warning recovers",
+      "pass": true,
+      "details": {
+        "before": {
+          "a": 1.6087963267948966,
+          "expose": 0.31666666666666665,
+          "z": 4
+        },
+        "after": {
+          "a": 1.7267963267948967,
+          "expose": 0,
+          "z": 4
+        }
+      }
+    },
+    {
+      "name": "Walk through moving shadows with ordinary movement at tier 0",
+      "pass": true,
+      "details": {
+        "tier": 0,
+        "phase": 0,
+        "crossingPhase": 0.20000000000000015,
+        "seconds": 3.6666666666666665,
+        "steps": 44,
+        "maxExposure": 1.6166666666666658,
+        "exposeMax": 1.8,
+        "maxError": 3.019806626980426e-14,
+        "failures": 0,
+        "solved": true,
+        "position": [
+          0,
+          0,
+          -9.19999999999998
+        ],
+        "hintAdded": 3.566666666666658
+      }
+    },
+    {
+      "name": "Walk through moving shadows with ordinary movement at tier 3",
+      "pass": true,
+      "details": {
+        "tier": 3,
+        "phase": 1.4,
+        "crossingPhase": 1.6,
+        "seconds": 4.583333333333333,
+        "steps": 55,
+        "maxExposure": 1.2333333333333338,
+        "exposeMax": 1.8,
+        "maxError": 2.1317438523750432e-14,
+        "failures": 0,
+        "solved": true,
+        "position": [
+          -0.9000000000000001,
+          0,
+          -9.199999999999989
+        ],
+        "hintAdded": 4.483333333333322
+      }
+    },
+    {
+      "name": "Walk through moving shadows with ordinary movement at tier 5",
+      "pass": true,
+      "details": {
+        "tier": 5,
+        "phase": 2.7,
+        "crossingPhase": 2.899999999999978,
+        "seconds": 4.833333333333333,
+        "steps": 58,
+        "maxExposure": 1.2333333333333338,
+        "exposeMax": 1.8,
+        "maxError": 2.044740276336181e-14,
+        "failures": 0,
+        "solved": true,
+        "position": [
+          4.199999999999999,
+          0,
+          -9.200000000000008
+        ],
+        "hintAdded": 4.733333333333321
+      }
+    },
+    {
+      "name": "Solved state restores and invalid phase rejects atomically",
+      "pass": true
+    },
+    {
+      "name": "New shrine save reopens with completed shadow crossing",
+      "pass": true
+    },
+    {
+      "name": "Return walk stays open and warning is off after completion",
+      "pass": true
+    },
+    {
+      "name": "144 camera directions avoid pillars, arches and lamp hardware",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "failures": []
+      }
+    },
+    {
+      "name": "Walking into a pillar stops outside its solid body",
+      "pass": true,
+      "details": 1.12
+    },
+    {
+      "name": "Fault injection catches drawing shadows one metre away from safe area",
+      "pass": true,
+      "details": [
+        {
+          "a": 0,
+          "count": 1918,
+          "renderMismatch": 190,
+          "geometryMismatch": 0,
+          "shadowed": 598
+        },
+        {
+          "a": 0.7,
+          "count": 1918,
+          "renderMismatch": 192,
+          "geometryMismatch": 0,
+          "shadowed": 394
+        },
+        {
+          "a": 1.4,
+          "count": 1918,
+          "renderMismatch": 333,
+          "geometryMismatch": 0,
+          "shadowed": 364
+        },
+        {
+          "a": 2.1,
+          "count": 1918,
+          "renderMismatch": 350,
+          "geometryMismatch": 0,
+          "shadowed": 601
+        },
+        {
+          "a": 3.141592653589793,
+          "count": 1918,
+          "renderMismatch": 126,
+          "geometryMismatch": 0,
+          "shadowed": 242
+        }
+      ]
+    },
+    {
+      "name": "Mobile notebook pauses rotating lamp and exposure",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "comparisonMetrics": {
+    "frame": 51,
+    "calls": 592,
+    "triangles": 31647,
+    "points": 640,
+    "lines": 0
+  },
+  "routes": [
+    {
+      "tier": 0,
+      "phase": 0,
+      "crossingPhase": 0.20000000000000015,
+      "seconds": 3.6666666666666665,
+      "steps": 44,
+      "maxExposure": 1.6166666666666658,
+      "exposeMax": 1.8,
+      "maxError": 3.019806626980426e-14,
+      "failures": 0,
+      "solved": true,
+      "position": [
+        0,
+        0,
+        -9.19999999999998
+      ],
+      "hintAdded": 3.566666666666658
+    },
+    {
+      "tier": 3,
+      "phase": 1.4,
+      "crossingPhase": 1.6,
+      "seconds": 4.583333333333333,
+      "steps": 55,
+      "maxExposure": 1.2333333333333338,
+      "exposeMax": 1.8,
+      "maxError": 2.1317438523750432e-14,
+      "failures": 0,
+      "solved": true,
+      "position": [
+        -0.9000000000000001,
+        0,
+        -9.199999999999989
+      ],
+      "hintAdded": 4.483333333333322
+    },
+    {
+      "tier": 5,
+      "phase": 2.7,
+      "crossingPhase": 2.899999999999978,
+      "seconds": 4.833333333333333,
+      "steps": 58,
+      "maxExposure": 1.2333333333333338,
+      "exposeMax": 1.8,
+      "maxError": 2.044740276336181e-14,
+      "failures": 0,
+      "solved": true,
+      "position": [
+        4.199999999999999,
+        0,
+        -9.200000000000008
+      ],
+      "hintAdded": 4.733333333333321
+    }
+  ],
+  "metrics": {
+    "frame": 136,
+    "calls": 589,
+    "triangles": 30911,
+    "points": 640,
+    "lines": 0
+  }
+}

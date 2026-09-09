@@ -1,0 +1,112 @@
+{
+  "commit": "be9b7b47ea57ee875adfe0267be92d911092480c",
+  "jsFiles": 68,
+  "physicalLines": 15380,
+  "reachableFiles": 58,
+  "unreachableFiles": [
+    "src/core/Assets.js",
+    "src/data/curriculum/earth4.js",
+    "src/data/curriculum/index.js",
+    "src/data/curriculum/korean4.js",
+    "src/data/curriculum/math4.js",
+    "src/data/curriculum/plant4.js",
+    "src/data/curriculum/science4.js",
+    "src/data/curriculum/social4.js",
+    "src/data/curriculum/space4.js",
+    "src/data/curriculum/validate.js"
+  ],
+  "missingRelativeImports": [
+    {
+      "file": "src/core/Assets.js",
+      "import": "src\\rendering\\Toon.js"
+    }
+  ],
+  "syntaxErrors": [],
+  "assetsByExtension": {
+    ".jpg": {
+      "count": 2,
+      "bytes": 188670
+    },
+    ".png": {
+      "count": 3,
+      "bytes": 8742
+    },
+    ".mp3": {
+      "count": 5,
+      "bytes": 9420292
+    },
+    ".glb": {
+      "count": 31,
+      "bytes": 3203404
+    }
+  },
+  "largestFiles": [
+    {
+      "file": "src/debug/introspect.js",
+      "lines": 1311,
+      "bytes": 78876
+    },
+    {
+      "file": "src/world/Forage.js",
+      "lines": 971,
+      "bytes": 52902
+    },
+    {
+      "file": "src/boot.js",
+      "lines": 904,
+      "bytes": 47797
+    },
+    {
+      "file": "src/shrine/SiftGates.js",
+      "lines": 673,
+      "bytes": 30845
+    },
+    {
+      "file": "src/shrine/Gates.js",
+      "lines": 656,
+      "bytes": 31319
+    },
+    {
+      "file": "src/ui/Notebook.js",
+      "lines": 628,
+      "bytes": 34916
+    },
+    {
+      "file": "src/shrine/ShadowGates.js",
+      "lines": 625,
+      "bytes": 27012
+    },
+    {
+      "file": "src/world/Lab.js",
+      "lines": 586,
+      "bytes": 32311
+    },
+    {
+      "file": "src/shrine/WaterGates.js",
+      "lines": 489,
+      "bytes": 22393
+    },
+    {
+      "file": "src/shrine/FireGates.js",
+      "lines": 484,
+      "bytes": 21831
+    },
+    {
+      "file": "src/shrine/StrataGates.js",
+      "lines": 443,
+      "bytes": 20611
+    },
+    {
+      "file": "src/world/Scatter.js",
+      "lines": 365,
+      "bytes": 19058
+    }
+  ],
+  "bgmFiles": [
+    "balance.mp3",
+    "lab.mp3",
+    "planet.mp3",
+    "shadow.mp3",
+    "title.mp3"
+  ]
+}

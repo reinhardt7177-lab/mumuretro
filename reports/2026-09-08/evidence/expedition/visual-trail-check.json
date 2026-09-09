@@ -1,0 +1,15 @@
+{
+  "pass": true,
+  "painted": 44476,
+  "idempotent": true,
+  "positionsUnchanged": true,
+  "seam": 0,
+  "resetColors": true,
+  "roadLift": 0,
+  "offRoadLift": 0.15,
+  "originalLift": 0.15,
+  "edgeLift": 0.075,
+  "originalEdgeLift": 0.15,
+  "meshCount": 3,
+  "errors": []
+}

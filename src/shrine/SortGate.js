@@ -15,6 +15,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { shuffle } from '../util/rand.js';
+import { SORT_PALETTE as C } from '../data/lighting.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -83,6 +84,7 @@ export class MagnetGate {
       glowMat(0x3d8fc4, { transparent: true, opacity: 0.8 }));
     wt.position.set(this.basin.x, 1.0, this.basin.z); g.add(wt);
     this.testMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), toon(0x9a938a));
+    this.testT = 0;
     this.testMesh.visible = false;
     g.add(this.testMesh);
     this.testItem = null;
@@ -122,16 +124,16 @@ export class MagnetGate {
   get crit() { return this.crits[Math.min(this.round, this.crits.length - 1)]; }
 
   _paint() {
-    this.bins[0].ringMat.color.set(0x6fe3d2);
-    this.bins[1].ringMat.color.set(0x8a8b90);
+    this.bins[0].ringMat.color.set(C.yes);
+    this.bins[1].ringMat.color.set(C.no);
     for (const b of this.bins) {
-      if (b.got.some((it) => this.crit.test(it) !== b.yes)) b.ringMat.color.set(0xe0736b);
+      if (b.got.some((it) => this.crit.test(it) !== b.yes)) b.ringMat.color.set(C.wrong);
     }
   }
 
   _near(pos) {
     let best = null, bd = REACH;
-    let ib = ITEM_REACH;
+    let ib = this.held ? 0 : ITEM_REACH;
     for (const it of this.items) {
       if (it.bin || it === this.held || it === this.testItem) continue;
       const d = Math.hypot(pos.x - it.x, pos.z - it.z);
@@ -163,7 +165,9 @@ export class MagnetGate {
   update(dt, actor) {
     const p = actor.position;
     this.magnet.position.set(p.x + actor.heading.x * 0.6, 1.0, p.z + actor.heading.z * 0.6);
-    this.magnet.rotation.y = Math.atan2(actor.heading.x, actor.heading.z);
+    // 저장된 quaternion의 Euler 분해가 x/z에 반 회전을 남길 수 있다.
+    // 손에 따라오는 도구는 매번 세 축을 같은 기준으로 설정한다.
+    this.magnet.rotation.set(0, Math.atan2(actor.heading.x, actor.heading.z), 0);
 
     // 자석에 붙는 물건만 떨린다 — 1·3라운드의 정보
     for (const it of this.items) {
@@ -172,7 +176,7 @@ export class MagnetGate {
       const pull = it.iron && d < PULL_R ? (1 - d / PULL_R) : 0;
       it.jig += dt * 22;
       it.mesh.position.x = it.x + Math.sin(it.jig) * 0.06 * pull;
-      it.mesh.position.y = 0.31 + Math.abs(Math.sin(it.jig * 0.7)) * 0.14 * pull;
+      it.mesh.position.y = it.home.y + Math.abs(Math.sin(it.jig * 0.7)) * 0.14 * pull;
       it.mesh.rotation.z = Math.sin(it.jig * 0.5) * 0.2 * pull;
     }
     if (this.held) {
@@ -185,6 +189,7 @@ export class MagnetGate {
         ? 1.05 + Math.sin(this.testT * 6) * 0.05 : 1.05 - this.testT * 0.8;
       this.testMesh.position.set(this.basin.x, y, this.basin.z);
     }
+    this.workshop?.sync();
     return {};
   }
 
@@ -195,14 +200,15 @@ export class MagnetGate {
     const n = this._near(pos);
     if (this.held) {
       if (n && n.kind === 'bin') return `E — ${n.bin.yes ? c.yes : c.no} 통에`;
-      if (n && n.kind === 'basin') return 'E — 물통에 담가 보기';
-      return `${say} — 통에 담아라`;
+      if (n && n.kind === 'basin' && !this.testItem) return 'E — 물통에 담가 보기';
+      return 'E — 시료를 제자리에 돌려놓기';
     }
     if (n && n.kind === 'item') {
       return `E — 들기 · ${n.item.iron ? '자석이 당긴다' : '자석이 반응 안 한다'}`;
     }
     if (n && n.kind === 'basin') {
-      if (this.testItem) return `${this.testItem.floats ? '뜬다!' : '가라앉는다!'} — E로 꺼내기`;
+      if (this.testItem) return this.testT < 1 ? 'E — 꺼내기 · 물속 움직임을 관찰하라'
+        : `E — 꺼내기 · ${this.testItem.floats ? '뜬다!' : '가라앉는다!'}`;
       return '💧 물통 — 물건을 담가 보면 안다';
     }
     if (n && n.kind === 'bin' && n.bin.got.length) return 'E — 통에서 되꺼내기';
@@ -210,7 +216,18 @@ export class MagnetGate {
   }
 
   interact(pos) {
+    if (this.solved) return false;
+    const result = this._interact(pos);
+    this.workshop?.sync();
+    return result;
+  }
+
+  _interact(pos) {
     const n = this._near(pos);
+    if (this.held && (!n || n.kind === 'item' || (n.kind === 'basin' && this.testItem))) {
+      this.held.mesh.position.copy(this.held.home); this.held.mesh.rotation.set(0, 0, 0);
+      this.held = null; return true;
+    }
     if (!n) return false;
     if (this.held) {
       if (n.kind === 'basin') {                       // 담가 보기
@@ -238,7 +255,8 @@ export class MagnetGate {
     if (n.kind === 'basin' && this.testItem) {        // 물통에서 꺼내기
       const it = this.testItem;
       this.testItem = null;
-      this.testMesh.visible = false;
+      this.testT = 0;
+    this.testMesh.visible = false;
       it.mesh.visible = true;
       this.held = it;
       return true;
@@ -261,6 +279,7 @@ export class MagnetGate {
     this.solved = false;
     this.crits = [...shuffle(CRITERIA.slice(0, 2)), CRITERIA[2]];
     this.testItem = null;
+    this.testT = 0;
     this.testMesh.visible = false;
     for (const p of this.pips) p.material.color.set(0x3a3020);
     for (const b of this.bins) b.got.length = 0;
@@ -271,5 +290,6 @@ export class MagnetGate {
       it.mesh.rotation.set(0, 0, 0);
     }
     this._paint();
+    this.workshop?.sync(true);
   }
 }

@@ -1,0 +1,1620 @@
+{
+  "date": "2026-09-08T11:50:05.018Z",
+  "checks": [
+    {
+      "name": "Legacy finale preserves direction, height, target, hints and open gates at safe entry",
+      "pass": true,
+      "details": {
+        "seed": 3065223911,
+        "state": {
+          "version": 1,
+          "id": "shadow",
+          "seed": 3065223911,
+          "tier": 0,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            true
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "a": 0,
+                "expose": 0
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "a.0": 0,
+                "a.1": 0,
+                "a.2": 0,
+                "hit": false
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "solved": false,
+                "round": 0,
+                "answers": [
+                  -44.678809985425325,
+                  -47.32936913380399,
+                  -41.056825594743714
+                ],
+                "objZ": -42.6,
+                "holeW": 1.4516554770331909,
+                "dragOffset": 0
+              }
+            }
+          ],
+          "final": {
+            "version": 2,
+            "fields": {
+              "ai": 5,
+              "hi": 1,
+              "solved": false,
+              "eyes": 0
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": -1,
+            "t": 0
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 1,
+              "t": 60
+            }
+          },
+          "checkpoint": {
+            "x": 0,
+            "y": 0,
+            "z": -56,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        },
+        "position": [
+          0,
+          0,
+          -56
+        ],
+        "answer": {
+          "a": 4,
+          "h": 1
+        }
+      }
+    },
+    {
+      "name": "All 24 direction-height combinations match actual statue ray blocking",
+      "pass": true,
+      "details": [
+        {
+          "ai": 0,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 167,
+          "signature": 2598304652,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 112,
+          "signature": 4214009321,
+          "length": 3.760683769609871,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 89,
+          "signature": 410149844,
+          "length": 2.7644736907984075,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 171,
+          "signature": 3589298462,
+          "length": 6.111111129507602,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 122,
+          "signature": 1714739701,
+          "length": 3.8655387134475396,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 94,
+          "signature": 3732120743,
+          "length": 2.8755041294194186,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 170,
+          "signature": 2811456763,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 118,
+          "signature": 2343406085,
+          "length": 3.7606837696098694,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 97,
+          "signature": 132766922,
+          "length": 2.764473690798411,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 174,
+          "signature": 4277464493,
+          "length": 6.111111129507602,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 121,
+          "signature": 2047967398,
+          "length": 3.86553871344754,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 96,
+          "signature": 3037796541,
+          "length": 2.8755041294194186,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 168,
+          "signature": 126217717,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 112,
+          "signature": 2491802461,
+          "length": 3.760683769609871,
+          "solved": true,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 91,
+          "signature": 4230163358,
+          "length": 2.7644736907984075,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 165,
+          "signature": 2411877930,
+          "length": 6.111111129507609,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 119,
+          "signature": 3105327842,
+          "length": 3.760683769609874,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 2802565938,
+          "length": 2.594380011111171,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 173,
+          "signature": 2610683674,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 119,
+          "signature": 3340833832,
+          "length": 3.7606837696098694,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 2937588666,
+          "length": 2.764473690798411,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 168,
+          "signature": 1893132395,
+          "length": 6.1111111295076075,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 118,
+          "signature": 3370234663,
+          "length": 3.760683769609872,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 3594984426,
+          "length": 2.594380011111171,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        }
+      ]
+    },
+    {
+      "name": "Rendered triangles match computed shadows in every combination",
+      "pass": true,
+      "details": [
+        {
+          "ai": 0,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 167,
+          "signature": 2598304652,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 112,
+          "signature": 4214009321,
+          "length": 3.760683769609871,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 89,
+          "signature": 410149844,
+          "length": 2.7644736907984075,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 171,
+          "signature": 3589298462,
+          "length": 6.111111129507602,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 122,
+          "signature": 1714739701,
+          "length": 3.8655387134475396,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 1,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 94,
+          "signature": 3732120743,
+          "length": 2.8755041294194186,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 170,
+          "signature": 2811456763,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 118,
+          "signature": 2343406085,
+          "length": 3.7606837696098694,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 2,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 97,
+          "signature": 132766922,
+          "length": 2.764473690798411,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 174,
+          "signature": 4277464493,
+          "length": 6.111111129507602,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 121,
+          "signature": 2047967398,
+          "length": 3.86553871344754,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 96,
+          "signature": 3037796541,
+          "length": 2.8755041294194186,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 168,
+          "signature": 126217717,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 112,
+          "signature": 2491802461,
+          "length": 3.760683769609871,
+          "solved": true,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 4,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 91,
+          "signature": 4230163358,
+          "length": 2.7644736907984075,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 165,
+          "signature": 2411877930,
+          "length": 6.111111129507609,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 119,
+          "signature": 3105327842,
+          "length": 3.760683769609874,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 5,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 2802565938,
+          "length": 2.594380011111171,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 173,
+          "signature": 2610683674,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 119,
+          "signature": 3340833832,
+          "length": 3.7606837696098694,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 6,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 2937588666,
+          "length": 2.764473690798411,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 168,
+          "signature": 1893132395,
+          "length": 6.1111111295076075,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 118,
+          "signature": 3370234663,
+          "length": 3.760683769609872,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 7,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 0,
+          "physicalMismatch": 0,
+          "shadowed": 93,
+          "signature": 3594984426,
+          "length": 2.594380011111171,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        }
+      ]
+    },
+    {
+      "name": "24 distinct visible shadows have exactly one winning combination",
+      "pass": true
+    },
+    {
+      "name": "Raising the light shortens the shadow at all eight directions",
+      "pass": true
+    },
+    {
+      "name": "Default PC entrance view contains the lamp in all 24 states",
+      "pass": true,
+      "details": {
+        "combinations": 24,
+        "failures": [],
+        "controlErrors": []
+      }
+    },
+    {
+      "name": "Wheel marker and height grip show actual lamp settings",
+      "pass": true
+    },
+    {
+      "name": "Target lines follow the outer silhouette, without internal part seams",
+      "pass": true,
+      "details": {
+        "segments": 38,
+        "bad": []
+      }
+    },
+    {
+      "name": "Inconsistent solved flag rejects before changing live state",
+      "pass": true
+    },
+    {
+      "name": "Legacy awakening and falling orb resume partway through, without replaying start",
+      "pass": true,
+      "details": {
+        "before": {
+          "version": 1,
+          "id": "shadow",
+          "seed": 3065223911,
+          "tier": 0,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            true
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "a": 0,
+                "expose": 0
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "a.0": 0,
+                "a.1": 0,
+                "a.2": 0,
+                "hit": false
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "solved": false,
+                "round": 0,
+                "answers": [
+                  -44.678809985425325,
+                  -47.32936913380399,
+                  -41.056825594743714
+                ],
+                "objZ": -42.6,
+                "holeW": 1.4516554770331909,
+                "dragOffset": 0
+              }
+            }
+          ],
+          "final": {
+            "version": 2,
+            "fields": {
+              "ai": 4,
+              "hi": 1,
+              "solved": true,
+              "eyes": 0.39999999999999997
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": 0.4285714285714286,
+            "t": 0.6
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 1,
+              "t": 60
+            }
+          },
+          "checkpoint": {
+            "x": 0,
+            "y": 0,
+            "z": -56,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        },
+        "after": {
+          "version": 1,
+          "id": "shadow",
+          "seed": 3065223911,
+          "tier": 0,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            true
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "a": 0.15400000000000008,
+                "expose": 0
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "a.0": 0,
+                "a.1": 0,
+                "a.2": 0,
+                "hit": false
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "solved": false,
+                "round": 0,
+                "answers": [
+                  -44.678809985425325,
+                  -47.32936913380399,
+                  -41.056825594743714
+                ],
+                "objZ": -42.6,
+                "holeW": 1.4516554770331909,
+                "dragOffset": 0
+              }
+            }
+          ],
+          "final": {
+            "version": 2,
+            "fields": {
+              "ai": 4,
+              "hi": 1,
+              "solved": true,
+              "eyes": 0.644444444444444
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": 0.6904761904761899,
+            "t": 0.9666666666666678
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 1,
+              "t": 60
+            }
+          },
+          "checkpoint": {
+            "x": 0,
+            "y": 0,
+            "z": -56,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        }
+      }
+    },
+    {
+      "name": "Walk to both controls and combine direction with height at three tiers",
+      "pass": true,
+      "details": [
+        {
+          "tier": 0,
+          "steps": 559,
+          "turns": 8,
+          "directionOnly": true,
+          "solved": true,
+          "eyes": 1,
+          "drop": 1,
+          "collectible": true
+        },
+        {
+          "tier": 3,
+          "steps": 559,
+          "turns": 8,
+          "directionOnly": true,
+          "solved": true,
+          "eyes": 1,
+          "drop": 1,
+          "collectible": true
+        },
+        {
+          "tier": 5,
+          "steps": 559,
+          "turns": 8,
+          "directionOnly": true,
+          "solved": true,
+          "eyes": 1,
+          "drop": 1,
+          "collectible": true
+        }
+      ]
+    },
+    {
+      "name": "New completed save restores and orb can be collected only once",
+      "pass": true,
+      "details": {
+        "same": true,
+        "taken": true,
+        "duplicate": false,
+        "unchanged": true,
+        "before": {
+          "version": 1,
+          "id": "shadow",
+          "seed": 3065223911,
+          "tier": 5,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            true
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "a": 7.8399999999999075,
+                "expose": 0
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "a.0": 0,
+                "a.1": 0,
+                "a.2": 0,
+                "hit": false
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "solved": false,
+                "round": 0,
+                "answers": [
+                  -44.678809985425325,
+                  -47.32936913380399,
+                  -41.056825594743714
+                ],
+                "objZ": -42.6,
+                "holeW": 1.4516554770331909,
+                "dragOffset": 0
+              }
+            }
+          ],
+          "final": {
+            "version": 2,
+            "fields": {
+              "ai": 4,
+              "hi": 1,
+              "solved": true,
+              "eyes": 1
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": 1,
+            "t": 3.733333333333325
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 0,
+              "t": 7.116666666666647
+            }
+          },
+          "checkpoint": {
+            "x": 0.0000948584503354539,
+            "y": 0,
+            "z": -58.37998450250445,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        },
+        "restored": {
+          "version": 1,
+          "id": "shadow",
+          "seed": 3065223911,
+          "tier": 5,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            true,
+            true
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "a": 7.8399999999999075,
+                "expose": 0
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "a.0": 0,
+                "a.1": 0,
+                "a.2": 0,
+                "hit": false
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "held": false,
+                "solved": false,
+                "round": 0,
+                "answers": [
+                  -44.678809985425325,
+                  -47.32936913380399,
+                  -41.056825594743714
+                ],
+                "objZ": -42.6,
+                "holeW": 1.4516554770331909,
+                "dragOffset": 0
+              }
+            }
+          ],
+          "final": {
+            "version": 2,
+            "fields": {
+              "ai": 4,
+              "hi": 1,
+              "solved": true,
+              "eyes": 1
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": 1,
+            "t": 3.733333333333325
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 0,
+              "t": 0
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 0,
+              "t": 7.116666666666647
+            }
+          },
+          "checkpoint": {
+            "x": 0.0000948584503354539,
+            "y": 0,
+            "z": -58.37998450250445,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        }
+      }
+    },
+    {
+      "name": "Collected orb stays collected after reopening game",
+      "pass": true
+    },
+    {
+      "name": "Old completion-only record opens awakened shrine without another reward",
+      "pass": true,
+      "details": {
+        "valid": true,
+        "taken": true,
+        "hidden": true,
+        "legacy": true,
+        "awake": 1,
+        "count": 1,
+        "locked": true
+      }
+    },
+    {
+      "name": "144 camera views avoid guardian, controls, lamp and arches",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "failures": []
+      }
+    },
+    {
+      "name": "Walking into the guardian stops outside the stone base",
+      "pass": true,
+      "details": 1.8800000000000026
+    },
+    {
+      "name": "Fault injection detects shadow displaced from actual statue",
+      "pass": true,
+      "details": [
+        {
+          "ai": 0,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 54,
+          "physicalMismatch": 0,
+          "shadowed": 167,
+          "signature": 2598304652,
+          "length": 6.111111129507606,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 46,
+          "physicalMismatch": 0,
+          "shadowed": 112,
+          "signature": 4214009321,
+          "length": 3.760683769609871,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 0,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 46,
+          "physicalMismatch": 0,
+          "shadowed": 89,
+          "signature": 410149844,
+          "length": 2.7644736907984075,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 0,
+          "count": 2304,
+          "visualMismatch": 92,
+          "physicalMismatch": 0,
+          "shadowed": 174,
+          "signature": 4277464493,
+          "length": 6.111111129507602,
+          "solved": false,
+          "lampY": 4.16,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 1,
+          "count": 2304,
+          "visualMismatch": 69,
+          "physicalMismatch": 0,
+          "shadowed": 121,
+          "signature": 2047967398,
+          "length": 3.86553871344754,
+          "solved": false,
+          "lampY": 5.33,
+          "bounded": true
+        },
+        {
+          "ai": 3,
+          "hi": 2,
+          "count": 2304,
+          "visualMismatch": 60,
+          "physicalMismatch": 0,
+          "shadowed": 96,
+          "signature": 3037796541,
+          "length": 2.8755041294194186,
+          "solved": false,
+          "lampY": 6.825,
+          "bounded": true
+        }
+      ]
+    },
+    {
+      "name": "Touch wheel changes only direction once",
+      "pass": true
+    },
+    {
+      "name": "Touch height handle changes only height once",
+      "pass": true
+    },
+    {
+      "name": "Mobile notebook pauses partial awakening and falling reward",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "comparisonMetrics": {
+    "frame": 34,
+    "calls": 332,
+    "triangles": 14155,
+    "points": 640,
+    "lines": 0
+  },
+  "optics": [
+    {
+      "ai": 0,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 167,
+      "signature": 2598304652,
+      "length": 6.111111129507606,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 0,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 112,
+      "signature": 4214009321,
+      "length": 3.760683769609871,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 0,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 89,
+      "signature": 410149844,
+      "length": 2.7644736907984075,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 1,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 171,
+      "signature": 3589298462,
+      "length": 6.111111129507602,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 1,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 122,
+      "signature": 1714739701,
+      "length": 3.8655387134475396,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 1,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 94,
+      "signature": 3732120743,
+      "length": 2.8755041294194186,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 2,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 170,
+      "signature": 2811456763,
+      "length": 6.111111129507606,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 2,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 118,
+      "signature": 2343406085,
+      "length": 3.7606837696098694,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 2,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 97,
+      "signature": 132766922,
+      "length": 2.764473690798411,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 3,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 174,
+      "signature": 4277464493,
+      "length": 6.111111129507602,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 3,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 121,
+      "signature": 2047967398,
+      "length": 3.86553871344754,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 3,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 96,
+      "signature": 3037796541,
+      "length": 2.8755041294194186,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 4,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 168,
+      "signature": 126217717,
+      "length": 6.111111129507606,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 4,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 112,
+      "signature": 2491802461,
+      "length": 3.760683769609871,
+      "solved": true,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 4,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 91,
+      "signature": 4230163358,
+      "length": 2.7644736907984075,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 5,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 165,
+      "signature": 2411877930,
+      "length": 6.111111129507609,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 5,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 119,
+      "signature": 3105327842,
+      "length": 3.760683769609874,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 5,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 93,
+      "signature": 2802565938,
+      "length": 2.594380011111171,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 6,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 173,
+      "signature": 2610683674,
+      "length": 6.111111129507606,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 6,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 119,
+      "signature": 3340833832,
+      "length": 3.7606837696098694,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 6,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 93,
+      "signature": 2937588666,
+      "length": 2.764473690798411,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    },
+    {
+      "ai": 7,
+      "hi": 0,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 168,
+      "signature": 1893132395,
+      "length": 6.1111111295076075,
+      "solved": false,
+      "lampY": 4.16,
+      "bounded": true
+    },
+    {
+      "ai": 7,
+      "hi": 1,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 118,
+      "signature": 3370234663,
+      "length": 3.760683769609872,
+      "solved": false,
+      "lampY": 5.33,
+      "bounded": true
+    },
+    {
+      "ai": 7,
+      "hi": 2,
+      "count": 2304,
+      "visualMismatch": 0,
+      "physicalMismatch": 0,
+      "shadowed": 93,
+      "signature": 3594984426,
+      "length": 2.594380011111171,
+      "solved": false,
+      "lampY": 6.825,
+      "bounded": true
+    }
+  ]
+}

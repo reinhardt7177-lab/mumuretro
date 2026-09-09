@@ -6,7 +6,7 @@
 //
 // 그래서 굴을 걷어 낸다. 다만 **관문의 좌표계는 한 줄도 안 바꾼다.**
 //   · 구간은 여전히 −Z 한 줄기다. 관문은 seg.x0~x1, z0~z1 안에서 그대로 돈다.
-//   · 바닥은 여전히 y=0이다. 걸음(RoomActor)은 모른다.
+//   · 기본 바닥은 여전히 y=0이다. 물 회랑은 이 위에 선택적인 높이 면을 얹는다.
 //   · 문은 여전히 통로 사각형의 on/off다(Dungeon.js). 모양만 아치가 됐다.
 //   바뀌는 것은 천장(없음) · 옆벽(낮은 난간) · 통로(다리) · 하늘(진짜 하늘)이다.
 //
@@ -133,6 +133,7 @@ export function buildOpenField(scene, rooms, theme) {
     const floor = box(s.w + (isBridge ? 0 : 1.2), slabH, len + (isBridge ? 0 : 0.6),
       isBridge ? stone : ground, 0, -slabH / 2, cz);
     floor.castShadow = false;
+    if (s.architecture) floor.position.y -= 0.12;
     // 가장자리 띠 — 바닥돌 옆면이 다른 색이어야 두께가 읽힌다
     if (!isBridge) {
       for (const sd of [-1, 1]) box(0.5, slabH + 0.2, len + 0.6, rim, sd * (hw + 0.85), -slabH / 2 + 0.1, cz);
@@ -148,7 +149,7 @@ export function buildOpenField(scene, rooms, theme) {
         }
         box(0.10, 0.10, len, gm, sd * (hw - 0.1), RAIL + 0.05, cz);
       }
-    } else {
+    } else if (!s.architecture) {
       // 난간 — 낮은 돌담. 위에 발광 줄. 천장이 없으니 이것이 방의 테두리다.
       for (const sd of [-1, 1]) {
         box(0.5, RAIL, len + 0.6, stone, sd * (hw + 0.25), RAIL / 2, cz);
@@ -169,7 +170,7 @@ export function buildOpenField(scene, rooms, theme) {
     }
 
     // 막다른 끝 — 신전 뒤. 벽 대신 **봉화**. 입구에서부터 보여야 한다.
-    if (isEnd) {
+    if (isEnd && !['shadowSanctum', 'siftSanctum'].includes(s.architecture)) {
       const bz = s.to + 1.6;
       for (let k = 0; k < 3; k++) {
         box(4.2 - k * 0.9, 0.5, 4.2 - k * 0.9, k % 2 ? lite : stone, 0, 0.25 + k * 0.5, bz);
@@ -177,8 +178,10 @@ export function buildOpenField(scene, rooms, theme) {
       const bm = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.32,
         depthWrite: false, side: THREE.DoubleSide });
       bm.userData.outlineParameters = { visible: false };
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 1.2, 46, 8, 1, true), bm);
-      beam.position.set(0, 1.5 + 23, bz);
+      const beamHeight = theme.court ? 14 : 46;
+      if (theme.court) bm.opacity = 0.10;
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 1.2, beamHeight, 8, 1, true), bm);
+      beam.position.set(0, 1.5 + beamHeight / 2, bz);
       scene.add(beam);
       const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), gm);
       core.position.set(0, 2.3, bz);
@@ -203,12 +206,13 @@ export function buildOpenField(scene, rooms, theme) {
       dm.userData.outlineParameters = { visible: false };
       const mesh = box(s.w - 0.1, oh - 0.05, 0.22, dm, 0, oh / 2, s.from - 0.1);
       mesh.userData.veil = true;
+      const frame = (...args) => { const m = box(...args); m.userData.doorFrame = s.door; return m; };
       for (const sd of [-1, 1]) {
-        box(0.7, oh + 0.9, 0.7, stone, sd * (s.w / 2 + 0.45), (oh + 0.9) / 2, s.from - 0.05);
-        box(0.22, oh, 0.2, gm, sd * (s.w / 2 + 0.2), oh / 2, s.from - 0.05);
+        frame(0.7, oh + 0.9, 0.7, stone, sd * (s.w / 2 + 0.45), (oh + 0.9) / 2, s.from - 0.05);
+        frame(0.22, oh, 0.2, gm, sd * (s.w / 2 + 0.2), oh / 2, s.from - 0.05);
       }
-      box(s.w + 1.6, 0.55, 0.8, dark, 0, oh + 0.9 + 0.27, s.from - 0.05);
-      box(s.w + 0.4, 0.16, 0.2, gm, 0, oh + 0.08, s.from - 0.05);
+      frame(s.w + 1.6, 0.55, 0.8, dark, 0, oh + 0.9 + 0.27, s.from - 0.05);
+      frame(s.w + 0.4, 0.16, 0.2, gm, 0, oh + 0.08, s.from - 0.05);
       doors[s.door] = { mesh, rect: rects[rects.length - 1], opened: false, glow: gm, color: gcol.getHex() };
     }
   }

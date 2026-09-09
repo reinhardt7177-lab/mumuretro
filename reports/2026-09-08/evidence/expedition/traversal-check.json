@@ -1,0 +1,111 @@
+{
+  "date": "2026-09-08T04:11:57.012Z",
+  "checks": [
+    {
+      "name": "Airborne feet preserve radial altitude over descending terrain",
+      "pass": true,
+      "details": {
+        "error": 1.4210854715202004e-14,
+        "groundDrop": 0.09191155765276449,
+        "height": 2.9869115576527605
+      }
+    },
+    {
+      "name": "90 seconds of surface walking stays attached and orthogonal through poles",
+      "pass": true,
+      "details": {
+        "groundError": 1.4210854715202004e-14,
+        "frameError": 2.220446049250313e-16,
+        "locked": true,
+        "glide": {
+          "height": 5.049999999999386,
+          "traveled": 25.200000000000003,
+          "fallSpeed": -1.65,
+          "groundedWithoutSail": true,
+          "visible": true,
+          "raisedArms": 2.4899999999999993,
+          "bentKnees": 0.4999999999999999
+        },
+        "released": true,
+        "landed": true,
+        "landingFrames": 35,
+        "buffer": true,
+        "reset": true,
+        "camera": {
+          "aimDot": 1,
+          "altitude": 23.474378392755355
+        }
+      }
+    },
+    {
+      "name": "Sail is unavailable before acquisition",
+      "pass": true
+    },
+    {
+      "name": "Held sail crosses 25 metres while normal falling reaches ground",
+      "pass": true,
+      "details": {
+        "height": 5.049999999999386,
+        "traveled": 25.200000000000003,
+        "fallSpeed": -1.65,
+        "groundedWithoutSail": true,
+        "visible": true,
+        "raisedArms": 2.4899999999999993,
+        "bentKnees": 0.4999999999999999
+      }
+    },
+    {
+      "name": "Sail has raised hands and bent knees",
+      "pass": true,
+      "details": {
+        "height": 5.049999999999386,
+        "traveled": 25.200000000000003,
+        "fallSpeed": -1.65,
+        "groundedWithoutSail": true,
+        "visible": true,
+        "raisedArms": 2.4899999999999993,
+        "bentKnees": 0.4999999999999999
+      }
+    },
+    {
+      "name": "Releasing jump folds sail and restores gravity",
+      "pass": true
+    },
+    {
+      "name": "Landing restores jumps and produces a landing pose",
+      "pass": true,
+      "details": 35
+    },
+    {
+      "name": "Jump pressed just before landing is buffered",
+      "pass": true
+    },
+    {
+      "name": "Scene reset clears flight and buffered input but preserves equipment",
+      "pass": true
+    },
+    {
+      "name": "Camera follows actual feet at 18 metres, with terrain clearance",
+      "pass": true,
+      "details": {
+        "aimDot": 1,
+        "altitude": 23.474378392755355
+      }
+    },
+    {
+      "name": "No browser exceptions",
+      "pass": true,
+      "details": []
+    },
+    {
+      "name": "Failure injection: removing altitude preservation is detected",
+      "pass": true,
+      "details": {
+        "error": 0.09191155765276449,
+        "groundDrop": 0.09191155765276449,
+        "height": 2.895
+      }
+    }
+  ],
+  "errors": []
+}

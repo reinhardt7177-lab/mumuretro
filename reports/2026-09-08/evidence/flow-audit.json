@@ -1,0 +1,62 @@
+{
+  "date": "2026-09-07T15:52:06.377Z",
+  "authorLink": {
+    "modeAfterLinkPointerDown": "lab"
+  },
+  "actualKeyboardOverlay": {
+    "before": [
+      0,
+      0,
+      10
+    ],
+    "after": [
+      0,
+      0,
+      8.79999999999999
+    ],
+    "notebookOpen": true
+  },
+  "ending": {
+    "afterOrb": {
+      "cleared": 6,
+      "gameDone": true,
+      "labDone": true
+    },
+    "labSent": true,
+    "endCard": true,
+    "cardText": "무무 행성\n\n끝\n\n답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.\n\n화면을 눌러 처음으로\nmade by mumuclass.kr",
+    "grandHints": [
+      "구슬은 아무 제단에나 올려도 된다.",
+      "다섯을 다 올리면 신이 눈을 뜬다."
+    ]
+  },
+  "mobileButtons": [
+    {
+      "text": "\n      1별",
+      "label": null
+    },
+    {
+      "text": "\n      2물음",
+      "label": null
+    },
+    {
+      "text": "\n      3들",
+      "label": null
+    },
+    {
+      "text": "\n      4편지",
+      "label": null
+    },
+    {
+      "text": "\n      5부엌",
+      "label": null
+    },
+    {
+      "text": "✕",
+      "label": "수첩 닫기"
+    }
+  ],
+  "mobileClose": {
+    "isOpen": false
+  }
+}

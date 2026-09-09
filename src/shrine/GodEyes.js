@@ -28,6 +28,7 @@ export function godEyes(parent, x, y, z, gap = 0.3, w = 0.44, h = 0.16) {
   return {
     mats,
     get awake() { return awake; },
+    restore(value) { awake = value; c.set(DARK).lerp(new THREE.Color(LIT), awake); for (const m of mats) m.color.copy(c); },
     // 풀렸으면 1.5초에 걸쳐 뜬다. 안 풀렸으면(다시 도전) 도로 감는다.
     tick(dt, solved) {
       const want = solved ? 1 : 0;

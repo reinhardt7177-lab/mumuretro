@@ -28,6 +28,19 @@ import { WeighGate } from './WeighGate.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
 import { addBoard } from './Signboard.js';
+import { buildWaterCourt } from './WaterCourt.js';
+import { attachWaterProgress } from './WaterProgress.js';
+import { attachShrineProgress } from './ShrineProgress.js';
+import { withSeed } from '../util/rand.js';
+import { deviceProgress } from './DeviceProgress.js';
+import { buildMirrorGallery } from './MirrorGallery.js';
+import { buildShadeCourt } from './ShadeCourt.js';
+import { buildSilhouetteCourt } from './SilhouetteCourt.js';
+import { buildShadowSanctum } from './ShadowSanctum.js';
+import { buildSieveCourt } from './SieveCourt.js';
+import { buildSortCourt } from './SortCourt.js';
+import { buildEvaporationCourt } from './EvaporationCourt.js';
+import { buildSiftSanctum } from './SiftSanctum.js';
 
 const GATES = {
   weigh: WeighGate, plate: PlateGate,                          // 01 균형
@@ -99,10 +112,15 @@ function makeFinal(kind, scene, seg, theme) {
   return new TodoGod(scene, seg, theme, kind);
 }
 
-export function buildRoom(spec) {
+export function buildRoom(spec, seed = Math.floor(Math.random() * 4294967296)) {
+  return withSeed(seed, () => assembleRoom(spec, seed));
+}
+function assembleRoom(spec, seed) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(spec.theme.bg);
   const dungeon = buildDungeon(scene, spec.rooms, spec.theme);
+  const court = spec.id === 'water' ? buildWaterCourt(scene, dungeon.rectOf('r3'),
+    dungeon.rectOf('shrine'), spec.theme, dungeon.rects) : null;
 
   const gates = [];
   for (const r of spec.rooms) {
@@ -113,7 +131,7 @@ export function buildRoom(spec) {
       // dungeon을 넘기는 이유: 얼음 발판처럼 **걸을 수 있는 영역 자체를 만드는**
       // 관문이 있다. 물 위는 못 걷고, 얼면 걸을 수 있어야 한다.
       gate: new Cls(scene, dungeon.rectOf(r.id), {
-        theme: spec.theme, kind: r.gate, dungeon, entryRect: dungeon.rectOf('entry'),
+        theme: spec.theme, kind: r.gate, dungeon, entryRect: dungeon.rectOf('entry'), court,
       }),
     });
   }
@@ -130,15 +148,40 @@ export function buildRoom(spec) {
     if (!r.goal) continue;
     const seg = dungeon.rectOf(r.id);
     goals[r.id] = r.goal;
-    addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
+    const goalBoard = addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
+    if (r.gate === 'sieve') { goalBoard.group.position.set(4.3, 2.1, seg.z1 - 2); goalBoard.group.rotation.y = -Math.PI / 3; }
+    if (r.gate === 'evaporate') { goalBoard.group.position.set(5.5, 2.1, seg.z1 - 1.5); goalBoard.group.rotation.y = -Math.PI / 3; goalBoard.group.scale.setScalar(.72); }
     if (!r.hints) continue;
     const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있다', spec.theme.glow, true);
+    if (r.gate === 'sieve') { board.group.position.set(4.3, 2.1, seg.z0 + 2); board.group.rotation.y = -Math.PI / 3; }
+    if (r.gate === 'evaporate') { board.group.position.set(5.5, 2.1, seg.z1 - 4.5); board.group.rotation.y = -Math.PI / 3; board.group.scale.setScalar(.72); }
     hints[r.id] = { board, texts: r.hints, level: 0, t: 0 };
   }
 
   const shrineSeg = dungeon.rectOf('shrine');
   const final = makeFinal(spec.final, scene, shrineSeg, spec.theme);
   const prize = new Prize(scene, final.prizePos);
+  const mirror = gates.find(g => g.gate instanceof MirrorGate)?.gate;
+  const gallery = mirror ? buildMirrorGallery(scene, mirror.seg, dungeon.rects, mirror,
+    deviceProgress(mirror, 'mirror', scene)) : null;
+  const shade = gates.find(g => g.gate instanceof ShadeGate)?.gate;
+  const shadeCourt = shade ? buildShadeCourt(scene, shade.seg, dungeon.rects, shade,
+    deviceProgress(shade, 'shade', scene)) : null;
+  const silhouette = gates.find(g => g.gate instanceof SilhouetteGate)?.gate;
+  const silhouetteCourt = silhouette ? buildSilhouetteCourt(scene, silhouette.seg, dungeon.rects, silhouette,
+    deviceProgress(silhouette, 'silhouette', scene)) : null;
+  const sanctum = final instanceof MirrorGod ? buildShadowSanctum(scene, shrineSeg, dungeon.rects, final,
+    deviceProgress(final, 'mirrorGod', scene)) : null;
+  const sieve = gates.find(g => g.gate instanceof SieveGate)?.gate;
+  const sieveCourt = sieve ? buildSieveCourt(scene, sieve.seg, dungeon.rects, sieve, deviceProgress(sieve, 'sieve', scene)) : null;
+
+  const sort = gates.find(g => g.gate instanceof MagnetGate)?.gate;
+  const sortCourt = sort ? buildSortCourt(scene, sort.seg, dungeon.rects, sort, deviceProgress(sort, 'magnet', scene)) : null;
+
+  const evaporation = gates.find(g => g.gate instanceof EvaporateGate)?.gate;
+  const evaporationCourt = evaporation ? buildEvaporationCourt(scene, evaporation.seg, dungeon.rects, evaporation, deviceProgress(evaporation, 'evaporate', scene)) : null;
+
+  const siftSanctum = final instanceof SiftGod ? buildSiftSanctum(scene, shrineSeg, dungeon.rects, final, deviceProgress(final, 'siftGod', scene)) : null;
 
   // ── 가림막 — 카메라와 나 사이에 낀 판은 흐려진다 ─────────────────────────
   // ★ 카메라가 낮은 천장에서 각도를 낮춰 제대로 물러나게 되자, 예전엔 갈 수
@@ -164,9 +207,9 @@ export function buildRoom(spec) {
     }
   };
 
-  return {
+  const api = {
     fadeVeils, veils,
-    spec, scene, dungeon, gates, final, prize, goals, hints,
+    spec, seed, scene, dungeon, gates, final, prize, goals, hints, court, gallery, shadeCourt, silhouetteCourt, sanctum, sieveCourt, sortCourt, evaporationCourt, siftSanctum, runTier: 0,
     // 헤맨 시간이 쌓이면 힌트가 한 단계씩 켜진다. 실패는 시간을 크게 밀어 준다 —
     // 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르게 대접해야 한다.
     // 켜졌으면 그 문구를 돌려준다(배너로 한 번 알리려고).
@@ -174,23 +217,25 @@ export function buildRoom(spec) {
       const h = hints[id];
       if (!h || h.level >= h.texts.length) return null;
       h.t += dt;
-      const need = h.level === 0 ? 45 : 90;
+      const need = 45 * (h.level + 1);
       if (h.t < need) return null;
       h.board.set(`힌트 ${h.level + 1}`, h.texts[h.level], false);
       h.level++;
       return h.texts[h.level - 1];
     },
-    obstacles: final.obstacles || [],
+    obstacles: [...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
     shrineSeg,
     // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
-    // 어느 순서로 돌든 점점 어려워지고, 같은 사당을 다시 와도 그동안 실력이
-    // 붙었으면 그만큼 올라와 있다. 몸으로 푸는 관문만 반응한다.
+    // 새 도전은 깬 개수에 맞추고, 진행 중인 도전은 첫 입장 단계를 유지한다.
     applyTier(t) {
+      this.runTier = t;
       for (const g of gates) if (g.gate.setTier) g.gate.setTier(t);
       if (final.setTier) final.setTier(t);
     },
     // 같은 사당을 다시 도전할 때. 다른 사당으로 갈 때는 부를 일이 없다 — 씬이 다르다.
     restart() {
+      if (court) court.restart();
+      this.hasProgress = false; this.checkpoint = null; this.legacyCompleted = false;
       // ★ restart만 부르고 있었다. PlateGate처럼 reset만 가진 관문은 되돌아가지 않아
       //   같은 사당을 다시 들어가면 압력판이 이미 풀려 있었다(전수 조사에서 잡힘).
       //   둘 중 있는 것을 부른다 — 계약에 없는 이름을 강요하지 않는다.
@@ -212,4 +257,9 @@ export function buildRoom(spec) {
       prize.reset();
     },
   };
+  const restart = api.restart.bind(api);
+  api.restart = () => withSeed((seed ^ 0x51a7e) >>> 0, restart);
+  if (court) attachWaterProgress(api);
+  else attachShrineProgress(api);
+  return api;
 }

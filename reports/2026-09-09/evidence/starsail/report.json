@@ -1,0 +1,155 @@
+{
+  "checks": [
+    {
+      "name": "Blender model loads in the playable starting ship",
+      "pass": true
+    },
+    {
+      "name": "Walk to winch, retrieve parcel and open notebook",
+      "pass": true,
+      "details": {
+        "prompt": "E — 소포 건져 올리기",
+        "recovering": true,
+        "note": true,
+        "state": {
+          "version": 1,
+          "dials": [
+            0,
+            0,
+            0
+          ],
+          "hasNote": true,
+          "read": false,
+          "open": false,
+          "done": false,
+          "sent": false,
+          "parcelRecovered": true
+        }
+      }
+    },
+    {
+      "name": "Walk between all navigation rings without getting stuck",
+      "pass": true,
+      "details": {
+        "open": true,
+        "dials": [
+          3,
+          5,
+          8
+        ]
+      }
+    },
+    {
+      "name": "Depart for planet and return to the same ship",
+      "pass": true,
+      "details": {
+        "landed": true,
+        "returned": true,
+        "note": true,
+        "recovered": true
+      }
+    },
+    {
+      "name": "Old saves migrate and contradictory parcel state rejects atomically",
+      "pass": true,
+      "details": {
+        "old": true,
+        "rejects": true
+      }
+    },
+    {
+      "name": "Merged-model solid test detects cabin interior and leaves open deck clear",
+      "pass": true,
+      "details": {
+        "cabin": true,
+        "deck": false
+      }
+    },
+    {
+      "name": "A-X full regression",
+      "pass": true
+    },
+    {
+      "name": "Mid-recovery save resumes with a settled parcel and no duplicate notebook",
+      "pass": true
+    },
+    {
+      "name": "Touch E opens the recovered parcel",
+      "pass": true
+    },
+    {
+      "name": "Touch notebook pauses ship recovery clock",
+      "pass": true
+    },
+    {
+      "name": "All quality levels render the ship",
+      "pass": true,
+      "details": [
+        {
+          "q": "high",
+          "calls": 360,
+          "triangles": 67651,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "q": "mid",
+          "calls": 360,
+          "triangles": 67651,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "q": "low",
+          "calls": 347,
+          "triangles": 67638,
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "q": "min",
+          "calls": 137,
+          "triangles": 33202,
+          "width": 1152,
+          "height": 720
+        }
+      ]
+    },
+    {
+      "name": "No unhandled browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "metrics": [
+    {
+      "q": "high",
+      "calls": 360,
+      "triangles": 67651,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "q": "mid",
+      "calls": 360,
+      "triangles": 67651,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "q": "low",
+      "calls": 347,
+      "triangles": 67638,
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "q": "min",
+      "calls": 137,
+      "triangles": 33202,
+      "width": 1152,
+      "height": 720
+    }
+  ]
+}

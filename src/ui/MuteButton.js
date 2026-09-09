@@ -16,7 +16,9 @@ const CSS = `
   transition:transform .08s ease,background .12s ease}
 #mute:hover{background:rgba(14,22,26,.72)}
 #mute:active{transform:scale(.92)}
+#mute:focus-visible{outline:3px solid #a7eadc;outline-offset:4px;background:rgba(14,22,26,.9)}
 #mute.off{color:#8b959a}
+@media (prefers-reduced-motion:reduce){#mute{transition:none}}
 /* 터치 기기에서는 지도·수첩 단추가 오른쪽 위를 쓴다 — 그 아래로 내려간다. */
 @media (any-pointer:coarse){#mute{top:calc(176px + env(safe-area-inset-top));width:46px;height:46px;font-size:19px}}
 @media (any-pointer:coarse) and (min-width:820px) and (min-height:620px){
@@ -39,17 +41,24 @@ export function buildMuteButton() {
     const m = isMuted();
     el.textContent = m ? '🔇' : '🔊';
     el.classList.toggle('off', m);
-    el.setAttribute('aria-label', m ? '소리 켜기' : '소리 끄기');
+    el.setAttribute('aria-label', '음소거');
+    el.title = m ? '소리 켜기' : '소리 끄기';
     el.setAttribute('aria-pressed', String(m));
   };
   paint();
 
-  el.addEventListener('pointerdown', (e) => {
-    e.stopPropagation();               // 시작 화면의 "아무 데나 눌러 시작"에 안 새게
+  el.addEventListener('pointerdown', (e) => e.stopPropagation());
+  el.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation();
+  });
+  el.addEventListener('keyup', (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') e.stopPropagation();
+  });
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();               // 기본 버튼 click은 마우스·터치·Enter·Space를 모두 지원한다.
     startAudio();
     setMuted(!isMuted());
     paint();
-    el.blur();
   });
 
   return { el, paint };

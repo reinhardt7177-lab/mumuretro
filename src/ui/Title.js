@@ -11,9 +11,9 @@
 //   전부 끌려다니고, 무엇보다 링크(mumuclass.kr)를 누를 수가 없다.
 //
 // 규칙
-//   · 아무 데나 누르면 시작한다. "시작 버튼을 찾아라"는 문제가 아니다.
+//   · 시작·이어하기를 버튼으로 구분한다. 새 탐사는 기존 기록을 확인하고 시작한다.
 //   · 만든 이 링크만 예외다 — 거기서는 시작이 아니라 그 주소로 간다.
-//   · 키보드로도 시작한다(아무 키). 터치도 같은 길로 들어온다.
+//   · Enter·Space와 터치 모두 같은 버튼으로 시작한다.
 const CSS = `
 #title{position:fixed;inset:0;z-index:42;display:none;cursor:pointer;
   font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
@@ -73,77 +73,82 @@ body.titling #hint,body.titling #prompt,body.titling #touchUI{display:none!impor
   #title .lock{left:7vw;top:7vh;max-width:66vw}
   #title .go{bottom:11%}
   #title .by{bottom:4.5%}
-}`;
+}
+#title{cursor:default}
+#title .actions{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;width:min(90vw,430px);padding:16px 20px;border-radius:20px;background:rgba(243,250,248,.92);box-shadow:0 12px 38px -18px #183e43;text-align:center;color:#213e43}
+#title .go{position:static;transform:none;animation:none;cursor:pointer;border:0;font-family:inherit;font-size:17px;font-weight:700;letter-spacing:.03em;background:#17695f;color:#fff;width:100%;padding:13px 24px;min-height:48px}
+#title .secondary{font:inherit;font-size:13px;border:0;background:transparent;color:#24574f;padding:7px 16px;min-height:36px;cursor:pointer;text-decoration:underline}
+#title button:focus-visible,#title a:focus-visible{outline:3px solid #184fba;outline-offset:4px}
+#title .save-info{font-size:12px;line-height:1.6;word-break:keep-all}
+#title .save-detail{font-size:11px;line-height:1.55;color:#44615f}
+#title .confirm-row{display:flex;justify-content:center;gap:10px;width:100%}
+#title [hidden]{display:none!important}
+@media (max-height:520px){#title .actions{bottom:12%;padding:10px 16px;gap:5px}#title .lock{top:5vh}#title .t{font-size:clamp(30px,6vw,56px)}#title .rule{margin:8px 0}#title .s1,#title .s2{font-size:14px}#title .go{padding:9px 22px;min-height:42px}#title .by{bottom:3%}}
+@media (max-width:640px) and (min-height:521px){#title .actions{bottom:12%}}
+`;
+
 
 const SITE = 'https://mumuclass.kr';
-
-export function buildTitle(onStart) {
-  const style = document.createElement('style');
-  style.textContent = CSS;
-  document.head.appendChild(style);
-
-  const el = document.createElement('div');
-  el.id = 'title';
-  el.innerHTML = `
-    <div class="lock">
-      <h1 class="t">무무 행성</h1>
-      <div class="rule"></div>
-      <p class="s1">작은 별을 걸어서</p>
-      <p class="s2">사당 여섯 · 수첩 한 권</p>
-    </div>
-    <div class="go">화면을 눌러 시작</div>
-    <div class="by">made by <a href="${SITE}" target="_blank" rel="noopener">mumuclass.kr</a></div>`;
+export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew = () => true } = {}) {
+  const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
+  const el = document.createElement('div'); el.id = 'title';
+  el.innerHTML = '<div class="lock"><h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">작은 별을 걸어서</p><p class="s2">사당 여섯 · 수첩 한 권</p></div>'
+    + '<div class="actions"><p class="save-info"></p><button class="go" type="button">탐사 시작</button><button class="secondary new" type="button" hidden>새 탐사 시작</button><p class="save-detail">이 브라우저에 자동 저장된다.</p><div class="confirm-row" hidden><button class="secondary cancel" type="button">이어갈 기록 유지</button><button class="secondary confirm" type="button">새로 시작</button></div></div>'
+    + '<div class="by">made by <a href="'+SITE+'" target="_blank" rel="noopener">mumuclass.kr</a></div>';
   document.body.appendChild(el);
-
-  let live = false, going = false;
-
-  const start = () => {
-    if (!live || going) return;
-    going = true;
-    el.classList.add('out');
-    document.body.classList.remove('titling');
-    setTimeout(() => { el.classList.remove('on', 'out'); live = false; }, 430);
-    onStart();
+  let live = false, going = false, ending = false, confirming = false;
+  const go = el.querySelector('.go'), info = el.querySelector('.save-info');
+  const fresh = el.querySelector('.new'), confirmRow = el.querySelector('.confirm-row');
+  const detail = el.querySelector('.save-detail');
+  const savedInfo = save ? '구슬 '+save.progress.cleared.length+'/6 · '+new Date(save.savedAt).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 기록'
+    : '걷고, 실험하고, 나만의 수첩을 채운다.';
+  info.textContent = savedInfo;
+  if (save) {
+    go.textContent = save.progress.lab.sent ? '완성한 기록 보기' : '이어서 탐사'; fresh.hidden = false;
+    detail.textContent = '탐사 기록을 자동 저장한다. 여섯 사당의 장치와 진행을 이어간다. 위험 구간은 안전한 위치에서 시작한다.';
+  } else if (saveStatus === 'invalid') {
+    detail.textContent = '이전 기록을 읽지 못했다. 새 탐사를 시작하면 이전 기록은 백업으로 남긴다.';
+  } else if (saveStatus === 'unavailable') {
+    detail.textContent = '이 브라우저에서 저장을 사용할 수 없다. 창을 닫으면 진행이 사라진다.';
+  }
+  const start = (resume = !!save) => {
+    if (!live || going || confirming) return;
+    if (!resume) onNew();
+    going = true; live = false; document.activeElement?.blur();
+    el.classList.add('out'); document.body.classList.remove('titling');
+    setTimeout(() => { if (!ending) el.classList.remove('on','out'); }, 430);
+    onStart(resume);
   };
-
-  // ★ 링크는 시작보다 먼저 가로챈다. 안 그러면 mumuclass.kr을 누른 사람이
-  //   새 탭을 열면서 **동시에 게임까지 시작해 놓고** 돌아온다.
-  el.querySelector('.by a').addEventListener('click', (e) => e.stopPropagation());
-  el.addEventListener('pointerdown', start);
-  addEventListener('keydown', (e) => {
-    if (!live || e.repeat) return;
-    if (e.code === 'F5' || e.code === 'F12' || e.metaKey || e.ctrlKey || e.altKey) return;
-    start(); e.preventDefault();
+  const link = el.querySelector('.by a');
+  link.addEventListener('pointerdown', e => e.stopPropagation());
+  link.addEventListener('click', e => e.stopPropagation());
+  go.addEventListener('click', () => { if (ending) location.reload(); else start(); });
+  fresh.addEventListener('click', () => {
+    confirming = true; go.hidden = fresh.hidden = true; confirmRow.hidden = false;
+    info.textContent = '새 탐사를 시작할까? 이전 기록 한 개는 백업으로 남긴다.';
+    el.querySelector('.cancel').focus();
   });
-
-  // ── 끝 카드 ──────────────────────────────────────────────────────────
-  // ★ 엔딩이 알림 한 줄로 끝나고 있었다. 끝은 끝이라고 말해야 한다.
-  //   누르면 처음으로 — 다시 시작하면 표지의 그 자리다.
-  let ending = false;
+  const cancel = () => {
+    confirming = false; confirmRow.hidden = true; go.hidden = false; fresh.hidden = !save;
+    info.textContent = savedInfo; go.focus();
+  };
+  el.querySelector('.cancel').addEventListener('click', cancel);
+  el.querySelector('.confirm').addEventListener('click', () => { confirming = false; start(false); });
+  addEventListener('keydown', e => {
+    if (!live || e.repeat) return;
+    if (e.code === 'Escape' && confirming) { cancel(); e.preventDefault(); return; }
+    if (e.target.closest?.('button,a') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.code === 'Enter' || e.code === 'Space') { start(); e.preventDefault(); }
+  });
   const endCard = () => {
-    ending = true;
-    el.classList.add('on', 'end');
-    el.querySelector('.lock').innerHTML = `
-      <h1 class="t">무무 행성</h1>
-      <div class="rule"></div>
-      <p class="s1">끝</p>
-      <p class="fin">답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.</p>`;
-    el.querySelector('.go').textContent = '화면을 눌러 처음으로';
-    document.body.classList.add('titling');
-    live = false;                         // start()가 안 먹게
+    ending = true; live = false; el.classList.add('on','end'); el.classList.remove('out');
+    el.querySelector('.lock').innerHTML = '<h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">끝</p><p class="fin">답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.</p>';
+    go.textContent = '시작 화면으로'; go.hidden = false; fresh.hidden = confirmRow.hidden = true;
+    info.textContent = '여섯 개의 물음이 한 권의 기록이 되었다.';
+    detail.textContent = '완성한 기록은 이 브라우저에 남아 있다.';
+    document.body.classList.add('titling'); go.focus();
   };
-  el.addEventListener('pointerdown', (e) => {
-    if (!ending) return;
-    e.stopPropagation();
-    location.reload();
-  }, true);
-
-  return {
-    endCard,
-    get isEnding() { return ending; },
-    show() { live = true; el.classList.add('on'); document.body.classList.add('titling'); },
-    get isOpen() { return live; },
-    start,                      // 검사·디버그가 부를 수 있게
-    el,
-  };
+  return { endCard, get isEnding(){return ending;},
+    show(){live=true;el.classList.add('on');document.body.classList.add('titling');},
+    get isOpen(){return live;}, start, el };
 }

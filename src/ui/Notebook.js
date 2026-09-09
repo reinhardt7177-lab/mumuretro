@@ -20,7 +20,7 @@
 //   따로 저장하지 않는다. 깬 사당이 곧 읽을 수 있는 편지다.
 import { NOTE_TITLE, NOTES } from '../shrine/dialogue.js';
 import { KEEPERS, ENDING, OPENING } from '../shrine/dialogue.js';
-import { registerOverlay, soloOpen } from './overlay.js';
+import { registerOverlay, soloOpen, hasOpenOverlay } from './overlay.js';
 import { PORTAL_CODE } from '../world/Lab.js';
 import { SHRINE_THEMES } from '../data/lighting.js';
 import { markSvg } from '../data/marks.js';
@@ -41,12 +41,15 @@ const CSS_BASE = `
     linear-gradient(rgba(90,110,120,.10) 1px,transparent 1px),
     linear-gradient(90deg,rgba(90,110,120,.10) 1px,transparent 1px);
   background-size:22px 22px,22px 22px}
+#nb .page,#nb .page *{box-sizing:border-box}
+#nb button:focus-visible,#nb .body:focus-visible,#nb .letter:focus-visible{
+  outline:2px solid #2f5490;outline-offset:-2px}
 
 /* 색인 탭 — 진짜 수첩처럼 위에 붙는다 */
 #nb .tabs{display:flex;gap:3px;padding:8px 10px 0;background:rgba(35,39,42,.05);
   border-bottom:2px solid #23272a;flex:0 0 auto}
-#nb .tab{position:relative;appearance:none;border:0;cursor:pointer;
-  padding:7px 13px 8px;border-radius:4px 4px 0 0;font:600 13px/1 inherit;
+#nb .tab{position:relative;appearance:none;border:0;cursor:pointer;white-space:nowrap;
+  padding:7px 13px 8px;border-radius:4px 4px 0 0;font-family:inherit;font-size:13px;font-weight:600;line-height:1;
   color:#7d878c;background:rgba(255,255,255,.35)}
 #nb .tab:hover{color:#3d474c;background:rgba(255,255,255,.7)}
 #nb .tab.on{color:#23272a;background:#f3f2ec;box-shadow:0 1px 0 0 #f3f2ec}
@@ -60,7 +63,7 @@ const CSS_BASE = `
    수첩에 덮인다). 바닥글에는 "N 닫기"라고 적혀 있었으니 화면이 거짓말을 한 것이다.
    닫기는 **보이는 자리에** 있어야 한다. */
 #nb .x{margin-left:auto;appearance:none;border:0;cursor:pointer;background:transparent;
-  color:#7d878c;font:600 20px/1 inherit;width:40px;height:36px;border-radius:6px 6px 0 0}
+  color:#7d878c;font-family:inherit;font-size:20px;font-weight:600;line-height:1;width:40px;height:36px;border-radius:6px 6px 0 0}
 #nb .x:hover{color:#23272a;background:rgba(255,255,255,.7)}
 @media (any-pointer:coarse){#nb .x{width:52px;height:44px;font-size:23px}
   /* 손가락으로 여는 기기에는 1~5 키가 없다. 없는 키를 탭에 적어 두지 않는다. */
@@ -74,13 +77,15 @@ const CSS_BASE = `
    **넷이 그냥 잘려 나갔다** — 없어진 줄 모르게. 잘리는 것보다는 굴러가는 게 낫다.
    설계 목표는 여전히 "스크롤 없음"이고 검사 M이 440·540·660에서 그걸 지킨다.
    이 스크롤은 그 아래 높이에서의 **예비**지 기본이 아니다. */
-#nb .body{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:0 22px;
+#nb .body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 22px;
   -webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #nb .ft{padding:9px 22px 12px;display:flex;gap:14px;align-items:center;flex:0 0 auto;
   font-size:11.5px;color:#7d878c;border-top:1px solid #dfe1da}
 #nb .ft .close{margin-left:auto}
 #nb .ft .lg{display:inline-flex;align-items:center;gap:5px}
 #nb .ft .lg i{width:6px;height:6px;border-radius:99px;background:#c0653a;display:block}
+#nb .ft>span{white-space:nowrap}
+#nb .ft .ink-key{font-size:13px}
 
 /* 앞사람 글씨 — 화자를 가르는 장치다. 장식이 아니다. */
 .hw{font-family:"Nanum Pen Script","Gowun Batang","Malgun Gothic",cursive;color:#2f5490}
@@ -89,6 +94,7 @@ const CSS_BASE = `
 #nb .qrow{display:grid;grid-template-columns:26px 1fr;gap:0 10px;
   padding:8px 0;border-bottom:1px dashed #d8dad2}
 #nb .qrow:last-child{border-bottom:0}
+#nb .qrow>div:last-child,#nb .frow>div:last-child{min-width:0;overflow-wrap:anywhere}
 #nb .qno{font-size:11px;color:#9aa3a7;padding-top:5px;font-variant-numeric:tabular-nums}
 #nb .qq{font-size:19px;line-height:1.3}
 #nb .qa{font-size:13px;line-height:1.5;color:#3d474c;margin-top:1px}
@@ -115,7 +121,7 @@ const CSS_BASE = `
 #nb .mail{display:flex;flex-direction:column;gap:8px;height:100%}
 #nb .chips{display:flex;flex-wrap:wrap;gap:4px;flex:0 0 auto}
 #nb .chip{appearance:none;border:1px solid #d5d8ce;cursor:pointer;border-radius:99px;
-  padding:3px 10px;font:500 11.5px/1.5 inherit;color:#6b757a;background:#fbfaf5}
+  padding:3px 10px;font-family:inherit;font-size:11.5px;font-weight:500;line-height:1.5;color:#6b757a;background:#fbfaf5}
 #nb .chip:hover{border-color:#b9bfb2;color:#3d474c}
 #nb .chip.on{background:#23272a;border-color:#23272a;color:#f3f2ec}
 #nb .letter{flex:1 1 auto;min-height:0;overflow:auto;padding:9px 2px 0;
@@ -213,6 +219,28 @@ const CSS = CSS_BASE
   + `@media (max-height:620px){${TIGHT}}`
   + `@container pg (max-height:430px){${TIGHTER}}`
   + `@media (max-height:470px){${TIGHTER}}`
+  // 화면이 아니라 실제 종이 폭을 본다. 작은 창과 웹폰트 차단 환경도 같은 배치다.
+  + `@container pg (max-width:520px){
+    #nb .tabs{gap:2px;padding:6px 7px 0}
+    #nb .tab{padding:7px 9px;font-size:12px;min-width:0}
+    #nb .tab .k{display:none}
+    #nb .x{flex:0 0 40px;width:40px;min-height:40px}
+    #nb .ft{gap:10px;justify-content:space-between}
+    #nb .ft .close{display:none}
+    #nb .mapstats,#nb .mapkey{flex-wrap:wrap;gap:5px 10px}
+  }`
+  + `@container pg (max-height:460px){
+    #nb .hd{padding:7px 16px 4px}
+    #nb .body{padding:0 16px}
+    #nb .ft{padding:5px 16px 7px}
+    #nb .qrow{padding:3px 0}
+    #nb .frow{padding:1px 0}
+  }`
+  + `@container pg (max-width:340px){
+    #nb .tab{padding-left:7px;padding-right:7px}
+    #nb .hd{gap:6px}#nb .hd .n{font-size:11px}
+    #nb .ft .ink-key{font-size:12px}
+  }`
   // 낮고 넓은 창에서는 수첩이 더 넓고 더 높아도 된다 — 남는 건 가로다.
   + `@media (max-height:520px){#nb .page{width:min(96vw,780px);height:95vh}}`;
 
@@ -229,20 +257,24 @@ const TABS = [
   { id: 'kitchen', key: '5', name: '부엌' },
 ];
 
-export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
+export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, getTrail) {
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
 
   const el = document.createElement('div');
   el.id = 'nb';
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.setAttribute('aria-label', '탐사 수첩');
+  el.setAttribute('aria-hidden', 'true');
   el.innerHTML = `<div class="page">
-    <div class="tabs">${TABS.map((t) => `<button class="tab" data-tab="${t.id}">
+    <div class="tabs" role="tablist" aria-label="수첩 목차">${TABS.map((t) => `<button type="button" class="tab" id="nb-tab-${t.id}" data-tab="${t.id}" role="tab" aria-controls="nbBody" aria-selected="false" tabindex="-1">
       <span class="k">${t.key}</span>${t.name}<i class="dot" hidden></i></button>`).join('')}
       <button class="x" id="nbX" aria-label="수첩 닫기">✕</button></div>
     <div class="hd"><span class="t" id="nbT"></span><span class="n" id="nbN"></span></div>
-    <div class="body" id="nbBody"></div>
-    <div class="ft"><span class="hw" style="font-size:15px">앞사람의 글씨는 파란색</span>
+    <div class="body" id="nbBody" role="tabpanel" tabindex="0"></div>
+    <div class="ft"><span class="hw ink-key">파란 글씨 · 앞사람</span>
       <span class="lg"><i></i>새로 적힌 것</span>
       <span class="close" id="nbKeys"></span></div>
   </div>`;
@@ -255,10 +287,10 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
   //   그건 안내가 아니라 막다른 길이다(가진 것만 적는다).
   const byTouch = (navigator.maxTouchPoints || 0) > 0
     && matchMedia('(any-pointer: coarse)').matches;
-  el.querySelector('#nbKeys').textContent = byTouch ? '탭을 눌러 넘기기' : '1~5 넘기기 · N 닫기';
+  el.querySelector('#nbKeys').textContent = byTouch ? '탭을 눌러 넘기기' : '1~5 넘기기 · N / Esc 닫기';
   el.querySelector('#nbX').addEventListener('click', (e) => { e.stopPropagation(); setOpen(false); });
 
-  let open = false, has = false, tab = 'ask', measuring = false;
+  let open = false, has = false, tab = 'ask', measuring = false, returnFocus = null;
   // 몇 번째로 연 것인가. 반짝임은 **한 번 여는 동안** 한 벌이어야 한다.
   let openSeq = 0;
   // ★ 탭마다 "지난번에 본 상태"를 적어 둔다. 달라졌으면 점이 켜진다.
@@ -288,7 +320,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
       return fg ? Object.values(fg.found).filter(Boolean).length
         + '/' + BEASTS.filter((b) => fg.caught[b.id] > 0).length : '0';
     }
-    if (id === 'mail') return `${clearedCount()}|${has ? 1 : 0}`;
+    if (id === 'mail') return `${clearedCount()}|${has ? 1 : 0}|${getTrail?.()?.records.length || 0}`;
     if (id === 'kitchen') { const kt = getKitchen && getKitchen(); return kt ? `${kt.made.size}` : '0'; }
     if (id === 'star') {
       // ★ 예전엔 둘러본 %를 그대로 서명에 넣었다. 그러면 **한 걸음 걸을 때마다**
@@ -297,7 +329,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
       //   사당이 처음 지도에 뜰 때 · 사당을 깰 때 · 둘러본 땅이 10%씩 늘 때.
       if (!mapPage) return '0';
       const found = shrines.shrines.filter((sh) => mapPage.isSeenDir(sh.dir)).length;
-      return `${found}|${clearedCount()}|${Math.floor(mapPage.exploredPct() / 10)}`;
+      return `${found}|${clearedCount()}|${Math.floor(mapPage.exploredPct() / 10)}|${getTrail?.()?.landmarks.length || 0}`;
     }
     return '0';
   };
@@ -364,6 +396,9 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
         <b class="hw" style="font-size:22px;letter-spacing:.14em">${PORTAL_CODE[0]} · ${PORTAL_CODE[1]} · <i style="font-style:normal;color:#a9a294">▓</i></b></div>
         <div class="said hw" style="font-size:19px">셋째 자리는 잉크가 번졌다.<br>앞의 두 자리를 더한 수라고 적어 뒀는데.</div>
         <div class="said hw" style="font-size:17px;margin-top:8px;color:#5a7ab0">내림판 옆에 불 자리를 만들어 뒀다. 솥도. 들에서 가져온 걸 거기서 익혀라.</div>` }];
+    const records = getTrail?.()?.records || [];
+    if (records.length) out.push({ tag: '탐사 일지', key: 'trail', who: '내가 걸으며 적은 것',
+      html: records.map(r => `<div class="said" data-k="ml:${r.key}" style="margin-bottom:10px">${r.text}</div>`).join('') });
     // ★ 지킴이의 말 — 예전엔 대사로 지나가고 **어디에도 안 남았다.**
     //   이 게임에서 가장 감정적인 문장들이다. 깬 사당이 곧 읽을 수 있는 편지다.
     specs.forEach((sp, i) => {
@@ -400,7 +435,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     elBody.innerHTML = `<div class="mail">
       <div class="chips">${list.map((x, i) =>
         `<button class="chip" data-i="${i}" data-k="ml:${x.key}">${x.tag}</button>`).join('')}</div>
-      <div class="letter"></div></div>`;
+      <div class="letter" tabindex="0" role="region" aria-label="편지 본문"></div></div>`;
     for (const b of elBody.querySelectorAll('.chip')) {
       b.addEventListener('click', (e) => { e.stopPropagation(); showLetter(+b.dataset.i); });
     }
@@ -414,6 +449,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     elN.textContent = `${list.length}통 중 ${mailSel + 1}번째`;
     for (const b of elBody.querySelectorAll('.chip')) {
       b.classList.toggle('on', +b.dataset.i === mailSel);
+      b.setAttribute('aria-pressed', String(+b.dataset.i === mailSel));
     }
     const L = elBody.querySelector('.letter');
     if (L) {
@@ -498,6 +534,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
       for (const n of elBody.querySelectorAll('[data-k]')) {
         if (lit.has(n.dataset.k)) continue;
         nu.add(n.dataset.k); lit.add(n.dataset.k);
+        wrote = true;
       }
     }
     for (const n of elBody.querySelectorAll('[data-k]')) {
@@ -508,32 +545,72 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
 
   const draw = () => {
     if (!open) { syncDots(); return; }
-    for (const b of tabBtns) b.classList.toggle('on', b.dataset.tab === tab);
+    for (const b of tabBtns) {
+      const selected = b.dataset.tab === tab;
+      b.classList.toggle('on', selected);
+      b.setAttribute('aria-selected', String(selected));
+      b.tabIndex = selected ? 0 : -1;
+    }
+    elBody.setAttribute('aria-labelledby', `nb-tab-${tab}`);
     // 지도는 캔버스를 옮겨 붙이므로, 다른 면으로 갈 때 떼어 둔다
     if (tab !== 'star' && mapPage && mapPage.canvas.parentElement) {
       mapPage.canvas.remove();
     }
     (DRAW[tab] || drawAsk)();
     flash();
-    seen[tab] = sigOf(tab);          // 본 면은 점이 꺼진다
+    if (!measuring) seen[tab] = sigOf(tab); // 측정은 읽은 것으로 치지 않는다
     syncDots();
   };
 
-  const go = (id) => { if (open && tab !== id) sfx('ui_tab'); tab = id; if (open) draw(); };
+  const go = (id) => {
+    if (!TABS.some((t) => t.id === id)) return;
+    if (open && tab !== id) sfx('ui_tab');
+    const tabFocused = tabBtns.includes(document.activeElement);
+    tab = id;
+    if (open) {
+      draw(); elBody.scrollTop = 0;
+      if (tabFocused) tabBtns.find((b) => b.dataset.tab === tab)?.focus({ preventScroll: true });
+    }
+  };
 
   const setOpen = (v) => {
+    v = !!v;
     if (v && !has) return;
+    const changed = open !== v;
     if (v) soloOpen(me);
+    if (v && changed) returnFocus = document.activeElement;
     if (v && !open) openSeq++;
     open = v;
     el.classList.toggle('show', v);
+    el.setAttribute('aria-hidden', String(!v));
     if (v) draw(); else syncDots();
+    if (changed && v) tabBtns.find((b) => b.dataset.tab === tab)?.focus({ preventScroll: true });
+    if (changed && !v && returnFocus?.isConnected) {
+      const target = returnFocus;
+      target.focus({ preventScroll: true });
+      // 터치 버튼은 루프의 다음 프레임에 다시 보인다. 그 뒤에도 초점을 복구한다.
+      if (document.activeElement !== target) requestAnimationFrame(() => {
+        if (!hasOpenOverlay() && target.isConnected) target.focus({ preventScroll: true });
+      });
+      returnFocus = null;
+    }
   };
 
   for (const b of tabBtns) {
     b.addEventListener('click', (e) => { e.stopPropagation(); go(b.dataset.tab); });
   }
   addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target?.closest?.('input,textarea,select,[contenteditable="true"]')) return;
+    if (open && e.code === 'Tab') {
+      const focusable = [...el.querySelectorAll('button,[tabindex="0"]')]
+        .filter((n) => n.tabIndex >= 0 && n.getClientRects().length);
+      const index = focusable.indexOf(document.activeElement);
+      if (e.shiftKey && index <= 0) { focusable.at(-1)?.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && (index < 0 || index === focusable.length - 1)) {
+        focusable[0]?.focus(); e.preventDefault();
+      }
+      return;
+    }
     if (e.repeat) return;
     if (e.code === 'KeyN') { setOpen(!open); e.preventDefault(); return; }
     if (e.code === 'KeyM') {                       // ★ M은 이제 수첩의 지도 면이다
@@ -543,6 +620,12 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     }
     if (!open) return;
     if (e.code === 'Escape') { setOpen(false); e.preventDefault(); return; }
+    if (tabBtns.includes(document.activeElement) && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.code)) {
+      const current = TABS.findIndex((t) => t.id === tab);
+      const next = e.code === 'Home' ? 0 : e.code === 'End' ? TABS.length - 1
+        : (current + (e.code === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length;
+      go(TABS[next].id); tabBtns[next].focus(); e.preventDefault(); return;
+    }
     const t = TABS.find((x) => e.code === `Digit${x.key}`);
     if (t) { go(t.id); e.preventDefault(); }
   });
@@ -554,8 +637,9 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
     get tab() { return tab; },
     get has() { return has; },
     setHas(v) {
-      has = v;
-      if (v) {
+      const acquired = !!v && !has;
+      has = !!v;
+      if (acquired) {
         // ★ 점이 켜지는 조건이 `seen[id] !== undefined && 달라짐`이었다. seen은
         //   **그 면을 한 번 그린 뒤에야** 생기므로, 한 번도 안 열어 본 면은
         //   내용이 아무리 채워져도 영영 점이 안 떴다 — 첫 사당을 깨도 물음 탭은
@@ -567,6 +651,30 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen) {
         seen.mail = '';
       }
       if (!v && open) setOpen(false);
+    },
+
+    // 수첩 소유권은 진행 저장이 관리한다. 읽음 표시와 마지막 펼친 면만 저장한다.
+    exportState: () => ({ version: 1, tab, mailSel, seen: { ...seen }, lit: [...lit] }),
+    importState(st) {
+      if (!st || st.version !== 1 || typeof st !== 'object' || Array.isArray(st)) return false;
+      if (TABS.some((t) => t.id === st.tab)) tab = st.tab;
+      mailSel = Number.isInteger(st.mailSel) && st.mailSel >= 0 && st.mailSel < 32 ? st.mailSel : 0;
+      if (st.seen && typeof st.seen === 'object' && !Array.isArray(st.seen)) {
+        for (const t of TABS) if (typeof st.seen[t.id] === 'string' && st.seen[t.id].length <= 80) {
+          seen[t.id] = st.seen[t.id];
+        }
+      }
+      const allowed = new Set([
+        ...specs.map((s) => `ask:${s.id}`), ...FORAGE_KINDS.map((k) => `fd:${k.id}`),
+        ...BEASTS.map((b) => `bs:${b.id}`), ...RECIPES.map((r) => `ck:${r.id}`),
+        ...['parcel', 'last', 'sealed', ...specs.map((s) => s.id), ...ENDING.map((_, i) => `end${i}`)].map((k) => `ml:${k}`),
+        ...['trail', 'trail-found', 'trail-equipped', 'trail-water', 'trail-restored'].map(k => `ml:${k}`),
+      ]);
+      lit.clear();
+      if (Array.isArray(st.lit)) for (const k of st.lit.slice(0, 128)) if (allowed.has(k)) lit.add(k);
+      nuFor = null;
+      if (open) draw(); else syncDots();
+      return true;
     },
 
     // ── 검사용 ──────────────────────────────────────────────────────────

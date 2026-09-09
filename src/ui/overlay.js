@@ -11,6 +11,9 @@ const panels = [];
 
 export function registerOverlay(p) { panels.push(p); return p; }
 
+// 게임 루프와 입력은 이 값으로 읽는 동안의 진행을 멈춘다.
+export function hasOpenOverlay() { return panels.some((p) => p.isOpen); }
+
 // 나를 열기 직전에 부른다 — 다른 전면 화면은 전부 닫힌다.
 export function soloOpen(self) {
   for (const p of panels) if (p !== self && p.isOpen) p.close();

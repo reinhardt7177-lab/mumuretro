@@ -1,0 +1,568 @@
+{
+  "date": "2026-09-08T04:27:50.537Z",
+  "base": "http://127.0.0.1:5512",
+  "checks": [
+    {
+      "name": "Start at landing pad with an unopened glider",
+      "pass": true
+    },
+    {
+      "name": "Ridge route is reachable by actual ground walking",
+      "pass": true,
+      "details": [
+        {
+          "label": "ridge 0",
+          "frames": 0,
+          "seconds": 0,
+          "traveled": 0,
+          "remaining": 0,
+          "maxHeight": 0
+        },
+        {
+          "label": "ridge 1",
+          "frames": 78,
+          "seconds": 1.3,
+          "traveled": 6.517777439981688,
+          "remaining": 0.37619784751071095,
+          "maxHeight": 0
+        },
+        {
+          "label": "ridge 2",
+          "frames": 70,
+          "seconds": 1.1666666666666667,
+          "traveled": 6.092525810599889,
+          "remaining": 0.40912164388988914,
+          "maxHeight": 0
+        },
+        {
+          "label": "ridge 3",
+          "frames": 79,
+          "seconds": 1.3166666666666667,
+          "traveled": 7.564031925077254,
+          "remaining": 0.4234890875458648,
+          "maxHeight": 0
+        },
+        {
+          "label": "ridge 4",
+          "frames": 59,
+          "seconds": 0.9833333333333333,
+          "traveled": 5.907879402806673,
+          "remaining": 0.41324477683177896,
+          "maxHeight": 0
+        },
+        {
+          "label": "ridge 5",
+          "frames": 49,
+          "seconds": 0.8166666666666667,
+          "traveled": 4.818259332361075,
+          "remaining": 0.40860179865850094,
+          "maxHeight": 0
+        }
+      ]
+    },
+    {
+      "name": "E at overlook acquires and saves the glider",
+      "pass": true,
+      "details": {
+        "prompt": "E — 접이식 활공막 챙기기",
+        "glider": true,
+        "trail": {
+          "version": 1,
+          "overlook": true,
+          "glider": true,
+          "water": false,
+          "restored": false
+        },
+        "saved": {
+          "version": 1,
+          "trail": {
+            "version": 1,
+            "overlook": true,
+            "glider": true,
+            "water": false,
+            "restored": false
+          },
+          "waterway": {
+            "version": 1,
+            "discovered": false,
+            "heater": {
+              "x": -7,
+              "z": 2.8,
+              "held": false
+            },
+            "mirrorAngle": 180,
+            "thermal": {
+              "version": 1,
+              "energyJ": 0,
+              "temperatureC": -8,
+              "meltFraction": 0
+            },
+            "energyFromHeater": 0,
+            "energyFromLight": 0,
+            "flow": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Jump-and-hold opens sail in actual downhill flight",
+      "pass": true,
+      "details": {
+        "frames": 45,
+        "glideFrames": 23,
+        "maxHeight": 3.6487467826877094,
+        "distance": 5.136666666666709,
+        "h": 3.6487467826877094,
+        "pause": {
+          "unchanged": true,
+          "before": {
+            "position": [
+              70.19152361100318,
+              23.23552743150734,
+              2.9602247432040807
+            ],
+            "h": 3.6487467826877094,
+            "vy": -1.2453333333333303,
+            "thermal": {
+              "version": 1,
+              "discovered": false,
+              "heater": {
+                "x": -7,
+                "z": 2.8,
+                "held": false
+              },
+              "mirrorAngle": 180,
+              "thermal": {
+                "version": 1,
+                "energyJ": 0,
+                "temperatureC": -8,
+                "meltFraction": 0
+              },
+              "energyFromHeater": 0,
+              "energyFromLight": 0,
+              "flow": 0
+            },
+            "gliding": true
+          },
+          "after": {
+            "position": [
+              70.19152361100318,
+              23.23552743150734,
+              2.9602247432040807
+            ],
+            "h": 3.6487467826877094,
+            "vy": -1.2453333333333303,
+            "thermal": {
+              "version": 1,
+              "discovered": false,
+              "heater": {
+                "x": -7,
+                "z": 2.8,
+                "held": false
+              },
+              "mirrorAngle": 180,
+              "thermal": {
+                "version": 1,
+                "energyJ": 0,
+                "temperatureC": -8,
+                "meltFraction": 0
+              },
+              "energyFromHeater": 0,
+              "energyFromLight": 0,
+              "flow": 0
+            },
+            "gliding": true
+          }
+        }
+      }
+    },
+    {
+      "name": "Notebook freezes mid-flight position, gravity and waterway state",
+      "pass": true,
+      "details": {
+        "unchanged": true,
+        "before": {
+          "position": [
+            70.19152361100318,
+            23.23552743150734,
+            2.9602247432040807
+          ],
+          "h": 3.6487467826877094,
+          "vy": -1.2453333333333303,
+          "thermal": {
+            "version": 1,
+            "discovered": false,
+            "heater": {
+              "x": -7,
+              "z": 2.8,
+              "held": false
+            },
+            "mirrorAngle": 180,
+            "thermal": {
+              "version": 1,
+              "energyJ": 0,
+              "temperatureC": -8,
+              "meltFraction": 0
+            },
+            "energyFromHeater": 0,
+            "energyFromLight": 0,
+            "flow": 0
+          },
+          "gliding": true
+        },
+        "after": {
+          "position": [
+            70.19152361100318,
+            23.23552743150734,
+            2.9602247432040807
+          ],
+          "h": 3.6487467826877094,
+          "vy": -1.2453333333333303,
+          "thermal": {
+            "version": 1,
+            "discovered": false,
+            "heater": {
+              "x": -7,
+              "z": 2.8,
+              "held": false
+            },
+            "mirrorAngle": 180,
+            "thermal": {
+              "version": 1,
+              "energyJ": 0,
+              "temperatureC": -8,
+              "meltFraction": 0
+            },
+            "energyFromHeater": 0,
+            "energyFromLight": 0,
+            "flow": 0
+          },
+          "gliding": true
+        }
+      }
+    },
+    {
+      "name": "Downhill sail crosses the 24u approach and lands within 2u of the waterway",
+      "pass": true,
+      "details": {
+        "frames": 170,
+        "glideFrames": 128,
+        "maxHeight": 7.414535641034291,
+        "traveled": 23.05666666666671,
+        "remainingAtLanding": 1.163773294481653,
+        "landed": true,
+        "finish": {
+          "label": "waterway entry after landing",
+          "frames": 9,
+          "seconds": 0.15,
+          "traveled": 0.7504307206167269,
+          "remaining": 0.41377329448177885,
+          "maxHeight": 0
+        },
+        "discovered": true
+      }
+    },
+    {
+      "name": "Notebook freezes active waterway heating, then heating resumes",
+      "pass": true,
+      "details": {
+        "walks": [
+          {
+            "label": "outside ice",
+            "frames": 27,
+            "seconds": 0.45,
+            "traveled": 2.2500613123923072,
+            "remaining": 0.37916185859476703,
+            "maxHeight": 0
+          },
+          {
+            "label": "heater approach",
+            "frames": 97,
+            "seconds": 1.6166666666666667,
+            "traveled": 8.251590536795854,
+            "remaining": 0.3398431480662872,
+            "maxHeight": 0
+          },
+          {
+            "label": "carry heater to ice",
+            "frames": 54,
+            "seconds": 0.9,
+            "traveled": 4.672605938075249,
+            "remaining": 0.3310945420846498,
+            "maxHeight": 0
+          }
+        ],
+        "status": {
+          "phase": "ice",
+          "temperatureC": -3.783564160888802,
+          "meltFraction": 0,
+          "heaterWatts": 11211.811763607253,
+          "lightWatts": 0,
+          "beamHit": false,
+          "energyJ": 8854.515262133516,
+          "flow": 0
+        },
+        "pause": {
+          "unchanged": true,
+          "before": {
+            "position": [
+              65.9478644739081,
+              11.265494139896758,
+              13.77855581924896
+            ],
+            "h": 0,
+            "vy": 0,
+            "thermal": {
+              "version": 1,
+              "discovered": true,
+              "heater": {
+                "x": -1.941552186822829,
+                "z": -1.3703284371134052,
+                "held": false
+              },
+              "mirrorAngle": 180,
+              "thermal": {
+                "version": 1,
+                "energyJ": 8854.515262133516,
+                "temperatureC": -3.783564160888802,
+                "meltFraction": 0
+              },
+              "energyFromHeater": 8854.515262133516,
+              "energyFromLight": 0,
+              "flow": 0
+            },
+            "gliding": false
+          },
+          "after": {
+            "position": [
+              65.9478644739081,
+              11.265494139896758,
+              13.77855581924896
+            ],
+            "h": 0,
+            "vy": 0,
+            "thermal": {
+              "version": 1,
+              "discovered": true,
+              "heater": {
+                "x": -1.941552186822829,
+                "z": -1.3703284371134052,
+                "held": false
+              },
+              "mirrorAngle": 180,
+              "thermal": {
+                "version": 1,
+                "energyJ": 8854.515262133516,
+                "temperatureC": -3.783564160888802,
+                "meltFraction": 0
+              },
+              "energyFromHeater": 8854.515262133516,
+              "energyFromLight": 0,
+              "flow": 0
+            },
+            "gliding": false
+          }
+        },
+        "energyAfter": 14273.557614543708,
+        "energyBefore": 8854.515262133516
+      }
+    },
+    {
+      "name": "Reload restores glider and waterway progress at a grounded checkpoint",
+      "pass": true,
+      "details": {
+        "glider": true,
+        "trail": {
+          "version": 1,
+          "overlook": true,
+          "glider": true,
+          "water": true,
+          "restored": false
+        },
+        "waterway": {
+          "version": 1,
+          "discovered": true,
+          "heater": {
+            "x": -1.941552186822829,
+            "z": -1.3703284371134052,
+            "held": false
+          },
+          "mirrorAngle": 180,
+          "thermal": {
+            "version": 1,
+            "energyJ": 16144.80899788976,
+            "temperatureC": -0.3119957152905899,
+            "meltFraction": 0
+          },
+          "energyFromHeater": 16144.80899788976,
+          "energyFromLight": 0,
+          "flow": 0
+        },
+        "grounded": true,
+        "position": [
+          65.94786447390811,
+          11.26549413989676,
+          13.778555819248963
+        ]
+      }
+    },
+    {
+      "name": "Failure injection: immobilized movement is detected instead of reporting reachability",
+      "pass": true
+    },
+    {
+      "name": "Meadow alternative is walkable from the same landing without a glider",
+      "pass": true,
+      "details": {
+        "entries": [
+          {
+            "label": "meadow 0",
+            "frames": 0,
+            "seconds": 0,
+            "traveled": 0,
+            "remaining": 0,
+            "maxHeight": 0
+          },
+          {
+            "label": "meadow 1",
+            "frames": 116,
+            "seconds": 1.9333333333333333,
+            "traveled": 9.695165448627607,
+            "remaining": 0.4450855768439612,
+            "maxHeight": 0
+          },
+          {
+            "label": "meadow 2",
+            "frames": 114,
+            "seconds": 1.9,
+            "traveled": 9.515927077652632,
+            "remaining": 0.3980757992928702,
+            "maxHeight": 0
+          },
+          {
+            "label": "meadow 3",
+            "frames": 128,
+            "seconds": 2.1333333333333333,
+            "traveled": 10.694732953362696,
+            "remaining": 0.3980447222311689,
+            "maxHeight": 0
+          },
+          {
+            "label": "meadow 4",
+            "frames": 183,
+            "seconds": 3.05,
+            "traveled": 12.349954001422716,
+            "remaining": 0.44617392226388086,
+            "maxHeight": 0
+          }
+        ],
+        "discovered": true,
+        "acquired": false
+      }
+    },
+    {
+      "name": "No browser exceptions",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "routes": {
+    "ridge": [
+      {
+        "label": "ridge 0",
+        "frames": 0,
+        "seconds": 0,
+        "traveled": 0,
+        "remaining": 0,
+        "maxHeight": 0
+      },
+      {
+        "label": "ridge 1",
+        "frames": 78,
+        "seconds": 1.3,
+        "traveled": 6.517777439981688,
+        "remaining": 0.37619784751071095,
+        "maxHeight": 0
+      },
+      {
+        "label": "ridge 2",
+        "frames": 70,
+        "seconds": 1.1666666666666667,
+        "traveled": 6.092525810599889,
+        "remaining": 0.40912164388988914,
+        "maxHeight": 0
+      },
+      {
+        "label": "ridge 3",
+        "frames": 79,
+        "seconds": 1.3166666666666667,
+        "traveled": 7.564031925077254,
+        "remaining": 0.4234890875458648,
+        "maxHeight": 0
+      },
+      {
+        "label": "ridge 4",
+        "frames": 59,
+        "seconds": 0.9833333333333333,
+        "traveled": 5.907879402806673,
+        "remaining": 0.41324477683177896,
+        "maxHeight": 0
+      },
+      {
+        "label": "ridge 5",
+        "frames": 49,
+        "seconds": 0.8166666666666667,
+        "traveled": 4.818259332361075,
+        "remaining": 0.40860179865850094,
+        "maxHeight": 0
+      }
+    ],
+    "meadow": {
+      "entries": [
+        {
+          "label": "meadow 0",
+          "frames": 0,
+          "seconds": 0,
+          "traveled": 0,
+          "remaining": 0,
+          "maxHeight": 0
+        },
+        {
+          "label": "meadow 1",
+          "frames": 116,
+          "seconds": 1.9333333333333333,
+          "traveled": 9.695165448627607,
+          "remaining": 0.4450855768439612,
+          "maxHeight": 0
+        },
+        {
+          "label": "meadow 2",
+          "frames": 114,
+          "seconds": 1.9,
+          "traveled": 9.515927077652632,
+          "remaining": 0.3980757992928702,
+          "maxHeight": 0
+        },
+        {
+          "label": "meadow 3",
+          "frames": 128,
+          "seconds": 2.1333333333333333,
+          "traveled": 10.694732953362696,
+          "remaining": 0.3980447222311689,
+          "maxHeight": 0
+        },
+        {
+          "label": "meadow 4",
+          "frames": 183,
+          "seconds": 3.05,
+          "traveled": 12.349954001422716,
+          "remaining": 0.44617392226388086,
+          "maxHeight": 0
+        }
+      ],
+      "discovered": true,
+      "acquired": false
+    }
+  }
+}

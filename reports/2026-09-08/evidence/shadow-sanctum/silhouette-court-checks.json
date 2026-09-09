@@ -1,0 +1,577 @@
+{
+  "date": "2026-09-08T11:42:37.614Z",
+  "checks": [
+    {
+      "name": "Legacy held panel restores distance, target, hints and opened doors without scoring",
+      "pass": true,
+      "details": {
+        "position": [
+          -1.65,
+          0,
+          -42.6
+        ],
+        "fields": {
+          "held": true,
+          "solved": false,
+          "round": 0,
+          "answers": [
+            -46.6592806108296,
+            -44.25445586028509,
+            -41.58060162351467
+          ],
+          "objZ": -42.6,
+          "holeW": 1.1117966683785958,
+          "dragOffset": 0
+        }
+      }
+    },
+    {
+      "name": "Actual panel projection agrees with distance law and screen centre",
+      "pass": true,
+      "details": [
+        {
+          "distance": 1.2,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 3721,
+          "actualWidth": 7.837499787997581,
+          "formulaWidth": 7.837499999999978,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 2.8,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 2729,
+          "actualWidth": 3.3589284816429466,
+          "formulaWidth": 3.3589285714285735,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 4.4,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 1131,
+          "actualWidth": 2.1374999430498356,
+          "formulaWidth": 2.1374999999999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 6.4,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 524,
+          "actualWidth": 1.469531210916747,
+          "formulaWidth": 1.4695312499999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 9.2,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 302,
+          "actualWidth": 1.0222825815399004,
+          "formulaWidth": 1.0222826086956514,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        }
+      ]
+    },
+    {
+      "name": "Visible clipped shadows match all opaque carriage parts at five distances",
+      "pass": true,
+      "details": [
+        {
+          "distance": 1.2,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 3721,
+          "actualWidth": 7.837499787997581,
+          "formulaWidth": 7.837499999999978,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 2.8,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 2729,
+          "actualWidth": 3.3589284816429466,
+          "formulaWidth": 3.3589285714285735,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 4.4,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 1131,
+          "actualWidth": 2.1374999430498356,
+          "formulaWidth": 2.1374999999999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 6.4,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 524,
+          "actualWidth": 1.469531210916747,
+          "formulaWidth": 1.4695312499999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 9.2,
+          "count": 3721,
+          "mismatch": 0,
+          "shadowed": 302,
+          "actualWidth": 1.0222825815399004,
+          "formulaWidth": 1.0222826086956514,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        }
+      ]
+    },
+    {
+      "name": "Exit frame stays behind screen instead of sharing its surface",
+      "pass": true,
+      "details": 0.1599999940395307
+    },
+    {
+      "name": "Construction, restart and rendering never advance a puzzle",
+      "pass": true,
+      "details": [
+        {
+          "seed": 1,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 3,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 8,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 15,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 77,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 2026,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 9137,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        },
+        {
+          "seed": 39144,
+          "initial": 0,
+          "restarted": 0,
+          "rendered": 0
+        }
+      ]
+    },
+    {
+      "name": "Walk to handle, grab without snapping, release, solve all rounds and exit at three tiers",
+      "pass": true,
+      "details": [
+        {
+          "tier": 0,
+          "steps": 526,
+          "rounds": [
+            {
+              "round": 1,
+              "objZ": -46.01999988323188,
+              "size": 1.2026854399533649
+            },
+            {
+              "round": 2,
+              "objZ": -44.81999988323184,
+              "size": 1.4206948891075426
+            },
+            {
+              "round": 3,
+              "objZ": -41.879999883231726,
+              "size": 2.5557066028330033
+            }
+          ],
+          "grabNoSnap": true,
+          "released": true,
+          "solved": true,
+          "exitZ": -51.979063485983424
+        },
+        {
+          "tier": 3,
+          "steps": 520,
+          "rounds": [
+            {
+              "round": 1,
+              "objZ": -46.139999879134756,
+              "size": 1.1845088341518828
+            },
+            {
+              "round": 2,
+              "objZ": -44.639999879134876,
+              "size": 1.4604037541167516
+            },
+            {
+              "round": 3,
+              "objZ": -41.75999987913477,
+              "size": 2.6418540222776135
+            }
+          ],
+          "grabNoSnap": true,
+          "released": true,
+          "solved": true,
+          "exitZ": -51.97906348600739
+        },
+        {
+          "tier": 5,
+          "steps": 516,
+          "rounds": [
+            {
+              "round": 1,
+              "objZ": -46.25999987503763,
+              "size": 1.1668734672227388
+            },
+            {
+              "round": 2,
+              "objZ": -44.51999987503777,
+              "size": 1.488132940816521
+            },
+            {
+              "round": 3,
+              "objZ": -41.69999987503766,
+              "size": 2.687142953083334
+            }
+          ],
+          "grabNoSnap": true,
+          "released": true,
+          "solved": true,
+          "exitZ": -51.97906348604788
+        }
+      ]
+    },
+    {
+      "name": "Walking away from handle releases panel without dragging it sideways",
+      "pass": true,
+      "details": {
+        "released": true,
+        "stationary": true
+      }
+    },
+    {
+      "name": "Inconsistent target is rejected before any live state changes",
+      "pass": true
+    },
+    {
+      "name": "Reload preserves grabbed offset and resumes moving without a jump or free answer",
+      "pass": true,
+      "details": {
+        "idle": true,
+        "delta": -0.17999999999612726,
+        "held": true
+      }
+    },
+    {
+      "name": "144 camera directions avoid screen, panel, lamp and arches",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "min": 5.687500000000001,
+        "failures": []
+      }
+    },
+    {
+      "name": "Moving lamp cannot collapse camera distance on connecting bridge",
+      "pass": true,
+      "details": {
+        "phases": 32,
+        "min": 6.500000000000001
+      }
+    },
+    {
+      "name": "Walking into carriage and screen stops outside visible solids",
+      "pass": true,
+      "details": {
+        "panel": 0.8999999999999986,
+        "screen": 0.5499999999999972
+      }
+    },
+    {
+      "name": "Fault injection detects drawing panel shadow 30 percent too small",
+      "pass": true,
+      "details": [
+        {
+          "distance": 1.2,
+          "count": 3721,
+          "mismatch": 1872,
+          "shadowed": 3721,
+          "actualWidth": 7.837499787997581,
+          "formulaWidth": 7.837499999999978,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 2.8,
+          "count": 3721,
+          "mismatch": 1408,
+          "shadowed": 2729,
+          "actualWidth": 3.3589284816429466,
+          "formulaWidth": 3.3589285714285735,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 4.4,
+          "count": 3721,
+          "mismatch": 560,
+          "shadowed": 1131,
+          "actualWidth": 2.1374999430498356,
+          "formulaWidth": 2.1374999999999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 6.4,
+          "count": 3721,
+          "mismatch": 228,
+          "shadowed": 524,
+          "actualWidth": 1.469531210916747,
+          "formulaWidth": 1.4695312499999997,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        },
+        {
+          "distance": 9.2,
+          "count": 3721,
+          "mismatch": 135,
+          "shadowed": 302,
+          "actualWidth": 1.0222825815399004,
+          "formulaWidth": 1.0222826086956514,
+          "actualY": 2.8,
+          "drawnY": 2.8
+        }
+      ]
+    },
+    {
+      "name": "Wrapped mobile prompt and notification have a visible gap",
+      "pass": true,
+      "details": {
+        "promptTop": 700,
+        "noteBottom": 692,
+        "gap": 8
+      }
+    },
+    {
+      "name": "Fault injection catches old fixed notification position overlapping long prompt",
+      "pass": true,
+      "details": -32
+    },
+    {
+      "name": "Notification remains separate after landscape and desktop resizing",
+      "pass": true,
+      "details": [
+        {
+          "width": 844,
+          "height": 390,
+          "gap": 8,
+          "noteTop": 244
+        },
+        {
+          "width": 1280,
+          "height": 800,
+          "gap": 8,
+          "noteTop": 654
+        }
+      ]
+    },
+    {
+      "name": "Touch release remains available while dragging",
+      "pass": true
+    },
+    {
+      "name": "Touch can grab again at the same handle",
+      "pass": true
+    },
+    {
+      "name": "Mobile notebook pauses dragged panel and round state",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "comparisonMetrics": {
+    "frame": 34,
+    "calls": 482,
+    "triangles": 22857,
+    "points": 640,
+    "lines": 0
+  },
+  "optics": [
+    {
+      "distance": 1.2,
+      "count": 3721,
+      "mismatch": 0,
+      "shadowed": 3721,
+      "actualWidth": 7.837499787997581,
+      "formulaWidth": 7.837499999999978,
+      "actualY": 2.8,
+      "drawnY": 2.8
+    },
+    {
+      "distance": 2.8,
+      "count": 3721,
+      "mismatch": 0,
+      "shadowed": 2729,
+      "actualWidth": 3.3589284816429466,
+      "formulaWidth": 3.3589285714285735,
+      "actualY": 2.8,
+      "drawnY": 2.8
+    },
+    {
+      "distance": 4.4,
+      "count": 3721,
+      "mismatch": 0,
+      "shadowed": 1131,
+      "actualWidth": 2.1374999430498356,
+      "formulaWidth": 2.1374999999999997,
+      "actualY": 2.8,
+      "drawnY": 2.8
+    },
+    {
+      "distance": 6.4,
+      "count": 3721,
+      "mismatch": 0,
+      "shadowed": 524,
+      "actualWidth": 1.469531210916747,
+      "formulaWidth": 1.4695312499999997,
+      "actualY": 2.8,
+      "drawnY": 2.8
+    },
+    {
+      "distance": 9.2,
+      "count": 3721,
+      "mismatch": 0,
+      "shadowed": 302,
+      "actualWidth": 1.0222825815399004,
+      "formulaWidth": 1.0222826086956514,
+      "actualY": 2.8,
+      "drawnY": 2.8
+    }
+  ],
+  "completedState": {
+    "version": 1,
+    "id": "shadow",
+    "seed": 1306250711,
+    "tier": 5,
+    "legacyCompleted": false,
+    "solved": [
+      true,
+      true,
+      true
+    ],
+    "devices": [
+      {
+        "version": 2,
+        "fields": {
+          "a": 5.9919999999999645,
+          "expose": 0
+        }
+      },
+      {
+        "version": 2,
+        "fields": {
+          "a.0": 0,
+          "a.1": 0,
+          "a.2": 0,
+          "hit": false
+        }
+      },
+      {
+        "version": 2,
+        "fields": {
+          "held": false,
+          "solved": true,
+          "round": 3,
+          "answers": [
+            -46.6592806108296,
+            -44.25445586028509,
+            -41.58060162351467
+          ],
+          "objZ": -41.69999987503766,
+          "holeW": 2.782049187511786,
+          "dragOffset": 0.040893457816252976
+        }
+      }
+    ],
+    "final": {
+      "version": 2,
+      "fields": {
+        "ai": 0,
+        "hi": 0,
+        "solved": false,
+        "eyes": 0
+      }
+    },
+    "prize": {
+      "taken": false,
+      "drop": -1,
+      "t": 0
+    },
+    "hints": {
+      "r1": {
+        "level": 0,
+        "t": 0
+      },
+      "r2": {
+        "level": 0,
+        "t": 0
+      },
+      "r3": {
+        "level": 0,
+        "t": 4.499999999999989
+      },
+      "shrine": {
+        "level": 0,
+        "t": 0
+      }
+    },
+    "checkpoint": {
+      "x": 0.5999399577661698,
+      "y": 0,
+      "z": -51.97906348604788,
+      "yaw": -0.002867815977591002,
+      "resetHazard": -1
+    }
+  }
+}

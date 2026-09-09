@@ -1,0 +1,456 @@
+{
+  "date": "2026-09-08T14:48:46.600Z",
+  "checks": [
+    {
+      "name": "Legacy water test, criterion order, hints and doors resume",
+      "pass": true,
+      "details": {
+        "seed": 2109066131,
+        "state": {
+          "version": 1,
+          "id": "sift",
+          "seed": 2109066131,
+          "tier": 0,
+          "legacyCompleted": false,
+          "solved": [
+            true,
+            false,
+            false
+          ],
+          "devices": [
+            {
+              "version": 2,
+              "fields": {
+                "orders": [
+                  2,
+                  1,
+                  0
+                ],
+                "held": -1,
+                "fitted": -1,
+                "round": 0,
+                "solved": false,
+                "mix": [
+                  0,
+                  1,
+                  2
+                ]
+              }
+            },
+            {
+              "version": 2,
+              "fields": {
+                "crits": [
+                  0,
+                  1,
+                  2
+                ],
+                "held": -1,
+                "testItem": 1,
+                "testT": 0.4,
+                "round": 0,
+                "solved": false,
+                "bin.0": -1,
+                "bin.1": -1,
+                "bin.2": -1,
+                "bin.3": -1,
+                "bin.4": -1,
+                "bin.5": -1,
+                "got.0": [],
+                "got.1": []
+              }
+            },
+            {
+              "fields": {
+                "held": false,
+                "state": "mixed"
+              },
+              "visual": {
+                "layout": 129384697,
+                "nodes": [],
+                "materials": []
+              }
+            }
+          ],
+          "final": {
+            "fields": {
+              "held": -1,
+              "solved": false,
+              "used.0": -1,
+              "used.1": -1,
+              "used.2": -1,
+              "used.3": -1,
+              "done.0": [],
+              "done.1": [],
+              "done.2": [],
+              "done.3": [],
+              "eyes": 0
+            },
+            "visual": {
+              "layout": 200281589,
+              "nodes": [],
+              "materials": []
+            }
+          },
+          "prize": {
+            "taken": false,
+            "drop": -1,
+            "t": 0
+          },
+          "hints": {
+            "r1": {
+              "level": 0,
+              "t": 0
+            },
+            "r2": {
+              "level": 1,
+              "t": 60
+            },
+            "r3": {
+              "level": 0,
+              "t": 0
+            },
+            "shrine": {
+              "level": 0,
+              "t": 0
+            }
+          },
+          "checkpoint": {
+            "x": 0,
+            "y": 0,
+            "z": -11,
+            "yaw": 0,
+            "resetHazard": -1
+          }
+        },
+        "pos": [
+          0,
+          0,
+          -11
+        ]
+      }
+    },
+    {
+      "name": "Six buoyancy displays agree with the rule, including floating iron",
+      "pass": true,
+      "details": [
+        {
+          "name": "속 빈 쇠통",
+          "floats": true,
+          "iron": true,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "못",
+          "floats": false,
+          "iron": true,
+          "y": 0.59,
+          "above": false,
+          "submerged": true,
+          "visible": true
+        },
+        {
+          "name": "고무 마개",
+          "floats": true,
+          "iron": false,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "나무 조각",
+          "floats": true,
+          "iron": false,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "쇠구슬",
+          "floats": false,
+          "iron": true,
+          "y": 0.59,
+          "above": false,
+          "submerged": true,
+          "visible": true
+        },
+        {
+          "name": "유리 구슬",
+          "floats": false,
+          "iron": false,
+          "y": 0.59,
+          "above": false,
+          "submerged": true,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "All unknown samples and the immersed sample share geometry and material",
+      "pass": true
+    },
+    {
+      "name": "Injected sinking-direction error is detected",
+      "pass": true,
+      "details": [
+        {
+          "name": "속 빈 쇠통",
+          "floats": true,
+          "iron": true,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "못",
+          "floats": false,
+          "iron": true,
+          "y": 2.19,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "고무 마개",
+          "floats": true,
+          "iron": false,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "나무 조각",
+          "floats": true,
+          "iron": false,
+          "y": 1.3760292250900537,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "쇠구슬",
+          "floats": false,
+          "iron": true,
+          "y": 2.19,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        },
+        {
+          "name": "유리 구슬",
+          "floats": false,
+          "iron": false,
+          "y": 2.19,
+          "above": true,
+          "submerged": false,
+          "visible": true
+        }
+      ]
+    },
+    {
+      "name": "Only magnetic samples visibly respond to the nearby magnet",
+      "pass": true,
+      "details": [
+        {
+          "iron": true,
+          "moves": true
+        },
+        {
+          "iron": true,
+          "moves": true
+        },
+        {
+          "iron": false,
+          "moves": false
+        },
+        {
+          "iron": false,
+          "moves": false
+        },
+        {
+          "iron": true,
+          "moves": true
+        },
+        {
+          "iron": false,
+          "moves": false
+        }
+      ]
+    },
+    {
+      "name": "Duplicate hand and water ownership rejects atomically",
+      "pass": true
+    },
+    {
+      "name": "Old held sample and occupied basin both resume",
+      "pass": true
+    },
+    {
+      "name": "New held and partial-water save roundtrips without advancing",
+      "pass": true
+    },
+    {
+      "name": "Occupied basin and empty floor both allow returning a held sample",
+      "pass": true
+    },
+    {
+      "name": "Walk, inspect 18 samples, recover a wrong bin, solve three criteria and exit",
+      "pass": true,
+      "details": {
+        "rounds": [
+          "자석에 붙는 것",
+          "물에 뜨는 것",
+          "붙으면서 가라앉는 것"
+        ],
+        "observations": [
+          {
+            "round": 0,
+            "name": "속 빈 쇠통",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 0,
+            "name": "못",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 0,
+            "name": "고무 마개",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 0,
+            "name": "나무 조각",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 0,
+            "name": "쇠구슬",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 0,
+            "name": "유리 구슬",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 1,
+            "name": "속 빈 쇠통",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 1,
+            "name": "못",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 1,
+            "name": "고무 마개",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 1,
+            "name": "나무 조각",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 1,
+            "name": "쇠구슬",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 1,
+            "name": "유리 구슬",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 2,
+            "name": "속 빈 쇠통",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 2,
+            "name": "못",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 2,
+            "name": "고무 마개",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 2,
+            "name": "나무 조각",
+            "y": 1.3760292250900537,
+            "floats": true
+          },
+          {
+            "round": 2,
+            "name": "쇠구슬",
+            "y": 0.59,
+            "floats": false
+          },
+          {
+            "round": 2,
+            "name": "유리 구슬",
+            "y": 0.59,
+            "floats": false
+          }
+        ],
+        "z": -22.94023615314206,
+        "open": true
+      }
+    },
+    {
+      "name": "144 camera views avoid solid workshop geometry",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "bad": []
+      }
+    },
+    {
+      "name": "Notebook pauses the water test and hint clock on mobile",
+      "pass": true
+    },
+    {
+      "name": "Touch E retrieves the observed sample",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "metrics": {
+    "frame": 34,
+    "calls": 607,
+    "triangles": 18471,
+    "points": 0,
+    "lines": 0
+  }
+}

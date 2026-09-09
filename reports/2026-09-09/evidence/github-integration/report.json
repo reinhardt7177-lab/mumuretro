@@ -1,0 +1,316 @@
+{
+  "checks": [
+    {
+      "name": "Four quality tiers resize real canvas and compositor together",
+      "pass": true,
+      "details": [
+        {
+          "name": "high",
+          "w": 2560,
+          "h": 1600,
+          "rw": 2560,
+          "rh": 1600,
+          "bloom": true,
+          "shadow": true
+        },
+        {
+          "name": "mid",
+          "w": 1792,
+          "h": 1120,
+          "rw": 1792,
+          "rh": 1120,
+          "bloom": true,
+          "shadow": true
+        },
+        {
+          "name": "low",
+          "w": 1280,
+          "h": 800,
+          "rw": 1280,
+          "rh": 800,
+          "bloom": false,
+          "shadow": true
+        },
+        {
+          "name": "min",
+          "w": 1024,
+          "h": 640,
+          "rw": 1024,
+          "rh": 640,
+          "bloom": false,
+          "shadow": false
+        }
+      ]
+    },
+    {
+      "name": "Fractional render scale stays aligned after resize",
+      "pass": true
+    },
+    {
+      "name": "Sustained slow frames lower auto quality; fixed and fast frames stay stable",
+      "pass": true,
+      "details": {
+        "down": true,
+        "pinned": true,
+        "stable": true,
+        "cleared": true
+      }
+    },
+    {
+      "name": "Shrine sunlight follows quality on entry and while inside",
+      "pass": true,
+      "details": {
+        "lights": [
+          1024
+        ],
+        "high": [
+          2048
+        ]
+      }
+    },
+    {
+      "name": "Settings opens with keyboard and pauses gameplay",
+      "pass": true
+    },
+    {
+      "name": "Escape closes settings",
+      "pass": true
+    },
+    {
+      "name": "All A-X selftests pass and preserve progress and quality",
+      "pass": true,
+      "details": {
+        "ok": true,
+        "saved": true,
+        "changed": [],
+        "quality": true
+      }
+    },
+    {
+      "name": "Fault injection detects disconnected quality-to-canvas update",
+      "pass": true
+    },
+    {
+      "name": "pc settings button does not overlap notebook or controls",
+      "pass": true,
+      "details": {
+        "rects": [
+          {
+            "id": "gfx",
+            "x": 1228,
+            "y": 122,
+            "w": 38,
+            "h": 38
+          },
+          {
+            "id": "mute",
+            "x": 1228,
+            "y": 14,
+            "w": 38,
+            "h": 38
+          },
+          {
+            "id": "tcNote",
+            "x": 1220,
+            "y": 68,
+            "w": 46,
+            "h": 46
+          }
+        ],
+        "overlap": []
+      }
+    },
+    {
+      "name": "phone settings button does not overlap notebook or controls",
+      "pass": true,
+      "details": {
+        "rects": [
+          {
+            "id": "gfx",
+            "x": 330,
+            "y": 230,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "mute",
+            "x": 330,
+            "y": 176,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcNote",
+            "x": 330,
+            "y": 68,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcMap",
+            "x": 330,
+            "y": 14,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcFull",
+            "x": 330,
+            "y": 122,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcAct",
+            "x": 298,
+            "y": 748,
+            "w": 78,
+            "h": 78
+          },
+          {
+            "id": "tcJump",
+            "x": 316,
+            "y": 676,
+            "w": 60,
+            "h": 60
+          }
+        ],
+        "overlap": []
+      }
+    },
+    {
+      "name": "phone settings opens by touch",
+      "pass": true
+    },
+    {
+      "name": "landscape settings button does not overlap notebook or controls",
+      "pass": true,
+      "details": {
+        "rects": [
+          {
+            "id": "gfx",
+            "x": 730,
+            "y": 14,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "mute",
+            "x": 784,
+            "y": 176,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcNote",
+            "x": 784,
+            "y": 68,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcMap",
+            "x": 784,
+            "y": 14,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcFull",
+            "x": 784,
+            "y": 122,
+            "w": 46,
+            "h": 46
+          },
+          {
+            "id": "tcAct",
+            "x": 766,
+            "y": 308,
+            "w": 64,
+            "h": 64
+          },
+          {
+            "id": "tcJump",
+            "x": 778,
+            "y": 244,
+            "w": 52,
+            "h": 52
+          }
+        ],
+        "overlap": []
+      }
+    },
+    {
+      "name": "landscape settings opens by touch",
+      "pass": true
+    },
+    {
+      "name": "tablet settings button does not overlap notebook or controls",
+      "pass": true,
+      "details": {
+        "rects": [
+          {
+            "id": "gfx",
+            "x": 942,
+            "y": 284,
+            "w": 58,
+            "h": 58
+          },
+          {
+            "id": "mute",
+            "x": 942,
+            "y": 218,
+            "w": 58,
+            "h": 58
+          },
+          {
+            "id": "tcNote",
+            "x": 942,
+            "y": 86,
+            "w": 58,
+            "h": 58
+          },
+          {
+            "id": "tcMap",
+            "x": 942,
+            "y": 20,
+            "w": 58,
+            "h": 58
+          },
+          {
+            "id": "tcFull",
+            "x": 942,
+            "y": 152,
+            "w": 58,
+            "h": 58
+          },
+          {
+            "id": "tcAct",
+            "x": 900,
+            "y": 640,
+            "w": 100,
+            "h": 100
+          },
+          {
+            "id": "tcJump",
+            "x": 924,
+            "y": 548,
+            "w": 76,
+            "h": 76
+          }
+        ],
+        "overlap": []
+      }
+    },
+    {
+      "name": "tablet settings opens by touch",
+      "pass": true
+    },
+    {
+      "name": "No JavaScript or shader errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": []
+}

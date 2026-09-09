@@ -2,14 +2,15 @@
 //
 // 여섯 중 가장 시끄럽고 가장 액션에 가깝다. 화면이 실제로 흔들린다.
 //
-// ★ 흔들림은 장식이 아니라 **신호**다. 큰 진동이 오기 전에 작은 예진이 먼저 오고,
-//   그걸 알아채는 아이는 안 죽는다. 이 사당이 가르치는 건 그거 하나다 —
-//   관찰해서 예측한다. 예진 없이 흔들리면 그건 지진이 아니라 주사위다.
+// ★ 흔들림과 경고등은 지킴이가 만든 **장치의 신호**다. 현실 지진 예측 모형이 아니다.
+//   실제 본진에는 전진이 없을 수 있고, 전진 여부는 더 큰 지진이 난 뒤에야 안다.
+//   근거: https://www.usgs.gov/media/videos/foreshocks-mainshocks-and-aftershocks
+//   기존 phase 키 fore/main은 판정·음향과의 호환을 위해 유지한다.
 import * as THREE from 'three';
 import { godEyes } from './GodEyes.js';
 import { sfx } from '../core/Audio.js';
 import { toon } from '../render/Toon.js';
-import { shuffle, range, randInt } from '../util/rand.js';
+import { shuffle, range, randInt, random } from '../util/rand.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -19,11 +20,10 @@ const glowMat = (c, o = {}) => {
 const REACH = 2.6;
 
 // ══════════════════════════════════════════════════════════════════════════
-// 관문 1 — 예진
+// 관문 1 — 흔들림 장치
 //
-//   고요 4.0초 → 예진 1.4초(작게 흔들리고 먼지가 인다) → 본진 1.6초
-// 본진 동안 기둥 곁에 붙어 있어야 산다. 예진은 반드시 본진보다 먼저 온다 —
-// 처음 한 번은 대개 맞지만, 그 한 번이 규칙을 가르친다.
+//   대기 → 장치 경고 1.4초(작게 흔들리고 등이 켜진다) → 큰 진동 1.6초
+// 기둥의 보호 고리는 이 사당 장치의 규칙이며, 현실의 지진 대피 장소를 뜻하지 않는다.
 // ══════════════════════════════════════════════════════════════════════════
 const CALM = 4.0, FORE = 1.4, MAIN = 1.6;
 const HOLD_R = 2.0;              // 기둥에서 이 안이면 산다
@@ -65,7 +65,7 @@ export class QuakeGate {
       this.pillars.push({ x, z, ring });
     }
 
-    // 경고등 — 예진이 시작되면 켜진다. 화면 흔들림만으로는 원인이 안 읽힌다.
+    // 경고등 — 장치의 작은 진동과 함께 켜진다. 화면 흔들림만으로는 원인이 안 읽힌다.
     this.warnMat = glowMat(0xe8664a, { transparent: true, opacity: 0 });
     for (const sx of [-1, 1]) {
       const w = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, seg.z1 - seg.z0 - 2), this.warnMat);
@@ -88,7 +88,7 @@ export class QuakeGate {
       this.warnMat.opacity = 0;
       if (this.t >= this.calm) { this.phase = 'fore'; this.t = 0; sfx('quake_fore'); }
     } else if (this.phase === 'fore') {
-      // 예진 — 작게 흔들리고 경고등이 켜진다. 이때 기둥으로 뛰어야 한다.
+      // 장치 경고 — 작게 흔들리고 등이 켜진다. 이때 보호 고리로 들어간다.
       actor.shake = Math.max(actor.shake, 0.06);
       this.warnMat.opacity = 0.35 + 0.35 * Math.abs(Math.sin(this.t * 12));
       if (this.t >= FORE) { this.phase = 'main'; this.t = 0; sfx('quake_main'); }
@@ -97,7 +97,7 @@ export class QuakeGate {
       this.warnMat.opacity = 0.9;
       if (inRoom && !this._safe(p)) {
         this.phase = 'calm'; this.t = 0; this.warnMat.opacity = 0;
-        return { fail: '지진에 휩쓸렸다 — 예진이 오면 기둥으로' };
+        return { fail: '장치의 진동에 밀렸다 — 경고등이 켜지면 보호 고리 안으로' };
       }
       if (this.t >= this.main) { this.phase = 'calm'; this.t = 0; }
     }
@@ -109,12 +109,12 @@ export class QuakeGate {
 
   prompt(pos) {
     if (pos.z < this.zOut) return null;
-    if (this.phase === 'calm') return `🌋 고요… ${Math.max(1, Math.ceil(this.calm - this.t))} — 기둥 위치를 봐 둬라`;
-    if (this.phase === 'fore') return '⚠ 예진이다! 기둥 곁으로!';
-    return this._safe(pos) ? '🪨 기둥을 붙잡았다' : '⚠ 흔들린다! 기둥으로!';
+    if (this.phase === 'calm') return `🌋 장치 대기 ${Math.max(1, Math.ceil(this.calm - this.t))} — 보호 고리 위치를 봐 둬라`;
+    if (this.phase === 'fore') return '⚠ 장치 경고! 기둥의 보호 고리 안으로!';
+    return this._safe(pos) ? '🪨 보호 고리 안에 들어왔다' : '⚠ 장치가 흔들린다! 보호 고리 안으로!';
   }
 
-  // 고요가 짧아지고 본진이 길어진다. 기둥 사이를 뛸 시간이 줄어든다.
+  // 대기가 짧아지고 큰 진동이 길어진다. 기둥 사이를 뛸 시간이 줄어든다.
   setTier(t) { this.calm = this.calmBase * (1 - t * 0.07); this.main = MAIN * (1 + t * 0.06); }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
@@ -304,7 +304,7 @@ export class GeyserGate {
   }
 
   solvedBy(actor) { return actor.position.z < this.zOut; }
-  restart() { for (const v of this.vents) v.t = Math.random() * v.per; }
+  restart() { for (const v of this.vents) v.t = random() * v.per; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -397,10 +397,8 @@ export class FireGod {
     this.prizePos = new THREE.Vector3(cx, 0, this.gz + 8.6);
     this.solved = false;
     // ★ 젤다 신전의 마지막은 새 기믹이 아니라 **앞 방을 합쳐 묻는 자리**다.
-    //   이 신전은 수로 퍼즐 셋뿐이라 첫 방(예진→본진)과 아무 관계가 없었다.
-    //   이제 신이 주기적으로 흔들린다. 예진이 오면 곧 본진이고, **본진 중엔
-    //   수로를 못 돌린다** — 손이 떨려서. 첫 방에서 배운 "작은 흔들림이 먼저
-    //   온다"를 여기서 다시 써야 한다. 전조를 읽고 그 사이에 돌려라.
+    //   수로에도 첫 방의 장치 경고를 적용한다. 경고 뒤 큰 진동 중에는 수로가 잠긴다.
+    //   게임 장치의 주기를 읽어 조작하는 퍼즐이며, 실제 지진의 법칙이 아니다.
     this.phase = 'calm'; this.pt = 0;
     this.CALM = 6.5; this.FORE = 1.4; this.MAIN = 1.6;
     this._flow();
@@ -443,11 +441,11 @@ export class FireGod {
     if (this.pt >= len) {
       this.pt = 0;
       this.phase = this.phase === 'calm' ? 'fore' : this.phase === 'fore' ? 'main' : 'calm';
-      // ★ 예진은 연출이 아니라 **기능**이다. 눈으로만 알리면 화면을 안 보는 순간 못 잡는다.
+      // 장치 경고를 소리로도 알린다. 기존 효과음 키는 유지한다.
       if (this.phase === 'fore') sfx('quake_fore');
       else if (this.phase === 'main') sfx('quake_main');
     }
-    // 예진은 분화구가 깜빡이고, 본진은 조각이 들썩인다 — 소리 없이 눈으로 온다.
+    // 경고 때 분화구가 깜빡이고, 큰 진동 때 조각이 들썩인다 — 무음으로도 읽힌다.
     const k = this.phase === 'main' ? Math.sin(this.pt * 42) * 0.06 : 0;
     for (const c of this.cells) c.grp.position.y = 0.25 + Math.abs(k) * 2;
     this.crater.material.color.set(this.phase === 'fore'
@@ -457,15 +455,16 @@ export class FireGod {
 
   prompt(pos) {
     if (this.solved) return null;
-    if (this.phase === 'main') return '⚠ 본진이다 — 손이 떨려 못 돌린다. 지나갈 때까지';
+    if (this.phase === 'main') return '⚠ 장치 진동 중 — 수로가 잠겼다. 멈출 때까지 기다려라';
     const c = this._near(pos);
-    const warn = this.phase === 'fore' ? '⚠ 예진 — 곧 흔들린다 · ' : '';
+    const warn = this.phase === 'fore' ? '⚠ 장치 경고 — 곧 흔들린다 · ' : '';
     if (!c) return `${warn}🌋 용암이 ${this.reach}번째 수로까지 왔다 — 길을 이어라`;
-    return `${warn}E — ${c.name} 돌리기 (${c.rot * 90}°)`;
+    // 상호작용 안내는 E로 시작해야 터치 버튼도 켜진다. 경고는 뒤에 덧붙인다.
+    return `E — ${c.name} 돌리기 (${c.rot * 90}°)${this.phase === 'fore' ? ' · ⚠ 장치 경고' : ''}`;
   }
 
   interact(pos) {
-    // 본진 중엔 안 돌아간다. 벌이 아니다 — 때를 읽으라는 것이다.
+    // 장치가 크게 흔들리는 동안 수로를 잠근다.
     if (this.phase === 'main') return true;
     const c = this._near(pos);
     if (!c) return false;

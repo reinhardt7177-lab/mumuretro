@@ -413,21 +413,22 @@ export function buildLab() {
   // ── 걸을 수 있는 곳 · 부딪히는 것 ────────────────────────────────────────
   const rects = ZONES.map((s) => ({ id: s.id, kind: 'room',
     x0: -s.hw, x1: s.hw, z0: s.z0, z1: s.z1, h: s.h, open: true }));
+  // ★ 길쭉한 것은 **원을 줄지어 놓지 않는다.** 원 둘이 겹치면 겹친 자리에 V자 홈이
+  //   생기고, 그 홈은 RoomActor 밀어내기의 고정점이라 한 번 끼면 한 픽셀도 못
+  //   움직인다(RoomActor._pushOut 머리말 — 다이얼 사이에서 실제로 그랬다).
+  //   대신 두 점을 잇는 **캡슐**을 준다. 바깥 경계는 원을 줄지어 놓은 것과 같고
+  //   홈만 없다. 원 하나로 막을 수 없다는 사정은 그대로 해결된다.
   const obstacles = [
     { x: -3.3, z: 8.4, r: 1.8 },                     // 침상
     // 원 하나로 직사각형 계단은 못 막는다 — 아래쪽 옆구리가 비어 발이 파묻혔었다
-    { x: STAIR_X, z: 5.2, r: 1.25 },
-    { x: STAIR_X, z: 6.8, r: 1.25 },
-    { x: STAIR_X, z: 8.4, r: 1.25 },
-    { x: STAIR_X, z: 9.5, r: 1.3 },                  // 계단참
+    { x: STAIR_X, z: 5.2, x2: STAIR_X, z2: 9.5, r: 1.3 },   // 계단 + 계단참
     { x: -5.0, z: -0.4, r: 1.6 },                    // 책상
     { x: SHELF_X, z: SHELF_Z, r: 1.5 },              // 표본 선반
     { x: PARCEL.x, z: PARCEL.z, r: 1.5 },            // 작업대
     // ★ 가로로 긴 콘솔(4.2u)을 원 하나로 막으면 밀려나는 거리가 **손 닿는 거리보다
-    //   멀어져서** 다이얼을 영영 못 만진다(한 번 그렇게 만들어 놨었다). 셋으로 나눈다.
-    { x: -1.5, z: CONSOLE_Z, r: 0.9 },
-    { x: 0, z: CONSOLE_Z, r: 0.9 },
-    { x: 1.5, z: CONSOLE_Z, r: 0.9 },
+    //   멀어져서** 다이얼을 영영 못 만진다(한 번 그렇게 만들어 놨었다).
+    //   앞면이 평평해야 다이얼 사이를 옆걸음으로 지나갈 수 있다.
+    { x: -1.5, z: CONSOLE_Z, x2: 1.5, z2: CONSOLE_Z, r: 0.9 },
     { x: 0, z: DAIS_Z, r: 2.8 },                     // 팔각 단 — 위에는 못 올라간다
   ];
 
@@ -454,7 +455,34 @@ export function buildLab() {
 
   return {
     scene, rects, obstacles, dials, state: st, ENTRY_Z: LAB_ENTRY_Z,
+    // 새 거점 외형도 기존 퍼즐·저장 객체를 공유한다.
+    visualBindings: { table, parcelG, noteG, con, gimbal, jars },
     CIRCLE: { x: 0, z: DAIS_Z + 3.0 },
+    exportState() {
+      return { version: 1, dials: dials.map((d) => d.value), hasNote: !!st.hasNote,
+        read: !!st.read, open: !!st.open, done: !!st.done, sent: !!st.sent };
+    },
+    importState(saved) {
+      if (!saved || saved.version !== 1 || !Array.isArray(saved.dials) || saved.dials.length !== 3
+        || !saved.dials.every((v) => Number.isInteger(v) && v >= 0 && v <= 9)) return false;
+      dials.forEach((d, i) => { d.value = saved.dials[i]; paintDial(d); });
+      st.hasNote = saved.hasNote === true;
+      st.read = st.hasNote && saved.read === true;
+      st.open = st.read && saved.open === true && dials.every((d, i) => d.value === PORTAL_CODE[i]);
+      st.done = st.open && saved.done === true;
+      st.sent = st.done && saved.sent === true;
+      st.stage = st.open ? 'ready' : st.read ? 'read' : st.hasNote ? 'note' : 'sleep';
+      lid.position.set(...(st.hasNote ? [0.7, 0.06, 0.34] : [0, 0.4, 0]));
+      lid.rotation.z = st.hasNote ? 0.5 : 0;
+      noteG.visible = st.hasNote;
+      beam.visible = disc.visible = st.open;
+      beamMat.opacity = st.open ? 0.55 * 0.34 : 0;
+      discMat.opacity = st.open ? 0.55 * 0.5 : 0;
+      portalLight.intensity = st.open ? 8 * LAB.lamp : 0;
+      coreMat.color.setHex(st.open ? LAB.glow : LAB.glowDim);
+      core.scale.setScalar(1);
+      return true;
+    },
     // 걸어서 닿아야 하는 것 전부 — 검사 I가 이 목록을 걸어서 확인한다.
     // 하나라도 빠뜨리면 그건 검사받지 않는 상호작용이 된다.
     reachables: [

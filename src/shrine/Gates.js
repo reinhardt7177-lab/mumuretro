@@ -475,9 +475,9 @@ export class PlateGate {
       }
       // 필요 무게 점 — 주문마다 개수가 바뀌므로 최대치를 만들어 두고 켜고 끈다
       const dots = [];
-      for (let k = 0; k < 9; k++) {
+      for (let k = 0; k < 13; k++) {
         const d = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.05, 0.13), ringMat);
-        d.position.set((k % 3 - 1) * 0.28, 0.16, Math.floor(k / 3) * 0.28 - 0.28);
+        d.position.set((k % 4 - 1.5) * 0.28, 0.16, Math.floor(k / 4) * 0.28 - 0.42);
         d.visible = k < spec.need;
         pg.add(d);
         dots.push(d);
@@ -529,7 +529,8 @@ export class PlateGate {
       if (d < bd) { bd = d; best = { kind: 'plate', plate: p }; }
     }
     for (const it of this.stock) {
-      if (it.taken) continue;
+      // 든 동안에는 놓을 판만 고른다. 옆 상자가 내려놓기를 가로채면 안 된다.
+      if (this.held || it.taken) continue;
       const d = Math.hypot(pos.x - it.home.x, pos.z - it.home.z);
       if (d < bd) { bd = d; best = { kind: 'stock', item: it }; }
     }
@@ -544,11 +545,11 @@ export class PlateGate {
     const n = this._nearest(pos);
     // 손에 뭘 들었는지, 어디로 가야 하는지 항상 말해 준다. 방 안에서 침묵하지 않는다.
     if (!n) {
-      if (this.held) return `${this.held.w}kg 상자를 들고 있다 — 판 가까이 가서 E`;
+      if (this.held) return 'E — 상자를 원래 자리로 돌려놓기';
       return stuck ? '⚠ 판에서 상자를 되가져와 다시 해 봐라 (E)'
         : `📦 ${say} · ${josa(this.plates[0].need, '과')} ${josa(this.plates[1].need, '을')} 만들어라`;
     }
-    if (n.kind === 'stock') return this.held ? `${this.held.w}kg 상자를 들고 있다 — 판 위에서 E` : `E — ${n.item.w}kg 상자 들기`;
+    if (n.kind === 'stock') return `E — ${n.item.w}kg 상자 들기`;
     const p = this._sum(n.plate), need = n.plate.need;
     if (this.held) return `E — 판에 올리기 (${p} / ${need})${stuck}`;
     if (n.plate.boxes.length) return `E — 되가져오기 (${p} / ${need})${p > need ? ' 너무 무겁다' : stuck}`;
@@ -557,7 +558,15 @@ export class PlateGate {
   }
 
   interact(pos) {
+    if (this.solvedBy()) return false;
     const n = this._nearest(pos);
+    if (this.held && !n) {
+      const box = this.held;
+      box.taken = false;
+      box.mesh.position.copy(box.home);
+      this.held = null;
+      return true;
+    }
     if (!n) return false;
     if (n.kind === 'stock') {
       if (this.held) return false;

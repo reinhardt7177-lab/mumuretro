@@ -1,7 +1,15 @@
 // GLB 로더 — HEAD 프로브 폴백 + DRACO/Meshopt + 툰 변환/정규화. town.html:206-209 패턴 이식.
 // 파일이 없으면 null 반환 → 호출부가 절차적 폴백 사용(에셋 0개로도 실행).
 import * as THREE from 'three';
-import { toonify } from '../rendering/Toon.js';
+import { toon as makeToon } from '../render/Toon.js';
+
+function toonify(material) {
+  return makeToon(material.color?.clone() ?? 0xffffff, {
+    map: material.map, alphaMap: material.alphaMap, transparent: material.transparent,
+    opacity: material.opacity, alphaTest: material.alphaTest, side: material.side,
+    depthWrite: material.depthWrite, vertexColors: material.vertexColors,
+  });
+}
 
 export async function loadGLB(path) {
   try { const h = await fetch(path, { method: 'HEAD' }); if (!h.ok) return null; } catch (e) { return null; }
@@ -9,7 +17,7 @@ export async function loadGLB(path) {
   const loader = new GLTFLoader();
   try {
     const { DRACOLoader } = await import('three/addons/loaders/DRACOLoader.js');
-    const d = new DRACOLoader(); d.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/');
+    const d = new DRACOLoader(); d.setDecoderPath('vendor/three/examples/jsm/libs/draco/gltf/');
     loader.setDRACOLoader(d);
     const { MeshoptDecoder } = await import('three/addons/libs/meshopt_decoder.module.js');
     loader.setMeshoptDecoder(MeshoptDecoder);

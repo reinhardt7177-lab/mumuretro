@@ -1,0 +1,49 @@
+{
+  "seed": 1306250711,
+  "samples": [
+    {
+      "distance": 1.2,
+      "formulaWidth": 7.837499999999978,
+      "physicalWidth": 12.53999946848547,
+      "physicalY": -4.776666517315464,
+      "renderedY": 1.5
+    },
+    {
+      "distance": 2.8,
+      "formulaWidth": 3.3589285714285735,
+      "physicalWidth": 4.002127533252559,
+      "physicalY": -0.19261864017799468,
+      "renderedY": 1.5
+    },
+    {
+      "distance": 4,
+      "formulaWidth": 2.351249999999999,
+      "physicalWidth": 2.649295695569159,
+      "physicalY": 0.543052706298319,
+      "renderedY": 1.5
+    },
+    {
+      "distance": 6.4,
+      "formulaWidth": 1.4695312499999997,
+      "physicalWidth": 1.5806722238671431,
+      "physicalY": 1.1276176193700786,
+      "renderedY": 1.5
+    },
+    {
+      "distance": 9.2,
+      "formulaWidth": 1.0222826086956514,
+      "physicalWidth": 1.0748571129187752,
+      "physicalY": 1.4056417482575059,
+      "renderedY": 1.5
+    }
+  ],
+  "heldPrompt": "1/3 · 그림자가 크다 — 등불에서 멀리 (E로 놓기)",
+  "initialRound": 0,
+  "metrics": {
+    "frame": 782,
+    "calls": 506,
+    "triangles": 13845,
+    "points": 640,
+    "lines": 0
+  }
+}
