@@ -41,8 +41,11 @@ import { buildSieveCourt } from './SieveCourt.js';
 import { buildSortCourt } from './SortCourt.js';
 import { buildEvaporationCourt } from './EvaporationCourt.js';
 import { buildSiftSanctum } from './SiftSanctum.js';
+import { buildBalanceDungeon } from './BalanceTemple.js';
+import { BalanceOrder, TwinBalance, LeverSix } from './BalanceTrials.js';
 
 const GATES = {
+  balanceOrder: BalanceOrder, twinBalance: TwinBalance,
   weigh: WeighGate, plate: PlateGate,                          // 01 균형
   tile: TileGate, laser: LaserGate,                            // (내려 둠 — 무게와 무관했다)
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
@@ -100,6 +103,7 @@ class TodoGod {
 
 // 신전 — 사당마다 다르다. 저울은 01, 거울의 신은 02.
 function makeFinal(kind, scene, seg, theme) {
+  if (kind === 'leverSix') return new LeverSix(scene,seg);
   if (kind === 'scale') {
     const oz = seg.z0 + (seg.z1 - seg.z0) * 0.47;
     const s = new BalanceScale(scene, { origin: new THREE.Vector3(0, 0, oz) });
@@ -118,7 +122,7 @@ export function buildRoom(spec, seed = Math.floor(Math.random() * 4294967296)) {
 function assembleRoom(spec, seed) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(spec.theme.bg);
-  const dungeon = buildDungeon(scene, spec.rooms, spec.theme);
+  const dungeon = spec.id === 'balance' ? buildBalanceDungeon(scene,spec.rooms,spec.theme) : buildDungeon(scene, spec.rooms, spec.theme);
   const court = spec.id === 'water' ? buildWaterCourt(scene, dungeon.rectOf('r3'),
     dungeon.rectOf('shrine'), spec.theme, dungeon.rects) : null;
 
@@ -149,10 +153,12 @@ function assembleRoom(spec, seed) {
     const seg = dungeon.rectOf(r.id);
     goals[r.id] = r.goal;
     const goalBoard = addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
+    if(spec.id==='balance'){goalBoard.group.scale.setScalar(.65);goalBoard.group.position.set(seg.x0+1.2,1.65,seg.z1-2);goalBoard.group.rotation.y=.45;}
     if (r.gate === 'sieve') { goalBoard.group.position.set(4.3, 2.1, seg.z1 - 2); goalBoard.group.rotation.y = -Math.PI / 3; }
     if (r.gate === 'evaporate') { goalBoard.group.position.set(5.5, 2.1, seg.z1 - 1.5); goalBoard.group.rotation.y = -Math.PI / 3; goalBoard.group.scale.setScalar(.72); }
     if (!r.hints) continue;
     const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있다', spec.theme.glow, true);
+    if(spec.id==='balance'){board.group.scale.setScalar(.65);board.group.position.set(seg.x1-1.2,1.65,seg.z1-2);board.group.rotation.y=-.45;}
     if (r.gate === 'sieve') { board.group.position.set(4.3, 2.1, seg.z0 + 2); board.group.rotation.y = -Math.PI / 3; }
     if (r.gate === 'evaporate') { board.group.position.set(5.5, 2.1, seg.z1 - 4.5); board.group.rotation.y = -Math.PI / 3; board.group.scale.setScalar(.72); }
     hints[r.id] = { board, texts: r.hints, level: 0, t: 0 };
@@ -261,5 +267,21 @@ function assembleRoom(spec, seed) {
   api.restart = () => withSeed((seed ^ 0x51a7e) >>> 0, restart);
   if (court) attachWaterProgress(api);
   else attachShrineProgress(api);
+  if(spec.id==='balance'){
+    api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]),{x:0,z:-60,r:1.7});
+    const restore=api.importState;
+    api.importState=s=>{
+      if(s?.id==='balance'&&s.version===1&&s.devices?.[0]?.version!==3){
+        // A changed exercise cannot reuse the old target sums. Preserve completed stages and other shrines.
+        s=JSON.parse(JSON.stringify(s));
+        if(!Array.isArray(s.solved)||s.solved.length!==2||!s.solved.every(v=>typeof v==='boolean'))return false;
+        s.devices=[{version:3,fields:{count:5,at:s.solved[0]?[0,1,2,3,4]:[-1,-1,-1,-1,-1],solved:s.solved[0]}},{version:3,fields:{at:s.solved[1]?[0,2,3,1]:[-1,-1,-1,-1],solved:s.solved[1]}}];
+        const done=!!(s.final?.fields?.balanced||s.prize?.taken);s.final={version:3,fields:{at:done?[0,2]:[-1,-1],pivot:2,solved:done}};
+        s.checkpoint={x:0,y:0,z:10,yaw:0,resetHazard:-1};
+      }
+      if(!s?.devices?.every((v,i)=>v.fields?.solved===s.solved?.[i])||(s.final?.fields?.solved&&!s.solved?.every(Boolean)))return false;
+      const ok=restore(s);if(ok){if(final.solved)dungeon.openDoor('shrine');dungeon.update(2);}return ok;
+    };
+  }
   return api;
 }

@@ -30,6 +30,7 @@ import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildMuteButton } from './ui/MuteButton.js';
 import { buildSettings } from './ui/Settings.js';
 import { buildShipView } from './ui/ShipView.js';
+import { loadBalanceTemple } from './shrine/BalanceTemple.js';
 import * as Audio from './core/Audio.js';
 import { SFX } from './data/sfx.js';
 const { sfx, sceneBgm, startAudio } = Audio;
@@ -221,6 +222,7 @@ function failTo(seg, msg) {
 const segOf = (id) => room.dungeon.rectOf(id);
 
 function enterShrine(shrine) {
+  if(shrine?.cleared && shrines.shrines.indexOf(shrine)===0){noteMsg='균형의 사당은 밀봉되었다 — 수첩에 지혜가 남았다';noteT=3;return;}
   room = roomFor(shrine);
   lastSeg = null;
   // 첫 입장에 깬 사당 수로 단계를 정한다. 이어하기는 퍼즐 배치와 그 단계를 함께 지킨다.
@@ -349,6 +351,10 @@ const _cUp = new THREE.Vector3();
 const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
 
 function step(dt) {
+  if(mode==='room'&&room?.spec.id==='balance'&&room.final.eventStarted&&dialogue.active&&!hasOpenOverlay()&&!document.hidden){
+    room.final.eventClock=(room.final.eventClock||0)+dt;
+    if(room.final.eventClock>=4.5){room.final.eventClock=0;dialogue.next();}
+  }
   shipView.update();
   touch.update();
   const intent = input.poll();
@@ -634,6 +640,7 @@ function returnToLab() {
 
 // 실내 — 관문 셋을 지나 신전으로. 통로 끝을 넘어서면 밖으로 나간다.
 function stepRoom(dt, intent) {
+  room.dungeon.update?.(dt);
   roomActor.update(dt, intent, engine.camera);
   roomActor.updateCamera(engine.camera, input, dt);
 
@@ -649,7 +656,7 @@ function stepRoom(dt, intent) {
   if (seg && seg.id !== lastSeg) {
     lastSeg = seg.id;
     const goal = room.goals[seg.id];
-    if (seg.id === 'shrine') {
+    if (seg.id === 'shrine' && room.spec.id!=='balance') {
       const k = KEEPERS[room.spec.id];
       dialogue.play(`arrive-${room.spec.id}`, k.who, k.arrive);
     }
@@ -698,7 +705,18 @@ function stepRoom(dt, intent) {
     const got = room.nudge('shrine', dt);
     if (got) { noteMsg = '💡 오른쪽 벽에 힌트가 켜졌다'; noteT = 2.6; }
   }
-  if (final.solvedBy(roomActor)) prize.reveal();
+  if(room.spec.id==='balance'){
+    if(final.solvedBy(roomActor))dungeon.openDoor('shrine');
+    if(final.solved && seg?.id==='audience' && roomActor.position.z < -56 && !prize.taken && !final.eventStarted){
+      final.eventStarted=true;brief.hide();briefWant=null;input.reset();
+      dialogue.play('balance-audience-v2','균형의 신',['눈으로 크기를 보던 너는 이제 무게를 비교하는구나.','두 판을 채우고, 받치는 자리를 옮겨 수평을 찾았지.','무게와 거리가 함께 균형을 만든다. 이 지혜를 가지고 다음 길로 가거라.','이 신전은 이제 잠든다. 너의 기록은 수첩에 남으리라.'],()=>{
+        prize.taken=true;prize.drop=1;prize.group.visible=false;cleared=true;shrines.markCleared(activeShrine);notebook.draw();
+        const last=shrines.clearedCount()===SHRINES.length;exitShrine();flash.play('#fff0c4',1100);sfx('orb_take');
+        noteMsg='균형의 지혜를 얻었다 — 신전이 밀봉되었다';noteT=5;saveProgress();if(last)playEnding();
+      });
+      return;
+    }
+  } else if (final.solvedBy(roomActor)) prize.reveal();
   prize.update(dt);
   room.court?.update(dt, gates[2].gate.valves, prize.taken);
   if (seg && seg.id === 'shrine') {
@@ -877,6 +895,8 @@ function stepPlanet(dt, intent) {
       // 지킴이의 첫마디. 들어가기 전에 한 번만.
       dialogue.play(`enter-${sp.id}`, KEEPERS[sp.id].who, KEEPERS[sp.id].enter);
       say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
+    } else if (near.shrine.cleared && sp.id==='balance') {
+      canEnter=false;say('🔒 균형의 사당 — 지혜를 전하고 밀봉되었다');
     } else if (near.shrine.cleared) {
       say(`E — ${sp.name} · 이미 깬 곳이다`);
     } else {
@@ -912,6 +932,7 @@ buildMuteButton();
 // 화면 설정 — 화질을 손으로 고른다. 기본은 자동이라 아무도 안 건드려도 된다.
 const settings = buildSettings(() => engine);
 const lab = await installStarsail(buildLab());
+await loadBalanceTemple();
 const shipView = buildShipView({camera:engine.camera,input,available:()=>mode==='lab'&&!dialogue.active&&!title.isEnding});
 const landing = buildLanding(planetScene, planet, landingDir);
 

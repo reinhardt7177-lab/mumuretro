@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "name": "Blender environment loaded",
+      "pass": true
+    },
+    {
+      "name": "Order difficulty 3,4,5 and invalid ownership",
+      "pass": true
+    },
+    {
+      "name": "Walk and solve five-item order",
+      "pass": true
+    },
+    {
+      "name": "Two per side balance and full-slot guard",
+      "pass": true
+    },
+    {
+      "name": "Movable fulcrum and six-cell torque balance",
+      "pass": true
+    },
+    {
+      "name": "Room state roundtrip and rejection atomicity",
+      "pass": true
+    },
+    {
+      "name": "Audience event automatically exits and seals temple",
+      "pass": true
+    },
+    {
+      "name": "No browser or shader errors",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "errors": []
+}

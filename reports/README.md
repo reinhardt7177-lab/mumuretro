@@ -1,5 +1,9 @@
 # 분석 보고서
 
+최신 구현: [균형의 사당 전체 개편](2026-09-09/BALANCE_TEMPLE_IMPLEMENTATION.md) — 사용자 지정 규칙, 전체 시안, Blender 모델, 자동 퇴장과 밀봉.
+
+첫 신전 준비: [기존 퍼즐 구성 분석](2026-09-09/PUZZLE_STRUCTURE_REPORT.md) · [별의 천칭 회랑 상세 레퍼런스](2026-09-09/BALANCE_COURT_REFERENCE.md) — 현재 규칙과 개선안을 구분하고 이미지 기반 제작 기준을 정리했다.
+
 최신 구현: [우주 범선 Blender 모델과 도입부 1차 적용](2026-09-09/STARSAIL_IMPLEMENTATION.md) — 실제 화면, 편집 가능한 원본, 소포 회수와 모바일·저장 검증.
 
 새 도입부 기획: [우주 범선 레퍼런스](D:/mumumetro/reports/2026-09-09/STARSAIL_REFERENCE.md) · [소포 발견부터 출항·귀환·엔딩까지 구현 시나리오](D:/mumumetro/reports/2026-09-09/STARSAIL_SCENARIO.md). 게임 적용 전 기획안이다.

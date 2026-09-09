@@ -1,0 +1,28 @@
+{
+  "checks": [
+    {
+      "name": "Three and four items solved by carry interactions",
+      "pass": true
+    },
+    {
+      "name": "Every movable fulcrum has a nonempty solution; unequal pairs rejected",
+      "pass": true
+    },
+    {
+      "name": "Touch E selects three-item difficulty",
+      "pass": true
+    },
+    {
+      "name": "Touch E picks up a box",
+      "pass": true
+    },
+    {
+      "name": "Reload preserves chosen difficulty and carried box",
+      "pass": true
+    },
+    {
+      "name": "Old completed stages migrate and unfinished changed stages reset",
+      "pass": true
+    }
+  ]
+}

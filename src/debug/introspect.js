@@ -1038,7 +1038,15 @@ export function installDebug(ctx) {
     if (ctx.roomFor && ctx.shrines) {
       const rmB = ctx.roomFor(ctx.shrines.shrines[0]);
       const wg = rmB.gates.find((g) => g.room === 'r1');
-      if (!wg || !wg.gate.sizeAgreement) { pOK = false; pBad.push('무게 순서 방 없음'); }
+      if (wg?.gate.progressCodec && wg.gate.select) {
+        const g=wg.gate, saved=g.state();
+        try { for(const n of [3,4,5]) { g.solved=false;g.select(n);
+          if(g.stock.filter(b=>b.mesh.visible).length!==n){pOK=false;pBad.push('난이도 상자 개수');}
+          const b=g.stock[0];g.interact(b.home);if(g.held!==0){pOK=false;pBad.push('상자 집기');}
+          g.interact(g.cells[5]);if(b.at!==5){pOK=false;pBad.push('접시 배치');}
+          const bad=g.state();bad.at[1]=5;if(g.valid(bad)){pOK=false;pBad.push('상자 중복 점유');}
+        }} finally {g.restore(saved);}
+      } else if (!wg || !wg.gate.sizeAgreement) { pOK = false; pBad.push('무게 순서 방 없음'); }
       else {
         const agree = wg.gate.sizeAgreement();
         if (agree > 2) { pOK = false; pBad.push(`무게 순서: 크기가 무게를 ${agree}/5 따라감`); }
@@ -1356,7 +1364,7 @@ export function installDebug(ctx) {
         ctx.enterShrine(ctx.shrines.shrines[0]);
         const rm = ctx.roomFor(ctx.shrines.shrines[0]);
         const wg = rm.gates.find((g) => g.room === 'r1');
-        const b0 = wg.gate.boxes[0];
+        const b0 = (wg.gate.boxes || wg.gate.stock)[0];
         ra.setAt(b0.home.x, b0.home.z + 0.6, -1);
         step(1 / 60);
         const before = pEl.textContent;

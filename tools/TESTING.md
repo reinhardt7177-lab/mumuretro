@@ -135,7 +135,11 @@ node tools/check-expedition.cjs
 
 `check-sieve-motion.cjs`는 5512 서버와 공통 AUDIT_NODE_MODULES를 사용한다. 세 체에서 모든 낙하 입자가 실제 망의 빈 곳을 통과하는지, 큰 입자가 남는지, 프레임 간격에 따라 결과가 달라지지 않는지 검사한다. 중간 저장·다음 조작·재시작·수첩 정지·동작 줄이기와 고장 주입도 포함한다. `capture-sieve-motion.cjs`는 실제 렌더링을 고정 시점 WebM 영상으로 기록한다. 결과 위치는 `reports/2026-09-09/evidence/sieve-motion/`다.
 
-## 우주 범선 검사
+## 균형의 사당 v02
+
+`check-balance-temple.cjs`는 실제 보행으로 다섯 상자 정렬, 두 판 2:2 배치, 지지대 이동과 지레 수평, 마지막 문 통과, 자동 대사·퇴장·밀봉을 검사한다. `check-balance-mobile.cjs`는 3·4개 풀이, 모든 지지점의 비어 있지 않은 해법, 잘못된 정답 거부, 모바일 E·재접속·이전 기록 변환을 확인한다. 공통 AUDIT_NODE_MODULES와 5512 서버를 사용한다. 출력은 `reports/2026-09-09/evidence/balance-temple/`이다.
+
+## 우주 범선 검사 상세
 
 `check-starsail.cjs`는 공통 AUDIT_NODE_MODULES와 5512 로컬 서버를 사용한다. 실제 보행으로 윈치 회수·수첩 획득·항로 설정·행성 진입을 검사한다. 귀환·기존 저장·잘못된 저장·회수 중 저장 복원·모바일 E와 수첩·A~X·선실과 빈 갑판의 고체 구별·화질별 렌더링을 포함한다. 결과와 실제 화면은 `reports/2026-09-09/evidence/starsail/`에 기록한다. `quality-check.cjs`의 시작 동선도 윈치 회수 후 작업대로 이동한다.
 

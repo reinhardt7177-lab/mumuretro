@@ -309,6 +309,12 @@ export function buildShrines(scene, planet, spots, themes) {
   const markCleared = (shrine) => {
     if (!shrine || shrine.cleared) return false;
     shrine.cleared = true;
+    if(shrines.indexOf(shrine)===0){
+      const seal=new THREE.Group();seal.name='밀봉된 균형의 사당';
+      const m=new THREE.MeshStandardMaterial({color:0xb8a981,roughness:.8});
+      const slab=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.2,.35),m);slab.position.set(0,1.6,1.8);seal.add(slab);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.6,.055,6,32),new THREE.MeshBasicMaterial({color:0xffd27a}));ring.position.set(0,1.8,2.01);seal.add(ring);shrine.group.add(seal);
+    }
     shrine.glow.color.set(SHRINE.gold);
     shrine.poolMat.color.set(SHRINE.gold);
     shrine.haloMat.color.set(SHRINE.gold);

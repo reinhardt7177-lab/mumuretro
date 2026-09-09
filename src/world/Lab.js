@@ -344,8 +344,9 @@ export function buildLab() {
     body.rotation.x = Math.PI / 2; g.add(body);
     const faceMat = new THREE.MeshBasicMaterial({ map: digits[0] });
     faceMat.userData.outlineParameters = { visible: false };
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.48), faceMat);
-    face.position.z = 0.17; g.add(face);
+    const frame = box(.76,.76,.08,brass,0,.66,.19,g);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.64, 0.64), faceMat);
+    face.position.set(0,.66,.24); g.add(face);
     const knob = box(0.09, 0.6, 0.09, iron, 0, 0, 0.2, g);
     return { i, x: dx, z: CONSOLE_Z + 0.48, g, faceMat, knob, value: 0 };
   });
