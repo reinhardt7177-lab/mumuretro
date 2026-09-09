@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { godEyes } from './GodEyes.js';
 import { toon } from '../render/Toon.js';
 import { shuffle, range, randInt, pick } from '../util/rand.js';
+import { SHADOW_WALK } from '../data/shadowWalk.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -34,11 +35,11 @@ const flatMat = (c, op) => {
 // 한 자리에 머물 수 없다 — 계속 따라다녀야 한다.
 //
 // 즉사가 아니라 **노출 시간**으로 판정한다. 그림자가 움직이는데 즉사면 운이 되고,
-// 운으로 지면 아이는 배우지 못한다. 0.75초의 여유를 주고, 그동안 벽의 눈이
+// 운으로 지면 아이는 배우지 못한다. 1.8초의 여유를 주고, 그동안 벽의 눈이
 // 밝아지므로 "지금 위험하다"가 눈에 보인다.
 // ══════════════════════════════════════════════════════════════════════════
-const EXPOSE = 0.75;          // 이만큼 빛에 서 있으면 발각
-const SH_LEN = 9.0;           // 그림자 길이
+const EXPOSE = SHADOW_WALK.exposure;
+const SH_LEN = SHADOW_WALK.length;
 const LAMP_Y = 4.6;
 
 export class ShadeGate {
@@ -51,8 +52,8 @@ export class ShadeGate {
     this.safeIn = seg.z1 - 2.2;
     this.safeOut = seg.z0 + 2.2;
     this.expose = 0;
-    this.a = 0;
-    this.speed = 0.42;
+    this.a = SHADOW_WALK.startAngle;
+    this.speed = SHADOW_WALK.speed;
     this.exposeMax = EXPOSE;
 
     const g = new THREE.Group();
@@ -70,7 +71,7 @@ export class ShadeGate {
       m.castShadow = true;
       g.add(m);
       // 그림자 — 바닥에 직접 그린다. 이게 곧 판정의 근거다.
-      const sh = new THREE.Mesh(new THREE.PlaneGeometry(r * 2.15, SH_LEN), flatMat(0x000000, 0.86));
+      const sh = new THREE.Mesh(new THREE.PlaneGeometry(SHADOW_WALK.width, SH_LEN), flatMat(0x000000, 0.86));
       sh.rotation.x = -Math.PI / 2;
       sh.position.y = 0.02;
       sh.renderOrder = 1;
@@ -92,8 +93,8 @@ export class ShadeGate {
   }
 
   _lampPos() {
-    const r = 3.6;
-    return { x: this.cx + Math.cos(this.a) * r, z: this.cz + Math.sin(this.a) * r * 1.5 };
+    return { x: this.cx + Math.cos(this.a) * SHADOW_WALK.orbitX,
+      z: this.cz + Math.sin(this.a) * SHADOW_WALK.orbitZ };
   }
 
   // 이 점이 어느 기둥의 그림자 안인가. 등불에서 기둥을 지나 뻗는 띠 안이면 그늘이다.
@@ -106,7 +107,7 @@ export class ShadeGate {
       const vx = x - L.x, vz = z - L.z;
       const t = vx * ux + vz * uz;                  // 등불에서 잰 거리
       if (t < wl || t > wl + SH_LEN) continue;      // 기둥 앞이거나 그림자 끝 너머
-      if (Math.abs(vx * uz - vz * ux) < p.r + 0.16) return true;
+      if (Math.abs(vx * uz - vz * ux) <= SHADOW_WALK.width / 2) return true;
     }
     return false;
   }
@@ -124,7 +125,8 @@ export class ShadeGate {
       const d = Math.hypot(dx, dz) || 1;
       const ux = dx / d, uz = dz / d;
       q.shadow.position.set(q.x + ux * SH_LEN / 2, 0.02, q.z + uz * SH_LEN / 2);
-      q.shadow.rotation.z = -Math.atan2(ux, uz);
+      // X축으로 바닥에 눕힌 뒤 로컬 Y축은 −Z다. 반대 부호면 그림과 판정이 뒤집힌다.
+      q.shadow.rotation.z = Math.atan2(ux, uz);
     }
 
     const inRoom = p.z < this.safeIn && p.z > this.safeOut;
@@ -146,12 +148,12 @@ export class ShadeGate {
     return this.expose > 0.1 ? '⚠ 들키는 중! 그림자로!' : '🕯 그림자를 따라가라';
   }
 
-  // 등불이 빨라지고 들키기까지의 여유가 짧아진다.
-  setTier(t) { this.speed = 0.42 * (1 + t * 0.12); this.exposeMax = EXPOSE - t * 0.055; }
+  // 사당을 깬 순서와 관계없이 관찰하고 걸어서 건널 여유를 보장한다.
+  setTier() { this.speed = SHADOW_WALK.speed; this.exposeMax = EXPOSE; }
 
   solvedBy(actor) { return actor.position.z < this.safeOut; }
   reset() { this.expose = 0; this.eyeMat.opacity = 0; }
-  restart() { this.reset(); this.a = 0; }
+  restart() { this.reset(); this.a = SHADOW_WALK.startAngle; }
 }
 
 // ══════════════════════════════════════════════════════════════════════════

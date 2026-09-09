@@ -7,6 +7,8 @@
 import * as THREE from 'three';
 import { PlateGate } from '../shrine/Gates.js';
 import { checkPlateCarry } from './plateCarryTest.js';
+import { ShadeGate } from '../shrine/ShadowGates.js';
+import { checkShadowWalk } from './shadowWalkTest.js';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 
 const ENTRY_Z_TEST = 10.0;   // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
@@ -1066,9 +1068,14 @@ export function installDebug(ctx) {
       // 압력판 방에서도 같은 제보가 재발했다. 기존 검사는 무게 순서 방만 봤다.
       const plateScene = new THREE.Scene();
       const plateTest = new PlateGate(plateScene, { x0: -7, x1: 7, z0: -14, z1: 0 });
+      const shadowRoom = ctx.roomFor(ctx.shrines.shrines[1]);
+      const shadeTest = new ShadeGate(plateScene, { x0: -4.5, x1: 4.5, z0: -16, z1: 0, h: 6 },
+        { theme: shadowRoom.spec.theme });
       try {
         const result = checkPlateCarry(plateTest);
         if (result.failures.length) { pOK = false; pBad.push(...result.failures); }
+        const shadeResult = checkShadowWalk(shadeTest);
+        if (shadeResult.failures.length) { pOK = false; pBad.push(...shadeResult.failures); }
       } finally {
         const geometries = new Set(), materials = new Set();
         plateScene.traverse((o) => {
@@ -1094,7 +1101,7 @@ export function installDebug(ctx) {
         if (altar.got !== right) { pOK = false; pBad.push('마지막 신: 맞는 구슬을 안 받음'); }
         gg.restart(); gg.held = before.held;
       }
-      log.push(`P 재설계 — 무게는 눈으로 안 풀리고 · 마지막 신은 표지를 본다`
+      log.push(`P 재설계 — 상자 회수 · 그림자 속도와 판정 · 마지막 신 표지`
         + (pOK ? ' 전부' : ` — ${pBad.join(' / ')}`) + ` -> ${pOK ? 'PASS' : 'FAIL'}`);
     }
 
