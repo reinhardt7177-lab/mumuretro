@@ -69,44 +69,54 @@ export function buildQuestGuide(getGame) {
   el.innerHTML='<button type="button" aria-pressed="false"><small>현재 퀘스트 · 눌러서 길 안내</small><span id="questText" aria-live="polite"></span></button><div id="questDirection" hidden><span id="questSparks" aria-hidden="true">✦ ·</span><span id="questArrow" aria-hidden="true">↑</span><span id="questDistance"></span></div>';document.body.appendChild(el);
   const button=el.querySelector('button'),label=el.querySelector('#questText'),arrow=el.querySelector('#questArrow'),direction=el.querySelector('#questDirection'),detail=el.querySelector('#questDistance');
   const trail=new THREE.Group();trail.name='퀘스트 길잡이';
-  const shape=new THREE.Shape();shape.moveTo(0,.24);shape.lineTo(.19,-.12);shape.lineTo(0,-.02);shape.lineTo(-.19,-.12);shape.closePath();
-  const geo=new THREE.ShapeGeometry(shape);
-  for(let i=0;i<3;i++){const m=new THREE.MeshBasicMaterial({color:0xffdc87,transparent:true,opacity:.8,side:THREE.DoubleSide,depthWrite:false});m.userData.outlineParameters={visible:false};trail.add(new THREE.Mesh(geo,m));}
+  // A direct, waist-high destination cue, rendered in one soft particle draw call.
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=32;
+  const ctx=canvas.getContext('2d'),glow=ctx.createRadialGradient(16,16,0,16,16,16);
+  glow.addColorStop(0,'#fff');glow.addColorStop(.18,'#fffffff0');glow.addColorStop(.45,'#ffffff70');glow.addColorStop(1,'#ffffff00');
+  ctx.fillStyle=glow;ctx.fillRect(0,0,32,32);
+  const count=130,positions=new Float32Array(count*3),colors=new Float32Array(count*3),geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
+  geo.setAttribute('color',new THREE.BufferAttribute(colors,3).setUsage(THREE.DynamicDrawUsage));
+  const material=new THREE.PointsMaterial({map:new THREE.CanvasTexture(canvas),size:.095,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false});
+  material.userData.outlineParameters={visible:false};
+  const dust=new THREE.Points(geo,material);dust.name='황금 가루 길';dust.frustumCulled=false;trail.add(dust);
+  const seed=i=>{const n=Math.sin(i*127.1+311.7)*43758.5453;return n-Math.floor(n);};
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');let clock=0;
-  let enabled=false,lastId='',timer=0,path=[],quest;
+  let enabled=false,lastId='',quest;
   button.addEventListener('pointerdown',e=>e.stopPropagation());
-  button.addEventListener('click',()=>{enabled=!enabled;timer=0;getGame().input.reset();button.setAttribute('aria-pressed',String(enabled));});
+  button.addEventListener('click',()=>{enabled=!enabled;getGame().input.reset();button.setAttribute('aria-pressed',String(enabled));});
   return {get enabled(){return enabled;},get current(){return quest;},update(dt,hidden=false){
     trail.visible=false;clock+=dt;
     const g=getGame();quest=currentQuest(g);el.hidden=hidden||!quest;if(el.hidden)return;
-    if(quest.id!==lastId){lastId=quest.id;label.textContent=quest.text;timer=0;}
+    if(quest.id!==lastId){lastId=quest.id;label.textContent=quest.text;}
     button.querySelector('small').textContent=enabled?'현재 퀘스트 · 안내 끄기':'현재 퀘스트 · 눌러서 길 안내';
     direction.hidden=!enabled;if(!enabled)return;
     if(!quest.target){arrow.hidden=true;detail.textContent=quest.hint;return;}
     const actor=g.mode==='planet'?g.player:g.roomActor,from=actor.position,up=g.mode==='planet'?from.clone().normalize():new THREE.Vector3(0,1,0);
     let target=quest.target,dist=g.mode==='planet'?from.angleTo(target)*from.length():from.distanceTo(target);
     if(dist<(g.mode==='lab'?.65:1.8)){arrow.hidden=true;detail.textContent=quest.hint;return;}
-    if(g.mode!=='planet'){
-      timer-=dt;if(timer<=0){path=floorRoute(from,target,actor.rects,actor.obstacles);timer=.65;}
-      while(path.length>1&&from.distanceTo(path[0])<1)path.shift();
-      if(!path.length){arrow.hidden=true;detail.textContent='주변 장치와 열린 통로를 살펴보자';return;}
-      target=path[Math.min(1,path.length-1)];
-    }
     const forward=new THREE.Vector3();g.engine.camera.getWorldDirection(forward);forward.addScaledVector(up,-forward.dot(up)).normalize();
     const right=forward.clone().cross(up).normalize(),toward=target.clone().sub(from);toward.addScaledVector(up,-toward.dot(up)).normalize();
     if(toward.lengthSq()>.1){
       if(trail.parent!==g.engine.scene)g.engine.scene.add(trail);trail.visible=true;
-      trail.children.forEach((mesh,i)=>{
-        const offset=Math.min(.7+i*.45,from.distanceTo(target)),p=from.clone().addScaledVector(toward,offset);
+      const time=reduced.matches?0:clock;
+      const end=target.clone();
+      if(g.mode!=='planet')end.y=actor.floorAt(end.x,end.z);
+      const side=toward.clone().cross(up).normalize();
+      for(let i=0;i<count;i++){
+        const phase=(i/count+time*.19)%1;
+        const p=from.clone().lerp(end,phase);
+        p.addScaledVector(side,(seed(i)-.5)*.16+Math.sin(time*1.3+i)*.012);
         const normal=g.mode==='planet'?p.clone().normalize():up;
-        if(g.mode==='planet')p.copy(g.planet.surfaceAt(normal));else p.y=actor.floorAt(p.x,p.z);
-        mesh.position.copy(p).addScaledVector(normal,.09);
-        const tangent=toward.clone().addScaledVector(normal,-toward.dot(normal)).normalize();
-        mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(tangent.clone().cross(normal).normalize(),tangent,normal));
-        mesh.material.opacity=reduced.matches?.8:.55+.3*Math.sin(clock*4-i);
-      });
+        if(g.mode==='planet')p.copy(g.planet.surfaceAt(normal));
+        p.addScaledVector(normal,.75+(seed(i+count)-.5)*.10+Math.sin(time*2+i)*.015);
+        p.toArray(positions,i*3);
+        const fade=Math.min(1,phase*9,(1-phase)*6),spark=.65+.35*Math.pow(Math.sin(time*2.3+i*1.7),6);
+        colors[i*3]=fade*spark;colors[i*3+1]=fade*spark*(.57+seed(i+7)*.22);colors[i*3+2]=fade*spark*.16;
+      }
+      geo.attributes.position.needsUpdate=true;geo.attributes.color.needsUpdate=true;
     }
     arrow.hidden=false;arrow.style.transform=`rotate(${Math.atan2(toward.dot(right),toward.dot(forward))}rad)`;
-    detail.textContent=g.mode==='planet'?`목적지 방향 · 약 ${Math.ceil(dist)}걸음`:'열린 통로를 따라 이동';
+    detail.textContent=g.mode==='planet'?`목적지 방향 · 약 ${Math.ceil(dist)}걸음`:'금빛이 가리키는 목적지로 이동';
   }};
 }
