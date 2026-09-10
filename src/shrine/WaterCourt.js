@@ -92,7 +92,9 @@ export function buildWaterCourt(scene, seg, shrineSeg, theme, rects) {
   const joints = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), stone, jointMatrices.length);
   jointMatrices.forEach((m, i) => joints.setMatrixAt(i, m)); group.add(joints);
   const bridge = new THREE.Group(); group.add(bridge); bridge.visible = false;
-  const bridgeDeck = box(12, 0.28, C.bridgeBack - C.bridgeFront, 0, C.height - 0.14, zAt(16), pale, bridge);
+  const iceDeck=new THREE.MeshStandardMaterial({color:0xa6eeef,roughness:.2,metalness:.1,emissive:0x174149});
+  iceDeck.userData.outlineParameters={visible:false};
+  const bridgeDeck = box(12, 0.28, C.bridgeBack - C.bridgeFront, 0, C.height - 0.14, zAt(16), iceDeck, bridge);
   cameraOccluders.push(bridgeDeck);
   for (const back of [C.bridgeFront, C.bridgeBack]) {
     box(12, 0.10, 0.12, 0, C.height + 0.73, zAt(back), bronze, bridge);

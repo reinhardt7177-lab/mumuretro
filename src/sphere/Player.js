@@ -55,7 +55,7 @@ export class Player extends SurfaceActor {
       this.lastArc = 0;
     }
     animateLimbs(this.body, dt, this.moving && this.grounded, this.running, {
-      airborne: this.airborne, gliding: this.gliding, vy: this.vy, landing: this.landingImpact,
+      airborne: this.airborne, gliding: this.gliding, vy: this.vy, landing: this.landingImpact, traveling: this.moving,
     });
     this.syncMesh();
   }

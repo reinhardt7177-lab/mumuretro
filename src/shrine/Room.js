@@ -19,7 +19,7 @@ import { buildDungeon } from './Dungeon.js';
 import { TileGate, LaserGate, PlateGate } from './Gates.js';
 import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.js';
 import { SieveGate, MagnetGate, EvaporateGate, SiftGod } from './SiftGates.js';
-import { FreezeGate, SlideGate, SteamGate, WaterGod } from './WaterGates.js';
+import { MeltBridge, CondenseLift, RestoreCourt, WaterAwakening } from './WaterPhases.js';
 import { QuakeGate, HexLavaGate, GeyserGate, FireGod } from './FireGates.js';
 import { ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
 import { StrataOrderGate } from './StrataOrder.js';
@@ -29,7 +29,7 @@ import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
 import { addBoard } from './Signboard.js';
 import { buildWaterCourt } from './WaterCourt.js';
-import { attachWaterProgress } from './WaterProgress.js';
+import { attachWaterPhaseProgress } from './WaterPhaseProgress.js';
 import { attachShrineProgress } from './ShrineProgress.js';
 import { withSeed } from '../util/rand.js';
 import { deviceProgress } from './DeviceProgress.js';
@@ -50,13 +50,13 @@ const GATES = {
   tile: TileGate, laser: LaserGate,                            // (내려 둠 — 무게와 무관했다)
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
   sieve: SieveGate, magnet: MagnetGate, evaporate: EvaporateGate,    // 03 분리
-  freeze: FreezeGate, slide: SlideGate, steam: SteamGate,            // 04 물
+  freeze: MeltBridge, slide: CondenseLift, steam: RestoreCourt,      // 04 물
   quake: QuakeGate, hexlava: HexLavaGate, geyser: GeyserGate,        // 05 화산
   strataOrder: StrataOrderGate, shaft: ShaftGate, fiveDoors: FiveDoorsGate,  // 06 지층
 };
 
 const FINALS = {
-  mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterGod,
+  mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterAwakening,
   fireGod: FireGod, grand: GrandGod,
 };
 
@@ -265,8 +265,9 @@ function assembleRoom(spec, seed) {
   };
   const restart = api.restart.bind(api);
   api.restart = () => withSeed((seed ^ 0x51a7e) >>> 0, restart);
-  if (court) attachWaterProgress(api);
+  if (court) attachWaterPhaseProgress(api);
   else attachShrineProgress(api);
+  if(court)api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]));
   if(spec.id==='balance'){
     api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]),{x:0,z:-60,r:1.7});
     const restore=api.importState;

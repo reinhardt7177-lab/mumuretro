@@ -26,7 +26,11 @@ export function buildNavigator(glider){
   const collar=new T.Mesh(new T.TorusGeometry(.033,.006,6,24),leather);collar.rotation.x=Math.PI/2;collar.position.y=.08;scopeSlot.add(collar);
   const cover=book.getObjectByName('Cover'),hinge=new T.Group();hinge.position.x=-.072;book.add(hinge);if(cover){book.updateMatrixWorld(true);hinge.attach(cover);}
   glider.removeFromParent();k.add(glider);glider.scale.setScalar(.8);glider.position.y=-.15;glider.visible=false;
-  let locomotion=0,carrying=0,air=0,time=0,wasAirborne=false,landing=0;
+  const restBodyY=body.position.y;
+  // Restore the authored pose before sampling: procedural offsets must not
+  // accumulate on bones whose idle tracks are constant or absent.
+  const authoredRotations=Object.entries(bones).map(([name,b])=>[b,b.quaternion.clone()]);
+  let locomotion=0,carrying=0,air=0,time=0,wasAirborne=false,landing=0,tuck=0,travelJump=false;
   const world=new T.Vector3(),at=new T.Vector3(),parentQ=new T.Quaternion(),q=new T.Quaternion();
   function aim(name,child,target,weight){const b=bones[name],c=bones[child];if(!b||!c||weight<.001)return;k.updateMatrixWorld(true);b.getWorldPosition(at);const dir=c.getWorldPosition(new T.Vector3()).sub(at).normalize();world.copy(target);k.localToWorld(world);world.sub(at).normalize();q.setFromUnitVectors(dir,world);b.getWorldQuaternion(parentQ);q.multiply(parentQ);b.parent.getWorldQuaternion(parentQ).invert();q.premultiply(parentQ);b.quaternion.slerp(q,weight);}
   function reach(side,target,weight){
@@ -35,19 +39,56 @@ export function buildNavigator(glider){
     const bend=new T.Vector3(side==='Left'?1:-1,-.6,-.3);bend.addScaledVector(axis,-bend.dot(axis)).normalize();const along=(l1*l1-l2*l2+d*d)/(2*d),elbow=a.clone().addScaledVector(axis,along).addScaledVector(bend,Math.sqrt(Math.max(0,l1*l1-along*along)));
     aim(side+'Arm',side+'ForeArm',elbow,weight);aim(side+'ForeArm',side+'Hand',target,weight);
   }
+  // Express flexion around each joint, not absolute targets near the floor.
+  // This keeps the knee bend anatomical at different hip heights and poses.
+  function jumpLeg(side,thigh,knee,weight){
+    k.updateMatrixWorld(true);
+    const hip=k.worldToLocal(bones[side+'UpLeg'].getWorldPosition(new T.Vector3()));
+    aim(side+'UpLeg',side+'Leg',hip.add(new T.Vector3(0,-Math.cos(thigh),Math.sin(thigh))),weight);
+    k.updateMatrixWorld(true);
+    const joint=k.worldToLocal(bones[side+'Leg'].getWorldPosition(new T.Vector3()));
+    aim(side+'Leg',side+'Foot',joint.add(new T.Vector3(0,-Math.cos(thigh-knee),Math.sin(thigh-knee))),weight);
+  }
   const u=k.userData;Object.assign(u,{bob:0,glider,head:bones.Head,armL:bones.LeftArm,armR:bones.RightArm,legL:bones.LeftUpLeg,legR:bones.RightUpLeg});
   u.armL.userData.lower=bones.LeftForeArm;u.armR.userData.lower=bones.RightForeArm;u.legL.userData.lower=bones.LeftLeg;u.legR.userData.lower=bones.RightLeg;
   u.navigator={mixer,bones,book,scope,update(dt,moving,running,pose={}){
-    if(wasAirborne&&!pose.airborne)landing=1;wasAirborne=!!pose.airborne;landing=Math.max(0,landing-dt*4);time+=dt;const f=1-Math.exp(-dt*12);locomotion=T.MathUtils.lerp(locomotion,moving&&!pose.airborne?1:0,f);carrying=T.MathUtils.lerp(carrying,u.carrying&&!pose.gliding?1:0,f);air=T.MathUtils.lerp(air,pose.airborne?1:0,f);
+    if(!wasAirborne&&pose.airborne){travelJump=!!(pose.traveling??moving);landing=0;}
+    if(wasAirborne&&!pose.airborne)landing=1;wasAirborne=!!pose.airborne;landing=Math.max(0,landing-dt*4);time+=dt;const f=1-Math.exp(-dt*16);locomotion=T.MathUtils.lerp(locomotion,moving&&!pose.airborne?1:0,f);carrying=T.MathUtils.lerp(carrying,u.carrying&&!pose.gliding?1:0,f);air=T.MathUtils.lerp(air,pose.airborne?1:0,f);
+    for(const [bone,rotation] of authoredRotations)bone.quaternion.copy(rotation);
     actions.idle.setEffectiveWeight(1-locomotion);actions.walk.setEffectiveWeight(locomotion*(running?0:1));actions.run.setEffectiveWeight(locomotion*(running?1:0));mixer.update(dt);
-    u.bob=-.015*landing;u.airBlend=air;u.glideBlend=pose.gliding?1:0;glider.visible=!!pose.gliding;
+    for(const [bone,rotation] of authoredRotations)rotation.copy(bone.quaternion);
+    // Velocity distinguishes takeoff/apex/descent without delaying the actual jump.
+    tuck=T.MathUtils.lerp(tuck,pose.airborne&&!pose.gliding?T.MathUtils.smoothstep(pose.vy||0,-3,3):0,f);
+    body.position.y=restBodyY-.085*landing;
+    u.bob=0;u.airBlend=air;u.glideBlend=pose.gliding?1:0;glider.visible=!!pose.gliding;
     const reading=!!pose.reading;
     hinge.rotation.y=T.MathUtils.lerp(hinge.rotation.y,reading?-2.25:0,f);
+    const lean=landing*.22+(!pose.gliding&&travelJump?air*.12:0);
+    if(lean>.001&&bones.Spine&&!reading){
+      k.updateMatrixWorld(true);
+      const axis=new T.Vector3(1,0,0).applyQuaternion(k.getWorldQuaternion(new T.Quaternion()));
+      bones.Spine.getWorldQuaternion(q);q.premultiply(new T.Quaternion().setFromAxisAngle(axis,lean));
+      bones.Spine.parent.getWorldQuaternion(parentQ).invert();bones.Spine.quaternion.copy(parentQ.multiply(q));
+    }
     for(const [side,x] of [['Left',1],['Right',-1]]){
-      if(landing>0){aim(side+'UpLeg',side+'Leg',new T.Vector3(x*.11,.4,.1),landing*.35);aim(side+'Leg',side+'Foot',new T.Vector3(x*.11,.10,.025),landing*.35);}// Lower the neutral A-pose; source locomotion retains its authored arm swing.
+      if(air>.01){
+        const lead=side==='Left',fold=pose.gliding?.15:tuck;
+        const thigh=travelJump?(lead?.10+fold*.55:-.10+fold*.16):.06+fold*(lead?.32:.24);
+        const knee=travelJump?(lead?.20+fold*.80:.24+fold*.38):.15+fold*(lead?.62:.50);
+        jumpLeg(side,thigh,knee,air);
+      }
+      if(landing>0){aim(side+'UpLeg',side+'Leg',new T.Vector3(x*.12,.36,.22),landing);aim(side+'Leg',side+'Foot',new T.Vector3(x*.12,.035,.015),landing);}
+      // Lower the neutral A-pose; source locomotion retains its authored arm swing.
       aim(side+'Arm',side+'ForeArm',new T.Vector3(x*.27,.89,.015),1-locomotion);
       aim(side+'ForeArm',side+'Hand',new T.Vector3(x*.24,.65,.04),1-locomotion);
-      if(air>.01){aim(side+'Arm',side+'ForeArm',new T.Vector3(x*(pose.gliding?.42:.32),pose.gliding?1.31:1.05,.09),air);aim(side+'ForeArm',side+'Hand',new T.Vector3(x*(pose.gliding?.61:.38),pose.gliding?1.48:1.05,.28),air);}
+      if(air>.01){
+        if(pose.gliding){aim(side+'Arm',side+'ForeArm',new T.Vector3(x*.42,1.31,-.04),air);aim(side+'ForeArm',side+'Hand',new T.Vector3(x*.61,1.48,.28),air);}
+        else {
+          const lead=side==='Right';
+          aim(side+'Arm',side+'ForeArm',new T.Vector3(x*(travelJump?.29:.27),.91,travelJump?(lead?.10:-.09):.025),air);
+          aim(side+'ForeArm',side+'Hand',new T.Vector3(x*(travelJump?.31:.28),travelJump?(lead?.96+tuck*.12:.76):.78+tuck*.12,travelJump?(lead?.28:-.13):.16),air);
+        }
+      }
       if(carrying>.01||reading){const w=reading?1:carrying;reach(side,new T.Vector3(x*(reading?.105:.26),reading?.98:.91,reading?.30:.34),w);}
     }
     if(reading){if(book.parent!==k){k.add(book);book.position.set(0,.99,.37);book.rotation.set(-.8,0,Math.PI/2);}bones.Head.rotation.x+=.12;}else if(book.parent!==bookSlot){bookSlot.add(book);book.position.set(0,0,0);book.rotation.set(0,0,0);}

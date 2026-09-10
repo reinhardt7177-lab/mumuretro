@@ -1,0 +1,21 @@
+{
+  "before": {
+    "ok": true,
+    "plug": 0.7610999999999997,
+    "heat": 1
+  },
+  "after": {
+    "version": 2,
+    "heat": 1,
+    "freeze": false,
+    "cool": false,
+    "align": 0,
+    "plug": 0.7610999999999997,
+    "water": 0,
+    "ice": 0,
+    "tank": 0,
+    "bridgeReady": false,
+    "completed": false
+  },
+  "errors": []
+}

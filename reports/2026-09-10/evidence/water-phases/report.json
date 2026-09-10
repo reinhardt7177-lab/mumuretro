@@ -1,0 +1,30 @@
+{
+  "negatives": {
+    "emptyIce": 0,
+    "heatTank": 0,
+    "missTank": 0,
+    "noBridgeTank": 0
+  },
+  "saved": {
+    "ok": true,
+    "rejected": true,
+    "unchanged": true
+  },
+  "migration": {
+    "ok": true,
+    "credited": true,
+    "backup": true,
+    "roundtrip": true,
+    "done": true
+  },
+  "end": {
+    "solved": [
+      true,
+      true,
+      true
+    ],
+    "final": true,
+    "drop": 1
+  },
+  "errors": []
+}
