@@ -1,0 +1,43 @@
+{
+  "source": "Meshy rigged output",
+  "mesh_count": 1,
+  "vertices": 31142,
+  "triangles": 36218,
+  "armatures": 1,
+  "bones": [
+    "Hips",
+    "LeftUpLeg",
+    "LeftLeg",
+    "LeftFoot",
+    "LeftToeBase",
+    "RightUpLeg",
+    "RightLeg",
+    "RightFoot",
+    "RightToeBase",
+    "Spine02",
+    "Spine01",
+    "Spine",
+    "LeftShoulder",
+    "LeftArm",
+    "LeftForeArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightArm",
+    "RightForeArm",
+    "RightHand",
+    "neck",
+    "Head",
+    "head_end",
+    "headfront"
+  ],
+  "vertex_groups": {
+    "char1": 24
+  },
+  "unweighted_vertices": 0,
+  "height_before": 1.4999998347219758,
+  "normalized_height": 1.5,
+  "actions": [
+    "Armature|clip0|baselayer"
+  ],
+  "game_integrated": false
+}

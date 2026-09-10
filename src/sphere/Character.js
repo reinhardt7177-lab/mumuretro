@@ -306,6 +306,7 @@ export function buildKid(loadout = DEFAULT_LOADOUT) {
 // 사인파 팔다리 애니메이션. 로컬 회전이라 구면 정렬과 무관. bob은 up 방향 → SurfaceActor가 적용.
 export function animateLimbs(k, dt, moving, running, pose = {}) {
   const u = k.userData;
+  if(u.navigator){u.navigator.update(dt,moving,running,pose);return;}
   const blend = 1 - Math.exp(-dt * 14);
   u.airBlend = THREE.MathUtils.lerp(u.airBlend || 0, pose.airborne ? 1 : 0, blend);
   u.glideBlend = THREE.MathUtils.lerp(u.glideBlend || 0, pose.gliding ? 1 : 0, blend);

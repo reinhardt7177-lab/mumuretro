@@ -24,8 +24,8 @@ class CarryTrial {
     if(this.held!==null)this.cells.forEach((s,i)=>{if(s.visible!==false&&!this.stock.some(b=>b.at===i))offer('cell',i,s.x,s.z);});return best;}
   interact(p){if(this.solved)return false;const n=this.near(p);if(this.held!==null){if(n?.kind==='cell'){this.stock[this.held].at=n.item;this.held=null;this.check();this.sync();return true;}this.stock[this.held].at=-1;this.held=null;this.sync();return true;}if(n?.kind==='stock'){this.held=n.item;this.stock[n.item].at=-2;this.sync();return true;}return false;}
   prompt(p){if(this.solved)return '문이 열렸다 — 안쪽으로';const n=this.near(p);if(this.held!==null)return n?.kind==='cell'?'E — 빈 칸에 놓기':'E — 상자를 원래 자리로 돌려놓기';return n?.kind==='stock'?'E — 상자 들기':this.instruction;}
-  sync(){this.stock.forEach(b=>{if(b.at===-1)b.mesh.position.copy(b.home);else if(b.at>=0){const s=this.cells[b.at];b.mesh.position.set(s.x,s.y??.25,s.z);}});}
-  update(dt,actor){this.sync();if(this.held!==null&&actor){const mesh=this.stock[this.held].mesh;mesh.position.copy(actor.position).addScaledVector(actor.heading,.8);mesh.position.y=.9;}return {};}
+  sync(){this.stock.forEach(b=>{if(b.at===-1){b.mesh.position.copy(b.home);b.mesh.rotation.y=0;}else if(b.at>=0){b.mesh.rotation.y=0;const s=this.cells[b.at];b.mesh.position.set(s.x,s.y??.25,s.z);}});}
+  update(dt,actor){this.sync();if(this.held!==null&&actor){const mesh=this.stock[this.held].mesh,n=actor.body?.userData.navigator;mesh.position.copy(actor.position).addScaledVector(actor.heading,n?.53:.8);mesh.position.y=actor.position.y+(n?.89:.9);if(n)mesh.rotation.y=Math.atan2(actor.heading.x,actor.heading.z);}return {};}
   solvedBy(){return this.solved;}
   restart(){this.solved=false;this.held=null;this.stock.forEach(b=>b.at=-1);this.sync();}
   restoreSolved(v){this.solved=v;}

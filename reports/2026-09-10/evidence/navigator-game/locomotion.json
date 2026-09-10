@@ -1,0 +1,45 @@
+{
+  "actions": 3,
+  "unique": 3,
+  "checks": [
+    {
+      "run": false,
+      "moved": true,
+      "legFrames": 12,
+      "weights": [
+        {
+          "name": "idle",
+          "weight": 0.000006144212353342837
+        },
+        {
+          "name": "walk",
+          "weight": 0.9999938557876467
+        },
+        {
+          "name": "run",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "run": true,
+      "moved": true,
+      "legFrames": 12,
+      "weights": [
+        {
+          "name": "idle",
+          "weight": 3.775135759553905e-11
+        },
+        {
+          "name": "walk",
+          "weight": 0
+        },
+        {
+          "name": "run",
+          "weight": 0.9999999999622486
+        }
+      ]
+    }
+  ],
+  "idleDelta": 3.0887885582586705e-9
+}

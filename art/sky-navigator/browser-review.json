@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "files": [
+    {
+      "name": "rigged",
+      "bytes": 7011284,
+      "joints": 24,
+      "primitives": 1,
+      "animations": 1
+    },
+    {
+      "name": "walking",
+      "bytes": 7024052,
+      "joints": 24,
+      "primitives": 1,
+      "animations": 1
+    },
+    {
+      "name": "running",
+      "bytes": 7019456,
+      "joints": 24,
+      "primitives": 1,
+      "animations": 1
+    }
+  ],
+  "checks": [
+    "GLB headers",
+    "skinning attributes",
+    "joint counts",
+    "walking and running bone motion",
+    "browser errors"
+  ]
+}

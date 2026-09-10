@@ -2,13 +2,15 @@
 import * as THREE from 'three';
 import { SurfaceActor } from './SurfaceActor.js';
 import { buildKid, animateLimbs, DEFAULT_LOADOUT } from './Character.js';
+import { buildNavigator } from './Navigator.js';
 import { projectTangent } from './SurfaceTransform.js';
 
 const _moveDir = new THREE.Vector3();
+function playerBody(loadout){const fallback=buildKid(loadout);return buildNavigator(fallback.userData.glider)||fallback;}
 
 export class Player extends SurfaceActor {
   constructor(planet, loadout = DEFAULT_LOADOUT) {
-    super(planet, buildKid(loadout));
+    super(planet, playerBody(loadout));
     this.loadout = { ...DEFAULT_LOADOUT, ...loadout };
     this.speed = 5.0;
     this.turnRate = 12;
@@ -18,7 +20,7 @@ export class Player extends SurfaceActor {
   // 커스터마이즈 적용 — 몸 통째로 재생성 후 교체(라이브 프리뷰).
   setLoadout(loadout) {
     this.loadout = { ...this.loadout, ...loadout };
-    this.setBody(buildKid(this.loadout));
+    this.setBody(playerBody(this.loadout));
     return this.loadout;
   }
 

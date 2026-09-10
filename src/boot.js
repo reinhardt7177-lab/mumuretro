@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { Planet, R, PEAKS } from './sphere/Planet.js';
 import { Player } from './sphere/Player.js';
+import { loadNavigator } from './sphere/Navigator.js';
+import { animateLimbs } from './sphere/Character.js';
 import { Engine } from './core/Engine.js';
 import { Input } from './core/Input.js';
 import { Loop } from './core/Loop.js';
@@ -30,6 +32,7 @@ import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildMuteButton } from './ui/MuteButton.js';
 import { buildSettings } from './ui/Settings.js';
 import { buildShipView } from './ui/ShipView.js';
+import { buildQuestGuide } from './ui/QuestGuide.js';
 import { loadBalanceTemple } from './shrine/BalanceTemple.js';
 import * as Audio from './core/Audio.js';
 import { SFX } from './data/sfx.js';
@@ -52,6 +55,7 @@ const planetScene = engine.scene;   // 사당에서 돌아올 때 갈아 끼울 
 engine.attachPost(new Post(engine));
 const sky = new Sky(engine, planet);
 
+await loadNavigator();
 const player = new Player(planet);
 player.setLatLon(6, -18);           // 주 랜드마크(lat 30 / lon 0)가 정면에 들어오는 자리
 engine.scene.add(player.mesh);
@@ -356,10 +360,15 @@ function step(dt) {
     if(room.final.eventClock>=4.5){room.final.eventClock=0;dialogue.next();}
   }
   shipView.update();
+  questGuide.update(dt, hasOpenOverlay() || dialogue.active || brief.isOpen || title.isEnding);
   touch.update();
   const intent = input.poll();
   if (mode === 'lab' && notebook.has && notebook.isOpen) sawNote = true;
   const reading = hasOpenOverlay() || dialogue.active;
+  player.body.userData.hasNotebook=notebook.has;
+  const carryingDevice=mode==='room'&&room?[...room.gates.map(g=>g.gate),room.final].some(d=>d.held!==null&&d.held!==undefined&&d.held!==false):mode==='planet'&&!!waterway.held;
+  player.body.userData.carrying=!!carryingDevice;
+  if(player.body.userData.navigator&&notebook.isOpen&&!document.hidden)animateLimbs(player.body,dt,false,false,{reading:true});
   if (dialogue.active && intent.action && !notebook.isOpen) { dialogue.next(); intent.action = false; }
   else if (brief.isOpen && intent.action) { brief.hide(); intent.action = false; }
   fill.intensity = mode === 'planet' ? 0 : mode === 'lab' ? FILL_LAB : FILL_ROOM;
@@ -934,6 +943,7 @@ const settings = buildSettings(() => engine);
 const lab = await installStarsail(buildLab());
 await loadBalanceTemple();
 const shipView = buildShipView({camera:engine.camera,input,available:()=>mode==='lab'&&!dialogue.active&&!title.isEnding});
+const questGuide = buildQuestGuide(() => game);
 const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
@@ -1106,7 +1116,7 @@ loop.onFrame = makeAutoQuality((name, med) => {
 const game = {
   step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
-  brief, kitchen, settings, shipView, waterway, firstTrail, save: saveProgress, snapshot: captureProgress,
+  brief, kitchen, settings, shipView, questGuide, waterway, firstTrail, save: saveProgress, snapshot: captureProgress,
   get saveStatus() { return saveStore.status; },
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },

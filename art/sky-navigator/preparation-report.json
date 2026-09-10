@@ -1,0 +1,8 @@
+{
+  "status": "preparation_only",
+  "packed_images": 5,
+  "guide_bones": 20,
+  "character_meshes": 0,
+  "skin_weights": false,
+  "game_integrated": false
+}
