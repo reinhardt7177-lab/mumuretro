@@ -74,25 +74,26 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   const state = { version: 1, overlook: false, glider: false, water: false, restored: false };
   let t = 0;
   const near = (position, d, radius) => position.clone().normalize().dot(d) > Math.cos(radius / planet.R);
-  function sync() { equipment.visible = !state.glider; gateMat.opacity = state.restored ? 0.24 : 0.035; }
+  const entryOpen=()=>waterway.entranceOpen||state.restored;
+  function sync() { equipment.visible = !state.glider; gateMat.opacity = entryOpen() ? 0.24 : 0.035; }
   return {
     group, plan, gateDir, equipment,
     update(dt, player) {
-      t += dt; flag.rotation.y = Math.sin(t * 1.8) * 0.12; ring.rotation.z = state.restored ? t * 0.13 : 0;
+      t += dt; flag.rotation.y = Math.sin(t * 1.8) * 0.12; ring.rotation.z = entryOpen() ? t * 0.13 : 0;
       let message = null;
       if (!state.overlook && near(player.position, plan.overlook, 4.5)) { state.overlook = true; message = TRAIL_TEXT.found; }
-      if (!state.water && waterway.discovered) { state.water = true; message = TRAIL_TEXT.water; }
-      if (!state.restored && waterway.solved) { state.restored = true; message = TRAIL_TEXT.restored; }
+      if (!state.water && (waterway.discovered||waterway.entranceOpen&&near(player.position,gateDir,8))) { state.water = true; message = waterway.entranceOpen?'물의 사당 입구를 찾았다. 문으로 바로 들어갈 수 있다.':TRAIL_TEXT.water; }
+      if (!waterway.entranceOpen&&!state.restored && waterway.solved) { state.restored = true; message = TRAIL_TEXT.restored; }
       sync(); return message;
     },
     getPrompt(position) {
       if (!state.glider && near(position, plan.overlook, 2.1)) return 'E — 접이식 활공막 챙기기';
-      if (near(position, gateDir, 2.6)) return state.restored ? 'E — 물의 사당에 들어가기' : '멈춘 물레와 이어진 문이다';
+      if (near(position, gateDir, 2.6)) return entryOpen() ? 'E — 물의 사당에 들어가기' : '멈춘 물레와 이어진 문이다';
       return null;
     },
     interact(position) {
       if (!state.glider && near(position, plan.overlook, 2.1)) { state.glider = true; state.overlook = true; sync(); return { kind: 'glider', message: TRAIL_TEXT.equipped }; }
-      if (state.restored && near(position, gateDir, 2.6)) return { kind: 'water-shrine' };
+      if (entryOpen() && near(position, gateDir, 2.6)) return { kind: 'water-shrine' };
       return null;
     },
     exportState() { return { ...state }; },
@@ -104,11 +105,11 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
     get glider() { return state.glider; },
     get records() { return Object.entries(TRAIL_TEXT).flatMap(([key, text]) => {
       const has = ({ found: state.overlook, equipped: state.glider, water: state.water, restored: state.restored })[key];
-      return has ? [{ key: 'trail-' + key, text: key === 'restored' ? `${text} ${waterway.record}` : text }] : [];
+      return has ? [{ key: 'trail-' + key, text: key==='water'&&waterway.entranceOpen?'물의 사당 입구를 발견했다. 문으로 바로 들어갈 수 있다.':key === 'restored' ? `${text} ${waterway.record}` : text }] : [];
     }); },
     get landmarks() { return [
       ...(state.overlook ? [{ dir: plan.overlook, label: '바람고개', done: state.glider }] : []),
-      ...(state.water ? [{ dir: plan.waterway, label: '물길 유적', done: state.restored }] : []),
+      ...(state.water ? [{ dir: waterway.entranceOpen?gateDir:plan.waterway, label: waterway.entranceOpen?'물의 사당 입구':'물길 유적', done: entryOpen() }] : []),
     ]; },
   };
 }

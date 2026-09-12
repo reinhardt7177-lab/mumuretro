@@ -700,9 +700,9 @@ function stepRoom(dt, intent) {
       if (r.stay) { noteMsg = `💫 ${r.fail}`; noteT = 1.6; }
       else failTo(segOf(g.room), r.fail);
     }
-    if (!g.solved && g.gate.solvedBy(roomActor)) {
-      g.solved = true;
-      g.gate.complete?.();
+    if (g.gate.solvedBy(roomActor)) {
+      if(!g.solved){g.solved = true;g.gate.complete?.();}
+      // A restored/completed puzzle and its door must not drift apart.
       dungeon.openDoor(g.room);
     }
     if (inSeg && !g.solved && g.gate.prompt) prompt = g.gate.prompt(roomActor.position) || prompt;
@@ -950,7 +950,7 @@ const landing = buildLanding(planetScene, planet, landingDir);
 const forage = buildForage(planetScene, planet, forageSpots, legendSpots, carpet);
 // 부엌 — 내림판 옆 모닥불. 채집이 쓰이는 곳(recipes.js 머리말).
 const kitchen = buildKitchen(planetScene, planet, landing, carpet, forage);
-const waterway = buildWaterway(planetScene, planet, trailPlan.waterway, { carpet });
+const waterway = buildWaterway(planetScene, planet, trailPlan.waterway, { carpet, entranceOnly:true });
 const firstTrail = buildFirstTrail(planetScene, planet, trailPlan, carpet, waterway);
 
 // 채집 결과 — 처음 얻은 것은 수첩에 한 줄이 적히고, 연구실 병 하나가 찬다.

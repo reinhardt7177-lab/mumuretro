@@ -1,0 +1,55 @@
+{
+  "results": [
+    {
+      "count": 3,
+      "solved": true,
+      "open": true,
+      "at": [
+        0,
+        1,
+        2,
+        -1,
+        -1
+      ],
+      "z": -17.908810263476354,
+      "restored": true,
+      "restoredOpen": true
+    },
+    {
+      "count": 4,
+      "solved": true,
+      "open": true,
+      "at": [
+        0,
+        1,
+        2,
+        3,
+        -1
+      ],
+      "z": -17.905134315965743,
+      "restored": true,
+      "restoredOpen": true
+    },
+    {
+      "count": 5,
+      "solved": true,
+      "open": true,
+      "at": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "z": -17.90605874198697,
+      "restored": true,
+      "restoredOpen": true
+    }
+  ],
+  "edge": {
+    "wrongBlocked": true,
+    "panBlocked": true,
+    "reconciled": true
+  },
+  "errors": []
+}

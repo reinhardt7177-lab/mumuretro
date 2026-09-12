@@ -1,0 +1,12 @@
+{
+  "result": {
+    "repaired": true,
+    "restored": true,
+    "removed": true,
+    "noDevice": true,
+    "prompt": "E — 물의 사당에 들어가기",
+    "mode": "room",
+    "unthawed": true
+  },
+  "errors": []
+}

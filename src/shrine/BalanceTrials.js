@@ -41,12 +41,24 @@ export class BalanceOrder extends CarryTrial {
     this.scaleBeam=this.scale.getObjectByName('scale_beam');this.panGroups=[this.scale.getObjectByName('pan_left'),this.scale.getObjectByName('pan_right')];
     for(const x of [-1.9,1.9])this.cells.push({x,z:this.scale.position.z,y:.7});
     this.choices=[3,4,5].map((n,i)=>{const x=(i-1)*1.4,z=seg.z1-1.8;const p=pad(this.root,x,z,.5);label(`${n}개`,x,.9,z+.25,.9,this.root);return {n,x,z,mat:p.mat};});this.select(5);this.tilt=0;this.obstacles=[{x:0,z:this.scale.position.z,r:.7}];
+    this.statusLabel=label('선택한 상자를 가벼운 순서대로',0,2.1,seg.z0+1.3,4.8,this.root);
   }
   select(n){if(this.solved||![3,4,5].includes(n))return false;this.restart();this.count=n;const order=this.stock.slice(0,n).map((b,i)=>({i,key:b.homeRank})).sort((a,b)=>a.key-b.key);order.forEach((v,j)=>this.stock[v.i].home.x=(j-(n-1)/2)*2);this.stock.forEach((b,i)=>{b.mesh.visible=i<n;});this.pads.forEach((p,i)=>{p.group.visible=i<n;p.mat.color.set(0x56c9c1);this.cells[i].visible=i<n;});this.choices.forEach(c=>c.mat.color.set(c.n===n?0xffdc85:0x36938c));this.sync();return true;}
   interact(p){const c=this.choices.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);return c?this.select(c.n):super.interact(p);}
-  prompt(p){const c=this.choices.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);return c&&!this.solved?`E — ${c.n}개로 도전 (현재 배치 초기화)`:super.prompt(p);}
-  check(){this.solved=this.stock.slice(0,this.count).every((b,i)=>b.at===i);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));}
-  update(dt,actor){const l=this.stock.find(b=>b.at===5)?.w||0,r=this.stock.find(b=>b.at===6)?.w||0;const target=Math.sign(l-r)*.18;this.tilt+=(target-this.tilt)*Math.min(1,dt*5);if(this.scaleBeam)this.scaleBeam.rotation.z=this.tilt;this.panGroups.forEach(p=>{if(p)p.rotation.z=-this.tilt;});for(let i=0;i<2;i++)this.cells[i+5].y=.75+(i===0?-1:1)*Math.sin(this.tilt)*1.9;return super.update(dt,actor);}
+  orderStatus(){const active=this.stock.slice(0,this.count),placed=active.filter(b=>b.at>=0&&b.at<this.count).length;
+    return this.solved?`${this.count}개 순서 성공! 중앙 문으로 이동`:`${this.count}개 도전 · ${placed}/${this.count} 배치 · ${placed===this.count?'순서가 달라요 — 저울로 다시 비교':'왼쪽 1번부터 가벼운 순서'}`;}
+  prompt(p){const c=this.choices.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);if(c&&!this.solved)return `E — ${c.n}개로 도전 (현재 배치 초기화)`;if(this.held===null&&!this.near(p))return this.orderStatus();return super.prompt(p);}
+  check(){this.solved=this.stock.slice(0,this.count).every((b,i)=>b.at===i);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));
+    const text=this.orderStatus();if(this.statusLabel&&text!==this.lastStatus){
+      const map=this.statusLabel.material.map,cv=map.image,c=cv.getContext('2d');c.fillStyle='#102e39';c.fillRect(0,0,cv.width,cv.height);c.strokeStyle=this.solved?'#ffd27a':'#baab73';c.lineWidth=5;c.strokeRect(4,4,cv.width-8,120);c.fillStyle=this.solved?'#ffd27a':'#fff5ce';c.font='bold 30px sans-serif';c.textAlign='center';c.textBaseline='middle';
+      const lines=text.split(' · ');if(lines.length>1){c.fillText(lines.slice(0,2).join(' · '),cv.width/2,44,cv.width-24);c.fillText(lines.slice(2).join(' · '),cv.width/2,88,cv.width-24);}else c.fillText(text,cv.width/2,64,cv.width-24);map.needsUpdate=true;this.lastStatus=text;
+    }
+  }
+  update(dt,actor){
+    // Reconcile the current layout as well as the last interaction event.
+    // Only selected crates participate; scale pans never count as answer pads.
+    this.check();
+    const l=this.stock.find(b=>b.at===5)?.w||0,r=this.stock.find(b=>b.at===6)?.w||0;const target=Math.sign(l-r)*.18;this.tilt+=(target-this.tilt)*Math.min(1,dt*5);if(this.scaleBeam)this.scaleBeam.rotation.z=this.tilt;this.panGroups.forEach(p=>{if(p)p.rotation.z=-this.tilt;});for(let i=0;i<2;i++)this.cells[i+5].y=.75+(i===0?-1:1)*Math.sin(this.tilt)*1.9;return super.update(dt,actor);}
   state(){return {...super.state(),count:this.count};}
   valid(s){return super.valid(s)&&[3,4,5].includes(s.count)&&s.at.every((a,i)=>i<s.count?(a<s.count||a>=5):a===-1)&&s.solved===s.at.slice(0,s.count).every((a,i)=>a===i);}
   restore(s){this.solved=false;this.select(s.count);super.restore(s);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));}

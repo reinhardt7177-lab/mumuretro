@@ -351,5 +351,12 @@ export function buildWaterway(scene, planet, dir, opts = {}) {
       geometries.forEach(g => g.dispose()); materials.forEach(m => m.dispose()); labelTexture.dispose(); group.removeFromParent();
     },
   };
+  if(opts.entranceOnly){
+    // Keep the legacy save codec and coordinate frame, but remove the outdoor
+    // thawing installation and every interaction/collision it used to own.
+    group.removeFromParent();api.entranceOpen=true;
+    api.update=()=>({});api.getPrompt=()=>null;api.interact=()=>false;api.resolve=()=>0;
+    Object.defineProperty(api,'held',{get:()=>false});
+  }
   return api;
 }
