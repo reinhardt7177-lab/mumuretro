@@ -87,7 +87,14 @@ export const settingsTexts = () => [
 // getEngine: 지금 실제로 그리는 크기를 읽으려고. 설정이 화면과 어긋나면 안 된다.
 export function buildSettings(getEngine) {
   const style = document.createElement('style');
-  style.textContent = CSS;
+  style.textContent = CSS + `
+#gfxWrap .card{width:min(92vw,430px);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif}
+#gfxWrap .now{font-size:16px;line-height:1.65;color:#35434b}
+#gfxWrap .tip{font-size:14px;color:#52616a;line-height:1.6}
+#gfxWrap .now button,#gfxWrap input{box-sizing:border-box;min-height:44px;border:1px solid #aebcb7;border-radius:10px;font:600 15px/1.4 "Malgun Gothic",system-ui,sans-serif;padding:9px 12px;margin:5px 5px 5px 0;color:#203a37;background:#fffdf6;max-width:100%}
+#gfxWrap .now button{cursor:pointer}#gfxWrap .now button:hover{background:#e0eee5}
+#gfxWrap input{width:100%;display:block}#gfxWrap .now p{margin:8px 0}
+`;
   document.head.appendChild(style);
 
   const btn = document.createElement('button');

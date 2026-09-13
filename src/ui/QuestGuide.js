@@ -82,9 +82,11 @@ export function buildQuestGuide(getGame) {
   const dust=new THREE.Points(geo,material);dust.name='황금 가루 길';dust.frustumCulled=false;trail.add(dust);
   const seed=i=>{const n=Math.sin(i*127.1+311.7)*43758.5453;return n-Math.floor(n);};
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');let clock=0;
-  let enabled=false,lastId='',quest;
+  let enabled=true,lastId='',quest;
+  try{enabled=localStorage.getItem('mumu.guide.enabled')!=='false';}catch{}
+  button.setAttribute('aria-pressed',String(enabled));
   button.addEventListener('pointerdown',e=>e.stopPropagation());
-  button.addEventListener('click',()=>{enabled=!enabled;getGame().input.reset();button.setAttribute('aria-pressed',String(enabled));});
+  button.addEventListener('click',()=>{enabled=!enabled;try{localStorage.setItem('mumu.guide.enabled',String(enabled));}catch{}getGame().input.reset();button.setAttribute('aria-pressed',String(enabled));});
   return {get enabled(){return enabled;},get current(){return quest;},update(dt,hidden=false){
     trail.visible=false;clock+=dt;
     const g=getGame();quest=currentQuest(g);el.hidden=hidden||!quest;if(el.hidden)return;

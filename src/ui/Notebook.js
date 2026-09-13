@@ -260,6 +260,8 @@ const TABS = [
 export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, getTrail) {
   const style = document.createElement('style');
   style.textContent = CSS + `
+#nb .hw{font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif!important;font-weight:600;letter-spacing:0;}
+#nb .said{font-size:18px!important;line-height:1.8!important;color:#29343b!important;}
 #nb .page{width:min(96vw,820px);height:min(92dvh,800px);background-image:none;background-color:#fffaf0}
 #nb .tab{font-size:15px;min-height:44px;color:#39444b}
 #nb .hd .t{font-size:21px}
