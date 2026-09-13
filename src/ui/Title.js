@@ -89,15 +89,27 @@ body.titling #hint,body.titling #prompt,body.titling #touchUI{display:none!impor
 
 
 const SITE = 'https://mumuclass.kr';
-export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew = () => true } = {}) {
-  const style = document.createElement('style'); style.textContent = CSS; document.head.appendChild(style);
+export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew = () => true, onTogether = () => {} } = {}) {
+  const style = document.createElement('style'); style.textContent = CSS + `
+#title .actions{box-sizing:border-box;width:min(90vw,470px);padding:24px;gap:12px;border-radius:8px;border:1px solid #bca16b;background:linear-gradient(145deg,#102d32f5,#101e28f5);color:#fff1cf;box-shadow:0 18px 60px #0008,inset 0 0 0 5px #ffffff06;max-height:65dvh;overflow:auto}
+#title .actions::before{content:'✦  여행자의 항해  ✦';font-size:13px;font-weight:700;letter-spacing:.18em;color:#dfbd77}
+#title .go,#title .together{box-sizing:border-box;min-height:52px;width:100%;border-radius:5px;border:1px solid #e6c47e;background:linear-gradient(#ead298,#c8a465);color:#172b2c;font:700 18px/1.4 "Malgun Gothic",system-ui,sans-serif;cursor:pointer;padding:12px 18px;box-shadow:0 3px 0 #6c5835}
+#title .together{background:#244c4d;color:#fff2d1;border-color:#9ab5a4;box-shadow:0 3px 0 #102629}
+#title .go:hover,#title .together:hover{filter:brightness(1.12)}
+#title .secondary{color:#e2d1ab;font-size:14px;min-height:42px}
+#title .save-info{font-size:14px;margin:0;color:#dfdfce}#title .save-detail{font-size:13px;line-height:1.7;margin:0;color:#bdcdc9}
+#title button:focus-visible{outline:3px solid #ffdc87}
+@media(max-height:520px) and (min-width:650px){#title .actions{left:auto;right:4vw;transform:none;bottom:10%;width:43vw;max-height:85dvh;padding:14px;gap:7px}#title .lock{max-width:43vw}#title .go,#title .together{min-height:44px;padding:8px;font-size:16px}}
+`; document.head.appendChild(style);
   const el = document.createElement('div'); el.id = 'title';
   el.innerHTML = '<div class="lock"><h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">작은 별을 걸어서</p><p class="s2">사당 여섯 · 수첩 한 권</p></div>'
-    + '<div class="actions"><p class="save-info"></p><button class="go" type="button">탐사 시작</button><button class="secondary new" type="button" hidden>새 탐사 시작</button><p class="save-detail">이 브라우저에 자동 저장된다.</p><div class="confirm-row" hidden><button class="secondary cancel" type="button">이어갈 기록 유지</button><button class="secondary confirm" type="button">새로 시작</button></div></div>'
+    + '<div class="actions"><p class="save-info"></p><button class="go" type="button">탐사 시작</button><button class="together" type="button">같이 하기 · 최대 3명</button><button class="secondary new" type="button" hidden>새 탐사 시작</button><p class="save-detail">이 브라우저에 자동 저장된다.</p><div class="confirm-row" hidden><button class="secondary cancel" type="button">이어갈 기록 유지</button><button class="secondary confirm" type="button">새로 시작</button></div></div>'
     + '<div class="by">made by <a href="'+SITE+'" target="_blank" rel="noopener">mumuclass.kr</a></div>';
   document.body.appendChild(el);
   let live = false, going = false, ending = false, confirming = false;
   const go = el.querySelector('.go'), info = el.querySelector('.save-info');
+  const together=el.querySelector('.together');
+  together.addEventListener('click',()=>{if(!live||going||confirming)return;start();onTogether();});
   const fresh = el.querySelector('.new'), confirmRow = el.querySelector('.confirm-row');
   const detail = el.querySelector('.save-detail');
   const savedInfo = save ? '구슬 '+save.progress.cleared.length+'/6 · '+new Date(save.savedAt).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 기록'
@@ -124,12 +136,12 @@ export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew =
   link.addEventListener('click', e => e.stopPropagation());
   go.addEventListener('click', () => { if (ending) location.reload(); else start(); });
   fresh.addEventListener('click', () => {
-    confirming = true; go.hidden = fresh.hidden = true; confirmRow.hidden = false;
+    confirming = true; together.hidden=true; go.hidden = fresh.hidden = true; confirmRow.hidden = false;
     info.textContent = '새 탐사를 시작할까? 이전 기록 한 개는 백업으로 남긴다.';
     el.querySelector('.cancel').focus();
   });
   const cancel = () => {
-    confirming = false; confirmRow.hidden = true; go.hidden = false; fresh.hidden = !save;
+    confirming = false; together.hidden=false; confirmRow.hidden = true; go.hidden = false; fresh.hidden = !save;
     info.textContent = savedInfo; go.focus();
   };
   el.querySelector('.cancel').addEventListener('click', cancel);
@@ -141,7 +153,7 @@ export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew =
     if (e.code === 'Enter' || e.code === 'Space') { start(); e.preventDefault(); }
   });
   const endCard = () => {
-    ending = true; live = false; el.classList.add('on','end'); el.classList.remove('out');
+    ending = true; together.hidden=true; live = false; el.classList.add('on','end'); el.classList.remove('out');
     el.querySelector('.lock').innerHTML = '<h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">끝</p><p class="fin">답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.</p>';
     go.textContent = '시작 화면으로'; go.hidden = false; fresh.hidden = confirmRow.hidden = true;
     info.textContent = '여섯 개의 물음이 한 권의 기록이 되었다.';

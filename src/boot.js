@@ -938,6 +938,7 @@ refreshHint();
 const flash = buildFlash();
 const title = buildTitle(resume => startFromTitle(resume), {
   save: savedGame, saveStatus: saveStore.status,
+  onTogether: () => { settings.setOpen(true); document.querySelector('#coopMenu')?.scrollIntoView({block:'center'}); document.querySelector('#coopMenu input')?.focus(); },
   onNew: () => { canPersist = saveStore.archive(); return canPersist; },
 });
 // 방 안내 — 들어서는 순간 한 번, 틀려서 되돌아오면 다시.

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { bindCoopBalance } from '../core/CoopBalance.js';
 export function attachCoop(settings,getState,hooks={}){
- const root=document.createElement('section');root.className='now';
+ const root=document.createElement('section');root.className='now';root.id='coopMenu';
  root.innerHTML='<b>친구와 함께 · 접속 시험</b><p>균형 신전 공동 실험 · 개인 기록과 별도로 진행한다.</p><input aria-label="초대 코드" placeholder="초대 코드" maxlength="8"><button type="button">방 만들기</button><button type="button">참여</button><button type="button">나가기</button><button type="button">균형 신전 함께하기</button><p role="status">최대 3명 · 기록은 각 기기에 저장</p>';
  settings.appendSection(root);const [create,join,leave,temple]=root.querySelectorAll('button'),code=root.querySelector('input'),status=root.querySelector('[role=status]');
  const endpoint=location.hostname==='127.0.0.1'||location.hostname==='localhost'?'http://127.0.0.1:5520':null;
