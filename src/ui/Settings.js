@@ -43,7 +43,7 @@ body.titling #gfx,body.titling #gfxWrap{display:none}
   background:rgba(8,10,9,.72);backdrop-filter:blur(3px);
   font-family:'IBM Plex Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
 #gfxWrap.show{display:grid}
-#gfxWrap .card{width:min(92vw,340px);background:#f3f2ec;color:#23272a;border-radius:6px;
+#gfxWrap .card{max-height:85dvh;overflow-y:auto;width:min(92vw,340px);background:#f3f2ec;color:#23272a;border-radius:6px;
   box-shadow:0 24px 60px -28px #000;padding:16px 18px 14px}
 #gfxWrap .hd{display:flex;align-items:center;font-size:15px;font-weight:700;
   letter-spacing:.02em;margin-bottom:12px}
@@ -165,6 +165,7 @@ export function buildSettings(getEngine) {
   quality.onChange(() => { if (open) paint(); });
 
   return {
+    appendSection: element => wrap.querySelector('.card').append(element),
     setOpen,
     get isOpen() { return open; },
     // 검사용 — 단추가 실제로 단수를 바꾸는가

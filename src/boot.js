@@ -31,6 +31,8 @@ import { buildTitle } from './ui/Title.js';
 import { buildRoomBrief } from './ui/RoomBrief.js';
 import { buildMuteButton } from './ui/MuteButton.js';
 import { buildSettings } from './ui/Settings.js';
+import { attachSaveBackup } from './ui/SaveBackup.js';
+import { attachCoop } from './ui/Coop.js';
 import { buildShipView } from './ui/ShipView.js';
 import { buildQuestGuide } from './ui/QuestGuide.js';
 import { loadBalanceTemple } from './shrine/BalanceTemple.js';
@@ -131,6 +133,7 @@ const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, [])
 // 사당마다 자기 내부를 갖는다. 처음 들어갈 때 짓고 캐시한다 —
 // 여섯을 미리 지으면 첫 로딩이 길어지고, 아이가 한 판에 여섯을 다 도는 일은 드물다.
 const rooms = new Map();
+let coopBackupRoom = null, coopRunning = false;
 function roomFor(shrine) {
   const i = shrines.shrines.indexOf(shrine);
   const key = i < 0 ? 0 : i % SHRINES.length;
@@ -226,7 +229,7 @@ function failTo(seg, msg) {
 const segOf = (id) => room.dungeon.rectOf(id);
 
 function enterShrine(shrine) {
-  if(shrine?.cleared && shrines.shrines.indexOf(shrine)===0){noteMsg='균형의 사당은 밀봉되었다 — 수첩에 지혜가 남았다';noteT=3;return;}
+  if(!coopRunning && shrine?.cleared && shrines.shrines.indexOf(shrine)===0){noteMsg='균형의 사당은 밀봉되었다 — 수첩에 지혜가 남았다';noteT=3;return;}
   room = roomFor(shrine);
   lastSeg = null;
   // 첫 입장에 깬 사당 수로 단계를 정한다. 이어하기는 퍼즐 배치와 그 단계를 함께 지킨다.
@@ -236,7 +239,7 @@ function enterShrine(shrine) {
   room.applyTier(tier);
   // 이미 깬 사당은 그대로 둔다 — 지나온 곳을 다시 잠그지 않는다.
   // 진행 중인 사당은 첫 입장의 난이도와 장치를 함께 이어간다.
-  if (!shrine.cleared) { if (!room.hasProgress) room.restart(); }
+  if (coopRunning || !shrine.cleared) { if (!room.hasProgress) room.restart(); }
   else {
     for (const g of room.gates) { g.solved = true; room.dungeon.openDoor(g.room); }
     room.prize.taken = true; room.prize.group.visible = false;
@@ -247,7 +250,7 @@ function enterShrine(shrine) {
   roomActor.obstacles = room.obstacles;
   roomActor.slip = 0;                  // 얼음 방에서 나가다 만 상태가 다음 사당에 묻지 않게
   roomActor.freeCam = !!room.dungeon.open;   // 하늘의 섬 — 천장이 없으니 카메라를 푼다
-  cleared = shrine.cleared;
+  cleared = coopRunning ? false : shrine.cleared;
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
   activeShrine = shrine;
@@ -279,7 +282,8 @@ function exitShrine() {
   roomActor.freeCam = false;
   sceneBgm('planet');
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
-  if (cleared) shrines.markCleared(activeShrine);
+  if (cleared && !coopRunning) shrines.markCleared(activeShrine);
+  if(coopRunning){if(coopBackupRoom)rooms.set(0,coopBackupRoom);else rooms.delete(0);coopBackupRoom=null;coopRunning=false;}
   mode = 'planet';
   if (room) room.scene.remove(player.mesh);
   engine.setScene(planetScene);
@@ -719,6 +723,7 @@ function stepRoom(dt, intent) {
     if(final.solved && seg?.id==='audience' && roomActor.position.z < -56 && !prize.taken && !final.eventStarted){
       final.eventStarted=true;brief.hide();briefWant=null;input.reset();
       dialogue.play('balance-audience-v2','균형의 신',['눈으로 크기를 보던 너는 이제 무게를 비교하는구나.','두 판을 채우고, 받치는 자리를 옮겨 수평을 찾았지.','무게와 거리가 함께 균형을 만든다. 이 지혜를 가지고 다음 길로 가거라.','이 신전은 이제 잠든다. 너의 기록은 수첩에 남으리라.'],()=>{
+        if(coopRunning){exitShrine();noteMsg='협동 실험 완료 — 개인 신전 기록은 유지된다';noteT=5;return;}
         prize.taken=true;prize.drop=1;prize.group.visible=false;cleared=true;shrines.markCleared(activeShrine);notebook.draw();
         const last=shrines.clearedCount()===SHRINES.length;exitShrine();flash.play('#fff0c4',1100);sfx('orb_take');
         noteMsg='균형의 지혜를 얻었다 — 신전이 밀봉되었다';noteT=5;saveProgress();if(last)playEnding();
@@ -940,6 +945,11 @@ const brief = buildRoomBrief(() => touch.visible);
 buildMuteButton();
 // 화면 설정 — 화질을 손으로 고른다. 기본은 자동이라 아무도 안 건드려도 된다.
 const settings = buildSettings(() => engine);
+attachSaveBackup(settings, captureProgress);
+attachCoop(settings, () => ({mode:coopRunning&&mode==='room'?'balance':mode, cooperative:coopRunning, position:mode==='room'?roomActor.position:player.position, scene:mode==='room'?room.scene:mode==='lab'?lab.scene:planetScene}), {
+ enter(){if(mode==='room'||mode==='title')return null;saveProgress(true);if(mode==='lab')landOnPlanet();coopBackupRoom=rooms.get(0)||null;const r=buildRoom(SHRINES[0],7132026);rooms.set(0,r);coopRunning=true;enterShrine(shrines.shrines[0]);return r;},
+ exit(){if(coopRunning)exitShrine();}
+});
 const lab = await installStarsail(buildLab());
 await loadBalanceTemple();
 const shipView = buildShipView({camera:engine.camera,input,available:()=>mode==='lab'&&!dialogue.active&&!title.isEnding});
@@ -1018,7 +1028,7 @@ function captureProgress() {
 }
 let saveFailed = false;
 function saveProgress(quiet = false) {
-  if (!saveEnabled || debugDepth || mode === 'title') return false;
+  if (coopRunning || !saveEnabled || debugDepth || mode === 'title') return false;
   const ok = saveStore.write(captureProgress());
   if (!ok && !saveFailed) showSaveNotice('저장하지 못했다 · 브라우저의 저장 공간을 확인하자');
   else if (ok && (!quiet || saveFailed)) showSaveNotice('탐사 기록 저장됨');

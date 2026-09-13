@@ -60,7 +60,12 @@ const CSS = `
 
 export function buildTouchControls(input, mapPage, notebook) {
   const style = document.createElement('style');
-  style.textContent = CSS;
+  style.textContent = CSS + `
+#touchUI #tcNote{width:112px;display:flex;justify-content:center;gap:8px;border-radius:14px;background:#fff0c5;color:#302514;border:2px solid #e1b75d;font-size:18px;font-weight:800;box-shadow:0 3px 14px #0008}
+#touchUI #tcNote[hidden]{display:none}
+#touchUI #tcNote:hover{background:#fff8df;color:#211b12}
+#touchUI #tcNote span:first-child{font-size:25px}
+`;
   document.head.appendChild(style);
 
   const el = document.createElement('div');
@@ -69,7 +74,7 @@ export function buildTouchControls(input, mapPage, notebook) {
     <button id="tcFull" aria-label="전체 화면" hidden>⛶</button>
     <button id="tcMap" aria-label="지도">🗺</button>
     <button id="tcNote" type="button" aria-label="탐사 수첩 열기" aria-controls="nb"
-      aria-expanded="false" aria-keyshortcuts="N" title="탐사 수첩 열기 (N)" hidden>📓</button>
+      aria-expanded="false" aria-keyshortcuts="N" title="탐사 수첩 열기 (N)" hidden><span aria-hidden="true">📓</span><span>수첩</span></button>
     <button id="tcJump" aria-label="점프">점프</button>
     <button id="tcAct" aria-label="상호작용" hidden>E</button>`;
   document.body.appendChild(el);

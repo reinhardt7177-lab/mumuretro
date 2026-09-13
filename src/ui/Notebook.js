@@ -259,7 +259,20 @@ const TABS = [
 
 export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, getTrail) {
   const style = document.createElement('style');
-  style.textContent = CSS;
+  style.textContent = CSS + `
+#nb .page{width:min(96vw,820px);height:min(92dvh,800px);background-image:none;background-color:#fffaf0}
+#nb .tab{font-size:15px;min-height:44px;color:#39444b}
+#nb .hd .t{font-size:21px}
+#nb .qq{font-size:21px;line-height:1.55}
+#nb .qa,#nb .fsaid,#nb .said{font-size:17px;line-height:1.75;color:#29343b}
+#nb .frule{font-size:19px;line-height:1.55}
+#nb .fnm{font-size:16px;color:#29343b}
+#nb .qa.blank,#nb .sealed,#nb .beasts{font-size:15px;color:#58636a}
+#nb .qrow,#nb .frow{padding-top:10px;padding-bottom:10px}
+#nb .qno,#nb .hd .n,#nb .ft,#nb .mapkey,#nb .mapstats{color:#526068;font-size:13px}
+#nb .body{overflow-y:auto}
+@media(max-width:420px){#nb .tabs{gap:0;padding-left:4px;padding-right:4px}#nb .tab{padding-left:7px;padding-right:7px;font-size:14px}#nb .body{padding-left:16px;padding-right:16px}#nb .qq{font-size:19px}}
+`;
   document.head.appendChild(style);
 
   const el = document.createElement('div');

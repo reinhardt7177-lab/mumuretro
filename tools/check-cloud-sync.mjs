@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { createCloudSync } from '../src/core/CloudSync.js';
+const progress={mode:'planet',position:[136,0,0],heading:[0,0,1],cleared:[],lab:{version:1,dials:[3,5,8]},forage:{version:1},map:{version:1},notebook:{version:1},kitchen:{version:1}};
+const raw=JSON.stringify({version:1,savedAt:1,progress});
+let record=null,n=0,writes=0;
+const remote={async read(){return record;},async compareAndSwap({expectedRevision,raw}){writes++;if(expectedRevision!==(record?.revision??null))return {status:'conflict'};record={revision:String(++n),raw};return {status:'saved',revision:record.revision};}};
+const a=createCloudSync({remote}),b=createCloudSync({remote});
+assert.equal((await a.upload(raw)).status,'inspect-required');
+assert.equal((await a.inspect()).status,'empty');await b.inspect();
+assert.equal((await a.upload(raw)).status,'saved');assert.equal((await b.upload(raw)).status,'conflict');
+assert.equal((await b.upload(raw)).status,'inspect-required');
+await b.inspect();assert.equal((await b.upload(raw)).status,'saved');
+const before=writes;assert.equal((await a.upload('{}')).status,'invalid');assert.equal(writes,before);
+const uncertain=createCloudSync({remote:{read:remote.read,async compareAndSwap(){throw Error('timeout');}}});
+await uncertain.inspect();assert.equal((await uncertain.upload(raw)).status,'unconfirmed');assert.equal((await uncertain.upload(raw)).status,'inspect-required');
+const bad=createCloudSync({remote:{async read(){return {revision:'3',raw:'bad'};}}});assert.equal((await bad.inspect()).status,'invalid');assert.equal((await bad.upload(raw)).status,'inspect-required');
+let release;const blocked=createCloudSync({remote:{read:()=>new Promise(r=>release=r)}});const pending=blocked.inspect();assert.equal((await blocked.inspect()).status,'busy');release(null);await pending;
+console.log('PASS two-client conflict, invalid payload, uncertain write, inspect requirement and concurrent access');
