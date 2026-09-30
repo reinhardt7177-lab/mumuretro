@@ -1,0 +1,11 @@
+{
+  "downloaded_utc": "2026-09-26T01:34:53.0466325Z",
+  "texture": "8k",
+  "provider": "Meshy",
+  "created_utc": "2026-09-26T01:18:07.8161023Z",
+  "geometry": "4k",
+  "target_triangles": 100000,
+  "task_id": "01a0db4a-7c0b-70a3-a11a-e6628be5d1bc",
+  "model": "meshy-7.1",
+  "status": "SUCCEEDED"
+}

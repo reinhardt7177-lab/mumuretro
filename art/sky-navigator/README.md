@@ -1,5 +1,13 @@
 # 하늘의 항해사 — 캐릭터 디자인 확정
 
+## 2026-09-20 소품 v02 적용
+
+[편집 원본](navigator-props-v02.blend) · [게임 GLB](../../assets/characters/sky-navigator/props-v02.glb) · [생성 스크립트](../../tools/blender/refine_navigator_props_v02.py)
+
+가죽 바느질, 책등 띠·책갈피, 망원경 초점 조절부·렌즈 테두리를 추가했다. 표지 장식은 열리는 `Cover`에 연결했다. 기존 소품 원점과 캐릭터 리깅은 유지한다. 7,172 삼각형, 12개 메시, 407,080바이트. [전체 보고서](../../reports/2026-09-20/ASSET_DETAIL_UPGRADE.md)
+
+## 최초 디자인 기록
+
 2026-09-10. 사용자 선택: 세 후보 중 **02 SKY NAVIGATOR**.
 
 ![제작용 시안](sky-navigator-turnaround-v01.png)

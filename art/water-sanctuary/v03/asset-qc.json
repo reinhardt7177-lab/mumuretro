@@ -1,0 +1,54 @@
+{
+  "blender_minimum": [
+    -1.1849336624145508,
+    -0.9804309010505676,
+    0.0
+  ],
+  "blender_maximum": [
+    1.1849336624145508,
+    0.9804309010505676,
+    3.3000001907348633
+  ],
+  "measured_height": 3.3000001907348633,
+  "triangles": 147977,
+  "mesh_count": 1,
+  "vertex_count": 72194,
+  "all_coordinates_finite": true,
+  "all_meshes_have_uv": true,
+  "textures": [
+    {
+      "name": "mat0-normal.png",
+      "size": [
+        4096,
+        4096
+      ],
+      "packed": true
+    },
+    {
+      "name": "mat0-albedo.jpg",
+      "size": [
+        8192,
+        8192
+      ],
+      "packed": true
+    },
+    {
+      "name": "mat0-orm-source.jpg",
+      "size": [
+        4096,
+        4096
+      ],
+      "packed": true
+    },
+    {
+      "name": "Final sculpt tangent normals",
+      "size": [
+        2048,
+        2048
+      ],
+      "packed": true
+    }
+  ],
+  "passed": true,
+  "native_file": "water-deity-v03-final.blend"
+}

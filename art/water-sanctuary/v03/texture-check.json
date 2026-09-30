@@ -1,0 +1,20 @@
+[
+  {
+    "name": "mat0-normal.png",
+    "width": 4096,
+    "height": 4096,
+    "packed": true
+  },
+  {
+    "name": "mat0-albedo.jpg",
+    "width": 8192,
+    "height": 8192,
+    "packed": true
+  },
+  {
+    "name": "mat0-orm-source.jpg",
+    "width": 4096,
+    "height": 4096,
+    "packed": true
+  }
+]

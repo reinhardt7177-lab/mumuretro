@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="750" viewBox="0 0 1200 750">
+<rect width="1200" height="750" fill="#17252a"/><g font-family="Malgun Gothic,sans-serif" fill="#eee2bc">
+<text x="40" y="45" font-size="26">태양 절벽 · 1번 사암 돌산 / 등반 배치도</text>
+<text x="40" y="80" font-size="16">H 손잡이 · P 선반 · 점선: 이동 연결 · 초록: 걸을 수 있는 지점</text>
+<text x="60" y="130" font-size="20">정면 · X / 높이 Y</text>
+<line x1="123.79999999999998" y1="589.0" x2="131.4" y2="553.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="131.4" y1="553.0" x2="154.20000000000002" y2="515.8" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="154.20000000000002" y1="515.8" x2="194.10000000000002" y2="509.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="194.10000000000002" y1="509.0" x2="239.7" y2="507.79999999999995" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="239.7" y1="507.79999999999995" x2="261.36" y2="478.2" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="261.36" y1="478.2" x2="323.3" y2="462.2" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="323.3" y1="462.2" x2="365.1" y2="437.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="365.1" y1="437.0" x2="378.4" y2="431.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="378.4" y1="431.0" x2="424" y2="411.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="424" y1="411.0" x2="462" y2="383.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="462" y1="383.0" x2="408.8" y2="351.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="408.8" y1="351.0" x2="348" y2="311.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="348" y1="311.0" x2="325.2" y2="251.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="325.2" y1="251.0" x2="317.6" y2="219.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="317.6" y1="219.0" x2="313.8" y2="203.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="123.79999999999998" cy="589.0" r="6" fill="#e1b665"/><text x="132.79999999999998" y="582.0" font-size="14">H0</text>
+<circle cx="131.4" cy="553.0" r="6" fill="#e1b665"/><text x="140.4" y="546.0" font-size="14">H1</text>
+<circle cx="154.20000000000002" cy="515.8" r="6" fill="#e1b665"/><text x="163.20000000000002" y="508.79999999999995" font-size="14">H2</text>
+<circle cx="194.10000000000002" cy="509.0" r="6" fill="#e1b665"/><text x="203.10000000000002" y="502.0" font-size="14">H3</text>
+<circle cx="239.7" cy="507.79999999999995" r="6" fill="#e1b665"/><text x="248.7" y="500.79999999999995" font-size="14">H4</text>
+<circle cx="261.36" cy="478.2" r="6" fill="#e1b665"/><text x="270.36" y="471.2" font-size="14">H5</text>
+<circle cx="323.3" cy="462.2" r="6" fill="#e1b665"/><text x="332.3" y="455.2" font-size="14">H6</text>
+<circle cx="365.1" cy="437.0" r="6" fill="#e1b665"/><text x="374.1" y="430.0" font-size="14">H7</text>
+<circle cx="325.2" cy="251.0" r="6" fill="#e1b665"/><text x="334.2" y="244.0" font-size="14">H8</text>
+<circle cx="317.6" cy="219.0" r="6" fill="#e1b665"/><text x="326.6" y="212.0" font-size="14">H9</text>
+<circle cx="378.4" cy="431.0" r="6" fill="#a2cf74"/><text x="387.4" y="424.0" font-size="14">P0</text>
+<circle cx="424" cy="411.0" r="6" fill="#a2cf74"/><text x="433" y="404.0" font-size="14">P1</text>
+<circle cx="462" cy="383.0" r="6" fill="#a2cf74"/><text x="471" y="376.0" font-size="14">P2</text>
+<circle cx="408.8" cy="351.0" r="6" fill="#a2cf74"/><text x="417.8" y="344.0" font-size="14">P3</text>
+<circle cx="348" cy="311.0" r="6" fill="#a2cf74"/><text x="357" y="304.0" font-size="14">P4</text>
+<circle cx="313.8" cy="203.0" r="6" fill="#a2cf74"/><text x="322.8" y="196.0" font-size="14">P5</text>
+<text x="590" y="130" font-size="20">측면 · 깊이 Z / 높이 Y</text>
+<line x1="660.64" y1="589.0" x2="667.1" y2="553.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="667.1" y1="553.0" x2="670.9" y2="515.8" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="670.9" y1="515.8" x2="663.3" y2="509.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="663.3" y1="509.0" x2="659.5" y2="507.79999999999995" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="659.5" y1="507.79999999999995" x2="665.2" y2="478.2" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="665.2" y1="478.2" x2="670.9" y2="462.2" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="670.9" y1="462.2" x2="688.0" y2="437.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="688.0" y1="437.0" x2="707.0" y2="431.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="707.0" y1="431.0" x2="756.4" y2="411.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="756.4" y1="411.0" x2="840" y2="383.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="840" y1="383.0" x2="916" y2="351.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="916" y1="351.0" x2="973.0" y2="311.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="973.0" y1="311.0" x2="992.0" y2="251.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="992.0" y1="251.0" x2="999.6" y2="219.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<line x1="999.6" y1="219.0" x2="1030" y2="203.0" stroke="#bc9b58" stroke-width="2" stroke-dasharray="5 4"/>
+<circle cx="660.64" cy="589.0" r="6" fill="#e1b665"/><text x="669.64" y="582.0" font-size="14">H0</text>
+<circle cx="667.1" cy="553.0" r="6" fill="#e1b665"/><text x="676.1" y="546.0" font-size="14">H1</text>
+<circle cx="670.9" cy="515.8" r="6" fill="#e1b665"/><text x="679.9" y="508.79999999999995" font-size="14">H2</text>
+<circle cx="663.3" cy="509.0" r="6" fill="#e1b665"/><text x="672.3" y="502.0" font-size="14">H3</text>
+<circle cx="659.5" cy="507.79999999999995" r="6" fill="#e1b665"/><text x="668.5" y="500.79999999999995" font-size="14">H4</text>
+<circle cx="665.2" cy="478.2" r="6" fill="#e1b665"/><text x="674.2" y="471.2" font-size="14">H5</text>
+<circle cx="670.9" cy="462.2" r="6" fill="#e1b665"/><text x="679.9" y="455.2" font-size="14">H6</text>
+<circle cx="688.0" cy="437.0" r="6" fill="#e1b665"/><text x="697.0" y="430.0" font-size="14">H7</text>
+<circle cx="992.0" cy="251.0" r="6" fill="#e1b665"/><text x="1001.0" y="244.0" font-size="14">H8</text>
+<circle cx="999.6" cy="219.0" r="6" fill="#e1b665"/><text x="1008.6" y="212.0" font-size="14">H9</text>
+<circle cx="707.0" cy="431.0" r="6" fill="#a2cf74"/><text x="716.0" y="424.0" font-size="14">P0</text>
+<circle cx="756.4" cy="411.0" r="6" fill="#a2cf74"/><text x="765.4" y="404.0" font-size="14">P1</text>
+<circle cx="840" cy="383.0" r="6" fill="#a2cf74"/><text x="849" y="376.0" font-size="14">P2</text>
+<circle cx="916" cy="351.0" r="6" fill="#a2cf74"/><text x="925" y="344.0" font-size="14">P3</text>
+<circle cx="973.0" cy="311.0" r="6" fill="#a2cf74"/><text x="982.0" y="304.0" font-size="14">P4</text>
+<circle cx="1030" cy="203.0" r="6" fill="#a2cf74"/><text x="1039" y="196.0" font-size="14">P5</text>
+<text x="40" y="720" font-size="15">Blender와 Unity 공통 좌표 · 외형 투시도가 아닌 동선 설계도</text></g></svg>

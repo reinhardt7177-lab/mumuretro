@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1540" viewBox="0 0 1600 1540">
+<rect width="1600" height="1540" fill="#112734"/>
+<style>text{font-family:Malgun Gothic,sans-serif;fill:#e5eced} .stone{fill:#8b897a;stroke:#eee0bf;stroke-width:2}.ice{fill:#2786a0;fill-opacity:.32;stroke:#7bdeeb;stroke-width:2}.line{fill:none;stroke:#a5bbbf;stroke-width:1.5}.dim{stroke:#e4c481;stroke-width:1.5}.flow{fill:none;stroke:#6edfd1;stroke-width:6}</style>
+<text x="45" y="48" font-size="30">빙하에 갇힌 물의 신전 · 제작 설계 v01</text>
+<text x="45" y="82" font-size="18">단위 m / 실제 제작 치수 우선 / 석조 본체 + 유지 빙하 + 해빙 봉인 분리</text>
+<text x="45" y="130" font-size="23">01 정면 · 돌산 거울을 향하는 면</text>
+<rect x="170" y="455" width="360" height="55" class="stone"/>
+<rect x="170" y="240" width="50" height="215" class="stone"/>
+<rect x="480" y="240" width="50" height="215" class="stone"/>
+<rect x="170" y="220" width="360" height="35" class="stone"/>
+<rect x="177" y="270" width="34" height="185" class="stone"/>
+<line x1="186" y1="285" x2="186" y2="445" class="line"/>
+<line x1="194" y1="285" x2="194" y2="445" class="line"/>
+<line x1="202" y1="285" x2="202" y2="445" class="line"/>
+<rect x="208" y="270" width="34" height="185" class="stone"/>
+<line x1="217" y1="285" x2="217" y2="445" class="line"/>
+<line x1="225" y1="285" x2="225" y2="445" class="line"/>
+<line x1="233" y1="285" x2="233" y2="445" class="line"/>
+<rect x="458" y="270" width="34" height="185" class="stone"/>
+<line x1="467" y1="285" x2="467" y2="445" class="line"/>
+<line x1="475" y1="285" x2="475" y2="445" class="line"/>
+<line x1="483" y1="285" x2="483" y2="445" class="line"/>
+<rect x="489" y="270" width="34" height="185" class="stone"/>
+<line x1="498" y1="285" x2="498" y2="445" class="line"/>
+<line x1="506" y1="285" x2="506" y2="445" class="line"/>
+<line x1="514" y1="285" x2="514" y2="445" class="line"/>
+<path d="M266.25,454.0 L266.25,332.75 A83.75,83.75 0 0 1 433.75,332.75 L433.75,454.0 Z" class="stone"/>
+<path d="M272.25,454.0 L272.25,332.75 Q350,251.00000000000003 427.75,332.75 L427.75,454.0 Z" class="ice"/>
+<path d="M110,510 L116,382 L145,276 L157,195 L208,168 L248,208 L310,174 L371,170 L432,207 L473,178 L528,217 L553,318 L590,510 L514,510 L496,340 L468,270 L430,230 L376,210 L310,225 L242,235 L206,298 L191,405 L185,510 Z" class="ice"/>
+<rect x="290" y="522" width="120" height="10" class="stone"/>
+<rect x="286" y="532" width="128" height="10" class="stone"/>
+<rect x="282" y="542" width="136" height="10" class="stone"/>
+<rect x="278" y="552" width="144" height="10" class="stone"/>
+<line x1="80" y1="176" x2="350" y2="360" class="dim"/>
+<circle cx="350" cy="360" r="9" fill="#f5c967"/>
+<text x="65" y="162" font-size="15" style="fill:#f5c967">거울에서 오는 태양광</text>
+<text x="375" y="360" font-size="15">수신점 Y=3.0</text>
+<line x1="110" y1="578" x2="590" y2="578" class="dim"/>
+<line x1="105" y1="573" x2="115" y2="583" class="dim"/>
+<line x1="585" y1="573" x2="595" y2="583" class="dim"/>
+<text x="358.0" y="570.0" font-size="16" style="fill:#e4c481">빙하 폭 9.6</text>
+<line x1="625" y1="510" x2="625" y2="170" class="dim"/>
+<line x1="620" y1="505" x2="630" y2="515" class="dim"/>
+<line x1="620" y1="165" x2="630" y2="175" class="dim"/>
+<text x="633.0" y="332.0" font-size="16" style="fill:#e4c481">6.8</text>
+<line x1="266.25" y1="476" x2="433.75" y2="476" class="dim"/>
+<line x1="261.25" y1="471" x2="271.25" y2="481" class="dim"/>
+<line x1="428.75" y1="471" x2="438.75" y2="481" class="dim"/>
+<text x="358.0" y="468.0" font-size="16" style="fill:#e4c481">개구 3.35</text>
+<text x="50" y="622" font-size="16">청록: 유지 빙하 · 중앙 봉인만 해빙 · 기단 높이 1.10</text>
+<text x="815" y="130" font-size="23">02 평면 · 접근로와 빛 통로</text>
+<rect x="988" y="149" width="324" height="216" class="stone"/>
+<path d="M934,446 L925,275 L960,110 L1064,86 L1234,95 L1346,127 L1366,300 L1353,446 L1242,420 L1252,211 L1041,193 L1052,420 Z" class="ice"/>
+<rect x="1096" y="375" width="108" height="235" class="line"/>
+<line x1="1096" y1="385" x2="1204" y2="385" class="line"/>
+<line x1="1096" y1="401" x2="1204" y2="401" class="line"/>
+<line x1="1096" y1="417" x2="1204" y2="417" class="line"/>
+<line x1="1096" y1="433" x2="1204" y2="433" class="line"/>
+<path d="M1067,365 L1067,580" class="flow"/>
+<circle cx="1037.5" cy="340.25" r="16" class="stone"/>
+<path d="M1233,365 L1233,580" class="flow"/>
+<circle cx="1262.5" cy="340.25" r="16" class="stone"/>
+<circle cx="1009.6" cy="331.25" r="12" class="stone"/>
+<circle cx="1290.4" cy="331.25" r="12" class="stone"/>
+<line x1="1150" y1="595" x2="1150" y2="377" class="dim"/>
+<text x="1213" y="537" font-size="16">중앙 접근로</text>
+<text x="1213" y="561" font-size="16">폭 2.4 이상</text>
+<text x="952" y="586" font-size="15">양옆 배수로</text>
+<line x1="934" y1="665" x2="1366" y2="665" class="dim"/>
+<line x1="929" y1="660" x2="939" y2="670" class="dim"/>
+<line x1="1361" y1="660" x2="1371" y2="670" class="dim"/>
+<text x="1158.0" y="657.0" font-size="16" style="fill:#e4c481">빙하 외곽 폭 9.6</text>
+<text x="835" y="710" font-size="16">전면 -Z / 후면 +Z · 외곽 깊이 8.0 / 본체 깊이 4.8</text>
+<text x="45" y="760" font-size="23">03 중앙 단면 · 계단–문턱–봉인</text>
+<rect x="260" y="1105" width="240" height="55" class="stone"/>
+<rect x="480" y="890" width="20" height="215" class="stone"/>
+<rect x="260" y="870" width="240" height="35" class="stone"/>
+<path d="M232,1104 L232,900 Q250,882 267,902 L267,1104 Z" class="ice"/>
+<path d="M225,890 L235,835 L325,820 L425,836 L517,822 L555,912 L570,1160 L508,1160 L503,890 Z" class="ice"/>
+<rect x="128" y="1146.25" width="33" height="13.75" class="stone"/>
+<rect x="161" y="1132.5" width="33" height="27.5" class="stone"/>
+<rect x="194" y="1118.75" width="33" height="41.25" class="stone"/>
+<rect x="227" y="1105.0" width="33" height="55.0" class="stone"/>
+<line x1="60" y1="910" x2="234" y2="1010" class="dim"/>
+<circle cx="234" cy="1010" r="7" fill="#f5c967"/>
+<path d="M250,1104 L215,1104 L215,1155 L115,1155" class="flow"/>
+<text x="48" y="1210" font-size="17">4段 × 0.275m → 문턱 1.12m</text>
+<text x="48" y="1239" font-size="16">정문 얼음 두께 0.7m · 지붕은 빛 통로에서 후퇴</text>
+<text x="815" y="760" font-size="23">04 후면 · 건물을 감싸는 빙하</text>
+<rect x="970" y="870" width="360" height="290" class="stone"/>
+<path d="M910,1160 L925,1045 L943,920 L1000,854 L1068,820 L1162,843 L1247,823 L1344,880 L1374,1020 L1390,1160 Z" class="ice"/>
+<path d="M1005,885 l-20,65 l27,52 l-18,65 l20,75" class="line"/>
+<path d="M1090,885 l-20,65 l27,52 l-18,65 l20,75" class="line"/>
+<path d="M1220,885 l-20,65 l27,52 l-18,65 l20,75" class="line"/>
+<path d="M1305,885 l-20,65 l27,52 l-18,65 l20,75" class="line"/>
+<text x="824" y="1210" font-size="17">후면 빙하 유지 · 큰 덩어리로 연결</text>
+<text x="824" y="1239" font-size="16">투명 판을 여러 겹 겹치지 않기 / 공중 수정 금지</text>
+<text x="45" y="1300" font-size="23">05 해빙 상태 / 전체 빙하를 없애지 않는다</text>
+<rect x="45" y="1325" width="360" height="110" class="line"/>
+<text x="61" y="1360" font-size="21" style="fill:#e4c481">① 동결</text>
+<text x="61" y="1396" font-size="16">유백색 봉인이 정문을 덮음</text>
+<rect x="430" y="1325" width="360" height="110" class="line"/>
+<text x="446" y="1360" font-size="21" style="fill:#e4c481">② 가열</text>
+<text x="446" y="1396" font-size="16">중앙 서리가 투명해짐</text>
+<rect x="815" y="1325" width="360" height="110" class="line"/>
+<text x="831" y="1360" font-size="21" style="fill:#e4c481">③ 해빙</text>
+<text x="831" y="1396" font-size="16">물막이 문턱·배수로로 흐름</text>
+<rect x="1200" y="1325" width="360" height="110" class="line"/>
+<text x="1216" y="1360" font-size="21" style="fill:#e4c481">④ 개방</text>
+<text x="1216" y="1396" font-size="16">아치 노출 / 외곽 빙하 유지</text>
+<text x="45" y="1490" font-size="17">제작 기준: design-spec.json / 미술 형태는 reference.png / 시안 단계이며 Blender·Unity 교체 전</text>
+</svg>

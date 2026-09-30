@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="850" viewBox="0 0 1320 850">
+<style>text{font-family:'Malgun Gothic',sans-serif;fill:#e3eced} .s{font-size:17px}</style>
+<rect width="1320" height="850" fill="#10212b"/>
+<text x="40" y="55" font-size="29">발견실 동선 · 팔찌 제작 규격 초안</text>
+<text x="40" y="89" class="s">계획 도면 / 크기는 캐릭터 측정 후 확정 / 게임 장면 아님</text>
+<rect x="40" y="125" width="620" height="660" rx="14" fill="#1b3039"/>
+<text x="65" y="165" font-size="23">발견실 12 × 10m · 팔찌 없이 접근</text>
+<rect x="100" y="240" width="480" height="400" fill="#35494f" stroke="#d1d5c8" stroke-width="3"/>
+<rect x="380" y="280" width="160" height="140" fill="#7b806a"/>
+<rect x="380" y="420" width="100" height="15" fill="#c2bea2"/><rect x="380" y="435" width="100" height="15" fill="#a5a48a"/>
+<circle cx="460" cy="345" r="26" fill="#9f7848" stroke="#68d0d3" stroke-width="4"/>
+<text x="402" y="314" class="s">팔찌 제단</text>
+<text x="393" y="399" class="s">단 Y=0.3</text>
+<rect x="200" y="523" width="200" height="42" fill="#347f97"/>
+<text x="235" y="550" class="s">첫 냉각 도랑</text>
+<path d="M340 665V606H155V475H430V370" fill="none" stroke="#e4b25d" stroke-width="5" stroke-dasharray="10 6"/>
+<text x="313" y="699" class="s">입구</text>
+<text x="110" y="726" class="s">금색: 고정 돌길 / 물을 얼리지 않아도 왕복 가능</text>
+<text x="110" y="755" class="s">제단 상판 Y=1.2m · 낮은 계단으로 접근</text>
+<rect x="690" y="125" width="590" height="660" rx="14" fill="#1b3039"/>
+<text x="715" y="165" font-size="23">팔찌 · 손목 밀착형 청동 띠</text>
+<ellipse cx="985" cy="365" rx="176" ry="144" fill="#9e794b"/>
+<ellipse cx="985" cy="365" rx="160" ry="129" fill="#1b3039"/>
+<path d="M805 365H1165M985 215V515" stroke="#bfcbd0" stroke-width="1" stroke-dasharray="5 5"/>
+<text x="895" y="372" font-size="24">내부 55 × 45mm</text>
+<path d="M976 217Q931 266 975 279Q1022 265 976 217" fill="#40b7c7" stroke="#e0bd70" stroke-width="5"/>
+<rect x="815" y="568" width="345" height="83" rx="12" fill="#9e794b" stroke="#d2ae6c" stroke-width="3"/>
+<text x="850" y="616" font-size="22">띠 높이 22mm</text>
+<text x="730" y="708" class="s">두께 2.5mm · 보석 약 14mm · 시작 규격</text>
+<text x="730" y="739" class="s">관통·뜬 간격·수첩 동작과 충돌 여부는 리그에서 확인</text>
+<text x="40" y="823" class="s">색과 재료는 bracelet-reference.png 참고 · 수치는 확대 이미지의 비례를 그대로 측정한 값이 아닙니다.</text>
+</svg>

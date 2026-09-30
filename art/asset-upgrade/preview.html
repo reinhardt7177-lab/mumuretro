@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>무무 행성 · 에셋 공방</title>
+<link rel="icon" href="/assets/favicon-32.png">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#12232d;color:#f0e6cd;font:16px 'Malgun Gothic',system-ui}canvas{display:block;touch-action:none}header{position:fixed;top:24px;left:30px;pointer-events:none}small{color:#d4b879;letter-spacing:.16em}h1{font-size:28px;margin:8px 0}p{color:#b9cad0;font-size:14px;line-height:1.6}nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;justify-content:center;gap:8px;flex-wrap:wrap;width:min(850px,96%)}button,a{border:1px solid #c9aa6266;background:#17323eea;color:#f5e6c1;border-radius:9px;padding:13px 17px;cursor:pointer;text-decoration:none;font:inherit}button[aria-pressed=true]{background:#846639;color:white}button:focus-visible,a:focus-visible{outline:3px solid #efd091}#status{max-width:75vw}@media(max-width:600px){header{left:18px;top:15px}h1{font-size:22px}button,a{font-size:13px;padding:10px}nav{bottom:16px}}
+</style>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+<header><small>MUMU PLANET / ASSET WORKSHOP</small><h1>항해자의 공방</h1><p id="status" role="status">Blender 에셋을 불러오는 중…</p><p>드래그로 회전 · 휠로 확대</p></header>
+<nav aria-label="에셋 선택"><button data-view="ship">우주 범선</button><button data-view="props">수첩 · 망원경</button><button data-view="temple">신전 장치</button><button data-view="markers">다섯 신전 문양</button><button data-view="nature">행성 자연물</button><a href="/">게임으로</a></nav>
+<script type="module">
+import * as T from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const renderer=new T.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;document.body.appendChild(renderer.domElement);
+const scene=new T.Scene();scene.background=new T.Color('#12232d');
+scene.add(new T.HemisphereLight(0xe5efff,0x635038,2.3));
+for(const [color,power,pos] of [[0xffe4b4,3,[4,8,5]],[0x89cce7,1.8,[-4,3,-4]]]){const l=new T.DirectionalLight(color,power);l.position.set(...pos);scene.add(l);}
+const camera=new T.PerspectiveCamera(35,innerWidth/innerHeight,.005,500);
+const controls={target:new T.Vector3(),minDistance:.1,maxDistance:200,update(){camera.lookAt(this.target);}};
+const canvas=renderer.domElement,pointers=new Map();
+function zoom(delta){const offset=camera.position.clone().sub(controls.target);offset.setLength(T.MathUtils.clamp(offset.length()*Math.exp(delta),controls.minDistance,controls.maxDistance));camera.position.copy(controls.target).add(offset);controls.update();}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);});
+canvas.addEventListener('pointermove',e=>{const old=pointers.get(e.pointerId);if(!old)return;const next=[e.clientX,e.clientY];
+  if(pointers.size===2){const other=[...pointers.entries()].find(([id])=>id!==e.pointerId)[1];zoom((Math.hypot(old[0]-other[0],old[1]-other[1])-Math.hypot(next[0]-other[0],next[1]-other[1]))*.006);}
+  else{const s=new T.Spherical().setFromVector3(camera.position.clone().sub(controls.target));s.theta-=(next[0]-old[0])*.006;s.phi=T.MathUtils.clamp(s.phi-(next[1]-old[1])*.006,.08,Math.PI-.08);camera.position.copy(controls.target).add(new T.Vector3().setFromSpherical(s));controls.update();}
+  pointers.set(e.pointerId,next);
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,e=>pointers.delete(e.pointerId));
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoom(e.deltaY*.001);},{passive:false});
+const loader=new GLTFLoader(),cache=new Map();let root,request=0;
+const urls={ship:'/assets/models/starsail-v02.glb',props:'/assets/characters/sky-navigator/props-v02.glb',temple:'/assets/models/balance-temple-v04.glb',nature:'/assets/models/planet-nature-v01.glb'};
+const descriptions={ship:'범선 v02 — 선실 경첩 · 굽은 나무통 · 선체 황동 장식',props:'소품 v02 — 가죽 바느질 · 수첩 경첩 연결 · 망원경 렌즈',temple:'균형 신전 v04 — 받침 · 상자 손잡이 · 새긴 문',markers:'신전별 문양 — 물 · 그림자 · 분리 · 불 · 지층',nature:'행성 자연물 — 가지와 수관 · 이끼 바위 · 낮은 관목'};
+async function load(url){if(!cache.has(url))cache.set(url,loader.loadAsync(url));return (await cache.get(url)).scene;}
+async function show(view){const ticket=++request;document.querySelector('#status').textContent='불러오는 중…';try{
+  const source=await load(urls[view==='markers'?'temple':view]);if(ticket!==request)return;
+  if(root)scene.remove(root);root=new T.Group();scene.add(root);
+  if(view==='ship')root.add(source.clone(true));
+  else if(view==='props'){
+    const book=source.getObjectByName('notebook').clone(true),scope=source.getObjectByName('telescope').clone(true);
+    book.scale.setScalar(8);book.position.x=-.8;root.add(book);
+    const wrapper=new T.Group();wrapper.add(scope);wrapper.scale.setScalar(8);wrapper.position.x=.8;root.add(wrapper);
+  }else if(view==='nature'){
+    for(const [name,x,z,scale] of [['trunk',-2,0,1],['canopyA',-2,0,1],['trunk',2,0,1],['canopyB',2,0,1],['rockA',-.6,1.7,2],['rockB',.8,1.7,2],['bush',-2.8,1.4,2],['bush',2.8,1.4,2]]){
+      const part=source.getObjectByName(name).clone(true);part.position.set(x,0,z);part.scale.setScalar(scale);root.add(part);
+      // Scatter multiplies these authored plane colours by its biome palette.
+      const tint=new T.Color(name==='trunk'?0x6b5138:name.startsWith('rock')?0x989eaa:0x769e59);
+      part.traverse(o=>{if(o.isMesh){o.material=o.material.clone();o.material.color.multiply(tint);}});
+    }
+  }else if(view==='temple'){
+    for(const [name,x] of [['plinth',-3],['crate',-3],['door_leaf',0],['fulcrum',3]]){const part=source.getObjectByName(name).clone(true);part.position.set(x,name==='crate'?.43:0,0);root.add(part);}
+  }else{
+    ['water','shadow','sift','fire','strata'].forEach((id,i)=>{const part=source.getObjectByName('waymark_'+id).clone(true);part.position.x=(i-2)*1.4;root.add(part);});
+  }
+  const bounds=new T.Box3().setFromObject(root),center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3());
+  const span=Math.max(size.y,size.x/Math.max(.4,camera.aspect),size.z*.7),distance=span/(2*Math.tan(T.MathUtils.degToRad(camera.fov/2)))*1.45;
+  controls.target.copy(center);camera.position.copy(center).add(new T.Vector3(.28,.22,1).normalize().multiplyScalar(distance));controls.minDistance=span*.2;controls.maxDistance=distance*3;controls.update();
+  document.querySelector('#status').textContent=descriptions[view];document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  window.assetPreview={view,root,scene,camera,controls,renderer,show};
+}catch(e){document.querySelector('#status').textContent='에셋을 불러오지 못했습니다. 로컬 서버를 확인해 주세요.';console.error(e);}}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();});
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
+const initialView=new URLSearchParams(location.search).get('view');show(Object.hasOwn(descriptions,initialView)?initialView:'ship');
+</script>
+</html>

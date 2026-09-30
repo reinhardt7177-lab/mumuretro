@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "units": "metres; X right, Y up, Z toward rear; front is -Z",
+  "stone": {"width":7.2,"depth":4.8,"height":5.8,"foundation_top":1.1,"front_z":0,"rear_z":4.8},
+  "glacier": {"width":9.6,"depth":8.0,"height":6.8,"front_z":-1.8,"rear_z":6.2,"shell_thickness_range":[0.6,1.3]},
+  "door": {"width":3.35,"height":4.1,"bottom":1.12,"front_z":-0.1,"ice_depth":0.7,"receiver":[0,3.0,-0.52]},
+  "approach": {"clear_width":2.4,"start_z":-5.8,"end_z":-0.6,"step_count":4,"step_rise":0.275},
+  "side_columns": [[-3.12,1.1,0.75],[-2.5,1.1,0.55],[2.5,1.1,0.55],[3.12,1.1,0.75]],
+  "runoff_channels": {"x":[-1.85,1.85],"width":0.22,"start_z":0,"end_z":-4.8},
+  "persistent_ice": ["west buttress","east buttress","roof crown","rear glacier","pool rim"],
+  "thawable_ice": ["entrance seal","thin frost on central approach"],
+  "states": ["frozen","sunlight warming","central thaw","doorway revealed"],
+  "status":"design only; dimensions require scene and beam integration before play"
+}

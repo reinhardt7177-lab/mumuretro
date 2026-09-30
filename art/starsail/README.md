@@ -1,5 +1,13 @@
 # 우주 범선 Blender 원본
 
+## 현재 적용: v02
+
+[편집 원본](starsail-v02.blend) · [게임 GLB](../../assets/models/starsail-v02.glb) · [생성 스크립트](../../tools/blender/refine_starsail_v02.py)
+
+v01을 읽어 통의 곡면·널빤지, 선실 경첩·문틀, 로프, 현창 장식을 개선한다. 메시 14개 유지, 47,228 삼각형, 2,074,632바이트. [전체 점검 보고서](../../reports/2026-09-20/ASSET_DETAIL_UPGRADE.md)
+
+## 보존한 v01
+
 - 편집용: [starsail-v01.blend](starsail-v01.blend). 게임용으로 재질별 합치기를 하기 전의 원본이다.
 - 게임용: [starsail-v01.glb](../../assets/models/starsail-v01.glb). 14개 메시, 14개 재질, 삼각형 30,480개, 1,416,256바이트. 외부 텍스처가 없다.
 - 생성 스크립트: [build_starsail.py](../../tools/blender/build_starsail.py).

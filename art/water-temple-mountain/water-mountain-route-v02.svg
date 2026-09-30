@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="물의 신전 돌산 등반 측면 설계도">
+<defs>
+  <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#122a40"/><stop offset="1" stop-color="#52727e"/></linearGradient>
+  <linearGradient id="cliff" x2="0" y2="1"><stop stop-color="#65717b"/><stop offset="1" stop-color="#263b48"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="5"/></filter>
+</defs>
+<rect width="1280" height="720" fill="url(#sky)"/>
+<text x="54" y="67" fill="#f6dfac" font-size="34" font-family="sans-serif" font-weight="700">물의 신전 · 돌산 등반 설계도</text>
+<text x="55" y="101" fill="#c0d1d4" font-size="18" font-family="sans-serif">절벽 측면 경로 개념도 · 세부 위치는 설계 문서의 3D 좌표를 따른다</text>
+<path d="M32 624 L82 585 L128 600 L158 514 L215 466 L273 483 L337 350 L403 332 L466 233 L508 183 L554 226 L610 266 L654 306 L722 329 L790 382 L860 433 L920 553 L988 612 Z" fill="url(#cliff)" stroke="#81939b" stroke-width="3"/>
+<path d="M128 600 L158 514 L215 466 L273 483 L337 350 L403 332 L466 233 L508 183 L554 226 L504 320 L388 355 L319 523 L236 555 Z" fill="#3d505d" opacity=".7"/>
+<path d="M337 350 L403 332 L455 340 L454 376 L326 386 Z" fill="#152630" stroke="#2b3640" stroke-width="4"/>
+<path d="M488 232 L552 224 L574 281 L535 276 Z" fill="#8c928c" opacity=".48"/>
+<path d="M58 624 L992 624" stroke="#a2aea3" stroke-width="5"/>
+<path d="M151 560 L163 521 L204 490 L282 481 L360 480 L401 449 L483 438 L527 408" fill="none" stroke="#f6c876" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18"/>
+<path d="M527 408 L601 379 L664 353 L640 322 L579 290" fill="none" stroke="#cde2d9" stroke-width="6" stroke-linecap="round" stroke-dasharray="12 10"/>
+<path d="M579 290 L553 251 L519 191" fill="none" stroke="#f6c876" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 18"/>
+<g fill="#f8d98d" stroke="#1b3540" stroke-width="3">
+<circle cx="151" cy="560" r="10"/><circle cx="204" cy="490" r="10"/>
+<circle cx="282" cy="481" r="10"/><circle cx="360" cy="480" r="10"/>
+<circle cx="401" cy="449" r="10"/><circle cx="483" cy="438" r="10"/>
+<circle cx="527" cy="408" r="10"/><circle cx="579" cy="290" r="10"/>
+<circle cx="553" cy="251" r="10"/>
+</g>
+<g fill="#f9f2db" font-family="sans-serif" font-size="19" font-weight="700">
+<text x="92" y="542">G0 · E 붙잡기</text>
+<text x="152" y="450">W 수직 등반</text>
+<text x="290" y="426">D/A 처마 아래 옆 이동</text>
+<text x="425" y="390">Space 옆 도약</text>
+<text x="612" y="314">좁은 바윗길</text>
+<text x="529" y="211">Space → W → E</text>
+</g>
+<path d="M519 191 L1020 363" stroke="#ffcd6d" stroke-width="24" opacity=".36" filter="url(#glow)"/>
+<path d="M519 191 L1020 363" stroke="#ffdf91" stroke-width="6"/>
+<circle cx="519" cy="191" r="26" fill="#d7a854" stroke="#ffe3a3" stroke-width="7"/>
+<path d="M1015 390 L1015 309 L1097 309 L1097 390 M1004 312 L1056 272 L1108 312" fill="#9dc8d2" fill-opacity=".25" stroke="#a8e5f1" stroke-width="9"/>
+<path d="M1016 389 L1096 389" stroke="#d5f6fd" stroke-width="16"/>
+<text x="1037" y="425" fill="#e6f8f7" font-size="22" font-family="sans-serif">얼음문</text>
+<rect x="54" y="646" width="1170" height="51" rx="16" fill="#112630" opacity=".82"/>
+<text x="75" y="679" fill="#f4e9cc" font-size="19" font-family="sans-serif">황금 점선 = 매달림 · 흰 점선 = 걷는 길 · 금빛 광선 = 거울로 얼음문 해제</text>
+</svg>

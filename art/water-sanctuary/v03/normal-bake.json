@@ -1,0 +1,14 @@
+{
+  "source": "source/water-deity-v03-high.glb",
+  "target": "water-deity-v03.blend",
+  "map": "mat0-normal-final.png",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "space": "tangent +X +Y +Z",
+  "cage_extrusion": 0.035,
+  "max_ray_distance": 0.07,
+  "margin": 12,
+  "seconds": 26.84
+}
