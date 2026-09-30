@@ -43,6 +43,7 @@ import { buildEvaporationCourt } from './EvaporationCourt.js';
 import { buildSiftSanctum } from './SiftSanctum.js';
 import { buildBalanceDungeon } from './BalanceTemple.js';
 import { BalanceOrder, TwinBalance, LeverSix } from './BalanceTrials.js';
+import { addEntranceMarkers } from './EntranceMarkers.js';
 
 const GATES = {
   balanceOrder: BalanceOrder, twinBalance: TwinBalance,
@@ -121,8 +122,10 @@ export function buildRoom(spec, seed = Math.floor(Math.random() * 4294967296)) {
 }
 function assembleRoom(spec, seed) {
   const scene = new THREE.Scene();
+  scene.userData.lookProfile = spec.id;
   scene.background = new THREE.Color(spec.theme.bg);
   const dungeon = spec.id === 'balance' ? buildBalanceDungeon(scene,spec.rooms,spec.theme) : buildDungeon(scene, spec.rooms, spec.theme);
+  const entranceObstacles = addEntranceMarkers(scene, spec);
   const court = spec.id === 'water' ? buildWaterCourt(scene, dungeon.rectOf('r3'),
     dungeon.rectOf('shrine'), spec.theme, dungeon.rects) : null;
 
@@ -229,7 +232,7 @@ function assembleRoom(spec, seed) {
       h.level++;
       return h.texts[h.level - 1];
     },
-    obstacles: [...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
+    obstacles: [...entranceObstacles, ...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
     shrineSeg,
     // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
     // 새 도전은 깬 개수에 맞추고, 진행 중인 도전은 첫 입장 단계를 유지한다.

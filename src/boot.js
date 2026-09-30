@@ -10,6 +10,7 @@ import { Loop } from './core/Loop.js';
 import { Sky } from './render/Sky.js';
 import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
+import { loadNatureAssets } from './world/NatureAssets.js';
 import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { pickShrineSpots, buildShrines } from './world/Shrine.js';
 import { SHRINES, ENTRY_Z, EXIT_Z } from './shrine/layouts.js';
@@ -57,7 +58,7 @@ const planetScene = engine.scene;   // 사당에서 돌아올 때 갈아 끼울 
 engine.attachPost(new Post(engine));
 const sky = new Sky(engine, planet);
 
-await loadNavigator();
+await Promise.all([loadNavigator(), loadNatureAssets()]);
 const player = new Player(planet);
 player.setLatLon(6, -18);           // 주 랜드마크(lat 30 / lon 0)가 정면에 들어오는 자리
 engine.scene.add(player.mesh);

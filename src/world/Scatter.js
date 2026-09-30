@@ -13,6 +13,8 @@ import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LIGHT, FOLIAGE as PALETTE } from '../data/lighting.js';
 import { fbm } from '../util/noise.js';
+import { natureGeometry } from './NatureAssets.js';
+import { quality } from '../render/Quality.js';
 
 // 구를 나누는 셀 — 위도 4띠 × 경도 6구간 = 24셀.
 // 지평선이 28u(각 23.6°)라 보통 두세 셀만 프러스텀에 들어온다.
@@ -197,13 +199,15 @@ export function buildScatter(scene, planet, opts = {}) {
     rockA: rockGeo(3), rockB: rockGeo(11),
     bush: bushGeo(),
   };
+  const detailedGeos = Object.fromEntries(Object.keys(geos).map(k => [k, natureGeometry(k) || geos[k]]));
   // 시각 메시의 윗부분에 기울기 여유를 더한 보수적인 충돌 높이.
   // 지상 반경은 이전과 같고, 발이 이 높이보다 위에 있을 때만 지나갈 수 있다.
   const heightOf = (keys, tilt) => {
     let height = 0;
     for (const key of keys) {
-      geos[key].computeBoundingBox();
-      const b = geos[key].boundingBox;
+      const bounds = new THREE.Box3();
+      for (const g of [geos[key], detailedGeos[key]]) { g.computeBoundingBox(); bounds.union(g.boundingBox); }
+      const b = bounds;
       const radius = Math.hypot(Math.max(Math.abs(b.min.x), Math.abs(b.max.x)),
         Math.max(Math.abs(b.min.z), Math.abs(b.max.z)));
       height = Math.max(height, b.max.y + radius * Math.sin(tilt / 2));
@@ -226,7 +230,10 @@ export function buildScatter(scene, planet, opts = {}) {
     rock:   toon(0xffffff, { rim: 0.05 }), // 바위 지오메트리의 면 법선을 쓴다.
     bush:   toon(0xffffff, { rim: 0.06 }),
   };
-  mats.bush.userData.outlineParameters = { visible: false };
+  Object.values(mats).forEach(m => {
+    m.vertexColors = true;
+    m.userData.outlineParameters = { visible: false };
+  });
   injectWind(mats.canopy, 0.16, uTime);   // 수관도 흔들려야 한다. 풀만 흔들리면 나무가 말뚝이 된다
   injectWind(mats.bush, 0.35, uTime);
 
@@ -311,7 +318,7 @@ export function buildScatter(scene, planet, opts = {}) {
   // 셀 × 종류마다 InstancedMesh 하나. 등 뒤 셀은 프러스텀에서 통째로 빠진다.
   const meshes = [];
   let tris = 0;
-  const geoOf = (k) => geos[k];
+  const geoOf = (k) => (quality.name === 'high' || quality.name === 'mid' ? detailedGeos : geos)[k];
   const matOf = (k) => k === 'trunk' ? mats.trunk
     : k.startsWith('canopy') ? mats.canopy
     : k.startsWith('rock') ? mats.rock : mats.bush;
@@ -329,11 +336,19 @@ export function buildScatter(scene, planet, opts = {}) {
       if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
       inst.computeBoundingSphere();          // 인스턴스 행렬 반영 — 없으면 컬링이 엉뚱하게 걸린다
       inst.name = `sc_${c}_${k}`;
+      inst.userData.natureKind = k;
       scene.add(inst);
       meshes.push(inst);
       tris += list.length * (geo.index ? geo.index.count / 3 : geo.attributes.position.count / 3);
     }
   }
+
+  quality.onChange(() => {
+    for (const inst of meshes) {
+      inst.geometry = geoOf(inst.userData.natureKind);
+      inst.computeBoundingSphere();
+    }
+  });
 
   console.log(`[scatter] 나무 ${counts.tree} · 바위 ${counts.rock} · 덤불 ${counts.bush}`
     + ` · 메시 ${meshes.length}개 · ~${Math.round(tris / 1000)}k삼각형 · 충돌체 ${colliders.length}`);

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { FIRST_TRAIL, TRAIL_TEXT, TRAIL_COLORS as C } from '../data/expedition.js';
+import { naturePart } from './NatureAssets.js';
 
 // 산포보다 먼저 계획한다. 길은 지면을 따르고 충돌 바닥을 따로 만들지 않는다.
 export function planFirstTrail(planet) {
@@ -57,8 +58,9 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   plan.samples.filter((_, i) => i % 7 === 0).forEach((d, i) => {
     const side = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize();
     const edge = d.clone().addScaledVector(side, (i % 2 ? 1 : -1) * 1.35 / planet.R).normalize();
-    const g = at(edge); const m = add(g, new THREE.DodecahedronGeometry(0.22, 0), stone, 0, 0.09, 0);
-    m.scale.set(1.4, 0.55, 0.9); m.rotation.y = i * 1.7;
+    const g = at(edge), detail = naturePart('trail_stone');
+    if (detail) { g.add(detail); detail.rotation.y = i * 1.7; }
+    else { const m = add(g, new THREE.DodecahedronGeometry(0.22, 0), stone, 0, 0.09, 0); m.scale.set(1.4, 0.55, 0.9); m.rotation.y = i * 1.7; }
   });
 
   // 기존 물 사당의 두 번째 입구. 기존 월드 사당과 저장 ID는 그대로다.

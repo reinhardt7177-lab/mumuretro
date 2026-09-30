@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LAB } from '../data/lighting.js';
+import { naturePart } from './NatureAssets.js';
 
 const PAD_R = 2.4;
 
@@ -35,6 +36,8 @@ export function buildLanding(scene, planet, dir) {
   base.position.y = 0.08; base.rotation.y = Math.PI / 8;
   base.castShadow = true; base.receiveShadow = true;
   group.add(base);
+  const detail = naturePart('survey_base');
+  if (detail) group.add(detail);
 
   // 연구실 분필 원과 같은 눈금. 같은 장치라는 걸 모양으로 말한다.
   const ringMat = basic(LAB.glow, 0.55);

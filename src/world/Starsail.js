@@ -16,7 +16,7 @@ export async function installStarsail(lab) {
   // 원본 진행 객체는 남기고, 집의 벽·천장·침상·계단은 장면에서 분리한다.
   const specimenShelf=scene.children.filter(o=>o.position.x>4.85&&o.position.x<5.6
     &&o.position.z> -1.7&&o.position.z<1.5&&o.position.y>1.2&&o.position.y<2.9);
-  scene.clear(); scene.background = new THREE.Color(C.sky); scene.fog = null;
+  scene.clear(); scene.userData.lookProfile='ship'; scene.background = new THREE.Color(C.sky); scene.fog = null;
   scene.add(asset.scene, v.table, v.con, v.gimbal, ...specimenShelf);
   asset.scene.name = 'Starsail — Blender model';
   const cameraOccluders = [];
@@ -30,11 +30,11 @@ export async function installStarsail(lab) {
     else o.userData.cameraNonSolid=true;
     o.userData.partitionedSolid=true;
   });
-  scene.add(new THREE.HemisphereLight(C.ambient, C.ground, 2.6));
-  const sun = new THREE.DirectionalLight(C.sun, 3.3); sun.position.set(12,18,9); sun.castShadow = true;
+  scene.add(new THREE.HemisphereLight(C.ambient, C.ground, 2.15));
+  const sun = new THREE.DirectionalLight(C.sun, 3.0); sun.position.set(12,18,9); sun.castShadow = true;
   sun.shadow.mapSize.set(1024,1024); Object.assign(sun.shadow.camera,{left:-19,right:19,top:22,bottom:-22,near:1,far:70});
   sun.shadow.bias = -.0006; scene.add(sun);
-  const fill = new THREE.DirectionalLight(C.ambient, .8); fill.position.set(-10,8,-15); scene.add(fill);
+  const fill = new THREE.DirectionalLight(C.ambient, 1.0); fill.position.set(-10,8,-15); scene.add(fill);
   const vista=buildSpaceVista(scene),{sky,planet}=vista;
   const route=buildStarRoute(scene,v.gimbal,planet);
   const halfWidth=z=>{

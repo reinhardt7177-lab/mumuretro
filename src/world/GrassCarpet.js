@@ -14,6 +14,7 @@
 import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
 import { MEADOW, PATH } from '../data/lighting.js';
+import { addSurfaceDetail } from '../render/SurfaceDetail.js';
 
 // 카펫이 지면 위로 솟는 높이(월드).
 // ★ 0.34로 잡았다가 0.15로 내렸다. 플레이어는 **지형** 위를 걷는데 눈에 보이는 지면은
@@ -109,6 +110,7 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
       `);
   };
 
+  addSurfaceDetail(mat, true);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.receiveShadow = true;
   mesh.castShadow = false;      // 카펫이 자기 그림자를 던지면 지면이 얼룩진다
