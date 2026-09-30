@@ -1,0 +1,17 @@
+**/Library/
+**/Temp/
+**/Obj/
+**/Logs/
+**/UserSettings/
+**/Builds/
+**/MemoryCaptures/
+**/.vs/
+**/*.csproj
+**/*.sln
+**/*.slnx
+**/*.user
+
+# 장면 생성기가 다시 만드는 것(unity/build.ps1 → BuildExploration.Create). 1.2GB · 2,024개.
+# 원본은 Assets/Mumu/Models·Source와 Editor의 생성기다.
+MumuPlanet/Assets/Mumu/Generated/
+MumuPlanet/Assets/Mumu/Generated.meta

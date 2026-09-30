@@ -1,0 +1,6 @@
+# 웹 게임은 index.html · src · assets · vendor만 쓴다(src에서 아래 폴더를 부르는 곳 0).
+# Unity 프로젝트·Blender 원본·검증 기록은 저장소에만 두고 사이트로는 내보내지 않는다.
+unity/
+art/
+reports/
+tools/
