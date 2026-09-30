@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Navigator",
+    "bones": 24,
+    "actions": [
+      "Navigator"
+    ]
+  },
+  {
+    "name": "Walk",
+    "bones": 24,
+    "actions": [
+      "Walk"
+    ]
+  },
+  {
+    "name": "Run",
+    "bones": 24,
+    "actions": [
+      "Run"
+    ]
+  }
+]
