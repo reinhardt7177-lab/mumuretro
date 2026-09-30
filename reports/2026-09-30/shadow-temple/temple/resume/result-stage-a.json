@@ -1,0 +1,18 @@
+{
+    "passed": true,
+    "mode": "stage-a",
+    "error": "",
+    "checks": [
+        "stage a: a shadow-only crossing exists from the practice yard",
+        "stage a: walked through the lit band in shadow without a failure",
+        "Gate 1 opened (1.17 s)",
+        "Prompt names mirror 1 at its pedestal (E  시계 방향  ·  Q  반대 방향  ·  거울 1)",
+        "Mirror 1 turned to step 3",
+        "Hint post gives the first mirror hint on request",
+        "Stage a saved"
+    ],
+    "measurements": [
+        "stage a: crossing 35.3 s, 353 plan steps, max exposure 0.00 s of 1.8, BFS states 99991",
+        "stage a: seed 433014158 mirror 1 step 3 at (2.08, 0.00, 21.96)"
+    ]
+}

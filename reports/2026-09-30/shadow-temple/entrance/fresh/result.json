@@ -1,0 +1,33 @@
+{
+    "passed": true,
+    "mode": "fresh",
+    "error": "",
+    "checks": [
+        "Fresh record: the moon gate is open and unsealed",
+        "The landing is outside the gate's prompt range",
+        "The first quest stays the weight temple (무게의 신전 찾아가기)",
+        "The bone-white beacon clears the horizon from the landing",
+        "No tree or rock stands in the gate footprint (0 hidden)",
+        "A walkable route exists from the landing to the moon gate (9523 cells, 1240 blocked)",
+        "Ordinary walking reaches the forecourt",
+        "The moon gate prompt appears on the forecourt",
+        "The quest names the shadow temple at its gate (그림자의 사당 들어가기)",
+        "The weight temple prompt steps aside at the moon gate",
+        "E enters from the portal forecourt (E  그림자의 사당 입장)",
+        "Moon gate prompt glyphs exist ()",
+        "Quest card glyphs exist for the shadow temple ()",
+        "An open notebook blocks the gate",
+        "Closing the notebook restores the gate",
+        "E at the portal loads the shadow temple",
+        "The shadow temple scene loads from the moon gate",
+        "The first visit is recorded on the planet record",
+        "Inside, the keeper greets the first visit",
+        "Leaving the temple returns the player to the moon gate forecourt (0.36 m)",
+        "The temple journey record was saved on leaving (stage 0)"
+    ],
+    "measurements": [
+        "landing to the moon gate: 35.8 m along the surface",
+        "from the landing camera: beacon top visible True, gate crest visible True",
+        "landing -> moon gate: walked 34.9 m in 10.9 s (surface 35.8 m)"
+    ]
+}

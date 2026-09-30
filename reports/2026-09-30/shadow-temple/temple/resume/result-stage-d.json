@@ -1,0 +1,17 @@
+{
+    "passed": true,
+    "mode": "stage-d",
+    "error": "",
+    "checks": [
+        "Resume: round 2 continues with the panel where it was, released",
+        "Resume round 2: grabbed the panel handle",
+        "Resume round 2: the shadow filled the outline and the handle let go by itself",
+        "Resume round 3: grabbed the lamp handle",
+        "Resume round 3: the shadow filled the outline and the handle let go by itself",
+        "Resume: the silhouette room is solved",
+        "Gate 3 opened (1.18 s)",
+        "Height grip prompt offers up and down (E  등불 올리기  ·  Q  내리기)",
+        "Direction wheel prompt offers both ways (E  등불을 한 칸 돌리기  ·  Q  거꾸로 at (-3.34, 0.00, 58.50), room 3)"
+    ],
+    "measurements": []
+}

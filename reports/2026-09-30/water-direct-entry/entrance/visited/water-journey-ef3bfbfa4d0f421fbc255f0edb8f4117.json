@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "room": 0,
+    "acquired": false,
+    "bridge": false,
+    "door": false,
+    "gallery": false,
+    "toBoiler": false,
+    "valve": false,
+    "finished": false,
+    "rail": -2.5,
+    "water": [
+        {
+            "id": "얼음 저수조",
+            "ice": 4.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "얼음길 도랑",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "회수조",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        }
+    ]
+}

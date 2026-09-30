@@ -1,0 +1,119 @@
+{
+  "assets": [
+    {
+      "file": "assets/models/starsail-v01.glb",
+      "bytes": 1416256,
+      "meshes": 14,
+      "materials": 14,
+      "triangles": 30480
+    },
+    {
+      "file": "assets/models/starsail-v02.glb",
+      "bytes": 2074632,
+      "meshes": 14,
+      "materials": 14,
+      "triangles": 47228
+    },
+    {
+      "file": "assets/models/balance-temple-v03.glb",
+      "bytes": 6990512,
+      "meshes": 51,
+      "materials": 9,
+      "triangles": 112892
+    },
+    {
+      "file": "assets/models/balance-temple-v04.glb",
+      "bytes": 10355496,
+      "meshes": 68,
+      "materials": 9,
+      "triangles": 189852
+    },
+    {
+      "file": "assets/characters/sky-navigator/props-v01.glb",
+      "bytes": 200836,
+      "meshes": 18,
+      "materials": 4,
+      "triangles": 2904
+    },
+    {
+      "file": "assets/characters/sky-navigator/props-v02.glb",
+      "bytes": 407080,
+      "meshes": 12,
+      "materials": 6,
+      "triangles": 7172
+    }
+  ],
+  "scenes": [
+    {
+      "id": "balance",
+      "markers": 0,
+      "crossed": true,
+      "finite": true,
+      "profile": "balance"
+    },
+    {
+      "id": "water",
+      "markers": 2,
+      "crossed": true,
+      "finite": true,
+      "profile": "water"
+    },
+    {
+      "id": "shadow",
+      "markers": 2,
+      "crossed": true,
+      "finite": true,
+      "profile": "shadow"
+    },
+    {
+      "id": "sift",
+      "markers": 2,
+      "crossed": true,
+      "finite": true,
+      "profile": "sift"
+    },
+    {
+      "id": "fire",
+      "markers": 2,
+      "crossed": true,
+      "finite": true,
+      "profile": "fire"
+    },
+    {
+      "id": "strata",
+      "markers": 2,
+      "crossed": true,
+      "finite": true,
+      "profile": "strata"
+    }
+  ],
+  "errors": [],
+  "externalRequests": [
+    {
+      "url": "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap",
+      "error": "net::ERR_NETWORK_ACCESS_DENIED"
+    }
+  ],
+  "cancelledRequests": [
+    {
+      "url": "http://127.0.0.1:5512/assets/characters/sky-navigator/navigator-v01.glb",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:5512/assets/models/balance-temple-v04.glb",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:5512/assets/audio/bgm/title.mp3",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:5512/assets/models/starsail-v02.glb",
+      "error": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:5512/assets/models/balance-temple-v04.glb",
+      "error": "net::ERR_ABORTED"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Guide test starts on the Starsail",
+        "Current ship goal points to the recovery winch",
+        "Guide begins hidden when switched off",
+        "Quest card receives the top pointer hit",
+        "Clicking the quest card shows the golden dust path",
+        "Ship progression is still controlled by the winch",
+        "Quest automatically follows the recovered parcel",
+        "Parcel can still be opened with guidance on",
+        "Notebook hides the guide and has a map page",
+        "Fourth notebook page opens with a paper turn",
+        "Ship map waits for planet landing",
+        "After reading, guidance points to the course console",
+        "On landing, the quest points to the actual temple entrance",
+        "Gold dust follows the planet surface toward the entrance",
+        "Planet notebook opens the local landmark chart",
+        "Chart shows both player and temple markers",
+        "Player marker moves with the explorer",
+        "Turning guidance off clears every spark"
+    ]
+}

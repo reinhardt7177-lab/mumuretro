@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "room": 1,
+    "acquired": true,
+    "bridge": false,
+    "door": false,
+    "gallery": false,
+    "toBoiler": false,
+    "valve": false,
+    "finished": false,
+    "rail": -2.5,
+    "water": []
+}

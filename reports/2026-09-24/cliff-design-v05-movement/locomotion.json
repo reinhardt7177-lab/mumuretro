@@ -1,0 +1,52 @@
+{
+    "windows": [
+        {
+            "phase": "initial idle",
+            "normalizedTime": 3.8685479164123537,
+            "legSwing": 0.0,
+            "speed": 0.0
+        },
+        {
+            "phase": "walk forward",
+            "normalizedTime": 6.886169910430908,
+            "legSwing": 58.063232421875,
+            "speed": 3.200000047683716
+        },
+        {
+            "phase": "turn right",
+            "normalizedTime": 9.901498794555664,
+            "legSwing": 56.116329193115237,
+            "speed": 3.1999998092651369
+        },
+        {
+            "phase": "stop for three seconds",
+            "normalizedTime": 12.915562629699707,
+            "legSwing": 0.0,
+            "speed": 0.0
+        },
+        {
+            "phase": "restart in reverse",
+            "normalizedTime": 16.102149963378908,
+            "legSwing": 51.943382263183597,
+            "speed": 3.200000047683716
+        },
+        {
+            "phase": "turn and run",
+            "normalizedTime": 20.849218368530275,
+            "legSwing": 50.929931640625,
+            "speed": 5.800000190734863
+        },
+        {
+            "phase": "stop again",
+            "normalizedTime": 23.87395477294922,
+            "legSwing": 0.0,
+            "speed": 0.0
+        },
+        {
+            "phase": "restart left",
+            "normalizedTime": 26.890405654907228,
+            "legSwing": 57.630836486816409,
+            "speed": 3.200000047683716
+        }
+    ]
+}

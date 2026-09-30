@@ -1,0 +1,4 @@
+﻿WATER_SANCTUARY_POSE_DELTA position=0.0000 angle=0.0000
+WATER_FONT_MISSING usingSytemColcGrIOLqUEdMaRTPphwfbK20697Bv5WxANHDFzk48V31jYQZJ물의신전입장계단위열린구로이동으들어갑니다밀봉순환지혜기록완료번탐사저확인필요내부면실행판에없습목적방향약걸음무게찾아가수첩두서보상태우주소포를건져올리현회손잡도착하끌는중읽을고닫자별항맞추해숫돌성출발대새운균형했은되었정문살펴재퀘스트금루안끄눌러길 ◀▶°·+-:%/.()
+WATER_SANCTUARY_READY position=(51.764, 47.599, 16.852) doorway=(52.880, 48.028, 17.021) formerIce=(54.103, 49.618, 17.571) elevated=5 natureInactiveBefore=109 restored=109 hiddenInPlot=109 natureInactiveAfter=109
+WATER_SANCTUARY_READY position=(51.764, 47.599, 16.852) doorway=(52.880, 48.028, 17.021) formerIce=(54.103, 49.618, 17.571) elevated=5 natureInactiveBefore=109 restored=109 hiddenInPlot=109 natureInactiveAfter=109

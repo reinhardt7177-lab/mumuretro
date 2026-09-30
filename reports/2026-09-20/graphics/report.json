@@ -1,0 +1,54 @@
+{
+  "shots": [
+    {
+      "id": "ship",
+      "profile": "ship",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "planet",
+      "profile": "planet",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "balance",
+      "profile": "balance",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "shadow",
+      "profile": "shadow",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "sift",
+      "profile": "sift",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "water",
+      "profile": "water",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "fire",
+      "profile": "fire",
+      "samples": 4,
+      "calls": 1
+    },
+    {
+      "id": "strata",
+      "profile": "strata",
+      "samples": 4,
+      "calls": 1
+    }
+  ],
+  "errors": [],
+  "minSamples": 0
+}

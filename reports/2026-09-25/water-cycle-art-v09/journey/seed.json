@@ -1,0 +1,17 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "fresh journey starts before bracelet",
+        "first room bracelet pickup",
+        "partial melt saved to isolated disk record",
+        "new store reads partial melt and bracelet",
+        "invalid or newer record preserved verbatim",
+        "invalid or newer record preserved verbatim",
+        "invalid or newer record preserved verbatim",
+        "invalid or newer record preserved verbatim",
+        "next-room entry survives Unity JSON empty-array round trip",
+        "non-finite mass rejected",
+        "incorrect total mass rejected"
+    ]
+}

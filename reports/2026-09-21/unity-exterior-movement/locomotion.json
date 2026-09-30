@@ -1,0 +1,34 @@
+{
+    "windows": [
+        {
+            "phase": "initial idle",
+            "normalizedTime": 3.9973695278167726,
+            "legSwing": 0.0,
+            "speed": 0.0
+        },
+        {
+            "phase": "walk forward",
+            "normalizedTime": 7.030057907104492,
+            "legSwing": 35.453304290771487,
+            "speed": 3.200000047683716
+        },
+        {
+            "phase": "turn right",
+            "normalizedTime": 10.055845260620118,
+            "legSwing": 35.90983581542969,
+            "speed": 3.1999998092651369
+        },
+        {
+            "phase": "stop for three seconds",
+            "normalizedTime": 13.079568862915039,
+            "legSwing": 0.0,
+            "speed": 0.0
+        },
+        {
+            "phase": "restart in reverse",
+            "normalizedTime": 16.35771369934082,
+            "legSwing": 40.01547622680664,
+            "speed": 0.06766173988580704
+        }
+    ]
+}

@@ -1,0 +1,5 @@
+{
+    "passed": false,
+    "error": "System.InvalidOperationException: Player keeps moving during restart in reverse\r\n  at Mumu.Planet.ExplorationSmoke.Check (System.Boolean condition, System.String message) [0x00021] in D:\\mumumetro\\unity\\MumuPlanet\\Assets\\Mumu\\Runtime\\ExplorationSmoke.cs:55 \r\n  at Mumu.Planet.ExplorationSmoke+<CheckLocomotionCycles>d__12.MoveNext () [0x003f4] in D:\\mumumetro\\unity\\MumuPlanet\\Assets\\Mumu\\Runtime\\ExplorationSmoke.cs:85 \r\n  at Mumu.Planet.ExplorationSmoke+<Validate>d__14.MoveNext () [0x006db] in D:\\mumumetro\\unity\\MumuPlanet\\Assets\\Mumu\\Runtime\\ExplorationSmoke.cs:143 \r\n  at Mumu.Planet.ExplorationSmoke+<Start>d__5.MoveNext () [0x00129] in D:\\mumumetro\\unity\\MumuPlanet\\Assets\\Mumu\\Runtime\\ExplorationSmoke.cs:30 ",
+    "unity": "6000.0.84f1"
+}

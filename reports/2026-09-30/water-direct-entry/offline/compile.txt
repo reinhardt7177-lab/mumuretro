@@ -1,0 +1,6 @@
+﻿Offline compile with Unity 6000.0.84f1 bundled Roslyn and the project's own Bee response files (sources replaced by the current Assets list).
+Run: 2026-09-30 13:07:32
+editor-runtime       exit=0 sources=59 diagnostics=0
+editor-editor        exit=0 sources=27 diagnostics=0
+player-development   exit=0 sources=59 diagnostics=0
+player-release       exit=0 sources=59 diagnostics=0

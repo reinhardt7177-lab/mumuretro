@@ -1,0 +1,12 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "second process restores partial water phases",
+        "far arrival fixes return bridge",
+        "exit opens through normal interaction",
+        "first room completion observed",
+        "bracelet carried across first real scene transition",
+        "partial collector tank and rail checkpoint saved"
+    ]
+}

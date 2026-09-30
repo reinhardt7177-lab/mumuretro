@@ -1,0 +1,11 @@
+﻿ice skin samples at body height (5cm grid): 9837
+inside a collider: 9489  within capsule reach of a face (<=0.285m): 348  further out: 0
+share the player body cannot overlap: 100.0%
+largest gaps (sanctuary-local x,z -> distance to nearest collider):
+gap histogram {}
+  far cell -5.78 -2.33 nearest ice 0.51
+  far cell -5.78 6.28 nearest ice 0.54
+  far cell 5.38 -2.33 nearest ice 0.53
+  far cell 5.88 6.03 nearest ice 0.53
+  far cell 5.88 6.28 nearest ice 0.66
+glacier box boundary cells farther than 0.5m from any ice skin: 5 of 1246 box cells

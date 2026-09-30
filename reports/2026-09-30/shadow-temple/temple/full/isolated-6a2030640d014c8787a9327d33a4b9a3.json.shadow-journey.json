@@ -1,0 +1,40 @@
+{
+    "version": 1,
+    "active": false,
+    "seed": 1680779183,
+    "stage": 4,
+    "x": 0.08667963743209839,
+    "z": 58.20769119262695,
+    "yaw": 264.9302673339844,
+    "greeted": true,
+    "sanctumGreeted": true,
+    "lampPhase": 0.10705184936523438,
+    "shadeFails": 0,
+    "mirrors": [
+        3,
+        3,
+        1,
+        1
+    ],
+    "cart": 0,
+    "firstLock": true,
+    "round": 3,
+    "panelZ": 44.980995178222659,
+    "lampZ": 42.02295684814453,
+    "direction": 7,
+    "height": 0,
+    "orbRevealed": true,
+    "orbTaken": true,
+    "hintLevel": [
+        0,
+        0,
+        0,
+        0
+    ],
+    "hintTime": [
+        33.71644592285156,
+        10.750007629394532,
+        8.083381652832032,
+        11.816658020019532
+    ]
+}

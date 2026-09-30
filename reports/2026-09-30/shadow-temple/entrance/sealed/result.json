@@ -1,0 +1,13 @@
+{
+    "passed": true,
+    "mode": "sealed",
+    "error": "",
+    "checks": [
+        "A completed record shows the bronze seal",
+        "The prompt says the temple is sealed (그림자의 사당 밀봉  ·  그림자의 지혜 기록 완료)",
+        "The sealed gate refuses entry",
+        "Notebook opens",
+        "The notebook shows the shadow wisdom"
+    ],
+    "measurements": []
+}

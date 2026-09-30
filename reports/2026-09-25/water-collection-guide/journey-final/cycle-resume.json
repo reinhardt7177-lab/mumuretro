@@ -1,0 +1,11 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "fourth process resumes final room automatically",
+        "permanent bridge and water route settings restored",
+        "all six units restored at correct devices",
+        "reused water opens final exit",
+        "final traversal persists completion"
+    ]
+}

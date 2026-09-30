@@ -1,0 +1,20 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Record case runs on the planet scene",
+        "Earlier record does not seal the doorway",
+        "Damaged record is detected without inventing a visit",
+        "Damaged record keeps the default weight temple quest",
+        "Doorway accepts entry with an earlier unreadable record",
+        "E action at the open doorway starts the connected water temple",
+        "A second E press during the transition is ignored",
+        "Return landing stays outside the doorway that will be sealed",
+        "Outdoor entry lands in the initialized first water puzzle room",
+        "First water room has an active controllable player",
+        "Entering does not award water completion early",
+        "Existing unreadable water record is kept byte-for-byte",
+        "Unreadable water record is reported, not replaced",
+        "First-room progress is written to the isolated local journey record"
+    ]
+}

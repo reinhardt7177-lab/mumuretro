@@ -1,0 +1,9 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "fifth process restores completion without replaying rooms",
+        "completed exit remains open",
+        "water mass preserved through all reloads"
+    ]
+}

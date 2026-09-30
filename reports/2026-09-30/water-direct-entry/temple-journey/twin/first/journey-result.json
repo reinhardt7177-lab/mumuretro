@@ -1,0 +1,23 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Valid journey fixture loaded",
+        "Ship resume opens saved room",
+        "Twin room loaded",
+        "Twin box 0 placement restored",
+        "Twin box 0 visual restored",
+        "Twin box 1 placement restored",
+        "Twin box 2 placement restored",
+        "Twin box 2 visual restored",
+        "Twin box 3 placement restored",
+        "Unsolved twin door remains closed",
+        "Twin reset saved to disk",
+        "Mid-progress does not complete or seal temple",
+        "Newer record is preserved",
+        "Corrupt record is preserved",
+        "Duplicate order slot rejected",
+        "Duplicate twin slot rejected",
+        "Invalid fulcrum rejected"
+    ]
+}

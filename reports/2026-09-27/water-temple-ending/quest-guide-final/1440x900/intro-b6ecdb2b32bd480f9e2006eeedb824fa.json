@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "recovered": true,
+    "opened": true,
+    "read": true,
+    "solved": false,
+    "departed": false,
+    "dials": [
+        0,
+        0,
+        0
+    ]
+}

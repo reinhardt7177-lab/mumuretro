@@ -1,0 +1,33 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "start freezing",
+        "cancel retains converted mass",
+        "resume freezes remaining water",
+        "long press stops at ice to water boundary",
+        "new press vaporizes water",
+        "repeated opposite powers conserve mass",
+        "empty target rejected",
+        "scene begins with four mass units",
+        "distant pickup rejected",
+        "near pickup attaches cuff to hand bone",
+        "reachable cooling accepted",
+        "scene cancellation retains partial freeze",
+        "full ice enables support collider",
+        "partial melt disables full ice support",
+        "runtime heating stops at melt boundary",
+        "wall blocks power from player",
+        "range above six metres rejected",
+        "carrying blocks ability",
+        "notebook blocks power",
+        "notebook restores input",
+        "unprepared collector returns water",
+        "physical pump recovers supply",
+        "collector cooling accepted",
+        "collector stores cold after releasing",
+        "prepared collector condenses into receiver",
+        "complete scene cycle conserves water",
+        "repeat loop restores supply without duplication"
+    ]
+}

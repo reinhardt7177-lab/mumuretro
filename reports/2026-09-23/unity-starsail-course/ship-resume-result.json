@@ -1,0 +1,10 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Previous voyage was loaded from disk",
+        "Relaunch resumes on the playable planet",
+        "Completed ship introduction is skipped on relaunch",
+        "Found notebook is usable after relaunch"
+    ]
+}

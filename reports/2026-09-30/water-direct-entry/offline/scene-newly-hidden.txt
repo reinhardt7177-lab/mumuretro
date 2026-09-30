@@ -1,0 +1,8 @@
+﻿chapter root 63.814,32.778,12.331 temple world 51.764,47.599,16.852
+former ice point 54.103,49.617,17.571 (log: 54.10, 49.62, 17.57)
+"Blender nature \xB7 original placement" children 1117 inactive 172 (in retired chapter rects 172 , elsewhere 0) in new plot 70 (active now 10) expected to reappear 112
+Nature collisions                      children 547 inactive 120 (in retired chapter rects 120 , elsewhere 0) in new plot 45 (active now 6) expected to reappear 81
+FINAL "Blender nature \xB7 o  hidden by sanctuary 66 | restored (was hidden) 119 | newly hidden (visible on 09-27) 13 | kept hidden 53 | visible but base 5-15cm under footing 3
+FINAL Nature collisions       hidden by sanctuary 42 | restored (was hidden) 84 | newly hidden (visible on 09-27) 6 | kept hidden 36 | visible but base 5-15cm under footing 1
+NEWLY "Blender nature \xB7  in footprint 0 buried 13 depth range 0.33..3.54
+NEWLY Nature collisions     in footprint 0 buried 6 depth range 0.47..3.54

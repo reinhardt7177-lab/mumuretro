@@ -1,0 +1,11 @@
+{
+    "passed": false,
+    "toggleValidated": true,
+    "persistenceValidated": true,
+    "blades": 174506,
+    "blenderLeaves": 164620,
+    "plumes": 9886,
+    "chunks": 181,
+    "changedPixels": 175291,
+    "error": "System.Exception: Scene changed independently of grass wind\r\n  at Mumu.Planet.MeadowSmoke+<Start>d__1.MoveNext () [0x00cbf] in D:\\mumumetro\\unity\\MumuPlanet\\Assets\\Mumu\\Runtime\\MeadowSmoke.cs:91 "
+}

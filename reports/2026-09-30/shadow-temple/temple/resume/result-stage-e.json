@@ -1,0 +1,12 @@
+{
+    "passed": true,
+    "mode": "stage-e",
+    "error": "",
+    "checks": [
+        "Resume: the lamp direction and height are restored, still unsolved",
+        "Resume: the sanctum greeting is not repeated",
+        "Height grip prompt offers up and down (E  등불 올리기  ·  Q  내리기)",
+        "Resume: the final stage completes and closes the record"
+    ],
+    "measurements": []
+}

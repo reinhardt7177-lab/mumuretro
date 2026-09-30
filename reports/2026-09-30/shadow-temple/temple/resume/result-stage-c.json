@@ -1,0 +1,17 @@
+{
+    "passed": true,
+    "mode": "stage-c",
+    "error": "",
+    "checks": [
+        "Resume: first lock and the cart stop are restored (1)",
+        "Rail lever prompt offers both directions",
+        "Cart rolled to the second target's line (stop 2)",
+        "Fourth mirror sends the beam into the second target; the mirror room is solved",
+        "Gate 2 opened (0.58 s)",
+        "Stage c round 1: grabbed the panel handle",
+        "Stage c round 1: the shadow filled the outline and the handle let go by itself",
+        "Stage c grabs the panel for round 2",
+        "Stage c is holding the panel mid-round"
+    ],
+    "measurements": []
+}

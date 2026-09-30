@@ -1,0 +1,724 @@
+{
+    "samples": [
+        {
+            "frame": 0,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 0.01666666753590107,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 15,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 0.2666666805744171,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 30,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 0.516666829586029,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 45,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 0.76666659116745,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 60,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 1.0166664123535157,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 75,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 1.2666661739349366,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 90,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 1.5166659355163575,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 105,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 1.7666656970977784,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 120,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 2.016665458679199,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 135,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 2.26666522026062,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 150,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 2.516664981842041,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 165,
+            "phase": "0",
+            "speed": 0.0,
+            "parameter": 0.0,
+            "time": 2.766664743423462,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 180,
+            "phase": "1",
+            "speed": 3.200000286102295,
+            "parameter": 0.4571429193019867,
+            "time": 3.016664505004883,
+            "legChange": 4.50823450088501,
+            "loop": true
+        },
+        {
+            "frame": 195,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 2.9283552169799806,
+            "time": 3.2666642665863039,
+            "legChange": 30.568878173828126,
+            "loop": true
+        },
+        {
+            "frame": 210,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.1730971336364748,
+            "time": 3.5166640281677248,
+            "legChange": 19.716157913208009,
+            "loop": true
+        },
+        {
+            "frame": 225,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.197335720062256,
+            "time": 3.7666637897491457,
+            "legChange": 37.162086486816409,
+            "loop": true
+        },
+        {
+            "frame": 240,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.1997361183166506,
+            "time": 4.016663551330566,
+            "legChange": 50.807125091552737,
+            "loop": true
+        },
+        {
+            "frame": 255,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999738216400148,
+            "time": 4.266666889190674,
+            "legChange": 8.837081909179688,
+            "loop": true
+        },
+        {
+            "frame": 270,
+            "phase": "1",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999971866607668,
+            "time": 4.516670227050781,
+            "legChange": 22.66338539123535,
+            "loop": true
+        },
+        {
+            "frame": 285,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999993324279787,
+            "time": 4.766673564910889,
+            "legChange": 37.29770278930664,
+            "loop": true
+        },
+        {
+            "frame": 300,
+            "phase": "1",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999995708465578,
+            "time": 5.016676902770996,
+            "legChange": 50.82920455932617,
+            "loop": true
+        },
+        {
+            "frame": 315,
+            "phase": "1",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999995708465578,
+            "time": 5.2666802406311039,
+            "legChange": 8.834598541259766,
+            "loop": true
+        },
+        {
+            "frame": 330,
+            "phase": "1",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999995708465578,
+            "time": 5.516683578491211,
+            "legChange": 22.66554069519043,
+            "loop": true
+        },
+        {
+            "frame": 345,
+            "phase": "1",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999995708465578,
+            "time": 5.766686916351318,
+            "legChange": 37.297019958496097,
+            "loop": true
+        },
+        {
+            "frame": 360,
+            "phase": "2",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999995708465578,
+            "time": 6.016690254211426,
+            "legChange": 50.83135223388672,
+            "loop": true
+        },
+        {
+            "frame": 375,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999995708465578,
+            "time": 6.266693592071533,
+            "legChange": 8.833535194396973,
+            "loop": true
+        },
+        {
+            "frame": 390,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999998092651369,
+            "time": 6.516696929931641,
+            "legChange": 22.667417526245118,
+            "loop": true
+        },
+        {
+            "frame": 405,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999998092651369,
+            "time": 6.766700267791748,
+            "legChange": 37.29631423950195,
+            "loop": true
+        },
+        {
+            "frame": 420,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999998092651369,
+            "time": 7.0167036056518559,
+            "legChange": 50.833499908447269,
+            "loop": true
+        },
+        {
+            "frame": 435,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999998092651369,
+            "time": 7.266706943511963,
+            "legChange": 8.832648277282715,
+            "loop": true
+        },
+        {
+            "frame": 450,
+            "phase": "2",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999998092651369,
+            "time": 7.51671028137207,
+            "legChange": 22.669294357299806,
+            "loop": true
+        },
+        {
+            "frame": 465,
+            "phase": "2",
+            "speed": 3.200000286102295,
+            "parameter": 3.1999998092651369,
+            "time": 7.766713619232178,
+            "legChange": 37.29560852050781,
+            "loop": true
+        },
+        {
+            "frame": 480,
+            "phase": "2",
+            "speed": 3.200000524520874,
+            "parameter": 3.1999998092651369,
+            "time": 8.016716003417969,
+            "legChange": 50.83559799194336,
+            "loop": true
+        },
+        {
+            "frame": 495,
+            "phase": "2",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999998092651369,
+            "time": 8.266712188720704,
+            "legChange": 8.832026481628418,
+            "loop": true
+        },
+        {
+            "frame": 510,
+            "phase": "2",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999998092651369,
+            "time": 8.516708374023438,
+            "legChange": 22.668807983398439,
+            "loop": true
+        },
+        {
+            "frame": 525,
+            "phase": "2",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999998092651369,
+            "time": 8.766704559326172,
+            "legChange": 37.29486083984375,
+            "loop": true
+        },
+        {
+            "frame": 540,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.742856979370117,
+            "time": 9.016700744628907,
+            "legChange": 46.78532028198242,
+            "loop": true
+        },
+        {
+            "frame": 555,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.2716447114944458,
+            "time": 9.26669692993164,
+            "legChange": 24.162158966064454,
+            "loop": true
+        },
+        {
+            "frame": 570,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.026902910321950914,
+            "time": 9.516693115234375,
+            "legChange": 3.059901714324951,
+            "loop": true
+        },
+        {
+            "frame": 585,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.0026643872261047365,
+            "time": 9.76668930053711,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 600,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.00026387328398413956,
+            "time": 10.016685485839844,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 615,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.000026133255232707597,
+            "time": 10.266681671142579,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 630,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 0.000002588162942629424,
+            "time": 10.516677856445313,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 645,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.56324256042717e-7,
+            "time": 10.766674041748047,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 660,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.5385624269347319e-8,
+            "time": 11.016670227050782,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 675,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.5141198012335055e-9,
+            "time": 11.266666412353516,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 690,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.4899127204491835e-10,
+            "time": 11.51666259765625,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 705,
+            "phase": "3",
+            "speed": 0.0,
+            "parameter": 2.46593839098308e-11,
+            "time": 11.766658782958985,
+            "legChange": 0.0,
+            "loop": true
+        },
+        {
+            "frame": 720,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 0.4571428894996643,
+            "time": 12.016654968261719,
+            "legChange": 4.508060455322266,
+            "loop": true
+        },
+        {
+            "frame": 735,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 2.9283552169799806,
+            "time": 12.266651153564454,
+            "legChange": 30.5693416595459,
+            "loop": true
+        },
+        {
+            "frame": 750,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 3.1730971336364748,
+            "time": 12.516647338867188,
+            "legChange": 19.71372413635254,
+            "loop": true
+        },
+        {
+            "frame": 765,
+            "phase": "4",
+            "speed": 3.1999998092651369,
+            "parameter": 3.197335720062256,
+            "time": 12.766643524169922,
+            "legChange": 37.16253662109375,
+            "loop": true
+        },
+        {
+            "frame": 780,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 3.1997361183166506,
+            "time": 13.016639709472657,
+            "legChange": 50.80366897583008,
+            "loop": true
+        },
+        {
+            "frame": 795,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999738216400148,
+            "time": 13.26663589477539,
+            "legChange": 8.839031219482422,
+            "loop": true
+        },
+        {
+            "frame": 810,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999974250793459,
+            "time": 13.516632080078125,
+            "legChange": 22.65775489807129,
+            "loop": true
+        },
+        {
+            "frame": 825,
+            "phase": "4",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999993324279787,
+            "time": 13.76662826538086,
+            "legChange": 37.298858642578128,
+            "loop": true
+        },
+        {
+            "frame": 840,
+            "phase": "4",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999993324279787,
+            "time": 14.016624450683594,
+            "legChange": 50.82151412963867,
+            "loop": true
+        },
+        {
+            "frame": 855,
+            "phase": "4",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999995708465578,
+            "time": 14.266620635986329,
+            "legChange": 8.83858871459961,
+            "loop": true
+        },
+        {
+            "frame": 870,
+            "phase": "4",
+            "speed": 3.200000047683716,
+            "parameter": 3.1999995708465578,
+            "time": 14.516616821289063,
+            "legChange": 22.65587615966797,
+            "loop": true
+        },
+        {
+            "frame": 885,
+            "phase": "4",
+            "speed": 3.1999998092651369,
+            "parameter": 3.1999995708465578,
+            "time": 14.766613006591797,
+            "legChange": 37.29969024658203,
+            "loop": true
+        },
+        {
+            "frame": 900,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 3.5714282989501955,
+            "time": 15.017552375793457,
+            "legChange": 53.83384704589844,
+            "loop": true
+        },
+        {
+            "frame": 915,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.579288482666016,
+            "time": 15.358185768127442,
+            "legChange": 12.978118896484375,
+            "loop": true
+        },
+        {
+            "frame": 930,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.778141498565674,
+            "time": 15.751025199890137,
+            "legChange": 49.2896842956543,
+            "loop": true
+        },
+        {
+            "frame": 945,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.797835826873779,
+            "time": 16.150300979614259,
+            "legChange": 68.17987060546875,
+            "loop": true
+        },
+        {
+            "frame": 960,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799785614013672,
+            "time": 16.550230026245118,
+            "legChange": 73.13101959228516,
+            "loop": true
+        },
+        {
+            "frame": 975,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799979209899902,
+            "time": 16.950227737426759,
+            "legChange": 43.85683059692383,
+            "loop": true
+        },
+        {
+            "frame": 990,
+            "phase": "5",
+            "speed": 5.8000006675720219,
+            "parameter": 5.7999982833862309,
+            "time": 17.35022735595703,
+            "legChange": 20.897279739379884,
+            "loop": true
+        },
+        {
+            "frame": 1005,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799999237060547,
+            "time": 17.750226974487306,
+            "legChange": 50.19377517700195,
+            "loop": true
+        },
+        {
+            "frame": 1020,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799999237060547,
+            "time": 18.150226593017579,
+            "legChange": 68.19760131835938,
+            "loop": true
+        },
+        {
+            "frame": 1035,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799999237060547,
+            "time": 18.55022621154785,
+            "legChange": 73.15570831298828,
+            "loop": true
+        },
+        {
+            "frame": 1050,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799999237060547,
+            "time": 18.950225830078126,
+            "legChange": 43.857452392578128,
+            "loop": true
+        },
+        {
+            "frame": 1065,
+            "phase": "5",
+            "speed": 5.800000190734863,
+            "parameter": 5.799999237060547,
+            "time": 19.3502254486084,
+            "legChange": 20.897544860839845,
+            "loop": true
+        },
+        {
+            "frame": 1080,
+            "phase": "6",
+            "speed": 3.1999995708465578,
+            "parameter": 5.428570747375488,
+            "time": 19.748119354248048,
+            "legChange": 51.17826461791992,
+            "loop": true
+        },
+        {
+            "frame": 1095,
+            "phase": "6",
+            "speed": 3.200000286102295,
+            "parameter": 3.4207112789154054,
+            "time": 20.033016204833986,
+            "legChange": 46.75722122192383,
+            "loop": true
+        },
+        {
+            "frame": 1110,
+            "phase": "6",
+            "speed": 3.200000286102295,
+            "parameter": 3.2218589782714845,
+            "time": 20.285930633544923,
+            "legChange": 6.107028961181641,
+            "loop": true
+        },
+        {
+            "frame": 1125,
+            "phase": "6",
+            "speed": 3.200000286102295,
+            "parameter": 3.202164888381958,
+            "time": 20.53621482849121,
+            "legChange": 25.79018211364746,
+            "loop": true
+        },
+        {
+            "frame": 1140,
+            "phase": "6",
+            "speed": 3.200000524520874,
+            "parameter": 3.200214385986328,
+            "time": 20.786243438720704,
+            "legChange": 35.41865158081055,
+            "loop": true
+        },
+        {
+            "frame": 1155,
+            "phase": "6",
+            "speed": 3.200000047683716,
+            "parameter": 3.200021505355835,
+            "time": 21.036239624023439,
+            "legChange": 53.0189323425293,
+            "loop": true
+        },
+        {
+            "frame": 1170,
+            "phase": "6",
+            "speed": 3.200000286102295,
+            "parameter": 3.2000021934509279,
+            "time": 21.286235809326173,
+            "legChange": 7.722658634185791,
+            "loop": true
+        },
+        {
+            "frame": 1185,
+            "phase": "6",
+            "speed": 3.200000047683716,
+            "parameter": 3.200000524520874,
+            "time": 21.536231994628908,
+            "legChange": 25.75995635986328,
+            "loop": true
+        }
+    ]
+}

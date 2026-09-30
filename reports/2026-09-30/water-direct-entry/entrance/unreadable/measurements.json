@@ -1,0 +1,12 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Record case runs on the planet scene",
+        "Earlier record does not seal the doorway",
+        "Damaged record is detected without inventing a visit",
+        "Damaged record keeps the default weight temple quest",
+        "Doorway accepts entry with an earlier unreadable record"
+    ],
+    "measurements": []
+}

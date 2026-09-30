@@ -1,0 +1,8 @@
+﻿started 16:42:15
+PASS exploration 4s @{passed=True; error=; unity=6000.0.84f1}
+PASS quest-guide 12s Quest guide 1440x900: 18 checks passed | Quest guide 960x540: 18 checks passed
+PASS weight-exterior 6s Exterior validation passed: 56 checks
+PASS weight-temple 22s Temple validation passed: 768 checks | Completion save and sealed door passed a separate-process reload.
+PASS starsail 9s Starsail opening passed: 39 checks | Starsail relaunch passed: 4 checks
+PASS notebook 35s Notebook uncompleted validation passed: 1180 checks at 1440x900 | Notebook completed validation passed: 1180 checks at 960x540 | Notebook wide validation passed: 1180 checks at 1920x868
+finished 16:43:42

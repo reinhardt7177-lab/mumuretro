@@ -1,0 +1,19 @@
+{
+    "version": 1,
+    "active": true,
+    "scene": "LeverBalanceTemple",
+    "count": 2,
+    "pivot": 3,
+    "locations": [
+        0,
+        4
+    ],
+    "floorX": [
+        -2.0,
+        2.0
+    ],
+    "floorZ": [
+        -4.800000190734863,
+        -4.800000190734863
+    ]
+}

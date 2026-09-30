@@ -1,0 +1,13 @@
+{
+    "passed": true,
+    "mode": "unreadable",
+    "error": "",
+    "checks": [
+        "The corrupt fixture exists",
+        "Unreadable record is reported and protected",
+        "The player is told the record could not be read",
+        "The unreadable file is kept byte for byte",
+        "Play continues in memory from a fresh layout"
+    ],
+    "measurements": []
+}

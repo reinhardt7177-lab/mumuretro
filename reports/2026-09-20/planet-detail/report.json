@@ -1,0 +1,86 @@
+{
+  "errors": [],
+  "views": [
+    "landing",
+    "forest",
+    "rocks",
+    "overlook",
+    "waterway"
+  ],
+  "routes": {
+    "ridge": [
+      {
+        "frames": 0,
+        "remaining": 0
+      },
+      {
+        "frames": 79,
+        "remaining": 0.37619784751071095
+      },
+      {
+        "frames": 70,
+        "remaining": 0.40912164388988914
+      },
+      {
+        "frames": 79,
+        "remaining": 0.4234890875458648
+      },
+      {
+        "frames": 59,
+        "remaining": 0.41324477683177896
+      },
+      {
+        "frames": 49,
+        "remaining": 0.40860179865850094
+      }
+    ],
+    "meadow": [
+      {
+        "frames": 0,
+        "remaining": 0
+      },
+      {
+        "frames": 116,
+        "remaining": 0.4450855768439612
+      },
+      {
+        "frames": 114,
+        "remaining": 0.3980757992928702
+      },
+      {
+        "frames": 128,
+        "remaining": 0.3980447222311689
+      },
+      {
+        "frames": 130,
+        "remaining": 0.37294595632877076
+      }
+    ]
+  },
+  "high": {
+    "byKind": {
+      "trunk": 232,
+      "canopyA": 140,
+      "canopyB": 140,
+      "rockA": 80,
+      "rockB": 80,
+      "bush": 80
+    },
+    "meshes": 139,
+    "instances": 12504,
+    "colliders": 4972
+  },
+  "low": {
+    "byKind": {
+      "trunk": 20,
+      "canopyA": 60,
+      "canopyB": 60,
+      "rockA": 20,
+      "rockB": 20,
+      "bush": 60
+    },
+    "meshes": 139,
+    "instances": 12504,
+    "colliders": 4972
+  }
+}

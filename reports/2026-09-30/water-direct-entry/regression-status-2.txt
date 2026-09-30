@@ -1,0 +1,7 @@
+﻿started 16:52:37
+FAIL meadow 4s THROWN: Meadow validation failed: D:\mumumetro\reports\2026-09-30\water-direct-entry\meadow/player.log
+PASS temple-journey 13s twin first: 17 checks | twin reload: 15 checks | lever first: 15 checks | lever reload: 13 checks
+PASS water-interior-ice 3s ice : 45 passed
+PASS water-interior-collection 2s collection : 46 passed
+PASS water-interior-cycle 2s cycle : 41 passed
+finished 16:53:02

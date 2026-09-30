@@ -1,0 +1,16 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Blender deity rendered in sanctuary",
+        "dialogue cannot start from entrance",
+        "central dry aisle is walkable",
+        "approaching deity starts dialogue and locks movement",
+        "input debounce prevents skipped opening line",
+        "notebook blocks dialogue advancement",
+        "second dialogue line shown",
+        "third dialogue line shown",
+        "dialogue completion restores exploration",
+        "audience does not immediately repeat in the same visit"
+    ]
+}

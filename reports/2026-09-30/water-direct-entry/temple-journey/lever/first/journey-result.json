@@ -1,0 +1,21 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Valid journey fixture loaded",
+        "Ship resume opens saved room",
+        "Lever fulcrum restored",
+        "Lever weight 0 placement restored",
+        "Lever weight 0 visual restored",
+        "Lever weight 1 placement restored",
+        "Lever weight 1 visual restored",
+        "Unsolved lever door remains closed",
+        "Lever reset saved to disk",
+        "Mid-progress does not complete or seal temple",
+        "Newer record is preserved",
+        "Corrupt record is preserved",
+        "Duplicate order slot rejected",
+        "Duplicate twin slot rejected",
+        "Invalid fulcrum rejected"
+    ]
+}

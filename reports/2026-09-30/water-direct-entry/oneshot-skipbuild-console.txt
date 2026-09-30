@@ -1,0 +1,31 @@
+Water entrance fresh: 48 checks passed
+Water entrance visited: 14 checks passed
+Water entrance unreadable: 14 checks passed
+sanctuary : 29 passed
+seed : 11 passed
+ice-resume : 6 passed
+collection-resume : 7 passed
+cycle-resume : 5 passed
+finished : 3 passed
+Isolated save: D:\mumumetro\tmp\oneshot-run\journey\journey-95c24169615a42cb9c0caf94581d2548.json
+Exploration movement check passed.
+Quest guide 1440x900: 18 checks passed
+Quest guide 960x540: 18 checks passed
+Exterior validation passed: 56 checks
+Temple validation passed: 768 checks
+Completion save and sealed door passed a separate-process reload.
+Starsail opening passed: 39 checks
+Starsail relaunch passed: 4 checks
+Notebook uncompleted validation passed: 1180 checks at 1440x900
+Notebook completed validation passed: 1180 checks at 960x540
+Notebook wide validation passed: 1180 checks at 1920x868
+weight first: 18 checks
+weight reload: 17 checks
+twin first: 17 checks
+twin reload: 15 checks
+lever first: 15 checks
+lever reload: 13 checks
+ice : 45 passed
+collection : 46 passed
+cycle : 41 passed
+All water direct-entry and regression checks passed. Evidence: D:\mumumetro\tmp\oneshot-run

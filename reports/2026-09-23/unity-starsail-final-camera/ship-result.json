@@ -1,0 +1,20 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Game opens on the Starsail",
+        "Starsail story controller exists",
+        "Ship scene has no planet temple entrance",
+        "Parcel must be recovered before reading",
+        "Ship and space vista render in the scene",
+        "Winch pulls the found parcel from space",
+        "Parcel lands on deck after retrieval",
+        "Opening the parcel begins the notebook scene",
+        "Blender notebook opens with the parcel message",
+        "Closing the notebook unlocks departure and movement",
+        "Helm cannot be used from the parcel position",
+        "Helm starts the planet voyage",
+        "Voyage lands on the existing playable planet",
+        "Acquired notebook remains usable on the planet"
+    ]
+}

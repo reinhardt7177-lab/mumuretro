@@ -1,0 +1,17 @@
+{
+    "passed": true,
+    "mode": "stage-b",
+    "error": "",
+    "checks": [
+        "Resume: room 1 stays solved and its gate open",
+        "Resume: the player returns to the saved spot in room 2",
+        "Resume: mirror 1 and the requested hint are restored",
+        "Resume: the greeting is not repeated",
+        "Prompt names mirror 2 at its pedestal (E  시계 방향  ·  Q  반대 방향  ·  거울 2)",
+        "Mirror 2 turned to step 3",
+        "Prompt names mirror 3 at its pedestal (E  시계 방향  ·  Q  반대 방향  ·  거울 3)",
+        "Mirror 3 turned to step 1",
+        "Resume: finishing the three mirrors locks the first target"
+    ],
+    "measurements": []
+}

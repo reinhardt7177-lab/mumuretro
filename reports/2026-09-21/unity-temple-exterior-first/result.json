@@ -1,0 +1,29 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Exterior lives in the exploration scene",
+        "Distant spawn cannot enter temple",
+        "Authored Blender exterior is present",
+        "Supported exterior material: Sanctuary limestone",
+        "Supported exterior material: Sanctuary dark inlay",
+        "Supported exterior material: Sanctuary aged gold",
+        "Supported exterior material: Sanctuary cut edges",
+        "Supported exterior material: Sanctuary turquoise",
+        "Supported exterior material: Sanctuary doorway",
+        "Supported exterior material: NanumGothic - Regular Material",
+        "Supported exterior material: Sanctuary cut edges",
+        "Exterior geometry stays below 20k triangles including paving",
+        "Rear wall cannot trigger temple entry",
+        "Side wall cannot trigger temple entry",
+        "Pier blocks walking through it: -1",
+        "Pier blocks walking through it: 1",
+        "Walking along the paved approach reaches the entrance",
+        "Player stays grounded on the approach",
+        "Portal surface blocks walking through the facade",
+        "Front entrance accepts the same action used by E",
+        "Exterior entry loads the first weight puzzle",
+        "Leaving the temple restores the exterior approach position",
+        "Exterior survives the return to the planet"
+    ]
+}

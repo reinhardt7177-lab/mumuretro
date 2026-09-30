@@ -1,0 +1,12 @@
+{
+    "passed": true,
+    "error": "",
+    "checks": [
+        "Record case runs on the planet scene",
+        "Earlier record does not seal the doorway",
+        "Existing entranceOpen record is read as a visit",
+        "Visited sanctuary is the quest target from the landing (물의 신전 찾아가기)",
+        "Doorway accepts entry with an earlier visited record"
+    ],
+    "measurements": []
+}

@@ -1,0 +1,56 @@
+{
+    "version": 1,
+    "room": 2,
+    "acquired": true,
+    "bridge": true,
+    "door": true,
+    "gallery": false,
+    "toBoiler": true,
+    "valve": true,
+    "finished": true,
+    "rail": -2.5,
+    "water": [
+        {
+            "id": "얼음 저수조",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "얼음길 도랑",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "회수조",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "가열 용기",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        },
+        {
+            "id": "냉각 집수판",
+            "ice": 0.0,
+            "liquid": 0.0,
+            "vapour": 0.0,
+            "cold": 1.0
+        },
+        {
+            "id": "성소 수조",
+            "ice": 0.0,
+            "liquid": 6.0,
+            "vapour": 0.0,
+            "cold": 0.0
+        }
+    ]
+}

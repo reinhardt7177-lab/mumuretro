@@ -1,0 +1,4 @@
+﻿Water entrance fresh: 48 checks passed
+Water entrance visited: 14 checks passed
+Water entrance unreadable: 14 checks passed
+elapsed 8s
