@@ -1,0 +1,14 @@
+{
+  "pass": true,
+  "url": "http://192.168.55.247:5514",
+  "clients": 3,
+  "date": "2026-10-21T14:40:02.247Z",
+  "checks": [
+    "three independent browser contexts create and join by visible room code",
+    "shared ownership and placements in all three stages",
+    "actual walk through opened doors to guardian",
+    "return to original ship",
+    "personal reward, dialogue and save remain isolated"
+  ],
+  "separatePhysicalStudentDevices": false
+}

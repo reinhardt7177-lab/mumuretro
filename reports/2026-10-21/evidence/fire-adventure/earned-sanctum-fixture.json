@@ -1,0 +1,57 @@
+{
+  "version": 3,
+  "fracture": {
+    "version": 1,
+    "braces": [
+      {
+        "slot": 0,
+        "pos": [
+          -32,
+          9
+        ]
+      },
+      {
+        "slot": 1,
+        "pos": [
+          -24,
+          9
+        ]
+      }
+    ],
+    "stable": true,
+    "latched": true,
+    "visited": true,
+    "returned": true,
+    "checkpoint": "hub"
+  },
+  "foundry": {
+    "version": 1,
+    "channels": [
+      0,
+      0
+    ],
+    "valve": false,
+    "fill": 1,
+    "cooling": 4,
+    "solid": true,
+    "latched": true,
+    "visited": true,
+    "returned": true
+  },
+  "steam": {
+    "version": 1,
+    "diverter": "lift",
+    "bridgeLatched": true,
+    "liftLevel": "upper",
+    "rodeUp": true,
+    "upperReached": true,
+    "visited": true
+  },
+  "sanctum": {
+    "version": 1,
+    "phase": "ready",
+    "line": 0,
+    "awards": 0
+  },
+  "checkpoint": "sanctum"
+}

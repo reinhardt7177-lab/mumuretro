@@ -9,6 +9,10 @@ for(const mobile of [false,true]){
  await p.locator('#questGuide').waitFor({state:'visible'});
  assert.match(await p.locator('#questText').innerText(),/소포 건져/);
  const before=await p.evaluate(()=>JSON.stringify(game.snapshot()));
+ assert.equal(await p.locator('#questGuide button').getAttribute('aria-pressed'),'true');
+ if(mobile)await p.locator('#questGuide button').tap();else await p.locator('#questGuide button').click();
+ await p.waitForFunction(()=>document.querySelector('#questDirection').hidden);
+ assert.equal(await p.evaluate(()=>JSON.stringify(game.snapshot())),before);
  if(mobile)await p.locator('#questGuide button').tap();else await p.locator('#questGuide button').click();
  await p.waitForFunction(()=>!document.querySelector('#questDirection').hidden);
  assert.equal(await p.evaluate(()=>JSON.stringify(game.snapshot())),before);

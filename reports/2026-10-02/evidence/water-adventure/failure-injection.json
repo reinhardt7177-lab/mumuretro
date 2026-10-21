@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-02T04:03:54.696Z",
+  "checks": [
+    {
+      "name": "new water room replaces old control panels",
+      "pass": true
+    },
+    {
+      "name": "bracelet acquired with E",
+      "pass": true
+    },
+    {
+      "name": "R freezes one parcel but does not open the first door",
+      "pass": true
+    },
+    {
+      "name": "waiting does not auto-solve",
+      "pass": true
+    },
+    {
+      "name": "optional water fragment earned by actual jumping",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "movement": "Automatic camera steering and actual Input intents; shrine entry staged.",
+  "funVerified": false,
+  "failureInjection": true,
+  "failure": "page.evaluate: Error: Walk blocked to 0,-7.2 at -8.412675069803766e-49,1.5826666666666678,-5.392287907519741\n    at Object.walk (eval at evaluate (:311:30), <anonymous>:4:244)\n    at eval (eval at evaluate (:311:30), <anonymous>:2:133)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+}

@@ -12,6 +12,8 @@ export class Input {
     this._action = false;
     this._jump = false;
     this._holdJump = false;      // 모바일 점프 버튼을 누르고 있는 동안 true(활공)
+    this._waterPower = null;
+    this._waterTool = null;
     this._test = null;
     this._touchMove = { active: false, x: 0, y: 0 };
 
@@ -26,6 +28,8 @@ export class Input {
       // Space는 점프 전용. 예전엔 배달도 겸했는데 그대로 두면 뛸 때마다 배달이 나간다.
       if (e.code === 'Space') this._jump = true;
       if (e.code === 'KeyE') this._action = true;
+      if (e.code === 'KeyQ') this._waterPower = 'heat';
+      if (e.code === 'KeyR') this._waterPower = 'cool';
     });
     addEventListener('keyup', e => { this.keys[e.code] = false; });
 
@@ -99,11 +103,14 @@ export class Input {
   // 터치 버튼용. 키보드의 E와 같은 자리로 들어간다 —
   // 조작 경로를 둘로 나누면 한쪽만 고쳐지는 일이 반드시 생긴다.
   requestAction() { this._action = true; }
+  requestWaterPower(power) { if (power === 'heat' || power === 'cool') this._waterPower = power; }
+  requestWaterTool(tool) { if (tool === 'recover' || tool === 'hint') this._waterTool = tool; }
   setHoldJump(on) { this._holdJump = !!on; }
 
   reset() {
     this.keys = {};
     this._action = this._jump = this._holdJump = false;
+    this._waterPower = this._waterTool = null;
     this._yawDelta = 0;
     this._touchMove.active = false;
     this._touchMove.x = this._touchMove.y = 0;
@@ -125,7 +132,9 @@ export class Input {
     const jump = this._jump; this._jump = false;
     // 누르고 있는 상태 — 활공 판정에 쓴다(모바일 버튼은 _holdJump로 대체).
     const jumpHeld = !!this.keys['Space'] || this._holdJump;
-    this.intent = { x, y, run, action, jump, jumpHeld };
+    const waterPower = this._waterPower, waterTool = this._waterTool;
+    this._waterPower = this._waterTool = null;
+    this.intent = { x, y, run, action, jump, jumpHeld, waterPower, waterTool };
     return this.intent;
   }
 }

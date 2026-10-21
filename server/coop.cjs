@@ -1,11 +1,13 @@
 // Ephemeral, account-free rooms. Deploy separately from static hosting.
 const {createBalance,releaseBalance,commandBalance}=require('./balance.cjs');
 const http=require('node:http'),crypto=require('node:crypto');
-function createCoopServer({now=Date.now,origins=['http://127.0.0.1:5512'],ttl=30000}={}){
+function createCoopServer({now=Date.now,origins=['http://127.0.0.1:5512'],ttl=30000,allowSameOrigin=false}={}){
  const rooms=new Map();
  function sweep(){for(const [code,r] of rooms){for(const [id,p] of r.players)if(now()-p.seen>ttl){releaseBalance(r.balance,p.id);r.players.delete(id);}if(!r.players.size)rooms.delete(code);}}
  const server=http.createServer(async(req,res)=>{
-  const origin=req.headers.origin;if(origin&&!origins.includes(origin)){res.writeHead(403);return res.end();}
+  const origin=req.headers.origin;
+  let sameOrigin=false;try{const u=new URL(origin);sameOrigin=allowSameOrigin&&u.host===req.headers.host&&['http:','https:'].includes(u.protocol);}catch{}
+  if(origin&&!origins.includes(origin)&&!sameOrigin){res.writeHead(403);return res.end();}
   if(origin)res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');res.setHeader('Cache-Control','no-store');
   res.setHeader('Access-Control-Allow-Headers','Content-Type');res.setHeader('Access-Control-Allow-Methods','POST, OPTIONS');
   if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}

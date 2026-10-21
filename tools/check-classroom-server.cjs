@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),{createAppServer}=require('../server/app.cjs');
+(async()=>{const s=createAppServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${s.address().port}`;
+ const call=(url,origin=base,body={})=>fetch(base+url,{method:'POST',headers:{'Content-Type':'application/json',Origin:origin},body:JSON.stringify(body)});
+ try{for(const url of ['/.git/config','/AGENTS.md','/server/coop.cjs','/art/fire-temple/v01/design-spec.json','/%2eenv'])assert.equal((await fetch(base+url)).status,404,url);
+ const page=await fetch(base+'/');assert.equal(page.status,200);assert.match(await page.text(),/무무/);const file=await fetch(base+'/src/boot.js');assert.equal(file.status,200);const bytes=await file.arrayBuffer();assert.equal(Number(file.headers.get('content-length')),bytes.byteLength);
+ assert.equal((await call('/api/coop/create','https://unexpected.example')).status,403);
+ const a=await (await call('/api/coop/create')).json(),members=[a];assert(a.code&&a.token);for(let i=0;i<2;i++)members.push(await (await call('/api/coop/join',base,{code:a.code})).json());
+ assert.equal((await call('/api/coop/join',base,{code:a.code})).status,409);const state=await(await call('/api/coop/state',base,a)).json();assert.equal(state.players.length,3);assert(!state.players.some(p=>'token'in p));
+ for(const m of members)assert.equal((await call('/api/coop/leave',base,m)).status,200);
+ console.log('PASS shared-origin game, binary size, private files blocked, foreign origin rejected, three members, fourth rejected, no token disclosure, leave');
+ }finally{await new Promise(r=>s.close(r));}})().catch(e=>{console.error(e);process.exitCode=1;});

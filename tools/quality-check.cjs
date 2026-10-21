@@ -140,9 +140,18 @@ const KEY = 'mumuplanet.progress.v1', BACKUP = 'mumuplanet.progress.previous.v1'
     { mode: restored.mode, count: restored.count, map: restored.map, tab: restored.snapshot.notebook.tab });
     const distance = Math.hypot(...restored.snapshot.position.map((v, i) => v - staged.snapshot.position[i]));
     check('Checkpoint returns to saved outdoor position', distance < 0.3, distance);
-    await p.evaluate(() => { game.enterShrine(game.shrines.shrines[0]); game.loop.stop(); });
-    check('Completed shrine stays open without duplicate orb', await p.evaluate(() => game.room.gates.every(g => g.solved)
-      && game.room.prize.taken && !game.room.prize.group.visible));
+    check('Completed balance shrine stays sealed without changing active progress', await p.evaluate(() => {
+      const before = game.room, mode = game.mode, count = game.shrines.clearedCount();
+      const shrine = game.shrines.shrines[0]; game.enterShrine(shrine); game.loop.stop();
+      return shrine.cleared && !!shrine.group.getObjectByName('밀봉된 균형의 사당')
+        && game.room === before && game.mode === mode && game.shrines.clearedCount() === count;
+    }));
+    await p.evaluate(() => {
+      game.exitShrine(); game.shrines.markCleared(game.shrines.shrines[1]);
+      game.enterShrine(game.shrines.shrines[1]); game.loop.stop();
+    });
+    check('Completed revisitable shrine stays open without duplicate orb', await p.evaluate(() => game.room.gates.every(g => g.solved)
+      && game.room.prize.taken && !game.room.prize.group.visible && game.shrines.clearedCount() === 2));
     check('Hint three waits until 135 seconds', await p.evaluate(() => {
       const r = game.room; const id = Object.keys(r.hints).find(id => r.hints[id].texts.length >= 3); const h = r.hints[id];
       r.nudge(id, 45); const a = h.level; r.nudge(id, 45); const b = h.level;

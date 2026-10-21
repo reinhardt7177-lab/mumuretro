@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-21",
+  "fracturePass": true,
+  "fractureChecks": 33,
+  "foundryPass": true,
+  "foundryChecks": 33,
+  "steamPass": true,
+  "steamChecks": 37,
+  "totalChecks": 103,
+  "steamErrors": [],
+  "transportInjectionDetected": true,
+  "mainGameReplaced": false,
+  "deployed": false
+}

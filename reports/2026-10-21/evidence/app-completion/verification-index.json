@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-21T14:45:17.336Z",
+  "pass": true,
+  "scope": "Local Three.js app completion, individual exploration and same-network three-person balance experiments. No public deployment or physical student-device claim.",
+  "reports": [
+    {
+      "id": "notebook",
+      "source": "tmp/notebook-check.json",
+      "captured": "2026-10-21T13:38:13.365Z",
+      "checks": 0,
+      "sha256": "9c807f48a8ee6c008b18bf08aaabd766ce27651b45d8d457e223dd0937209bbc",
+      "pass": true
+    },
+    {
+      "id": "ending",
+      "source": "tmp/endflow-check.json",
+      "captured": "2026-10-21T13:13:59.032Z",
+      "checks": 15,
+      "sha256": "a2676b10348c169299ae7ed8acae38ef1fb6bd9ecf709e35c978b598b181cd47",
+      "pass": true
+    },
+    {
+      "id": "starsail",
+      "source": "reports/2026-09-09/evidence/starsail/report.json",
+      "captured": "2026-10-21T13:40:27.750Z",
+      "checks": 12,
+      "sha256": "7850197c04fcac167b4d9300e59da8e1004a6bea6e2f590d4afce1826a879be9",
+      "pass": true
+    },
+    {
+      "id": "balance",
+      "source": "reports/2026-09-09/evidence/balance-temple/report.json",
+      "captured": "2026-10-21T13:22:46.652Z",
+      "checks": 8,
+      "sha256": "dcfa47bcffb5e734f5cab6799e7796bf69e14bc993c443473540ed177753163c",
+      "pass": true
+    },
+    {
+      "id": "common",
+      "source": "reports/2026-09-09/evidence/github-integration/report.json",
+      "captured": "2026-10-21T14:29:26.707Z",
+      "checks": 16,
+      "sha256": "dc15f79a8aa4f143f93273f661b2f8de18b1ab169c569d7ec268738cd6069363",
+      "pass": true
+    },
+    {
+      "id": "water",
+      "source": "reports/2026-10-02/evidence/water-adventure/report.json",
+      "captured": "2026-10-21T13:14:33.044Z",
+      "checks": 21,
+      "sha256": "5b8c95551b504357086a0897c0c3ce5f7079b400030e355c108ddb803f27a611",
+      "pass": true
+    },
+    {
+      "id": "fire",
+      "source": "reports/2026-10-21/evidence/fire-adventure/report.json",
+      "captured": "2026-10-21T14:35:50.126Z",
+      "checks": 27,
+      "sha256": "672bf9e7e62671bd47c3406ce6d605e43b2aac03992929ea5f23aa063cc7c0a9",
+      "pass": true
+    },
+    {
+      "id": "shade",
+      "source": "tmp/shade-court/report.json",
+      "captured": "2026-10-21T13:23:12.077Z",
+      "checks": 16,
+      "sha256": "2c14955259f893cfbdfeb0bb2745bfa76fa82df9d86413f5079aa8463e600e17",
+      "pass": true
+    },
+    {
+      "id": "mirrors",
+      "source": "tmp/mirror-gallery/report.json",
+      "captured": "2026-10-21T13:29:48.971Z",
+      "checks": 18,
+      "sha256": "10a86f65d676909219209c7768dc8a0e36cf1642649e65f086ad615a5c0d1fdc",
+      "pass": true
+    },
+    {
+      "id": "silhouette",
+      "source": "tmp/silhouette-court/report.json",
+      "captured": "2026-10-21T13:31:26.987Z",
+      "checks": 20,
+      "sha256": "a15190fb93e9c698637ee04d7b326c393d33eb92693e3c2c3e85c6ea7195f80c",
+      "pass": true
+    },
+    {
+      "id": "shadowSanctum",
+      "source": "tmp/shadow-sanctum/report.json",
+      "captured": "2026-10-21T13:33:28.593Z",
+      "checks": 21,
+      "sha256": "9a487e11a9f39e70729b22bf9cc9fbbcf5a7a1cf36a06d85c61248a544026c40",
+      "pass": true
+    },
+    {
+      "id": "sieve",
+      "source": "tmp/sieve-court/report.json",
+      "captured": "2026-10-21T13:29:57.936Z",
+      "checks": 15,
+      "sha256": "a25346e86dfcd23b652d756337fe6cfdba879db7bab70bf5e2fd82a24331ba6d",
+      "pass": true
+    },
+    {
+      "id": "sort",
+      "source": "tmp/sort-court/report.json",
+      "captured": "2026-10-21T13:32:08.784Z",
+      "checks": 14,
+      "sha256": "9cb0ca5af6274ad2fb5c33dac2b792d355f87b30d2170be2ad9ab170a96c7579",
+      "pass": true
+    },
+    {
+      "id": "evaporation",
+      "source": "tmp/evaporation-court/report.json",
+      "captured": "2026-10-21T13:33:20.485Z",
+      "checks": 14,
+      "sha256": "0b3ba2747b9a16350f4071c26d1612a37f7eddce48d4608dfe8e7b5800d207a7",
+      "pass": true
+    },
+    {
+      "id": "siftSanctum",
+      "source": "tmp/sift-sanctum/report.json",
+      "captured": "2026-10-21T13:40:12.364Z",
+      "checks": 14,
+      "sha256": "a5b14d1a8db88f1bb4897089da2971c6350d926929b1e8f16ac563f04a0b3311",
+      "pass": true
+    },
+    {
+      "id": "notebookPages",
+      "source": "reports/2026-10-21/evidence/app-completion/notebook-pages.json",
+      "captured": "2026-10-21T13:25:12.718Z",
+      "checks": 19,
+      "sha256": "4a70ac4510e7b62b4d4aae0b7fe57ee19fabe5e487fa61e407c99137c2a7dd3f",
+      "pass": true
+    },
+    {
+      "id": "chronicleArt",
+      "source": "reports/2026-10-21/evidence/app-completion/chronicle-art.json",
+      "captured": "2026-10-21T14:35:18.499Z",
+      "checks": 7,
+      "sha256": "65ec89df78ba140f9d16a61d182d3d7ea66b22f5939704009f7a284a6901c764",
+      "pass": true
+    },
+    {
+      "id": "strataJourney",
+      "source": "reports/2026-10-21/evidence/app-completion/strata-journey.json",
+      "captured": "2026-10-21T14:36:34.770Z",
+      "checks": 14,
+      "sha256": "83af51b4660ad5da1457becab36071f7414b150e445aba01783db80c10cf9f61",
+      "pass": true
+    },
+    {
+      "id": "currentProgress",
+      "source": "reports/2026-10-21/evidence/app-completion/app-progress.json",
+      "captured": "2026-10-21T14:44:19.359Z",
+      "checks": 7,
+      "sha256": "72e10e8fac2a745f908ed2dbfec01dd6dfff9d2baf830deba9521a836bbe2bad",
+      "pass": true
+    },
+    {
+      "id": "classroom",
+      "source": "reports/2026-10-21/evidence/app-completion/classroom-browser.json",
+      "captured": "2026-10-21T14:40:02.249Z",
+      "checks": 5,
+      "sha256": "58277a647737591f028a635b222e6b7b2d606f728b694029012b26addc6f2dea",
+      "pass": true
+    }
+  ],
+  "sourceFingerprints": {
+    "src/boot.js": "d3947b56cad0894601efed340de39db8d2c4dcc9f17b3e63f62093a9afc2a5f3",
+    "src/ui/Notebook.js": "2d98105822c6f5d63c908457f96a68b4a10aa6bff662dd441126d84dc2335352",
+    "src/ui/Coop.js": "ff6618cf7017878fd3778f32dbf0fc7dda2bed9b2ec4d7b260a20d90bdf3ebf5",
+    "src/ui/QuestGuide.js": "c4b09b919f7d8c566314f935b09809f02e0ca863c9168bab70d479478e6fadfe",
+    "src/ui/Title.js": "1cc6d4733b4df0e2de76916df9ea3f573051a3b7bf0d69378bb6a94b0a683d19",
+    "src/debug/introspect.js": "c2c7f28a2da47d4fa17faa5e40058b1606f2b54ecfb2aa91379cb6b7def57a5e",
+    "src/shrine/Room.js": "b487d0d064e6e77d746e1860e50c4b505ce2d03969c5e1e3e7a7f5fcd750ba7e",
+    "src/shrine/RoomActor.js": "3c0437bcdfbecf20405ebd14a4d58212fc285d20667442413f4477ac000c8b5b",
+    "src/shrine/StrataGates.js": "db5ff9311d6ce3356d9433b3ab83f60c3b50ac75c3867e40da9a8c7cba076b54",
+    "src/shrine/StrataOrder.js": "6b0510dce22cdd2d25c579e75ebab8f52b38debeb347289b9b5ea0b17d55e5f2",
+    "src/shrine/ChronicleArt.js": "aa458a6a125ff97d731382d7daaaa812737f3d290ec9538e362203dcf36accca",
+    "server/app.cjs": "e38007cfe9c30165df6198a075ae60dfcaad319c4ac72bc31bd7aa0afb9398ec",
+    "server/coop.cjs": "4ea7779a458e0c11f17df6abfa81e15e6bf3296563fa33001c8534f18438f3c9",
+    "tools/serve-local.cjs": "407e13fadf1e70ecbf911baa4a0c66bad8bdf91bfc25be96313e6ef2a7de1d31",
+    "assets/models/chronicle-temple/guardian-v01.glb": "ec6006ea1388fce47a7d055b11849530939ef82436d6d35dc2bee6f583fb9e00"
+  },
+  "visuals": "views/metrics.json",
+  "injections": [
+    "notebook-pages-failure.json",
+    "strata-failure.json",
+    "chronicle-art-failure.json"
+  ],
+  "notes": [
+    "Prior temple reports use their original evidence directories; copies preserved here. Each report records its own checks and source time.",
+    "Newest glyph-only model revision additionally validated by chronicle art and actual strata-ending traversal.",
+    "Independent browsers ran on one PC using its LAN address; real student devices remain field validation."
+  ]
+}

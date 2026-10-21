@@ -1,0 +1,473 @@
+{
+  "date": "2026-10-02",
+  "preserved": 272,
+  "models": [
+    {
+      "id": "balance-deity",
+      "meshes": 6,
+      "vertices": 270900,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 90300
+    },
+    {
+      "id": "weight-exterior",
+      "meshes": 13,
+      "vertices": 10412,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 19692
+    },
+    {
+      "id": "explorer-notebook",
+      "meshes": 6,
+      "vertices": 7996,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 6852
+    },
+    {
+      "id": "glacier-temple",
+      "meshes": 7,
+      "vertices": 155496,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 51832
+    },
+    {
+      "id": "glacier-seal",
+      "meshes": 1,
+      "vertices": 18192,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 6064
+    },
+    {
+      "id": "water-mountain",
+      "meshes": 6,
+      "vertices": 146550,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 48850
+    },
+    {
+      "id": "solar-altar",
+      "meshes": 3,
+      "vertices": 15432,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 5144
+    },
+    {
+      "id": "solar-mirror",
+      "meshes": 4,
+      "vertices": 17028,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 5676
+    },
+    {
+      "id": "water-deity",
+      "meshes": 1,
+      "vertices": 193306,
+      "finite": true,
+      "textured": 1,
+      "normal": true,
+      "drawn": 147977
+    },
+    {
+      "id": "ice-hall-v07",
+      "meshes": 13,
+      "vertices": 333900,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 111300
+    },
+    {
+      "id": "collection-hall-v07",
+      "meshes": 14,
+      "vertices": 456240,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 152080
+    },
+    {
+      "id": "cycle-hall-v09",
+      "meshes": 14,
+      "vertices": 413028,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 137676
+    },
+    {
+      "id": "ice-gate-detail-v06",
+      "meshes": 4,
+      "vertices": 20592,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 6864
+    },
+    {
+      "id": "collector-detail-v02",
+      "meshes": 1,
+      "vertices": 1656,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 552
+    },
+    {
+      "id": "return-bridge-detail-v02",
+      "meshes": 2,
+      "vertices": 3564,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1188
+    },
+    {
+      "id": "water-sanctuary-v01",
+      "meshes": 7,
+      "vertices": 121992,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 40664
+    },
+    {
+      "id": "water-deity-halo-v03",
+      "meshes": 2,
+      "vertices": 69888,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 23296
+    },
+    {
+      "id": "water-deity-droplet-v03",
+      "meshes": 1,
+      "vertices": 7680,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2560
+    },
+    {
+      "id": "direction-wheel-base-v01",
+      "meshes": 4,
+      "vertices": 7944,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2648
+    },
+    {
+      "id": "direction-wheel-rotor-v01",
+      "meshes": 4,
+      "vertices": 6672,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2224
+    },
+    {
+      "id": "guardian-v01",
+      "meshes": 5,
+      "vertices": 10362,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 3454
+    },
+    {
+      "id": "height-grip-base-v01",
+      "meshes": 4,
+      "vertices": 5556,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1852
+    },
+    {
+      "id": "height-grip-knob-v01",
+      "meshes": 2,
+      "vertices": 1104,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 368
+    },
+    {
+      "id": "hint-post-v01",
+      "meshes": 5,
+      "vertices": 2772,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 924
+    },
+    {
+      "id": "light-emitter-v01",
+      "meshes": 6,
+      "vertices": 7656,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2552
+    },
+    {
+      "id": "mirror-cart-v01",
+      "meshes": 4,
+      "vertices": 9372,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 3124
+    },
+    {
+      "id": "mirror-head-small-v01",
+      "meshes": 4,
+      "vertices": 3300,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1100
+    },
+    {
+      "id": "mirror-head-v01",
+      "meshes": 4,
+      "vertices": 3624,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1208
+    },
+    {
+      "id": "mirror-lever-v01",
+      "meshes": 5,
+      "vertices": 4896,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1632
+    },
+    {
+      "id": "mirror-pedestal-v01",
+      "meshes": 4,
+      "vertices": 4836,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1612
+    },
+    {
+      "id": "mirror-rail-v01",
+      "meshes": 3,
+      "vertices": 6804,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2268
+    },
+    {
+      "id": "mirror-receiver-v01",
+      "meshes": 7,
+      "vertices": 6252,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2084
+    },
+    {
+      "id": "sanctum-hanger-v01",
+      "meshes": 1,
+      "vertices": 132,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 44
+    },
+    {
+      "id": "sanctum-lamp-v01",
+      "meshes": 4,
+      "vertices": 6024,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2008
+    },
+    {
+      "id": "sanctum-trolley-v01",
+      "meshes": 4,
+      "vertices": 5664,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1888
+    },
+    {
+      "id": "shade-lamp-v01",
+      "meshes": 5,
+      "vertices": 9612,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 3204
+    },
+    {
+      "id": "shade-pillar-v01",
+      "meshes": 3,
+      "vertices": 4608,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1536
+    },
+    {
+      "id": "shade-practice-pillar-v01",
+      "meshes": 5,
+      "vertices": 4992,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 1664
+    },
+    {
+      "id": "shadow-bridges-v01",
+      "meshes": 9,
+      "vertices": 47484,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 15828
+    },
+    {
+      "id": "shadow-entry-v01",
+      "meshes": 10,
+      "vertices": 29280,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 9760
+    },
+    {
+      "id": "shadow-gate-exterior-v01",
+      "meshes": 8,
+      "vertices": 18804,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 6268
+    },
+    {
+      "id": "shadow-gate-seal-v01",
+      "meshes": 2,
+      "vertices": 7356,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2452
+    },
+    {
+      "id": "shadow-horizon-v01",
+      "meshes": 2,
+      "vertices": 11094,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 3698
+    },
+    {
+      "id": "shadow-island-v01",
+      "meshes": 3,
+      "vertices": 15216,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 5072
+    },
+    {
+      "id": "shadow-room1-v01",
+      "meshes": 12,
+      "vertices": 79800,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 26600
+    },
+    {
+      "id": "shadow-room2-v01",
+      "meshes": 13,
+      "vertices": 53280,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 17760
+    },
+    {
+      "id": "shadow-room3-v01",
+      "meshes": 10,
+      "vertices": 32316,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 10772
+    },
+    {
+      "id": "shadow-sanctum-v01",
+      "meshes": 15,
+      "vertices": 101232,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 33744
+    },
+    {
+      "id": "silhouette-lamp-stand-v01",
+      "meshes": 6,
+      "vertices": 9144,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 3048
+    },
+    {
+      "id": "silhouette-panel-cart-v01",
+      "meshes": 6,
+      "vertices": 7020,
+      "finite": true,
+      "textured": 0,
+      "normal": false,
+      "drawn": 2340
+    }
+  ],
+  "runtime": {
+    "notebook": true,
+    "exteriors": [
+      "weight-exterior",
+      "glacier-temple"
+    ],
+    "directWaterEntrance": true,
+    "balanceDeity": true,
+    "waterDeity": true,
+    "grassToggle": {
+      "enabled": true,
+      "visible": true,
+      "count": 470,
+      "batches": 4
+    }
+  },
+  "errors": []
+}

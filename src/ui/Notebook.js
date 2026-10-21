@@ -25,6 +25,7 @@ import { PORTAL_CODE } from '../world/Lab.js';
 import { SHRINE_THEMES } from '../data/lighting.js';
 import { markSvg } from '../data/marks.js';
 import { sfx } from '../core/Audio.js';
+import { attachNotebookArt } from './NotebookArt.js';
 import { RECIPES } from '../data/recipes.js';
 import { KINDS as FORAGE_KINDS, LEGEND, LEGEND_NOTE, LEGEND_LOCKED, BEASTS }
   from '../data/forage.js';
@@ -273,6 +274,11 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
 #nb .qrow,#nb .frow{padding-top:10px;padding-bottom:10px}
 #nb .qno,#nb .hd .n,#nb .ft,#nb .mapkey,#nb .mapstats{color:#526068;font-size:13px}
 #nb .body{overflow-y:auto}
+#nb [hidden]{display:none!important}
+#nb .leafnav{display:flex;align-items:center;justify-content:center;gap:16px;padding:5px 16px;flex:0 0 auto;border-top:1px solid #dfd7c6;background:#f2ead8}
+#nb .leafnav button{font-family:inherit;font-size:15px;font-weight:600;min-height:44px;min-width:76px;padding:6px 14px;border:1px solid #b6a477;border-radius:7px;background:#fffaf0;color:#354047;cursor:pointer}
+#nb .leafnav button:disabled{opacity:.35;cursor:default}
+#nb .leafnav output{font-size:15px;color:#485251;font-variant-numeric:tabular-nums}
 @media(max-width:420px){#nb .tabs{gap:0;padding-left:4px;padding-right:4px}#nb .tab{padding-left:7px;padding-right:7px;font-size:14px}#nb .body{padding-left:16px;padding-right:16px}#nb .qq{font-size:19px}}
 `;
   document.head.appendChild(style);
@@ -289,11 +295,13 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
       <button class="x" id="nbX" aria-label="수첩 닫기">✕</button></div>
     <div class="hd"><span class="t" id="nbT"></span><span class="n" id="nbN"></span></div>
     <div class="body" id="nbBody" role="tabpanel" tabindex="0"></div>
+    <nav class="leafnav" aria-label="수첩 내용 넘기기" hidden><button type="button" id="nbPrev" aria-label="수첩 이전 쪽">이전</button><output id="nbLeaf" aria-live="polite"></output><button type="button" id="nbNext" aria-label="수첩 다음 쪽">다음</button></nav>
     <div class="ft"><span class="hw ink-key">파란 글씨 · 앞사람</span>
       <span class="lg"><i></i>새로 적힌 것</span>
       <span class="close" id="nbKeys"></span></div>
   </div>`;
   document.body.appendChild(el);
+  const notebookArt=attachNotebookArt(el);
   const elBody = el.querySelector('#nbBody');
   const elT = el.querySelector('#nbT');
   const elN = el.querySelector('#nbN');
@@ -306,6 +314,29 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
   el.querySelector('#nbX').addEventListener('click', (e) => { e.stopPropagation(); setOpen(false); });
 
   let open = false, has = false, tab = 'ask', measuring = false, returnFocus = null;
+  const leafByTab={ask:0,field:0,kitchen:0};let leaves=[],leafRows=[];
+  const leafNav=el.querySelector('.leafnav'),leafOutput=el.querySelector('#nbLeaf'),prevLeaf=el.querySelector('#nbPrev'),nextLeaf=el.querySelector('#nbNext');
+  const showLeaf=()=>{
+    const i=Math.max(0,Math.min(leafByTab[tab]||0,leaves.length-1));leafByTab[tab]=i;
+    leafRows.forEach((row,k)=>row.hidden=!!leaves.length&&!leaves[i].includes(k));
+    prevLeaf.disabled=i===0;nextLeaf.disabled=i>=leaves.length-1;leafOutput.textContent=`${i+1} / ${Math.max(1,leaves.length)}쪽`;elBody.scrollTop=0;
+  };
+  const paginate=()=>{
+    leafNav.hidden=true;leaves=[];leafRows=[];
+    if(!Object.hasOwn(leafByTab,tab))return;
+    leafRows=[...elBody.children];leafRows.forEach(row=>row.hidden=false);
+    const heights=leafRows.map(row=>Math.ceil(row.getBoundingClientRect().height));
+    if(heights.reduce((a,b)=>a+b,0)>elBody.clientHeight+1)leafNav.hidden=false;
+    const available=elBody.clientHeight;let group=[],used=0;
+    heights.forEach((h,k)=>{if(group.length&&used+h>available){leaves.push(group);group=[];used=0;}group.push(k);used+=h;});if(group.length)leaves.push(group);
+    showLeaf();
+  };
+  const turnLeaf=direction=>{
+    const index=leafByTab[tab]||0;if(!leaves.length||index+direction<0||index+direction>=leaves.length)return;
+    leafByTab[tab]=index+direction;notebookArt.turn(direction>0);sfx('ui_tab');showLeaf();flash();
+  };
+  prevLeaf.addEventListener('click',()=>turnLeaf(-1));nextLeaf.addEventListener('click',()=>turnLeaf(1));
+  new ResizeObserver(()=>{if(open&&!measuring){paginate();flash();}}).observe(el.querySelector('.page'));
   // 몇 번째로 연 것인가. 반짝임은 **한 번 여는 동안** 한 벌이어야 한다.
   let openSeq = 0;
   // ★ 탭마다 "지난번에 본 상태"를 적어 둔다. 달라졌으면 점이 켜진다.
@@ -542,11 +573,12 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
   const flash = () => {
     if (measuring) return;
     let wrote = false;
-    const tag = `${openSeq}:${tab}`;
+    const tag = `${openSeq}:${tab}:${leafByTab[tab]||0}`;
     if (nuFor !== tag) {
       nuFor = tag;
       nu = new Set();
       for (const n of elBody.querySelectorAll('[data-k]')) {
+        if(n.closest('[hidden]'))continue;
         if (lit.has(n.dataset.k)) continue;
         nu.add(n.dataset.k); lit.add(n.dataset.k);
         wrote = true;
@@ -572,6 +604,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
       mapPage.canvas.remove();
     }
     (DRAW[tab] || drawAsk)();
+    paginate();
     flash();
     if (!measuring) seen[tab] = sigOf(tab); // 측정은 읽은 것으로 치지 않는다
     syncDots();
@@ -579,6 +612,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
 
   const go = (id) => {
     if (!TABS.some((t) => t.id === id)) return;
+    if(open&&tab!==id)notebookArt.turn(TABS.findIndex(t=>t.id===id)>TABS.findIndex(t=>t.id===tab));
     if (open && tab !== id) sfx('ui_tab');
     const tabFocused = tabBtns.includes(document.activeElement);
     tab = id;
@@ -597,6 +631,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
     if (v && !open) openSeq++;
     open = v;
     el.classList.toggle('show', v);
+    if(v)notebookArt.open();else notebookArt.close();
     el.setAttribute('aria-hidden', String(!v));
     if (v) draw(); else syncDots();
     if (changed && v) tabBtns.find((b) => b.dataset.tab === tab)?.focus({ preventScroll: true });
@@ -634,6 +669,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
       e.preventDefault(); return;
     }
     if (!open) return;
+    if(['PageDown','PageUp'].includes(e.code)&&!leafNav.hidden){turnLeaf(e.code==='PageDown'?1:-1);e.preventDefault();return;}
     if (e.code === 'Escape') { setOpen(false); e.preventDefault(); return; }
     if (tabBtns.includes(document.activeElement) && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.code)) {
       const current = TABS.findIndex((t) => t.id === tab);
@@ -699,7 +735,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
     //   미리보기 창이 279px로 좁아지자 물음 면이 +71px. 어떤 폰도 그렇게 좁지 않다.
     //   폭도 고정해서 잰다(360 = 가장 좁은 폰, 700 = 설계 폭).
     pageMetrics(pageH, pageW) {
-      const was = open, wasTab = tab, wasSel = mailSel;
+      const was = open, wasTab = tab, wasSel = mailSel,wasLeaves={...leafByTab};
       const page = el.querySelector('.page');
       const savedH = page.style.height, savedW = page.style.width;
       if (pageH) page.style.height = `${pageH}px`;
@@ -718,7 +754,11 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
       };
       for (const t of TABS) {
         tab = t.id; draw();
-        if (t.id !== 'mail') { put(t.id); continue; }
+        if (t.id !== 'mail') {
+          const count=leaves.length||1;
+          for(let i=0;i<count;i++){if(leaves.length){leafByTab[tab]=i;showLeaf();}put(i===0?t.id:`${t.id}#${i+1}`);}
+          continue;
+        }
         // 편지는 통마다 길이가 다르다. 열한 통을 다 펴 본다.
         const chips = [...elBody.querySelectorAll('.chip')];
         for (let i = 0; i < chips.length; i++) {
@@ -727,6 +767,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
         }
       }
       tab = wasTab; mailSel = wasSel;
+      Object.assign(leafByTab,wasLeaves);
       page.style.height = savedH; page.style.width = savedW;
       measuring = false;
       if (!was) { open = false; el.classList.remove('show'); } else draw();

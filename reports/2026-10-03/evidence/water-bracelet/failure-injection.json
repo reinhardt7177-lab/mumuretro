@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-02T23:36:42.382Z",
+  "checks": [
+    {
+      "name": "no wrist effect before acquisition",
+      "pass": true
+    },
+    {
+      "name": "bracelet is fitted to animated left wrist",
+      "pass": false,
+      "details": {
+        "amount": 0,
+        "pose": 0,
+        "root": false,
+        "cuff": true,
+        "sourceError": 0.49999999951178725,
+        "ribbonError": 1.0100394248523934e-8,
+        "wristGap": 0.5003013039216397,
+        "targetError": 5.087681048627601e-16,
+        "phase": "liquid",
+        "color": [
+          0.19806931954941637,
+          0.7529422167708612,
+          1
+        ],
+        "particles": 32,
+        "hand": [
+          -0.20800872371924772,
+          0.7619768726877297,
+          4.780664449429933
+        ],
+        "center": [
+          -0.6691689007209976,
+          0.7898364877512971,
+          4.588683909525709
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "failure": "bracelet is fitted to animated left wrist: {\"amount\":0,\"pose\":0,\"root\":false,\"cuff\":true,\"sourceError\":0.49999999951178725,\"ribbonError\":1.0100394248523934e-8,\"wristGap\":0.5003013039216397,\"targetError\":5.087681048627601e-16,\"phase\":\"liquid\",\"color\":[0.19806931954941637,0.7529422167708612,1],\"particles\":32,\"hand\":[-0.20800872371924772,0.7619768726877297,4.780664449429933],\"center\":[-0.6691689007209976,0.7898364877512971,4.588683909525709]}"
+}

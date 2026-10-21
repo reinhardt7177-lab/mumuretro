@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { FIRST_TRAIL, TRAIL_TEXT, TRAIL_COLORS as C } from '../data/expedition.js';
+import { naturePart } from './NatureAssets.js';
+import { fitHeritageFootprint } from '../core/HeritageAssets.js';
 
 // 산포보다 먼저 계획한다. 길은 지면을 따르고 충돌 바닥을 따로 만들지 않는다.
 export function planFirstTrail(planet) {
@@ -57,8 +59,9 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   plan.samples.filter((_, i) => i % 7 === 0).forEach((d, i) => {
     const side = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize();
     const edge = d.clone().addScaledVector(side, (i % 2 ? 1 : -1) * 1.35 / planet.R).normalize();
-    const g = at(edge); const m = add(g, new THREE.DodecahedronGeometry(0.22, 0), stone, 0, 0.09, 0);
-    m.scale.set(1.4, 0.55, 0.9); m.rotation.y = i * 1.7;
+    const g = at(edge), detail = naturePart('trail_stone');
+    if (detail) { g.add(detail); detail.rotation.y = i * 1.7; }
+    else { const m = add(g, new THREE.DodecahedronGeometry(0.22, 0), stone, 0, 0.09, 0); m.scale.set(1.4, 0.55, 0.9); m.rotation.y = i * 1.7; }
   });
 
   // 기존 물 사당의 두 번째 입구. 기존 월드 사당과 저장 ID는 그대로다.
@@ -71,13 +74,15 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   const ring = add(gate, new THREE.TorusGeometry(1.3, 0.055, 6, 36), brass, 0, 1.95, 0);
   const light = add(gate, new THREE.CircleGeometry(1.25, 36), gateMat, 0, 1.95, 0);
   light.castShadow = false;
+  const gateModel=fitHeritageFootprint('glacier-temple',4.2);
+  if(gateModel){for(const child of gate.children)child.visible=false;gateModel.position.z-=4.2;gate.add(gateModel);gate.userData.heritageAsset='glacier-temple';}
   const state = { version: 1, overlook: false, glider: false, water: false, restored: false };
   let t = 0;
   const near = (position, d, radius) => position.clone().normalize().dot(d) > Math.cos(radius / planet.R);
   const entryOpen=()=>waterway.entranceOpen||state.restored;
   function sync() { equipment.visible = !state.glider; gateMat.opacity = entryOpen() ? 0.24 : 0.035; }
   return {
-    group, plan, gateDir, equipment,
+    group, plan, gateDir, equipment, gateModel,
     update(dt, player) {
       t += dt; flag.rotation.y = Math.sin(t * 1.8) * 0.12; ring.rotation.z = entryOpen() ? t * 0.13 : 0;
       let message = null;

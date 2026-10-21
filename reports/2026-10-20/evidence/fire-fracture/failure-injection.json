@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-20",
+  "checks": [
+    {
+      "name": "actual Blender parts loaded independently",
+      "pass": true
+    },
+    {
+      "name": "walk from entrance through hub and doorway to test lever",
+      "pass": true
+    },
+    {
+      "name": "bench camera keeps bridge visible and avoids measured solid walls",
+      "pass": true,
+      "details": {
+        "samples": 36,
+        "inside": 0,
+        "forwardDistance": 5.4
+      }
+    },
+    {
+      "name": "testing empty sockets does not create stable bridge",
+      "pass": true
+    },
+    {
+      "name": "waiting never solves first trial",
+      "pass": true
+    },
+    {
+      "name": "E picks a physical brace and uses carrying pose",
+      "pass": true
+    },
+    {
+      "name": "carry and seat first brace",
+      "pass": true
+    },
+    {
+      "name": "notebook pauses test clock and movement",
+      "pass": true
+    },
+    {
+      "name": "one brace is insufficient and remains seated after failed test",
+      "pass": true
+    },
+    {
+      "name": "attempting unstable crossing recovers nearby and keeps fitted brace",
+      "pass": true
+    },
+    {
+      "name": "second brace can be carried after recovery",
+      "pass": true
+    },
+    {
+      "name": "carrying snapshot contains stable safe brace positions",
+      "pass": true
+    },
+    {
+      "name": "actual reload restores seated brace, safe checkpoint and no held duplicate",
+      "pass": true
+    },
+    {
+      "name": "both sockets filled but bridge still requires test",
+      "pass": true
+    },
+    {
+      "name": "invalid duplicate socket save is rejected atomically",
+      "pass": true,
+      "details": {
+        "rejected": true,
+        "unchanged": true,
+        "emptyValid": true
+      }
+    },
+    {
+      "name": "both braces and completed test raise bridge exactly to walking floor",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "failure": "page.evaluate: Error: Fell walking to -28,-4.2 at -28,0,10\n    at Object.walk (eval at evaluate (:311:30), <anonymous>:3:256)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:26)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+}

@@ -1,0 +1,172 @@
+{
+  "checks": [
+    {
+      "name": "decoded model starts at floor zero with two live eyes and five separate seals",
+      "pass": true,
+      "details": {
+        "loaded": true,
+        "base": 0,
+        "top": 14.038000106811523,
+        "eyes": true,
+        "seals": [
+          "balance",
+          "shadow",
+          "sift",
+          "water",
+          "fire"
+        ],
+        "meshes": 19,
+        "glyphs": [
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark raised marks remain in front of each luminous seal face",
+      "pass": true,
+      "details": [
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        }
+      ]
+    },
+    {
+      "name": "engraved seals follow their own offerings through arbitrary order, withdrawal and restore",
+      "pass": true,
+      "details": {
+        "failures": [],
+        "restored": true,
+        "legacyAccepted": true,
+        "hidden": true,
+        "semanticsUnchanged": true,
+        "awake": 0.5,
+        "eye": 16762031,
+        "oldVersion": 1
+      }
+    },
+    {
+      "name": "version-one visual snapshots restore gameplay without a doubled legacy statue",
+      "pass": true,
+      "details": {
+        "failures": [],
+        "restored": true,
+        "legacyAccepted": true,
+        "hidden": true,
+        "semanticsUnchanged": true,
+        "awake": 0.5,
+        "eye": 16762031,
+        "oldVersion": 1
+      }
+    },
+    {
+      "name": "144 camera rays stop before actual guardian surfaces",
+      "pass": true,
+      "details": {
+        "samples": 144,
+        "failures": [],
+        "framing": {
+          "feet": [
+            0,
+            -0.6823330317850361,
+            0.9647357670093292
+          ],
+          "head": [
+            0,
+            0.8788916783498638,
+            0.9734762208858719
+          ],
+          "haloLeft": [
+            -0.21087935181641296,
+            0.5792201948636964,
+            0.9764629253085759
+          ],
+          "haloRight": [
+            0.21087935181641296,
+            0.5792201948636964,
+            0.9764629253085759
+          ]
+        }
+      }
+    },
+    {
+      "name": "default final view frames the player and full guardian",
+      "pass": true,
+      "details": {
+        "feet": [
+          0,
+          -0.6823330317850361,
+          0.9647357670093292
+        ],
+        "head": [
+          0,
+          0.8788916783498638,
+          0.9734762208858719
+        ],
+        "haloLeft": [
+          -0.21087935181641296,
+          0.5792201948636964,
+          0.9764629253085759
+        ],
+        "haloRight": [
+          0.21087935181641296,
+          0.5792201948636964,
+          0.9764629253085759
+        ]
+      }
+    },
+    {
+      "name": "no browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "pass": true
+}

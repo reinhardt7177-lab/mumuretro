@@ -1,0 +1,31 @@
+{
+  "units": "metres",
+  "bounds": {
+    "x": [
+      -38,
+      38
+    ],
+    "z": [
+      -57,
+      34
+    ]
+  },
+  "roomCount": 4,
+  "hubDiameter": 24,
+  "floors": [
+    0,
+    3.2
+  ],
+  "minimumPath": 2.4,
+  "mainPath": 3.6,
+  "portal": {
+    "clearWidth": 4.8,
+    "clearHeight": 5.2,
+    "width": 9.6,
+    "height": 8.4,
+    "depth": 1.4,
+    "archSpring": 2.8
+  },
+  "designOnly": true,
+  "playtest": false
+}

@@ -1,0 +1,8 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>무무 행성 · 옮겨온 모델</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#142329;color:#f1ead6;font:16px/1.6 'Malgun Gothic',sans-serif}main{display:grid;grid-template-columns:290px 1fr;height:100dvh}aside{overflow:auto;padding:22px;background:#1b3034;border-right:1px solid #405454}h1{font-size:23px;line-height:1.35}select,button{width:100%;padding:12px;border:1px solid #819c99;border-radius:8px;background:#233d42;color:#fff;font:inherit;margin:6px 0}button{cursor:pointer;background:#74653c}#stage{position:relative;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none}#status{position:absolute;bottom:16px;left:18px;right:18px;padding:12px;background:#102226dd;border:1px solid #4b665b;border-radius:8px;font-size:14px}p{color:#cbd8ce}.badge{color:#dfc57c}@media(max-width:700px){main{grid-template-columns:1fr;grid-template-rows:auto 1fr}aside{padding:10px 18px}h1{margin:0;font-size:19px}aside p{display:none}select{width:70%}button{width:28%}}
+</style>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+<main><aside><h1>옮겨온 모델</h1><p>Blender 원본에서 만든 웹용 모델입니다. 드래그로 회전하고 휠로 확대해 확인할 수 있습니다.</p><p class="badge" id="total"></p><select id="models" aria-label="모델 선택"></select><button id="animate">움직임 보기</button><p>범선과 캐릭터는 기존 웹 모델을 이어 사용합니다. 방 전체 모델은 실제 방의 동선에 맞춰 추가 배치할 수 있습니다.</p></aside><section id="stage"><canvas id="view"></canvas><div id="status" role="status">모델 목록을 준비하는 중…</div></section></main>
+<script type="module" src="/tools/asset-library.js"></script></html>

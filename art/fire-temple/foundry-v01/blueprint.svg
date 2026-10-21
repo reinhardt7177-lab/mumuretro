@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="930" viewBox="0 0 1200 930">
+<defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#58727e" stroke-opacity=".18"/></pattern><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10" fill="#e9a955"/></marker><style>text{font-family:'Malgun Gothic',sans-serif;fill:#e7e4d9;font-size:17px}.small{font-size:13px;fill:#b5c6cd}.h{font-size:28px;font-weight:bold}.pipe{fill:none;stroke:#b4864b;stroke-width:13;stroke-linejoin:round}.flow{fill:none;stroke:#ed9d3b;stroke-width:3;marker-end:url(#arrow)}.control{fill:#344d59;stroke:#e1bd7a;stroke-width:2}</style></defs>
+<rect width="1200" height="930" rx="20" fill="#14252f"/><text class="h" x="42" y="48">용암 주조실 · 위치와 통행 단면</text><text class="small" x="42" y="73">정확한 좌표를 그린 제작 도면 / 1칸=1m / 위쪽 -Z / 보행 바닥 y=0 / 2026.10.20</text>
+<rect x="60" y="100" width="560" height="728" fill="#243944" stroke="#a5b4b7" stroke-width="5"/><rect x="60" y="100" width="560" height="728" fill="url(#grid)"/>
+<rect x="62" y="352" width="556" height="168" fill="#09161d"/><rect x="284" y="346" width="112" height="180" fill="#966b33" fill-opacity=".35" stroke="#dfad62" stroke-width="3"/>
+<text x="70" y="432" class="small">균열 바닥 -3m</text><text x="301" y="443">틀·돌길</text><text x="292" y="466" class="small">폭 4m</text>
+<!-- All map coordinates use screen=(60+(x-18)*28,100+(z+12)*28). -->
+<path class="pipe" d="M536 184H567V744"/><path d="M567 744H136V598" fill="none" stroke="#69818b" stroke-dasharray="8 7" stroke-width="7"/><text x="250" y="793" class="small">뒤쪽 공급관은 바닥 아래로 통과 · 시야 확보</text>
+<path class="pipe" d="M136 598H189 M228 559V537H385 M424 498V478H409"/>
+<path class="flow" d="M145 598H182 M228 550V537H365 M424 493V478H409L386 478"/>
+<path class="pipe" d="M189 598H228V559 M385 537H424V498" stroke="#f1c980"/>
+<circle cx="228" cy="598" r="12" fill="#26333a" stroke="#e8bd6e"/><circle cx="424" cy="537" r="12" fill="#26333a" stroke="#e8bd6e"/>
+<text x="170" y="580" class="small">A · y=2.8m</text><text x="442" y="538" class="small">B · y=2.8m</text>
+<path d="M228 622V641 M424 558V641" stroke="#e4be7b" stroke-width="3"/>
+<rect class="control" x="210" y="615" width="36" height="36" rx="5"/><rect class="control" x="406" y="615" width="36" height="36" rx="5"/><circle class="control" cx="536" cy="688" r="22"/>
+<text x="217" y="640">A</text><text x="417" y="640">B</text><text x="492" y="729">공급 밸브</text><text class="small" x="160" y="681">조작대는 모두 가까운 안전 바닥</text>
+<circle class="control" cx="340" cy="212" r="22"/><text x="294" y="177">돌길 잠금</text>
+<path d="M12 660H65" class="flow"/><text x="12" y="697" class="small">중앙 홀</text><path d="M340 700V548 M340 328V240" fill="none" stroke="#8cbdba" stroke-width="3" stroke-dasharray="6 6"/>
+<text class="small" x="255" y="854">방 20×26m · 조작점 A(24,7), B(31,7), 밸브(35,9)</text>
+<text class="h" x="682" y="145">눈앞의 흐름을 길로 바꾼다</text>
+<text x="682" y="199">1. 열린 수로의 양 끝을 잇는다</text><text x="682" y="238">2. 공급을 열어 틀을 채운다</text><text x="682" y="277">3. 공급을 직접 닫는다</text><text x="682" y="316">4. 잔열이 사라지면 건너 잠근다</text>
+<text x="682" y="391">단면 · 돌길 중심 x=28</text><path d="M685 485H765 M905 485H1135" stroke="#c5b28d" stroke-width="8"/><path d="M765 485V581H905V485" fill="none" stroke="#485967" stroke-width="6"/><rect x="765" y="485" width="140" height="16" fill="#cc9050"/><text class="small" x="687" y="462">안전 바닥 y=0</text><text class="small" x="780" y="550">틀 -0.6m</text><text class="small" x="939" y="518">완성 표면 y=0</text>
+<text x="682" y="643">제작·실측 기준</text><text class="small" x="682" y="677">회전 수로 밑면 2.56m 이상 · 중앙 통행 유지</text><text class="small" x="682" y="709">주입구는 x=30.45, 폭 4m 돌길 옆으로 이동</text><text class="small" x="682" y="741">잘못된 연결은 배수 · 충전량·완성한 길은 보존</text><text class="small" x="682" y="773">3초 충전·4초 냉각은 신전 장치의 게임 시간</text>
+<text class="small" x="42" y="899">목표 조감도는 ../v01/concept-overview.png · 원본 foundry-v01.blend · 실제 흐름과 냉각은 웹 셰이더</text>
+</svg>

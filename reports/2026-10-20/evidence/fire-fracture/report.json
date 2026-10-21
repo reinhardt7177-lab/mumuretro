@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-20",
+  "checks": [
+    {
+      "name": "actual Blender parts loaded independently",
+      "pass": true
+    },
+    {
+      "name": "walk from entrance through hub and doorway to test lever",
+      "pass": true
+    },
+    {
+      "name": "bench camera keeps bridge visible and avoids measured solid walls",
+      "pass": true,
+      "details": {
+        "samples": 36,
+        "inside": 0,
+        "forwardDistance": 5.4
+      }
+    },
+    {
+      "name": "testing empty sockets does not create stable bridge",
+      "pass": true
+    },
+    {
+      "name": "waiting never solves first trial",
+      "pass": true
+    },
+    {
+      "name": "E picks a physical brace and uses carrying pose",
+      "pass": true
+    },
+    {
+      "name": "carry and seat first brace",
+      "pass": true
+    },
+    {
+      "name": "notebook pauses test clock and movement",
+      "pass": true
+    },
+    {
+      "name": "one brace is insufficient and remains seated after failed test",
+      "pass": true
+    },
+    {
+      "name": "attempting unstable crossing recovers nearby and keeps fitted brace",
+      "pass": true
+    },
+    {
+      "name": "second brace can be carried after recovery",
+      "pass": true
+    },
+    {
+      "name": "carrying snapshot contains stable safe brace positions",
+      "pass": true
+    },
+    {
+      "name": "actual reload restores seated brace, safe checkpoint and no held duplicate",
+      "pass": true
+    },
+    {
+      "name": "both sockets filled but bridge still requires test",
+      "pass": true
+    },
+    {
+      "name": "invalid duplicate socket save is rejected atomically",
+      "pass": true,
+      "details": {
+        "rejected": true,
+        "unchanged": true,
+        "emptyValid": true
+      }
+    },
+    {
+      "name": "both braces and completed test raise bridge exactly to walking floor",
+      "pass": true
+    },
+    {
+      "name": "walk over real collision surface and lock far anchor",
+      "pass": true
+    },
+    {
+      "name": "permanent bridge allows return and hub records first experiment",
+      "pass": true
+    },
+    {
+      "name": "main game save never changed",
+      "pass": true
+    },
+    {
+      "name": "malformed and contradictory progress rejected",
+      "pass": true,
+      "details": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "name": "completed reload keeps bridge and hub progress",
+      "pass": true
+    },
+    {
+      "name": "optional golden guide toggles on",
+      "pass": true
+    },
+    {
+      "name": "viewport 390x844 has usable HUD",
+      "pass": true,
+      "details": {
+        "overflow": 0,
+        "objective": 125,
+        "tools": 378
+      }
+    },
+    {
+      "name": "viewport 844x390 has usable HUD",
+      "pass": true,
+      "details": {
+        "overflow": 0,
+        "objective": 90,
+        "tools": 829
+      }
+    },
+    {
+      "name": "viewport 1024x768 has usable HUD",
+      "pass": true,
+      "details": {
+        "overflow": 0,
+        "objective": 114.5,
+        "tools": 1007
+      }
+    },
+    {
+      "name": "backup and quota failures preserve existing trial data",
+      "pass": true,
+      "details": {
+        "archiveFailed": true,
+        "untouched": true,
+        "writeFailed": true
+      }
+    },
+    {
+      "name": "touch device exposes context-sensitive E action",
+      "pass": true
+    },
+    {
+      "name": "actual touch action triggers the same bridge test",
+      "pass": true
+    },
+    {
+      "name": "actual touch jump has physical upward movement",
+      "pass": true
+    },
+    {
+      "name": "touch joystick moves through actual Input path",
+      "pass": true,
+      "details": 1.5000000000000124
+    },
+    {
+      "name": "touch notebook pauses actual controller",
+      "pass": true
+    },
+    {
+      "name": "mobile trial leaves main game record intact",
+      "pass": true
+    },
+    {
+      "name": "no JavaScript or resource errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "pass": true
+}

@@ -1,0 +1,122 @@
+{
+  "checks": [
+    {
+      "name": "touch next changes visible leaf",
+      "pass": true
+    },
+    {
+      "name": "PageUp returns to previous leaf",
+      "pass": true
+    },
+    {
+      "name": "leaf 1 is readable and fits",
+      "pass": true,
+      "details": {
+        "ids": [
+          "ask:balance",
+          "ask:shadow"
+        ],
+        "over": 0,
+        "font": 17
+      }
+    },
+    {
+      "name": "leaf 2 is readable and fits",
+      "pass": true,
+      "details": {
+        "ids": [
+          "ask:sift",
+          "ask:water"
+        ],
+        "over": 0,
+        "font": 17
+      }
+    },
+    {
+      "name": "leaf 3 is readable and fits",
+      "pass": true,
+      "details": {
+        "ids": [
+          "ask:fire"
+        ],
+        "over": 0,
+        "font": 17
+      }
+    },
+    {
+      "name": "leaf 4 is readable and fits",
+      "pass": true,
+      "details": {
+        "ids": [
+          "ask:strata"
+        ],
+        "over": 0,
+        "font": 17
+      }
+    },
+    {
+      "name": "all six temple records reachable by actual page buttons",
+      "pass": true,
+      "details": [
+        "ask:balance",
+        "ask:shadow",
+        "ask:sift",
+        "ask:water",
+        "ask:fire",
+        "ask:strata"
+      ]
+    },
+    {
+      "name": "unseen leaves retain unread highlights",
+      "pass": true
+    },
+    {
+      "name": "ask remains readable after resize 844x390",
+      "pass": true
+    },
+    {
+      "name": "field remains readable after resize 844x390",
+      "pass": true
+    },
+    {
+      "name": "kitchen remains readable after resize 844x390",
+      "pass": true
+    },
+    {
+      "name": "ask remains readable after resize 390x844",
+      "pass": true
+    },
+    {
+      "name": "field remains readable after resize 390x844",
+      "pass": true
+    },
+    {
+      "name": "kitchen remains readable after resize 390x844",
+      "pass": true
+    },
+    {
+      "name": "ask remains readable after resize 1024x768",
+      "pass": true
+    },
+    {
+      "name": "field remains readable after resize 1024x768",
+      "pass": true
+    },
+    {
+      "name": "kitchen remains readable after resize 1024x768",
+      "pass": true
+    },
+    {
+      "name": "measuring every leaf preserves record state",
+      "pass": true
+    },
+    {
+      "name": "no JavaScript errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "pass": true
+}

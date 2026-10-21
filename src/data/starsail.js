@@ -1,5 +1,5 @@
 export const STARSAIL = {
-  model: 'assets/models/starsail-v01.glb',
+  model: 'assets/models/starsail-v02.glb',
   entry: { x: 0, z: 7 },
   winch: { x: 4.3, z: 4, reach: 1.65 },
   parcel: { x: 8.3, y: 2.2, z: 4 },

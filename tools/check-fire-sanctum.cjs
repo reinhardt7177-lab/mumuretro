@@ -1,0 +1,20 @@
+// Targeted preview UI/restore checks, using the checkpoint earned by the main traversal.
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {chromium}=require(path.join(process.env.AUDIT_NODE_MODULES||'.','playwright'));
+const OUT=path.join(__dirname,'../reports/2026-10-21/evidence/fire-adventure');
+const fixture=JSON.parse(fs.readFileSync(path.join(OUT,'earned-sanctum-fixture.json'),'utf8'));
+const checks=[];function check(name,pass){checks.push({name,pass:!!pass});assert.ok(pass,name);console.log('PASS '+name);}
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const c=await browser.newContext({viewport:{width:1440,height:900}});await c.addInitScript(s=>{if(!localStorage.getItem('mumuplanet.fire-trial.v3'))localStorage.setItem('mumuplanet.fire-trial.v3',JSON.stringify(s));localStorage.setItem('mumuplanet.progress.v1','PREVIEW_MAIN_UNTOUCHED');},fixture);const p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ async function ready(){await p.waitForFunction(()=>window.fireTrial,null,{timeout:90000});await p.evaluate(()=>fireTrial.loop.stop());await p.locator('#begin').click();await p.locator('#keep-playing').click();}
+ const url=new URL('fire-trial.html',process.env.AUDIT_URL||'http://127.0.0.1:5512/').href;await p.goto(url);await ready();
+ await p.keyboard.press('e');await p.evaluate(()=>fireTrial.step(1/60));check('preview keyboard E opens guardian dialogue',await p.locator('#audience').isVisible());
+ const pos=await p.evaluate(()=>fireTrial.actor.position.toArray());await p.evaluate(()=>{fireTrial.input.setTestIntent({y:1,run:true});for(let i=0;i<300;i++)fireTrial.step(1/60);fireTrial.input.setTestIntent(null);});check('preview reading pauses locomotion and page',await p.evaluate(pos=>fireTrial.room.sanctum.mechanics.state.line===0&&fireTrial.actor.position.toArray().every((v,i)=>v===pos[i]),pos));
+ await p.locator('#audience-next').click();await p.evaluate(()=>fireTrial.step(1/60));check('preview next button records page',await p.evaluate(()=>fireTrial.room.sanctum.mechanics.state.line===1));
+ await p.keyboard.press('n');check('notebook hides audience while paused',await p.locator('#audience').isHidden()&&await p.locator('#notes').isVisible());await p.locator('#close-notes').click();check('closing notebook restores audience',await p.locator('#audience').isVisible());
+ await p.reload();await ready();check('preview reload resumes exact page without award',await p.evaluate(()=>fireTrial.room.sanctum.mechanics.state.line===1&&!fireTrial.room.sanctum.awarded));
+ await p.locator('#audience-skip').click();await p.evaluate(()=>fireTrial.step(1/60));check('preview skip starts reward once',await p.evaluate(()=>fireTrial.room.sanctum.awarded&&fireTrial.room.sanctum.mechanics.state.phase==='reward'));await p.evaluate(()=>fireTrial.persist());
+ await p.reload();await ready();await p.evaluate(()=>{for(let i=0;i<120;i++)fireTrial.step(1/60);});check('preview reward reload automatically returns and seals',await p.evaluate(()=>fireTrial.room.sanctum.exited&&fireTrial.room.sanctum.mechanics.state.awards===1&&fireTrial.actor.position.z>26&&!fireTrial.room.contains(0,-48,3.2)));check('preview cannot receive duplicate reward',await p.evaluate(()=>!fireTrial.room.sanctum.skip()&&!fireTrial.room.interact(fireTrial.actor)&&fireTrial.room.sanctum.mechanics.state.awards===1));
+ await p.locator('#help').click();check('final notebook records all three experiments',await p.locator('#record').textContent().then(s=>s.includes('용암')&&s.includes('증기')&&s.includes('지혜')));await p.locator('#close-notes').click();
+ await p.screenshot({path:path.join(OUT,'preview-completed.png')});check('preview keeps main game save unchanged',await p.evaluate(()=>localStorage.getItem('mumuplanet.progress.v1')==='PREVIEW_MAIN_UNTOUCHED'));check('preview no browser errors',errors.length===0);
+ }finally{fs.writeFileSync(path.join(OUT,'preview.json'),JSON.stringify({checks},null,2));await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

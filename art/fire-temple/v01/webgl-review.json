@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-20",
+  "kind": "offline architecture and review only",
+  "map": {
+    "meshes": 12,
+    "triangles": 223576,
+    "status": "전체 지도 · 실제 GLB · 12개 메시 · 223,576삼각형 · 12개 재질 · 76.8 × 16.0 × 91.4m"
+  },
+  "portal": {
+    "min": [
+      -4.800000190734863,
+      0,
+      -0.7000007629394531
+    ],
+    "max": [
+      4.800000190734863,
+      8.399999618530273,
+      1.2450008392333984
+    ]
+  },
+  "mobile": {
+    "overflow": 0,
+    "ready": true
+  },
+  "errors": [],
+  "pass": true,
+  "gameplayTested": false
+}

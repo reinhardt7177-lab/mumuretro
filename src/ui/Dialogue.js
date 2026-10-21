@@ -56,7 +56,7 @@ export function buildDialogue(input) {
 
   const seen = new Set();
   let activeId = null;
-  let lines = [], i = 0, who = '', onDone = null;
+  let lines = [], i = 0, who = '', onDone = null, onPage = null;
 
   const render = () => {
     elWho.textContent = who || '';
@@ -67,14 +67,14 @@ export function buildDialogue(input) {
     activeId = null;
     lines = []; i = 0;
     el.classList.remove('show');
-    const cb = onDone; onDone = null;
+    const cb = onDone; onDone = null; onPage = null;
     if (cb) cb();
   };
   const next = () => {
     if (!lines.length) return;
     sfx('dlg_page');
     i++;
-    if (i >= lines.length) close(); else render();
+    if (i >= lines.length) close(); else { onPage?.(i); render(); }
   };
 
   // Esc(건너뛰기)만 여기서 받는다. 넘기기는 boot이 intent.action으로 보낸다.
@@ -89,13 +89,13 @@ export function buildDialogue(input) {
   return {
     // id가 이미 나온 적 있으면 조용히 넘어간다. done은 그래도 불린다 —
     // 부르는 쪽이 "대사 끝나고 할 일"을 매번 분기하지 않게.
-    play(id, who_, text, done) {
+    play(id, who_, text, done, pageChanged) {
       if (seen.has(id)) { if (done) done(); return false; }
       seen.add(id);
       activeId = id;
       who = who_ || '';
       lines = Array.isArray(text) ? text.slice(0, 4) : [text];
-      i = 0; onDone = done || null;
+      i = 0; onDone = done || null; onPage = pageChanged || null;
       render();
       el.classList.add('show');
       return true;

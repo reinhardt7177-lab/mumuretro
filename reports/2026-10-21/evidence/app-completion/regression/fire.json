@@ -1,0 +1,157 @@
+{
+  "checks": [
+    {
+      "name": "main fire temple loads new Blender rooms",
+      "pass": true
+    },
+    {
+      "name": "main north gate prevents skipping both wings",
+      "pass": true
+    },
+    {
+      "name": "main fracture room completed by walking and carrying",
+      "pass": true
+    },
+    {
+      "name": "main foundry completed without old number panels",
+      "pass": true
+    },
+    {
+      "name": "main rider actually reaches upper passage",
+      "pass": true
+    },
+    {
+      "name": "main golden dust follows upper passage height",
+      "pass": true,
+      "details": {
+        "visible": true,
+        "min": 3.4385812282562256,
+        "max": 3.555246591567993
+      }
+    },
+    {
+      "name": "earned passage connects to sanctum floor without falling",
+      "pass": true
+    },
+    {
+      "name": "grounded guardian and floor match design",
+      "pass": true,
+      "details": {
+        "metrics": {
+          "guardianLocalBase": 0,
+          "guardianTop": 5.048563003540039,
+          "floor": 3.2,
+          "faceEyes": 2,
+          "fingerChains": 10,
+          "parts": {
+            "static": 514,
+            "guardian": 240,
+            "eyes": 4,
+            "orb": 4
+          },
+          "staticTriangles": 44936,
+          "guardianTriangles": 211496,
+          "eyesTriangles": 2880,
+          "orbTriangles": 3792
+        },
+        "feet": 3.2,
+        "awards": 0
+      }
+    },
+    {
+      "name": "sanctum camera avoids measured walls in 36 views",
+      "pass": true,
+      "details": {
+        "inside": 0,
+        "samples": 36
+      }
+    },
+    {
+      "name": "main low quality reduces sanctum dynamic lights",
+      "pass": true,
+      "details": [
+        3,
+        1
+      ]
+    },
+    {
+      "name": "E starts manual guardian audience",
+      "pass": true
+    },
+    {
+      "name": "dialogue never auto-advances and player stays safe",
+      "pass": true
+    },
+    {
+      "name": "next page records exact audience progress",
+      "pass": true
+    },
+    {
+      "name": "reload resumes same dialogue line with no reward",
+      "pass": true
+    },
+    {
+      "name": "last line starts one reward animation",
+      "pass": true
+    },
+    {
+      "name": "reward commits once and automatically exits to planet",
+      "pass": true
+    },
+    {
+      "name": "fire temple remains sealed on repeat entry",
+      "pass": true
+    },
+    {
+      "name": "unrelated inventory and temple data preserved",
+      "pass": true
+    },
+    {
+      "name": "notebook displays earned fire wisdom and emblem",
+      "pass": true
+    },
+    {
+      "name": "reward-animation reload grants once and exits safely",
+      "pass": true
+    },
+    {
+      "name": "completed reload retains reward and seal",
+      "pass": true
+    },
+    {
+      "name": "invalid native save rejected without partial restore",
+      "pass": true,
+      "details": {
+        "rejected": true,
+        "untouched": true,
+        "valid": true
+      }
+    },
+    {
+      "name": "touch dialogue advances recorded line",
+      "pass": true
+    },
+    {
+      "name": "audience UI fits 390x844",
+      "pass": true
+    },
+    {
+      "name": "audience UI fits 844x390",
+      "pass": true
+    },
+    {
+      "name": "touch audience grants and exits",
+      "pass": true
+    },
+    {
+      "name": "no browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "pass": true
+}

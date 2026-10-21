@@ -1,0 +1,79 @@
+{
+  "checks": [
+    {
+      "name": "Blender guardian loads with eyes and five live seals",
+      "pass": true
+    },
+    {
+      "name": "actual drill-tip end is deepest in both flipped core layouts",
+      "pass": true,
+      "details": [
+        {
+          "flip": -1,
+          "deepest": 0
+        },
+        {
+          "flip": -1,
+          "deepest": 0
+        },
+        {
+          "flip": 1,
+          "deepest": 0
+        }
+      ]
+    },
+    {
+      "name": "hints describe the rendered core consistently",
+      "pass": true
+    },
+    {
+      "name": "actual fossil carrying and four floor markers open first door",
+      "pass": true
+    },
+    {
+      "name": "walk through active falling-rock shaft to open second door",
+      "pass": true
+    },
+    {
+      "name": "five mark-and-colour levers open third door",
+      "pass": true
+    },
+    {
+      "name": "final-temple progress round trips without changing solved rooms",
+      "pass": true
+    },
+    {
+      "name": "five actual offerings awaken final guardian",
+      "pass": true
+    },
+    {
+      "name": "sixth orb finishes the guardian dialogue and unlocks returning parcel",
+      "pass": true
+    },
+    {
+      "name": "actual exit returns to planet",
+      "pass": true
+    },
+    {
+      "name": "landing interaction returns to completed ship",
+      "pass": true
+    },
+    {
+      "name": "walking to parcel and E displays end card",
+      "pass": true
+    },
+    {
+      "name": "completed main save contains sent parcel and six orbs",
+      "pass": true
+    },
+    {
+      "name": "no JavaScript errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "setup": "Opening and five preceding orbs staged. Final temple and ship ending use actual movement/actions.",
+  "pass": true
+}

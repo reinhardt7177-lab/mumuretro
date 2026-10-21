@@ -1,5 +1,5 @@
 export const BALANCE_TEMPLE = {
-  model: 'assets/models/balance-temple-v02.glb',
+  model: 'assets/models/balance-temple-v04.glb',
   rooms: [
     {id:'entry',kind:'corridor',w:6,from:18,to:6,h:8,open:true},
     {id:'r1',kind:'room',name:'무게의 회랑',w:14,from:6,to:-12,h:9,gate:'balanceOrder',act:'carry',goal:'3·4·5개 중 고르고, 저울로 비교해 가벼운 순서대로 놓아라.',hints:['입구의 세 표식에서 상자 수를 고를 수 있다.','저울의 두 접시에 올려 비교해라.','왼쪽 받침부터 가장 가벼운 상자를 놓아라.']},

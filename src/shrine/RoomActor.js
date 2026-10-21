@@ -250,7 +250,8 @@ export class RoomActor {
   updateCamera(camera, input, dt) {
     this.camYaw += input.consumeYaw();
     let pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
-    const dist = Math.max(3.2, Math.min(6.5, input.camDist));
+    const p=this.position,zone=this.rects.cameraLookHeightZones?.find(r=>p.x>=r.x0&&p.x<=r.x1&&p.z>=r.z0&&p.z<=r.z1);
+    const dist = Math.max(zone?.minDistance??3.2, Math.min(zone?.maxDistance??6.5, input.camDist*(zone?.distanceScale??1)));
     const wantedHeight = this.lookHeight();
     this._cameraLookHeight = this._camPlaced
       ? this._cameraLookHeight + (wantedHeight - this._cameraLookHeight) * smoothK(0.0009, dt) : wantedHeight;

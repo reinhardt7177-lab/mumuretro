@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { BALANCE_TEMPLE as D } from '../data/balanceTemple.js';
+import { loadHeritageAsset, fitHeritageHeight } from '../core/HeritageAssets.js';
 let source=null;
 export async function loadBalanceTemple(){source=(await new GLTFLoader().loadAsync(D.model)).scene;}
 export function templePart(name){const found=source?.getObjectByName(name);if(!found)return null;const g=found.clone(true);g.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.userData.partitionedSolid=true;for(const m of Array.isArray(o.material)?o.material:[o.material])m.userData.outlineParameters={visible:false};}});return g;}
@@ -26,12 +27,16 @@ export function buildBalanceDungeon(scene,rooms,theme){
     const crest=new THREE.Mesh(new THREE.TorusGeometry(1.3,.055,6,48),new THREE.MeshStandardMaterial({color:0xbd9550,metalness:.6,roughness:.5}));crest.position.set(side*5.75,4.8,D.gateZ+.3);scene.add(crest);
   }
   const god=templePart('guardian');if(god){god.position.set(0,0,D.godZ);scene.add(god);}
+  const heritagePromise = loadHeritageAsset('balance-deity').then(() => {
+    const deity = fitHeritageHeight('balance-deity', 5.7); if (!deity) return;
+    deity.position.set(0,0,D.godZ);scene.add(deity);if(god)god.visible=false;
+  });
   const backdrop=new THREE.Mesh(new THREE.BoxGeometry(18,11,.5),new THREE.MeshStandardMaterial({color:0x12303b}));backdrop.position.set(0,5.5,-64);scene.add(backdrop);
   const aureole=new THREE.Mesh(new THREE.TorusGeometry(3.1,.08,8,64),new THREE.MeshStandardMaterial({color:0xcead6a,metalness:.65,roughness:.4}));aureole.position.set(0,4.3,-63.5);scene.add(aureole);
   for(let i=0;i<16;i++){const a=i*Math.PI/8,star=new THREE.Mesh(new THREE.OctahedronGeometry(i%2?.06:.13),new THREE.MeshBasicMaterial({color:0xe8d297}));star.position.set(Math.sin(a)*3.1,4.3+Math.cos(a)*3.1,-63.4);scene.add(star);}
   const blessing=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,1),new THREE.MeshBasicMaterial({color:0x8dffe0}));blessing.position.set(0,2.75,D.godZ+.85);scene.add(blessing);
   const ring=new THREE.Mesh(new THREE.TorusGeometry(1.5,.045,6,48),new THREE.MeshBasicMaterial({color:0xffd884}));ring.rotation.x=-Math.PI/2;ring.position.set(0,.04,D.godZ+2);scene.add(ring);
-  return {rects,doors,rooms,theme,lights:[],open:false,god,modelLoaded:!!source,
+  return {rects,doors,rooms,theme,lights:[],open:false,god,heritagePromise,modelLoaded:!!source,
     rectOf:id=>id==='shrine'?{...sr,z0:-64}:rects.find(r=>r.id===id),segmentAt:z=>rects.find(r=>z<=r.z1&&z>=r.z0),
     openDoor(id){const d=doors[id];if(!d||d.opened)return false;d.opened=true;return true;},
     update(dt){for(const d of Object.values(doors)){d.amount=Math.min(1,d.amount+(d.opened?dt/1.1:0));d.mesh.children.forEach((o,i)=>o.position.x=(i?1:-1)*(1.25+d.amount*2.7));if(d.amount===1)d.rect.open=true;}},

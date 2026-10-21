@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { SHRINE } from '../data/lighting.js';
+import { fitHeritageFootprint } from '../core/HeritageAssets.js';
 
 // 플레이어 키 1.5u 기준. 전체 높이 8u ≈ 5.3배 — 지형 봉우리(최대 15u)보다는 낮고
 // 나무(4.6~8u)와는 비슷하되, 형태가 완전히 달라 섞이지 않는다.
@@ -250,6 +251,13 @@ export function buildShrines(scene, planet, spots, themes) {
     const theme = themes[i % themes.length];
     const form = FORMS[i % FORMS.length];
     const { group, beamGeo, glow, poolMat, haloMat } = buildStructure(theme, form);
+    const inherited = i===0 ? fitHeritageFootprint('weight-exterior',2.95)
+      : i===3 ? fitHeritageFootprint('glacier-temple',2.95) : null;
+    if(inherited){
+      // Retain the pool, halo and beacon while replacing the old tower skin.
+      for(const child of group.children)if(child.isMesh&&!child.material.transparent)child.visible=false;
+      group.add(inherited);group.userData.heritageAsset=inherited.userData.heritageAsset;
+    }
     const fr = planet.frameAt(planet.surfaceAt(sp.dir), 0);
     group.position.copy(fr.position);
     group.quaternion.copy(fr.quaternion);
@@ -309,9 +317,10 @@ export function buildShrines(scene, planet, spots, themes) {
   const markCleared = (shrine) => {
     if (!shrine || shrine.cleared) return false;
     shrine.cleared = true;
-    if(shrines.indexOf(shrine)===0){
-      const seal=new THREE.Group();seal.name='밀봉된 균형의 사당';
-      const m=new THREE.MeshStandardMaterial({color:0xb8a981,roughness:.8});
+    if([0,4].includes(shrines.indexOf(shrine))){
+      const fire=shrines.indexOf(shrine)===4;
+      const seal=new THREE.Group();seal.name=fire?'밀봉된 불의 신전':'밀봉된 균형의 사당';
+      const m=new THREE.MeshStandardMaterial({color:fire?0x38414a:0xb8a981,roughness:.8});
       const slab=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.2,.35),m);slab.position.set(0,1.6,1.8);seal.add(slab);
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.6,.055,6,32),new THREE.MeshBasicMaterial({color:0xffd27a}));ring.position.set(0,1.8,2.01);seal.add(ring);shrine.group.add(seal);
     }

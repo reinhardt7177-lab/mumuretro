@@ -1,0 +1,82 @@
+{
+  "checks": [
+    {
+      "name": "main fire temple loads new Blender rooms",
+      "pass": true
+    },
+    {
+      "name": "main north gate prevents skipping both wings",
+      "pass": true
+    },
+    {
+      "name": "main fracture room completed by walking and carrying",
+      "pass": true
+    },
+    {
+      "name": "main foundry completed without old number panels",
+      "pass": true
+    },
+    {
+      "name": "main rider actually reaches upper passage",
+      "pass": true
+    },
+    {
+      "name": "earned passage connects to sanctum floor without falling",
+      "pass": true
+    },
+    {
+      "name": "grounded guardian and floor match design",
+      "pass": true,
+      "details": {
+        "metrics": {
+          "guardianLocalBase": 0,
+          "guardianTop": 5.048563003540039,
+          "floor": 3.2,
+          "faceEyes": 2,
+          "fingerChains": 10,
+          "parts": {
+            "static": 514,
+            "guardian": 238,
+            "eyes": 4,
+            "orb": 4
+          },
+          "staticTriangles": 44936,
+          "guardianTriangles": 240512,
+          "eyesTriangles": 2880,
+          "orbTriangles": 3792
+        },
+        "feet": 3.2,
+        "awards": 0
+      }
+    },
+    {
+      "name": "E starts manual guardian audience",
+      "pass": true
+    },
+    {
+      "name": "dialogue never auto-advances and player stays safe",
+      "pass": true
+    },
+    {
+      "name": "next page records exact audience progress",
+      "pass": true
+    },
+    {
+      "name": "reload resumes same dialogue line with no reward",
+      "pass": true
+    },
+    {
+      "name": "last line starts one reward animation",
+      "pass": true
+    },
+    {
+      "name": "reward commits once and automatically exits to planet",
+      "pass": false
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "failure": "reward commits once and automatically exits to planet: undefined"
+}

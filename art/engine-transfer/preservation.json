@@ -1,0 +1,1637 @@
+{
+  "date": "2026-10-02",
+  "files": [
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/crate.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/crate.fbx",
+      "bytes": 77948,
+      "sha256": "4c999ed48fa4fb2b39e25d2fac29d6d15a903117d023fa81b0b5fdc2669e3551"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/door_leaf.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/door_leaf.fbx",
+      "bytes": 213676,
+      "sha256": "dbf04177348d8b423facb84b1dc5ec2076eaf4cf059e37d69c9f72e20cf0a256"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/fulcrum.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/fulcrum.fbx",
+      "bytes": 42604,
+      "sha256": "f0140f793ac8380f9704a6dbc6a7103d14312d8524cb2bdf0f39bd07cf86a111"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/guardian.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/guardian.fbx",
+      "bytes": 191276,
+      "sha256": "f18363c5407f95dcd51a26bd4481b7c9aec6fd0ea21249fd5ab5204723cb25eb"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/hall_corridor.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/hall_corridor.fbx",
+      "bytes": 235420,
+      "sha256": "0bd6e4dd49a589fb5c79a639c9f0dc19939361c477ef40d3930fa3c3cd54074e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/hall_lever.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/hall_lever.fbx",
+      "bytes": 1491004,
+      "sha256": "9348449e8d762272203a75611f343f2e15fe4a202781ba9186b79da4ef6c4727"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/hall_order.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/hall_order.fbx",
+      "bytes": 1049500,
+      "sha256": "eade437845334459389de30c01bf7459cec34624348f360afb78b33017a73eed"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/hall_twin.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/hall_twin.fbx",
+      "bytes": 883612,
+      "sha256": "58ea5512fda1e562b43be236eeff2b5f3ac28d164c4a7861cf1e265f7a5d59ba"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/lever.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/lever.fbx",
+      "bytes": 41548,
+      "sha256": "229aca7328ff886df835f80ff2891e2e298d5d34095893b86a18544e343b2e2c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/materials.json",
+      "preserved": "art/engine-transfer/model-data/Balance/materials.json",
+      "bytes": 1788,
+      "sha256": "f9789f46d6f4054a4368ae97840db5312191773c62f177c28ca19aed0638511d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/plinth.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/plinth.fbx",
+      "bytes": 71452,
+      "sha256": "754ea33e3f532f100747fb4652ff6ca7e067040ef8c24c5c1044259d99492798"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/scale.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/scale.fbx",
+      "bytes": 111020,
+      "sha256": "d71e0b6eeaad6417b007bcd81155edecb384e1d36bf3956928e57aed892d6da3"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Balance/twin_scale.fbx",
+      "preserved": "art/engine-transfer/model-data/Balance/twin_scale.fbx",
+      "bytes": 26844,
+      "sha256": "793b1f64020acb8c0fec5b8b590fb36d516e868a6f6d527eb22a0d870c104985"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/BalanceDeity/deity-v01.json",
+      "preserved": "art/engine-transfer/model-data/BalanceDeity/deity-v01.json",
+      "bytes": 33337371,
+      "sha256": "d71558ef18e5d44dfe93d0db8d4a4d8b10511d5c320e551d2bf0d63a81d28ece"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/BalanceDeity/equilibrium-deity-v01.fbx",
+      "preserved": "art/engine-transfer/model-data/BalanceDeity/equilibrium-deity-v01.fbx",
+      "bytes": 2236604,
+      "sha256": "36ba412b39a7f1dd7268e607e945c3ea5b36d85dc73c022f4f27b65186f0c59d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/export-report.json",
+      "preserved": "art/engine-transfer/model-data/export-report.json",
+      "bytes": 278,
+      "sha256": "00a2f2aa0fb9098d3df1117fb4fdccbed6f2f20d51d07b2bac6825cb82674498"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Meadow/leaf-profiles.json",
+      "preserved": "art/engine-transfer/model-data/Meadow/leaf-profiles.json",
+      "bytes": 18486,
+      "sha256": "21e0f157f58150fdca863aa5ce95edb2f2616be17c0cbc6d6dae2cc62a91046a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Meadow/meadow-leaves-v01.fbx",
+      "preserved": "art/engine-transfer/model-data/Meadow/meadow-leaves-v01.fbx",
+      "bytes": 23356,
+      "sha256": "b09c0e9c5cfb526b2f197565d752e242240e45b585b4783b43a4628c4f46e786"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Navigator.fbx",
+      "preserved": "art/engine-transfer/model-data/Navigator.fbx",
+      "bytes": 2000956,
+      "sha256": "d735995ac097fdb8d2a459d78fa0af16ded291cea717f2dbe905c20d0a5a585e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/NavigatorTexture0.png",
+      "preserved": "art/engine-transfer/model-data/NavigatorTexture0.png",
+      "bytes": 5148171,
+      "sha256": "42f1f6fa60b9efcc3964810f29b0cedfb0ff855857e0ff1ab79f5540e438c379"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Notebook/notebook-v01.json",
+      "preserved": "art/engine-transfer/model-data/Notebook/notebook-v01.json",
+      "bytes": 909474,
+      "sha256": "d21f09f372b587bc4ebb2ee181cc8420e6842672568ed9124d1f9e769866d703"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Run.fbx",
+      "preserved": "art/engine-transfer/model-data/Run.fbx",
+      "bytes": 2041564,
+      "sha256": "8fb97961cd9f63d54a2a28c5a367d227c5b5cba9bec648c1e6ba76ab52e8507b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/direction-wheel-base-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/direction-wheel-base-v01.json",
+      "bytes": 1160843,
+      "sha256": "8d8344fc75b7cc1d4c55ab9604f0a54bea49a55de68b079ae18bf2439e6f5816"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/direction-wheel-rotor-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/direction-wheel-rotor-v01.json",
+      "bytes": 1066187,
+      "sha256": "76a1c0092d533d575cccfb0691b433dad1f04960065b5fc6da4c61a1919872a2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/guardian-anchors-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/guardian-anchors-v01.json",
+      "bytes": 183,
+      "sha256": "be30b3819e166736bdc83595767255569d7899dc46cfd657d5cd3f4175fb37d3"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/guardian-casters-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/guardian-casters-v01.json",
+      "bytes": 79899,
+      "sha256": "01f844b22054a2e8fec73f5ee44dc050dda5ed217ac026fbd96b60dc648502e2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/guardian-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/guardian-v01.json",
+      "bytes": 1554688,
+      "sha256": "9cf946341ff851cb910c05d537f56ff2d3b5ac29404696b504f40b74b98769e5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/height-grip-base-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/height-grip-base-v01.json",
+      "bytes": 808262,
+      "sha256": "61b7400bf884d93d6c66a22116b8ce24ee557a69ca6fff9ee2957d3fd29586c5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/height-grip-knob-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/height-grip-knob-v01.json",
+      "bytes": 171281,
+      "sha256": "a6fb4ceb055563ff955a35734d72d5a9dbea4e22d0aa9eaa47e2e3745af9f15d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/hint-post-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/hint-post-v01.json",
+      "bytes": 429268,
+      "sha256": "3e2e2a063937c329814f78b83a1350c83929304d1d71f72cdcaa0fc2156ee4f9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/light-emitter-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/light-emitter-v01.json",
+      "bytes": 1197288,
+      "sha256": "6bbcf80c0ef7d4988ca0966b47140ea27d900869544782069927955a463be28a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-cart-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-cart-v01.json",
+      "bytes": 1460312,
+      "sha256": "2a0f71c9389a52eeeb647b56fe59f910913e771f9c9872247a7dc32cbf559560"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-head-small-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-head-small-v01.json",
+      "bytes": 494958,
+      "sha256": "74ccfb8786cbfd6427aaf67e04007ec9e01be691bd6c826a1580debbd7f73cc2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-head-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-head-v01.json",
+      "bytes": 547823,
+      "sha256": "6a5f27cabc6d3d104615f9e2b107a033c93bdc52cabd78730ea0864898028bb7"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-lever-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-lever-v01.json",
+      "bytes": 748644,
+      "sha256": "0b5b91776cff05c7f680549b128b25251f09dec41b1dee4dc06ccfb635ea4264"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-pedestal-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-pedestal-v01.json",
+      "bytes": 751557,
+      "sha256": "adf5163d393bac2a63e5e38a7819a21a6d8190e498fb5cbd8a992ad811640af6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-rail-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-rail-v01.json",
+      "bytes": 1047316,
+      "sha256": "7152b55295b054fbbf94dcd273e5502cfd2fc7a3a7e7adfd506de9d2dd08151f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/mirror-receiver-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/mirror-receiver-v01.json",
+      "bytes": 998245,
+      "sha256": "cbb7ab65630eeb20df60c4e67ff98335f5e7d8623156cd0406079456022aa455"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/sanctum-hanger-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/sanctum-hanger-v01.json",
+      "bytes": 17116,
+      "sha256": "6a97a473171d00a904aebf30b920d8f59b20d7fc8ac3de6b37fdbc94f0193079"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/sanctum-lamp-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/sanctum-lamp-v01.json",
+      "bytes": 910257,
+      "sha256": "ef9606c0ea58b476ee120419c9e471dfef4e8eb87e683eaf6f5ca9c814b13f1c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/sanctum-trolley-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/sanctum-trolley-v01.json",
+      "bytes": 873863,
+      "sha256": "bbccc74ed2b29704a2762d6a7b83699082fbefda6291c6d195b5bae93e1dd50f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shade-lamp-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shade-lamp-v01.json",
+      "bytes": 1523688,
+      "sha256": "7df8acc2bc5424f19cef78293c0397b6727f8c5f5869fdbc04a2bba52232a635"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shade-pillar-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shade-pillar-v01.json",
+      "bytes": 621522,
+      "sha256": "a1cd306de7f105ff6138afe3a4885375ad8b26638a643e0dcad9f888d09a5144"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shade-practice-pillar-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shade-practice-pillar-v01.json",
+      "bytes": 700397,
+      "sha256": "80420b656fa46396483b45d028b7357bda418f2f8bf87a3ecfdc18d36b8e3467"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-bridges-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-bridges-v01.json",
+      "bytes": 6572524,
+      "sha256": "c8e295420751e40a23caf013f484d6640ce64860417fdcff0a10ff680d60cfbe"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-entry-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-entry-v01.json",
+      "bytes": 4205192,
+      "sha256": "8ad17e8ca00c4cf7696553559a8700a5f11ff177e8c2ff876c35df9bae2cd742"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-gate-exterior-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-gate-exterior-v01.json",
+      "bytes": 2680372,
+      "sha256": "2c7ea77ff1b438b297e1784dfc65e5a9c73172c34d7269453dc5e7c79c7817e8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-gate-seal-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-gate-seal-v01.json",
+      "bytes": 1066169,
+      "sha256": "574fb7ad3396a5f611035215706e56653b6aa8ba8c2be4de69af610b3030c3cd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-horizon-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-horizon-v01.json",
+      "bytes": 1494439,
+      "sha256": "0ce657326c087d88ef3f6be293a8e55c971a4dcb5596397f1836be70d297b047"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-island-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-island-v01.json",
+      "bytes": 2334995,
+      "sha256": "6e8656543b9c3b3e9ec3851efaf07866c98a7df187423ce52186ab1854147a3c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-room1-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-room1-v01.json",
+      "bytes": 11695753,
+      "sha256": "7650ca0f55c21a510965c1cd92ee00721c8d2c4f6c19a0e5f7d8ec3424be690c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-room2-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-room2-v01.json",
+      "bytes": 7038894,
+      "sha256": "c870643c77088184e3a5393af3f3d91fffac920b42bde83af2df7f3969953fdc"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-room3-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-room3-v01.json",
+      "bytes": 4645067,
+      "sha256": "4d8423c999c6b6ef3de805f7f13348c62a7c522f9b635c6359859c683f26ad5f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/shadow-sanctum-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/shadow-sanctum-v01.json",
+      "bytes": 13767023,
+      "sha256": "cc9586759d532733046e2203a45d96486e908735510a4b824ac1c395fc35c8de"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/silhouette-lamp-stand-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/silhouette-lamp-stand-v01.json",
+      "bytes": 1392776,
+      "sha256": "b96e773efe52410daf5b163a07d2c6c053347fffc69723095c7aa00fcf4e47cc"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/ShadowTemple/silhouette-panel-cart-v01.json",
+      "preserved": "art/engine-transfer/model-data/ShadowTemple/silhouette-panel-cart-v01.json",
+      "bytes": 989924,
+      "sha256": "dc1f7feaade4b32d38e6a21020997b6840120f402ee8ce2ef0aac848fe7df69a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Starsail/palette.json",
+      "preserved": "art/engine-transfer/model-data/Starsail/palette.json",
+      "bytes": 2396,
+      "sha256": "328a3951010af5fe33c2e51a87126b2cf3d8df61ed66ca312a018bca601e6c8f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Starsail/starsail-v02.fbx",
+      "preserved": "art/engine-transfer/model-data/Starsail/starsail-v02.fbx",
+      "bytes": 837404,
+      "sha256": "6dc864e30aa676d90a67340736ab0442d0cd76f105bd25c73444215133421b7c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/TempleExterior/exterior-v02.json",
+      "preserved": "art/engine-transfer/model-data/TempleExterior/exterior-v02.json",
+      "bytes": 1461413,
+      "sha256": "f166555ccd290302c88fa5072be63cda1fe7d2aa796bdbafe98869309f2e6714"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/TempleExterior/exterior.json",
+      "preserved": "art/engine-transfer/model-data/TempleExterior/exterior.json",
+      "bytes": 909195,
+      "sha256": "4d717a4dc7b6ce4806448af988b7442c3d6ebf6e14fab2e3e2d2364fe5704129"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/TempleExterior/weight-sanctuary-v01.fbx",
+      "preserved": "art/engine-transfer/model-data/TempleExterior/weight-sanctuary-v01.fbx",
+      "bytes": 543260,
+      "sha256": "24c878bb1d170aeed28533e5ae6d14c08decfa520240608cdabdcda184cd90a6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/TempleExterior/weight-sanctuary-v02.fbx",
+      "preserved": "art/engine-transfer/model-data/TempleExterior/weight-sanctuary-v02.fbx",
+      "bytes": 852252,
+      "sha256": "3d5a0e2320654f6d1b9f7bd4a1efb05d77ca4ea194f0d33c0c4f5f9a6188ee74"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/Walk.fbx",
+      "preserved": "art/engine-transfer/model-data/Walk.fbx",
+      "bytes": 2057324,
+      "sha256": "6a36814d186c2a48c044dafff1739b0e5984f59337cd58cce2f64cf72e784537"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/mat0-albedo.jpg",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/mat0-albedo.jpg",
+      "bytes": 48607484,
+      "sha256": "9889f111956d4680239389574974d853549b4f7d8fe2cd48684f1e83d2fb0ff7"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/mat0-metal-smooth.png",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/mat0-metal-smooth.png",
+      "bytes": 14683883,
+      "sha256": "b57cf3fb5faf5f6aa69ffd6aa2db5f7197722908a3efa3f449d5c6cda680140e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/mat0-normal-final.png",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/mat0-normal-final.png",
+      "bytes": 8215381,
+      "sha256": "eb22924c5b1e16994c29302129f447e89b85a79bed6943085188b47464d5b2b7"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/mat0-normal.png",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/mat0-normal.png",
+      "bytes": 23278925,
+      "sha256": "74ce433cbd29c98c03cbce41b5c6bc2665ea2c273e538d6799c120718ef6c39b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/mat0-orm-source.jpg",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/mat0-orm-source.jpg",
+      "bytes": 7265696,
+      "sha256": "f29156b3a6a38a35557eb1b3d7234b393353b4472ab7af026673d8299b7e6a9f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterDeityV03/water-deity-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterDeityV03/water-deity-v03.json",
+      "bytes": 17160471,
+      "sha256": "ba323112be3e4077da1c0f84de5c91d7aa389ae5d9cea9462571a63f24a48d35"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/collection-hall-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/collection-hall-v02.json",
+      "bytes": 13216963,
+      "sha256": "4bcbf7a0c07b4016444400cc779b7105c680052c33204799a75ca71c29c1f6cc"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/collection-hall-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/collection-hall-v03.json",
+      "bytes": 28259423,
+      "sha256": "5d8558ac5f67a20d390929835f9932846a32351662777011a7e8d54aba7a0b1d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/collection-hall-v04.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/collection-hall-v04.json",
+      "bytes": 68838474,
+      "sha256": "8cfb90411dacaf9f85748ecc2514f8e74f0d8b607e9a9ad11d1f51533c5d12e6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/collection-hall-v07.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/collection-hall-v07.json",
+      "bytes": 68564308,
+      "sha256": "3f0439c9b6a36e8a3dfeaa6f2ffb0bdd577c1e12867fd7fbc080c45d140c7f6c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/collector-detail-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/collector-detail-v02.json",
+      "bytes": 256090,
+      "sha256": "fbb9d86522a24ca5c41b945c202df63517869f68d9c72dd73b808d6e8e08bc33"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/cycle-hall-v08.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/cycle-hall-v08.json",
+      "bytes": 61265398,
+      "sha256": "d61ed842ada55d8d641d635e0e6163456d06849fd06bfd11de5409826143bd2d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/cycle-hall-v09.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/cycle-hall-v09.json",
+      "bytes": 63187454,
+      "sha256": "f9bdf87a2beea165f075c6e10f16dddd43c35ba84eedd198a6a8a596f644209d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-gate-detail-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-gate-detail-v02.json",
+      "bytes": 1223959,
+      "sha256": "87fedc80d576e34e21352f5097beb8857ec2787ab34e8eb6a92b21ee081921bd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-gate-detail-v06.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-gate-detail-v06.json",
+      "bytes": 3283089,
+      "sha256": "f00d6ecfdb94e0179a0ccf72ece3b4114db5064c495fec5a5269ff3716af1633"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-hall-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-hall-v02.json",
+      "bytes": 28597569,
+      "sha256": "6e84998139b7d00a005f03a34926f7a06bf03fefc228b9802e7bb11acf5af0da"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-hall-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-hall-v03.json",
+      "bytes": 48701185,
+      "sha256": "ef41f5b595edf5a6a71f31bc45be970d7c213ce08e34053540b5b837e5a47df2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-hall-v04.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-hall-v04.json",
+      "bytes": 53315089,
+      "sha256": "02343eb07f6b910f86dba48c5a9ff99b16a0380139f6014969e7b78e06aa0bc5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/ice-hall-v07.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/ice-hall-v07.json",
+      "bytes": 51712581,
+      "sha256": "eebb376d55db4a982092746aaa509a33efe255823312d8375a59118fc7921e85"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/return-bridge-detail-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/return-bridge-detail-v02.json",
+      "bytes": 534009,
+      "sha256": "326a45de99e533f5d7fee107759e0b3a19b618f86df328f4e722e562ec9f2194"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/water-deity-droplet-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/water-deity-droplet-v03.json",
+      "bytes": 1263849,
+      "sha256": "517c9c9b7758fa6ba34cb55406eb232de6689d166a4b9c652552b367de0468a4"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/water-deity-halo-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/water-deity-halo-v03.json",
+      "bytes": 11014055,
+      "sha256": "87b410ad3b160d50369a540066c413ccdb5504d9ac9ac38c5863ba629688654c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/water-deity-v01.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/water-deity-v01.json",
+      "bytes": 11911473,
+      "sha256": "07e617becfc3751c498ff8ad865ccf969387bd73e94d148faee16937adf39e8b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/water-deity-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/water-deity-v02.json",
+      "bytes": 8595843,
+      "sha256": "52cbd5f2eac05812e11d3809ffd09a2bd2e64efba5492232e90f76958c0a0742"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterInterior/water-sanctuary-v01.json",
+      "preserved": "art/engine-transfer/model-data/WaterInterior/water-sanctuary-v01.json",
+      "bytes": 17862753,
+      "sha256": "8e7c5d6f34673155b5297363fd1ae41bbfd5ce669a302795f3cc7df032d52ea1"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-seal-v01.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-seal-v01.json",
+      "bytes": 2522380,
+      "sha256": "e7746ade63f589541a57fdb726b885b405c98103ed8aa8cf2c5a839c14d2c399"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-seal-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-seal-v02.json",
+      "bytes": 2522380,
+      "sha256": "e7746ade63f589541a57fdb726b885b405c98103ed8aa8cf2c5a839c14d2c399"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-seal-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-seal-v03.json",
+      "bytes": 2522380,
+      "sha256": "e7746ade63f589541a57fdb726b885b405c98103ed8aa8cf2c5a839c14d2c399"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-temple-v01.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-temple-v01.json",
+      "bytes": 15202952,
+      "sha256": "498fcd17ef548fc94cb574e22dcf85bb87b2703e3be870e91867ec3569c08f36"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-temple-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-temple-v02.json",
+      "bytes": 16419011,
+      "sha256": "93ef657271b7fd15aba199527ded6b8dfa7eac53713093472f7fd3710d2a474f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/glacier-temple-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/glacier-temple-v03.json",
+      "bytes": 23518800,
+      "sha256": "c573b43dd97fe3b92987e3cea0e8a2bfb531147762a3d5b7fef025830604638b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/sandstone-detail-v04.png",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/sandstone-detail-v04.png",
+      "bytes": 53850,
+      "sha256": "e2a5293a73702ef60affc5d4575a4a140a8e99ded360b67a857d885cd515cdbd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/solar-altar-v04.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/solar-altar-v04.json",
+      "bytes": 2331145,
+      "sha256": "7bfe2e161914d9bae96ab0f9e7e507aadd853bfe8791c98ae80f45bf63a7d2df"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/solar-mirror-v04.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/solar-mirror-v04.json",
+      "bytes": 2743325,
+      "sha256": "93ac184bad53e4ab996b92a9ac27fb78ac07636fc59e4625c40a75205a1c60dc"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/water-mountain-v02.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/water-mountain-v02.json",
+      "bytes": 1465209,
+      "sha256": "6865c8f1ef67a2d31fadfa4271d53a44e771bf45cca50c45968a03052d129d20"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/water-mountain-v03.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/water-mountain-v03.json",
+      "bytes": 7499221,
+      "sha256": "ec1a00249cabc18a0e5d999f651acd9ff5c27ca8952047afbf1c354e17fafb6f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/water-mountain-v04.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/water-mountain-v04.json",
+      "bytes": 46869078,
+      "sha256": "2625bbf87f83770330b533a45742a6e82bd642b19c06d800fde949d0c468b379"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Models/WaterMountain/water-mountain-v05.json",
+      "preserved": "art/engine-transfer/model-data/WaterMountain/water-mountain-v05.json",
+      "bytes": 23273843,
+      "sha256": "37270ada4aff0e3d9c5242529e0d6ba0b666466acd2aebbb386f5a494890a4a3"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/BalanceOrderState.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/BalanceOrderState.cs",
+      "bytes": 2289,
+      "sha256": "3dc7c8f8b022b217f93a08f1b2dad6de2d8e7b545496d18f3fef66c6bdad765a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/BalanceRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/BalanceRoom.cs",
+      "bytes": 10685,
+      "sha256": "eefadb4b6fe234499bc97823560bbfb40634c2a663d887e0053ccbc2ca701e32"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ExplorationSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ExplorationSmoke.cs",
+      "bytes": 10931,
+      "sha256": "5fd1d0836b26168203f4da1c9503e4eadcb666bd97b73efa46735755de56dbb7"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/GlacialSeal.shader",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/GlacialSeal.shader",
+      "bytes": 2188,
+      "sha256": "3beb983e68bcd82ae5a58f5db9c9faac95107cccb4273123c1fdc67f47e042c2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/GlacierIce.shader",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/GlacierIce.shader",
+      "bytes": 3322,
+      "sha256": "b21158f9adaaf2b9216a15af413d37d1bd418a753b2665cb4fd1a88de343fbb0"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/LeverBalanceRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/LeverBalanceRoom.cs",
+      "bytes": 11888,
+      "sha256": "8faf2da36b8c4f5f27402e6c34a4d9205fd3980f3f73ad5b21da2c48b9612ada"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/LeverBalanceState.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/LeverBalanceState.cs",
+      "bytes": 2411,
+      "sha256": "594206032cea1e20a7cdfefc79fa0728cdfb65e78cb7fe1164de10f1806ccff8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/LeverTempleValidation.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/LeverTempleValidation.cs",
+      "bytes": 11362,
+      "sha256": "8cbb04190d9f689becaf4794301c844e651eaae15b64e4a421447a88bbd9bcff"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/MeadowGrass.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/MeadowGrass.cs",
+      "bytes": 1414,
+      "sha256": "d079fbfe93782ded3c4d00702f9222e9f88f7dd144eaf75eb043fb67116b9d52"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/MeadowSettingsUI.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/MeadowSettingsUI.cs",
+      "bytes": 1230,
+      "sha256": "c83f77f9b32222b6c8623e0f2488f9eec34133d2f116bcbff087a4d692d792fe"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/MeadowSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/MeadowSmoke.cs",
+      "bytes": 8538,
+      "sha256": "c73387eb4be4d017e691d031dce894aa95ada43476a510c86206320077d4e994"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/MirrorRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/MirrorRoom.cs",
+      "bytes": 14000,
+      "sha256": "1bd47bbd50466ff5ab4f7df75dbdfc89528b6b7ef2942d57d16d376c725f42ce"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/MountainClimbController.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/MountainClimbController.cs",
+      "bytes": 14885,
+      "sha256": "40bd6ec6e498676fa6dfe1ba1e1726c574f93e781b95edbbdbf183aef672634d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/NavigatorPose.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/NavigatorPose.cs",
+      "bytes": 10481,
+      "sha256": "8491672f411ba8a95ae49cc0ed2579b85439a4543c527cde7151ee18ee1908df"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/NotebookPresentation.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/NotebookPresentation.cs",
+      "bytes": 2686,
+      "sha256": "fb40493a9dd9afcbd912b1a06f312870652f902bb58190722ad388dae8618f0e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/NotebookSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/NotebookSmoke.cs",
+      "bytes": 11442,
+      "sha256": "2aa905f617b1a6807eac855c3f984916bb4fdd4ddeba2a1e8bca1792ff898db4"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/NotebookUI.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/NotebookUI.cs",
+      "bytes": 24042,
+      "sha256": "d073aedc7366b8ecacd7171ebef5333611f49097f2ef5fad7ee3bb90fe72d84a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/OrbitCamera.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/OrbitCamera.cs",
+      "bytes": 5307,
+      "sha256": "57adf749a8a87cc1c280b782d1a04e4f44de431414bf39f1aa235ec9566416e4"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/PlanetExplorer.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/PlanetExplorer.cs",
+      "bytes": 11158,
+      "sha256": "a72e32ba1cf9c14eafbd45eb12a7604c020a840a0c94adff14fb58efb0d77ff3"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/PlanetSurface.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/PlanetSurface.cs",
+      "bytes": 3362,
+      "sha256": "7c7622cdf883060d630a196eb9865024909da7f01c737717da9c1187d27bf806"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/QuestGuide.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/QuestGuide.cs",
+      "bytes": 11313,
+      "sha256": "3704bfb7ea91eb6ef1a9f797155587951f1f0d2955c81518ae7666d82375ff78"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/QuestGuideSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/QuestGuideSmoke.cs",
+      "bytes": 8012,
+      "sha256": "ef0cc43a4d82dce4af115990d086669bd0737bad0bc9c76fa15018b15d5c4af6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/SanctuaryDoor.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/SanctuaryDoor.cs",
+      "bytes": 1061,
+      "sha256": "55899b931e1317d182520ac80864618c22d2e031499a1a01ce03667665987e2a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadeWalkRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadeWalkRoom.cs",
+      "bytes": 9662,
+      "sha256": "b6419a09aeb462674b4cf87ccb882293a1c8d7639de05691923e5c2a308ddccf"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowEntranceSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowEntranceSmoke.cs",
+      "bytes": 18299,
+      "sha256": "264b38b64adfe324d0d1ccd17ec13db9c6365e2a18446d1db0325757b4407b77"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowOptics.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowOptics.cs",
+      "bytes": 10621,
+      "sha256": "2e4bd5a0b4e21dae6ca183dca83fd0a83893c930c6de18b924b173c27b67e216"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowSanctuaryEntrance.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowSanctuaryEntrance.cs",
+      "bytes": 6366,
+      "sha256": "b5590c9ff901a04593482fe0223ef49864adbb33ea5892c6785b353fceb5746c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowSanctum.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowSanctum.cs",
+      "bytes": 13139,
+      "sha256": "4b5a8dc045d395ec27718ae7e16a0b939fa50b9e670bff87dbb43f46a7c8f59f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowTemple.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowTemple.cs",
+      "bytes": 22356,
+      "sha256": "6a9e456dd1e37abfef9b2a395a2756c4dec7c142db1ecb73988585c59cc427d6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowTempleSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowTempleSmoke.cs",
+      "bytes": 56791,
+      "sha256": "a0db9ffcc810cabf28a898379c5419ccb93b91920306c9fc660615c3dcdbb24b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/ShadowTempleStore.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/ShadowTempleStore.cs",
+      "bytes": 9239,
+      "sha256": "3fee082aa2b5f966480cf7e64670dc56f72dc36accb12b9b9240ecad3ad5aeff"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/SilhouetteRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/SilhouetteRoom.cs",
+      "bytes": 9198,
+      "sha256": "5795d98279c82d57b0f121370563b1fa1ce61e6c63cff73d86c6a5e83af9fd29"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/StarsailIntro.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/StarsailIntro.cs",
+      "bytes": 11776,
+      "sha256": "c3ae997b6df3040f546c31ceddb84f24f679dbdacd67e203155d55dc4af4aeb5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/StarsailProgress.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/StarsailProgress.cs",
+      "bytes": 4371,
+      "sha256": "e83979ce5ccc8d273892d04dd974c28509967ebdc41f514cbc62a6af8c5d25c9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/StarsailSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/StarsailSmoke.cs",
+      "bytes": 9126,
+      "sha256": "af43dc1c4e4ea86e37636e371ea2518b6176c62e3cd6b94d0cfc686b6125fdbb"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleAudience.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleAudience.cs",
+      "bytes": 6142,
+      "sha256": "410e885f1e722a588f6de54481733f1a7e0305c5190242257169d00cec762757"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleAudienceValidation.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleAudienceValidation.cs",
+      "bytes": 10562,
+      "sha256": "f7b70aab13b085dddba6d8b12ec318b936fdfbead9ad419fee2d499d96932a92"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleEntrance.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleEntrance.cs",
+      "bytes": 5298,
+      "sha256": "c6f41c0c95d228a5ae88d73fac996360852a0c65f0618ac2884b4500d7993c89"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleExteriorSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleExteriorSmoke.cs",
+      "bytes": 9538,
+      "sha256": "a5f82b90d440d0a69156860581e7bdb994e2f306bd848b680176fc47035ff937"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleJourney.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleJourney.cs",
+      "bytes": 4972,
+      "sha256": "832c14049647c62dfdfd0103a8232f66d3288b600a722c34e1d66079b1d74069"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleJourneySmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleJourneySmoke.cs",
+      "bytes": 6138,
+      "sha256": "ac5ec37ed1c4da3eff6600d2ab99cd2ae6e8c7dbaa1422c619eb7c92e98752a1"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleProgress.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleProgress.cs",
+      "bytes": 2748,
+      "sha256": "af200047530c1b41e53da07ea4445ba11a443d10ccf7115b0df423fae6a2e2e6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleReflectionCapture.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleReflectionCapture.cs",
+      "bytes": 432,
+      "sha256": "3d3b00c0f3acbb94bdf3fbe01c507e542d4b9765745f72f4607d66ca7c026b55"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleSealSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleSealSmoke.cs",
+      "bytes": 2347,
+      "sha256": "0a3d655766790de0b62ad80c3f331d05ffffcdee7a801a3793e488831473169d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TempleSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TempleSmoke.cs",
+      "bytes": 10312,
+      "sha256": "4dd31f1ff25ffca6da7f8c792214adbf4ef7b9bedf224a54bd8c3e579532449e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TwinBalanceRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TwinBalanceRoom.cs",
+      "bytes": 8846,
+      "sha256": "cf192ef920529bfea280bb72ec2b9eda6299c9e9f3d6cc1007a01fddfacb0172"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TwinBalanceState.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TwinBalanceState.cs",
+      "bytes": 1864,
+      "sha256": "77d9724b0f375f7bf41203abe3f355dd8d93e2403e64f57695e31e81a5037f99"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/TwinTempleValidation.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/TwinTempleValidation.cs",
+      "bytes": 9775,
+      "sha256": "9f134b7b1211ea72761d42a56f7f492284e016284e78df7a2dea78a60f1a9cb9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterApproachProgress.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterApproachProgress.cs",
+      "bytes": 3611,
+      "sha256": "53856c809a5105d9dd980ce7c45573106a4c3e5405bfbfd742d7dbfa69cf8a2d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterBraceletLab.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterBraceletLab.cs",
+      "bytes": 9291,
+      "sha256": "717d0c7c025bbae89018cafab05bfe5fd2815285d3922069e06dcea04f3d0047"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterBraceletSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterBraceletSmoke.cs",
+      "bytes": 6968,
+      "sha256": "8ea18ba6ef2c46de2b1098989ae9c6aa7871116e4677e1bdb1e19befe7a129a8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterBraceletTarget.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterBraceletTarget.cs",
+      "bytes": 2737,
+      "sha256": "8496e530bae99c74ce47cebb147b73f290726416a9a02c704a01203a7d81249c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterCollectionRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterCollectionRoom.cs",
+      "bytes": 9511,
+      "sha256": "054c1e6b53107ccee02e6cb4517b0701aebff2b3d14c8b96e0982145cd28c07e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterCollectionRoomSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterCollectionRoomSmoke.cs",
+      "bytes": 9799,
+      "sha256": "dfa3d4d7fc124ef0316faecd843661e3843236eb241c9e2c1ada6a071cab74c6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterCycleRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterCycleRoom.cs",
+      "bytes": 7136,
+      "sha256": "39c426b036c13f42c9eca732687f226946e35f84e4d1c632428254f812766dc1"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterCycleRoomSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterCycleRoomSmoke.cs",
+      "bytes": 8808,
+      "sha256": "c82a96ba51b63e08f65cc05802d833d4b0f70c082ed8f874be29ed25ed001cd0"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterEndingSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterEndingSmoke.cs",
+      "bytes": 5156,
+      "sha256": "f7a566c1ac1c59bdaaa2fc14975ed067369da7fccadc04855b2a33df123617e4"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterEntranceSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterEntranceSmoke.cs",
+      "bytes": 34595,
+      "sha256": "8b6a45597a519e59bb02f2d39f79418d983bd200abb0aa64c1ba3adc6a425f0a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterEntrySmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterEntrySmoke.cs",
+      "bytes": 5127,
+      "sha256": "dc01169f8325b3cd882381262595af326c043a0fc5f19c8a61cca1f4661e31d8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterGateCeremony.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterGateCeremony.cs",
+      "bytes": 1439,
+      "sha256": "1be8a92439c3cc51cc0b094f2f80c3290d97704c3a460ce5be25996aaf11bcc2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterIceGuide.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterIceGuide.cs",
+      "bytes": 1035,
+      "sha256": "98d70ddbd080eb6b394de56f1f6e2824e373d8682d05d970f75b6da23d4ca4d8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterIceRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterIceRoom.cs",
+      "bytes": 8043,
+      "sha256": "cd582b3c2d7782127c76560fd3ce5d2fa539b3c917b8adab25f997a71e980057"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterIceRoomSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterIceRoomSmoke.cs",
+      "bytes": 10450,
+      "sha256": "c6b85cced8fafec0e03440e285f53a474c2e7bd967db62698135ae5f48a7d71c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterJourneySmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterJourneySmoke.cs",
+      "bytes": 8153,
+      "sha256": "fde40aebaeee110f7de74da0accca572d824fa1b330b3dceadd8df4189f4e624"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterJourneyStore.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterJourneyStore.cs",
+      "bytes": 3025,
+      "sha256": "914f77dc0d481f48f3aff84d30d73ba2a7ba9cdac1d8900d4be91a4b95ab79af"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterPhaseState.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterPhaseState.cs",
+      "bytes": 2281,
+      "sha256": "016e7fda3fe1270844d5818446a203e0b11f71bae139c9f2bbf112073f8c431c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterSanctuary.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterSanctuary.cs",
+      "bytes": 3887,
+      "sha256": "925221a976aff3524e32dc15aa98b6980fce2cbb395f1d97e971d795fabd232d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterSanctuaryEntrance.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterSanctuaryEntrance.cs",
+      "bytes": 9171,
+      "sha256": "7cc516e4108f182d5e241d5557075d68b851c3909ddb77364f14d9edd8d11526"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterSanctuarySmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterSanctuarySmoke.cs",
+      "bytes": 7250,
+      "sha256": "c09c669d0f486fd06e514db74596fb0e2746fb3ed7ce4c493885579d7647c6bd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Runtime/WaterTempleJourney.cs",
+      "preserved": "art/engine-transfer/logic-reference/Runtime/WaterTempleJourney.cs",
+      "bytes": 6208,
+      "sha256": "870906130073486cbff199813a21855bd3c15a6d2f939aa2206c402d16cd9026"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildBalanceDeity.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildBalanceDeity.cs",
+      "bytes": 3526,
+      "sha256": "04384b972f67bd70182b5bc3d239d6338ed9483d919b5e6e4eda241e4d165b72"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildExploration.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildExploration.cs",
+      "bytes": 17720,
+      "sha256": "3f22b5ca5d8e5fa5d1346bf5b49bcffd31b81032ae8a852c4824205940ed5e73"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildLeverTemple.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildLeverTemple.cs",
+      "bytes": 6745,
+      "sha256": "6bab1d21216da330f39416326a58b7ac67f418bebfc409ce9a0d524c4662fd6d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildMeadow.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildMeadow.cs",
+      "bytes": 12061,
+      "sha256": "bf0ff81eb003b759e8ba97876c403c2a36917c3b05122da0afaaac890d4bbd5d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildMeadowSettings.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildMeadowSettings.cs",
+      "bytes": 3613,
+      "sha256": "dd07938db6565b7bdeca846ac241979659520ae454f6f166c3a5b2ac8ef50ecd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildNotebook.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildNotebook.cs",
+      "bytes": 15870,
+      "sha256": "a8932be40834e7e57583d490e06be6c0e23524d0abb4a6bb768ea5d9a39ef7f2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildQuestGuide.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildQuestGuide.cs",
+      "bytes": 6848,
+      "sha256": "84bb3f4ed2976dec055b9cf532e05fe2724a6a4bb8117f73cdc1cf0afe37619f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildShadowSanctuaryExterior.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildShadowSanctuaryExterior.cs",
+      "bytes": 13123,
+      "sha256": "2926c997146875ce9ad7039cefd6ee6aa69c423c19602eb56cc17f0d91a84475"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildShadowTemple.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildShadowTemple.cs",
+      "bytes": 37821,
+      "sha256": "982956a42f61f28b684d32c605579ad7977c11aedd2980edfa18e6776f3b3c17"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildStarsailIntro.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildStarsailIntro.cs",
+      "bytes": 19161,
+      "sha256": "1ada2dca7a12472c4432b67950b5c6fe73bbbeb2d6d21fbb1f85dbb11bedf882"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildTempleAudience.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildTempleAudience.cs",
+      "bytes": 5990,
+      "sha256": "efbd2669897c69caa695dea0d1e3aeae54fae7507cc17b4003a4fb1fa201637b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildTempleExterior.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildTempleExterior.cs",
+      "bytes": 9104,
+      "sha256": "89b495ed6a943b0819f1f2579dc91770b5629e68064da77100795391a4a71bd9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildTwinTemple.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildTwinTemple.cs",
+      "bytes": 5504,
+      "sha256": "3b771d00c00c4b8429809bf4d83822b4daca9b473fa73940804a434c1a3d8bb6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterBraceletLab.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterBraceletLab.cs",
+      "bytes": 8920,
+      "sha256": "3de4be322a5a816ebb9ea351df0916280a333d63ba36d83951f14cba62c5a502"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterCollectionRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterCollectionRoom.cs",
+      "bytes": 8702,
+      "sha256": "36331a9045fc272fe6271d4d9fd8c830616de00ccccbbd4b52a68071cf8e6dda"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterCycleRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterCycleRoom.cs",
+      "bytes": 7519,
+      "sha256": "2a0fd89f7016d90ac68c801e85851af6a50c16af06ce4b113a540daeab4ee73a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterEnding.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterEnding.cs",
+      "bytes": 1027,
+      "sha256": "00d30c19b7007482d358f3ed3cfec8e930ddec978d0bdfcb469b09eff6233079"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterIceRoom.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterIceRoom.cs",
+      "bytes": 6917,
+      "sha256": "aaec3ecf9b2708e687e2385f88083b21d8f3664e21fb4306ff08c97e94e8eb1d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterSanctuary.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterSanctuary.cs",
+      "bytes": 7510,
+      "sha256": "fb78f0b6471c738beaf4a4cb2f43a454e52d7b0a4834ce6893572d0cc97fd1e7"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterSanctuaryExterior.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterSanctuaryExterior.cs",
+      "bytes": 27523,
+      "sha256": "f0bee7efb709833f827f523c87af8ba0e1bc68560b72641907e9c49e147c3a0a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWaterTempleJourney.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWaterTempleJourney.cs",
+      "bytes": 2746,
+      "sha256": "04320ff354e63641a89c50916c8f48b1f8f9e4d06518816a4ac16c421d04e661"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/BuildWeightTemple.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/BuildWeightTemple.cs",
+      "bytes": 18341,
+      "sha256": "f5cc5bf57073d4b566cbd8a5e87a4e8bd91bd8107e635ef0e14221719f0b203a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/InspectWaterDeityShading.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/InspectWaterDeityShading.cs",
+      "bytes": 2581,
+      "sha256": "3bbadfe99bc808929dde0761ded2365c02872b83b0c775a0f3d0df444cb05812"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/LocomotionAudit.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/LocomotionAudit.cs",
+      "bytes": 3315,
+      "sha256": "e634ac3a93ae4a2cbcd9b2770c560190df379137c7c746d39c4755889347816b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/NavigatorRigAudit.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/NavigatorRigAudit.cs",
+      "bytes": 3329,
+      "sha256": "b96aa8bae80a112db0140042170da0f37d4fdb6d7bd78c8d8feb228ef44f5abf"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/ShadowTempleArt.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/ShadowTempleArt.cs",
+      "bytes": 9887,
+      "sha256": "2e380a26b2375f1e548f9c5a3bbe13dbbc7cf4ead514a0ff3dc0ecd6ace72ec2"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/WaterDeityOfferingArt.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/WaterDeityOfferingArt.cs",
+      "bytes": 5275,
+      "sha256": "c27955f224fbfdff8bbbb052cbcea30eb9ff6992bec49772932fcc907faaef0e"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/WaterDeityV03Art.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/WaterDeityV03Art.cs",
+      "bytes": 4974,
+      "sha256": "050410cdf4ed9667cb83dc45be997bfb2f35df0f01d0db53a9f55fb931d38895"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Editor/WaterInteriorArt.cs",
+      "preserved": "art/engine-transfer/logic-reference/Editor/WaterInteriorArt.cs",
+      "bytes": 15884,
+      "sha256": "14bb18797cf85ba306f6d8354be470058596853aead87c377e37a1ae23eda058"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/InteriorGlacier.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/InteriorGlacier.shader",
+      "bytes": 3419,
+      "sha256": "909fa88705529cd2ce8200a711252d2af81babea1befe324c05f20f38c184df3"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/MeadowWind.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/MeadowWind.shader",
+      "bytes": 4937,
+      "sha256": "ed7a1af5ca2540e038ac6976a463127a48bc5710dcd991b8a69b985b38d68776"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/ShadowNightCommon.hlsl",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/ShadowNightCommon.hlsl",
+      "bytes": 1284,
+      "sha256": "4fba5b55f8c8577ffe01f83ab8d0967ffcee5e580476de55a15e368b76fc220d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/ShadowNightPortal.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/ShadowNightPortal.shader",
+      "bytes": 2353,
+      "sha256": "f07c3140c01b653173f9d897353512605884bc6373f0057ae2c5a95686e1b578"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/ShadowNightSky.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/ShadowNightSky.shader",
+      "bytes": 1619,
+      "sha256": "e2b93cb492a3166b25b99edc95c36fa5c9f40e85c0df6ae6be925b006c2612a8"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/TemplePhaseWater.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/TemplePhaseWater.shader",
+      "bytes": 3384,
+      "sha256": "a39e4eeb938e450912affe37d52681058a17fea2cfa9f5d866d602b35a2e39af"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/TempleWeatheredStone.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/TempleWeatheredStone.shader",
+      "bytes": 2784,
+      "sha256": "2a59032ae9b749e317a9041f751440dfab219b6d5b2592ce4ea04fefcdadb492"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/WaterGateSeal.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/WaterGateSeal.shader",
+      "bytes": 2750,
+      "sha256": "d63adadcb8c2c233486a1deac96e3088957affb694c1aa2d198b83b8e5d163f6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Shaders/WorldVertex.shader",
+      "preserved": "art/engine-transfer/logic-reference/Shaders/WorldVertex.shader",
+      "bytes": 1806,
+      "sha256": "229e2bd9058d0b98951701de5137ec8ea30ee43f08dfdc8cd2e03c185de81cb5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Source/world.json",
+      "preserved": "art/engine-transfer/logic-reference/Source/world.json",
+      "bytes": 30382541,
+      "sha256": "9387af8d1cd8c6f64f801d77534b54f6da905b9f157954ea0a8193a77ab9bcf5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Fonts/NanumGothic-Regular.ttf",
+      "preserved": "art/engine-transfer/fonts/NanumGothic-Regular.ttf",
+      "bytes": 2054744,
+      "sha256": "76f45ef4a6bcff344c837c95a7dcc26e017e38b5846d5ae0cdcb5b86be2e2d31"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Fonts/OFL.txt",
+      "preserved": "art/engine-transfer/fonts/OFL.txt",
+      "bytes": 4534,
+      "sha256": "eeacf16032901d0ed0456876ec77b8f0fda6b3fecec7d972f8543eb602e6c30f"
+    },
+    {
+      "source": "unity/MumuPlanet/Docs/AI/UnityProjectContext.md",
+      "preserved": "art/engine-transfer/logic-reference/Docs/AI/UnityProjectContext.md",
+      "bytes": 64957,
+      "sha256": "d2c2c3e230c64243594af8ffa545ce7fa06d16c67929335569080929ca5fbe3f"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/Assets/Mumu/Editor/BuildWaterMountain.cs",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/Assets/Mumu/Editor/BuildWaterMountain.cs",
+      "bytes": 35315,
+      "sha256": "edcb51d1e949e00d1009116f310879db7494d0c6485811dc302563b7e13457d8"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/Assets/Mumu/Runtime/IceThawPresentation.cs",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/Assets/Mumu/Runtime/IceThawPresentation.cs",
+      "bytes": 3371,
+      "sha256": "9b8f1555b0db0042b7a291d4dda9d601c34dfe31e677b9dd5776a0aa9424fd44"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/Assets/Mumu/Runtime/WaterMountainSmoke.cs",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/Assets/Mumu/Runtime/WaterMountainSmoke.cs",
+      "bytes": 22735,
+      "sha256": "3f8dd3226ab25451a1ed1f6d3bb52b10e8db34d4ef4aa9f2559f94c4795e96a8"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/Assets/Mumu/Runtime/WaterMountainTrial.cs",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/Assets/Mumu/Runtime/WaterMountainTrial.cs",
+      "bytes": 17207,
+      "sha256": "448f2a79a845e10bec0453bb6de47648ad7947c60a5a0b7a0a6df35e8bedc2aa"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/check-water-mountain.ps1",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/check-water-mountain.ps1",
+      "bytes": 2013,
+      "sha256": "e139acaa65fecfdaeae95bc6a583312329ce3b0371c6f4bfbd6526f6a9e3a1c6"
+    },
+    {
+      "source": "unity/legacy/water-mountain-v05/README.md",
+      "preserved": "art/engine-transfer/logic-reference/legacy/water-mountain-v05/README.md",
+      "bytes": 2134,
+      "sha256": "8b642df8b681cdd2f31e32b6372c0844b21d7549511d44b8037080a9b224a00f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/LeverBalanceTemple.unity",
+      "preserved": "art/engine-transfer/layout-reference/LeverBalanceTemple.unity",
+      "bytes": 650157,
+      "sha256": "04bfbb52994414d2bb4798f68a4231e8156d040bbdc3bad517bb316bb8ef93a5"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/PlanetExploration.unity",
+      "preserved": "art/engine-transfer/layout-reference/PlanetExploration.unity",
+      "bytes": 4679878,
+      "sha256": "1f4332d7859fbb8f16f24a3112e07e8b871214e0be083b421e9f45288c20e4db"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/ShadowTemple.unity",
+      "preserved": "art/engine-transfer/layout-reference/ShadowTemple.unity",
+      "bytes": 1261314,
+      "sha256": "93b0eaa87d5d5d3f9f534194c1f0c3f78ee9c6fc9eb7a181e6c32e29068b14dc"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/StarsailIntro.unity",
+      "preserved": "art/engine-transfer/layout-reference/StarsailIntro.unity",
+      "bytes": 514427,
+      "sha256": "0f9280970614345f2357071f65dff5d8102f67f482688a132c5200495d09c609"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/TwinBalanceTemple.unity",
+      "preserved": "art/engine-transfer/layout-reference/TwinBalanceTemple.unity",
+      "bytes": 563864,
+      "sha256": "f8ed55184c5fa7dd966a52ff261f1b2f0f758531452e90a05aace14b2115fda6"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterBraceletLab.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterBraceletLab.unity",
+      "bytes": 483133,
+      "sha256": "23684e8436c55e12367806739000426e85cf0fe49a6119b37e21fe4bcd7a01fb"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterCollectionRoom.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterCollectionRoom.unity",
+      "bytes": 550070,
+      "sha256": "fcdb573c73afb0098d4b4788e53aab5ce57fa50ecc30fb17abf2737d64a4179c"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterCycleRoom.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterCycleRoom.unity",
+      "bytes": 563913,
+      "sha256": "58b167fb8a611ef8f2348978bc061e50859c5eaa8d81744b1a46023d54e4a56a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterIceRoom.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterIceRoom.unity",
+      "bytes": 460581,
+      "sha256": "465419244398e511110e3f46beb2e261947e1379797ae1fdbd463cd6ba5e79ef"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterJourneyCollection.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterJourneyCollection.unity",
+      "bytes": 550985,
+      "sha256": "5e2634f1f1062ba83a907514153cf9ca7041be87b3daa6ce6f4e0916e53b293a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterJourneyCycle.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterJourneyCycle.unity",
+      "bytes": 564821,
+      "sha256": "8e66d99d7aa569b67108a7e9e88402f9d134dfb21be94c41d9e0b9232104c1e9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterJourneyIce.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterJourneyIce.unity",
+      "bytes": 461489,
+      "sha256": "4dfa4a35a25262957e248928a805b2f92849d5419c5eecbd7573f7fdc5ae376d"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WaterSanctuary.unity",
+      "preserved": "art/engine-transfer/layout-reference/WaterSanctuary.unity",
+      "bytes": 332465,
+      "sha256": "408ec12c21ce22e5cb0776c581c5a5bb3e948cd7388558ef01e7c542b5ed7e93"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Scenes/WeightTemple.unity",
+      "preserved": "art/engine-transfer/layout-reference/WeightTemple.unity",
+      "bytes": 596243,
+      "sha256": "af12374ab6b953693f33774d030d1e2b7fa807d3cbc7fd86d139b49d7248d9bf"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/DefaultVolumeProfile.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/DefaultVolumeProfile.asset",
+      "bytes": 23987,
+      "sha256": "3a6f825e8d07fe8b9f3b52e7d4e2dfa0e22c555b22335adb19f0ecc66dfa38dd"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/Mobile_Renderer.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/Mobile_Renderer.asset",
+      "bytes": 1713,
+      "sha256": "aa93274c9521fa941170becec9e87c5fa36b8587eefd5eeb5c0eed0d1d4b1dbe"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/Mobile_RPAsset.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/Mobile_RPAsset.asset",
+      "bytes": 4345,
+      "sha256": "077b30c366ee79c2b0906284297c3433c470b59a7bca563801901512d6cabf64"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/PC_Renderer.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/PC_Renderer.asset",
+      "bytes": 3439,
+      "sha256": "3d0b01d8ded3327263b6690be128a3de58d17c514943ae42fe743a3e084a9c79"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/PC_RPAsset.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/PC_RPAsset.asset",
+      "bytes": 4486,
+      "sha256": "89065cae0b740d5150ebd52e31faa857c78a46c98ad6099653fc9f86b7742a31"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/SampleSceneProfile.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/SampleSceneProfile.asset",
+      "bytes": 3703,
+      "sha256": "a8677d4bac051d24caa11cd622e39f968155ee277bfce132274f1de225692fe9"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Settings/UniversalRenderPipelineGlobalSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/Settings/UniversalRenderPipelineGlobalSettings.asset",
+      "bytes": 22044,
+      "sha256": "49b4f8f691811b51c30ce7f84cdc726f9519c9159d6649210eda788965b9f1e3"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/AudioManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/AudioManager.asset",
+      "bytes": 413,
+      "sha256": "aeedeb3243f07b61dbbe854aa08b5ef6f0b5274dd9852ad9f6129dde3e105a31"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/ClusterInputManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/ClusterInputManager.asset",
+      "bytes": 114,
+      "sha256": "40e65dd214bf254955d2c8829ca8ce2130fd3510485560ce012e9a1ddd93e623"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/DynamicsManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/DynamicsManager.asset",
+      "bytes": 1254,
+      "sha256": "b7c9a9dc08b98990109d4346f68745e15e238de400f96c583e53e1c83c743a78"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/EditorBuildSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/EditorBuildSettings.asset",
+      "bytes": 741,
+      "sha256": "f0480b2512c72c2e7f377de509575b25d82e865ea8f89d05360e9b647c0aef07"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/EditorSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/EditorSettings.asset",
+      "bytes": 970,
+      "sha256": "705e5dde8b4ceb8147971b0c8f3781ebbe566a12b8e280379ee24f2bd9ad9474"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/GraphicsSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/GraphicsSettings.asset",
+      "bytes": 2554,
+      "sha256": "56c816bd980ca4b9c5a33f5ef233bcaea6c08505a1af65ac5e5e633ce8bad6fe"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/InputManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/InputManager.asset",
+      "bytes": 9731,
+      "sha256": "7a1bb836a1008d26d0860d143e9d9df7ca41731d30a72901b518063819c62df2"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/MemorySettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/MemorySettings.asset",
+      "bytes": 1192,
+      "sha256": "1e8379a461b10ae09f3f696911088c16875d63e87ed5f2d95df9e1892703f9fd"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/MultiplayerManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/MultiplayerManager.asset",
+      "bytes": 157,
+      "sha256": "aba89fd1a1ddad182727ad82727e536d27372e90328a8196da2a4560398983dd"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/NavMeshAreas.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/NavMeshAreas.asset",
+      "bytes": 1308,
+      "sha256": "80106cfa7e6181a1928b142c075f3e510d527441e3d79bc83590e4ac91e7cd66"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/PackageManagerSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/PackageManagerSettings.asset",
+      "bytes": 1003,
+      "sha256": "a7dabba589abe7fc2b45bd3d3fba3fe9be97043492703f716da2d9131c13a807"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/Physics2DSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/Physics2DSettings.asset",
+      "bytes": 2028,
+      "sha256": "e3cbdbf0be15244b7b67d2f07bdb8e8981911c11a8c7fe8035f5261272fec658"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/PresetManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/PresetManager.asset",
+      "bytes": 146,
+      "sha256": "29c125923fe6e29f90190d4fce1c82d660e7051546e2c9d02908d18c9cf2436c"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/ProjectSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/ProjectSettings.asset",
+      "bytes": 25175,
+      "sha256": "d0980ea38dc31b36bdb23e918ef1f4408e6318caaa21590c78570c9861dc0be4"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/ProjectVersion.txt",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/ProjectVersion.txt",
+      "bytes": 85,
+      "sha256": "a48c8dd72f418e20b17a48f6b93b98e87a10d4c448befb6edeba79810c30fdab"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/QualitySettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/QualitySettings.asset",
+      "bytes": 3675,
+      "sha256": "9a1b9dd36048a1dcc8aa1fada1b834ac27678739f812eba0f8fe4b198f790c59"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/SceneTemplateSettings.json",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/SceneTemplateSettings.json",
+      "bytes": 3535,
+      "sha256": "bb9098b3bfcde78d93e264b96f7b77b5430e64e8c57a7aad7f5a5d9c3945e16a"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/ShaderGraphSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/ShaderGraphSettings.asset",
+      "bytes": 556,
+      "sha256": "cdba1e5d65bcf6e3269d76ed3e60b6c21f98322002996642c9d74f1eb89f6b91"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/TagManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/TagManager.asset",
+      "bytes": 657,
+      "sha256": "23fc56b484aa3d7edf5914cd3591f7a823ccef5e3f3496f8a51f30388ead63dc"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/TimeManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/TimeManager.asset",
+      "bytes": 202,
+      "sha256": "1a83e54adbbda7c9f4851103a0c6ab7f6448a3343d4ea5b7620452fa08416ecd"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/UnityConnectSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/UnityConnectSettings.asset",
+      "bytes": 1063,
+      "sha256": "8a92aadd85dfb6cceb89db68965344e328f836532e65ba329f75b11c437361df"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/URPProjectSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/URPProjectSettings.asset",
+      "bytes": 411,
+      "sha256": "596d5c8bf4f957b03684c949bebc252ae1918f25415a1147a00684c4b086efda"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/VersionControlSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/VersionControlSettings.asset",
+      "bytes": 188,
+      "sha256": "e7bda45bf7a394745fee1316e6c71fa676004d591ad1f3aa247fd3e4ceb86071"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/VFXManager.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/VFXManager.asset",
+      "bytes": 308,
+      "sha256": "f066c6483919961332415ee64204f74fe52f38c02e82892eb02b7a5b2e381f0e"
+    },
+    {
+      "source": "unity/MumuPlanet/ProjectSettings/XRSettings.asset",
+      "preserved": "art/engine-transfer/render-reference/ProjectSettings/XRSettings.asset",
+      "bytes": 158,
+      "sha256": "edd2beb4a2e388312b4b7da241aa51070434005d82c59363f1237dd2e567585f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Generated/Navigator.controller",
+      "preserved": "art/engine-transfer/animation-audio-reference/Navigator.controller",
+      "bytes": 3246,
+      "sha256": "76086dadc9b133468e0e9d95c4ba14dbdadb3c3b2df2a30b01a09c6c21ac0bbb"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Generated/NavigatorIdle.anim",
+      "preserved": "art/engine-transfer/animation-audio-reference/NavigatorIdle.anim",
+      "bytes": 305277,
+      "sha256": "83b10c0be985b15bd6e0ca52bc5af1d966585548f9e69ce6b32030a06f68ed4b"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Generated/WaterGateCeremony/WaterGateOpen.wav",
+      "preserved": "art/engine-transfer/animation-audio-reference/WaterGateCeremony/WaterGateOpen.wav",
+      "bytes": 97064,
+      "sha256": "bb2c22683e48409496fb4b9e700b8f4a06553a1823269aca99b95ac15cc8513a"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/InputSystem_Actions.inputactions",
+      "preserved": "art/engine-transfer/logic-reference/InputSystem_Actions.inputactions",
+      "bytes": 41005,
+      "sha256": "1c6cbb519d65ecfe19a29231735b7f54741a20ac1a8ad4f46a18e1bfb28a3c39"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Fonts/NanumGothic-Regular.ttf",
+      "preserved": "assets/fonts/NanumGothic-Regular.ttf",
+      "bytes": 2054744,
+      "sha256": "76f45ef4a6bcff344c837c95a7dcc26e017e38b5846d5ae0cdcb5b86be2e2d31"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Fonts/OFL.txt",
+      "preserved": "assets/fonts/NanumGothic-OFL.txt",
+      "bytes": 4534,
+      "sha256": "eeacf16032901d0ed0456876ec77b8f0fda6b3fecec7d972f8543eb602e6c30f"
+    },
+    {
+      "source": "unity/MumuPlanet/Assets/Mumu/Generated/WaterGateCeremony/WaterGateOpen.wav",
+      "preserved": "assets/audio/heritage/water-gate-open.wav",
+      "bytes": 97064,
+      "sha256": "bb2c22683e48409496fb4b9e700b8f4a06553a1823269aca99b95ac15cc8513a"
+    }
+  ]
+}

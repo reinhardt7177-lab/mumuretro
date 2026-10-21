@@ -90,7 +90,7 @@ export class Engine {
     sun.shadow.camera.near = 1; sun.shadow.camera.far = SUN_HEIGHT + drop + 20;
     sun.shadow.camera.left = -s; sun.shadow.camera.right = s;
     sun.shadow.camera.top = s; sun.shadow.camera.bottom = -s;
-    sun.shadow.bias = -0.0006;
+    sun.shadow.bias = -0.00015; sun.shadow.normalBias = 0.035;
     scene.add(sun); scene.add(sun.target);
     this.sun = sun;
     // 반대편 약한 보조광 — 이게 없으면 그림자 면이 단색 판이 되어 형태가 사라진다.
@@ -216,6 +216,7 @@ export class Engine {
     if (!size) return;
     this.scene.traverse(light => {
       if (!light.isLight || !light.castShadow || !light.shadow) return;
+      if(light.isDirectionalLight){light.shadow.normalBias=.035;light.shadow.bias=-.00015;}
       if (light.shadow.mapSize.x === size && light.shadow.mapSize.y === size) return;
       light.shadow.mapSize.set(size, size);
       if (light.shadow.map) { light.shadow.map.dispose(); light.shadow.map = null; }

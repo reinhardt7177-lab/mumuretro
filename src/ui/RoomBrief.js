@@ -36,6 +36,22 @@ const kid = (x, y, s = 1) => `
   </g>`;
 
 const ACTS = {
+  waterAudience: {
+    key: 'E', keyTouch: 'E 버튼',
+    how: '신 앞의 물그릇으로 다가가 말을 건다. 이야기가 끝나면 밖으로 돌아간다.',
+    svg: `${kid(26,76)}<path d="M66 72 L74 32 L101 32 L110 72 Z" fill="#8fc8d8"/>
+      <circle cx="87" cy="20" r="12" fill="none" stroke="${W}" stroke-width="3"/>
+      <path d="M43 42 h16 l-6 -6 M59 42 l-6 6" fill="none" stroke="${T}" stroke-width="3"/>`,
+  },
+  waterBracelet: {
+    key: 'Q · R · E', keyTouch: '팔찌 버튼 · E 버튼',
+    how: '팔찌로 데우거나 식힌다. 얼음은 E로 들고 놓는다. 발판은 Space로 오른다.',
+    svg: `<rect x="12" y="68" width="106" height="5" rx="2" fill="${I}" opacity=".18"/>
+      ${kid(28,68,.9)}<rect x="50" y="43" width="25" height="25" rx="3" fill="#8fc8d8"/>
+      <path d="M56 49 h12 v12" fill="none" stroke="#e3f6f8" stroke-width="2"/>
+      <circle cx="96" cy="29" r="12" fill="${W}"/><path d="M96 22 v14 M89 29 h14" stroke="#fff1d3" stroke-width="2"/>
+      <path d="M88 60 h18 M97 51 v18 M90 53 l14 14 M90 67 l14 -14" stroke="${T}" stroke-width="2"/>`,
+  },
   // 밟을 자리를 고른다 — 걷는 것 말고는 없다
   stand: {
     key: '걷기', keyTouch: '걷기',

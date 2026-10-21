@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { fbm } from '../util/noise.js';
 import { GROUND, PATH } from '../data/lighting.js';
+import { addSurfaceDetail } from '../render/SurfaceDetail.js';
 
 // 고도와 경사로 지면 색을 고른다.
 // ★ 지도(ui/MapPage.js)가 이 함수를 그대로 쓴다. 지도용 색을 따로 적으면
@@ -271,6 +272,7 @@ export class Planet {
 
     softenTerrainSurface(geo);
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    addSurfaceDetail(mat);
     mat.userData.outlineParameters = { visible: false };   // 지형에 외곽선은 그물망이 된다
     const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;

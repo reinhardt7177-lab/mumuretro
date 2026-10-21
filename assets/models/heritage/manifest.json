@@ -1,0 +1,666 @@
+{
+  "version": 1,
+  "date": "2026-10-02",
+  "coordinateSystem": "right-handed, Y-up (original Blender export)",
+  "sourceRoot": "art/engine-transfer/model-data",
+  "models": [
+    {
+      "id": "balance-deity",
+      "label": "균형의 신",
+      "file": "assets/models/heritage/balance-deity.glb",
+      "source": "BalanceDeity/deity-v01.json",
+      "triangles": 90300,
+      "materials": 6,
+      "bytes": 7506512,
+      "sha256": "6940c79b209ce04222e8a0daa3149222cea2e222e72785cfeae1889b631103a9",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "weight-exterior",
+      "label": "무게 신전 · 양개문",
+      "file": "assets/models/heritage/weight-exterior.glb",
+      "source": "TempleExterior/exterior-v02.json",
+      "triangles": 19692,
+      "materials": 7,
+      "bytes": 379564,
+      "sha256": "cca479fdf0a1a096933e3751a2bb397662d706d7ced8f5e0f66999ce1ad39fbf",
+      "parts": [
+        "Static",
+        "Left",
+        "Right"
+      ]
+    },
+    {
+      "id": "explorer-notebook",
+      "label": "탐사 수첩 · 넘김 페이지",
+      "file": "assets/models/heritage/explorer-notebook.glb",
+      "source": "Notebook/notebook-v01.json",
+      "triangles": 6852,
+      "materials": 5,
+      "bytes": 238840,
+      "sha256": "a07caab28b1f9640948981077d0d54380e1324ee3f2bb5480b1d0ce5b3cf0419",
+      "parts": [
+        "Book",
+        "Leaf"
+      ]
+    },
+    {
+      "id": "glacier-temple",
+      "label": "빙하에 갇힌 물 신전",
+      "file": "assets/models/heritage/glacier-temple.glb",
+      "source": "WaterMountain/glacier-temple-v03.json",
+      "triangles": 51832,
+      "materials": 7,
+      "bytes": 5294744,
+      "sha256": "1c71415e5740db13635f647cf9131bb5bfed6adccfb82b479bc2ec1ada242e3a",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "glacier-seal",
+      "label": "입구 얼음 봉인",
+      "file": "assets/models/heritage/glacier-seal.glb",
+      "source": "WaterMountain/glacier-seal-v03.json",
+      "triangles": 6064,
+      "materials": 1,
+      "bytes": 619972,
+      "sha256": "ff9c3e04e54f319940b68803f5cc4ca7790e0c1d7d62429722d618f449e5bff3",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "water-mountain",
+      "label": "층리 돌산 · 최종 조형",
+      "file": "assets/models/heritage/water-mountain.glb",
+      "source": "WaterMountain/water-mountain-v05.json",
+      "triangles": 48850,
+      "materials": 6,
+      "bytes": 5214492,
+      "sha256": "61924df7d671f2f638403f237aaac44798c9b70fce3f7955fad34a60968f5aa2",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "solar-altar",
+      "label": "돌산 정상 · 태양 제단",
+      "file": "assets/models/heritage/solar-altar.glb",
+      "source": "WaterMountain/solar-altar-v04.json",
+      "triangles": 5144,
+      "materials": 3,
+      "bytes": 528248,
+      "sha256": "a41681497ffbaf50af7033ef47ae43bbc7b2c0c50e3fddd30d77b79f97a8592a",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "solar-mirror",
+      "label": "태양의 거울 · 조작 부품",
+      "file": "assets/models/heritage/solar-mirror.glb",
+      "source": "WaterMountain/solar-mirror-v04.json",
+      "triangles": 5676,
+      "materials": 4,
+      "bytes": 583648,
+      "sha256": "0e1e7f8bc3a40848fa552e7f2eb5530d4b6d5e9282db39ba3867d66d6c53adfb",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "water-deity",
+      "label": "물의 신 · 최종 노멀맵",
+      "file": "assets/models/heritage/water-deity.glb",
+      "source": "WaterDeityV03/water-deity-v03.json",
+      "triangles": 147977,
+      "materials": 1,
+      "bytes": 19071020,
+      "sha256": "a1089211f17148bee8f3903df4b2dca818719debbca5ebc93730e1788dabf7ba",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "ice-hall-v07",
+      "label": "ice-hall-v07",
+      "file": "assets/models/heritage/ice-hall-v07.glb",
+      "source": "WaterInterior/ice-hall-v07.json",
+      "triangles": 111300,
+      "materials": 13,
+      "bytes": 11688312,
+      "sha256": "3813d41a15e2a413dc902e6bc9fe809ae89b0f9e08a98ccf145f58683d094407",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "collection-hall-v07",
+      "label": "collection-hall-v07",
+      "file": "assets/models/heritage/collection-hall-v07.glb",
+      "source": "WaterInterior/collection-hall-v07.json",
+      "triangles": 152080,
+      "materials": 14,
+      "bytes": 16071816,
+      "sha256": "f3e96eb4be36b4ebc62e31f338d92ae1b9d3fd061933589d1600484c735b1383",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "cycle-hall-v09",
+      "label": "cycle-hall-v09",
+      "file": "assets/models/heritage/cycle-hall-v09.glb",
+      "source": "WaterInterior/cycle-hall-v09.json",
+      "triangles": 137676,
+      "materials": 14,
+      "bytes": 14501896,
+      "sha256": "f51239c331fbd158c42ed1683276a639729466173c379e62cd2eec0af8565072",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "ice-gate-detail-v06",
+      "label": "ice-gate-detail-v06",
+      "file": "assets/models/heritage/ice-gate-detail-v06.glb",
+      "source": "WaterInterior/ice-gate-detail-v06.json",
+      "triangles": 6864,
+      "materials": 4,
+      "bytes": 704780,
+      "sha256": "96db6af12357171ebecb03dd5598ecd1d0f5f9dd7420610d3d37e0157449211d",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "collector-detail-v02",
+      "label": "collector-detail-v02",
+      "file": "assets/models/heritage/collector-detail-v02.glb",
+      "source": "WaterInterior/collector-detail-v02.json",
+      "triangles": 552,
+      "materials": 1,
+      "bytes": 57744,
+      "sha256": "87f51e335ead7afaf222e927747b96d54e5ece4b374c9100ef19197a74ce8758",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "return-bridge-detail-v02",
+      "label": "return-bridge-detail-v02",
+      "file": "assets/models/heritage/return-bridge-detail-v02.glb",
+      "source": "WaterInterior/return-bridge-detail-v02.json",
+      "triangles": 1188,
+      "materials": 2,
+      "bytes": 123608,
+      "sha256": "b6d6479e96866c0f39686f791ade7afb6e0127a271b46f40350b90486cf165af",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "water-sanctuary-v01",
+      "label": "water-sanctuary-v01",
+      "file": "assets/models/heritage/water-sanctuary-v01.glb",
+      "source": "WaterInterior/water-sanctuary-v01.json",
+      "triangles": 40664,
+      "materials": 7,
+      "bytes": 4155628,
+      "sha256": "99dddbc860e6b46fe261bb985703ca5d5212a97055392f0a719a8ee7d57ba4c3",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "water-deity-halo-v03",
+      "label": "water-deity-halo-v03",
+      "file": "assets/models/heritage/water-deity-halo-v03.glb",
+      "source": "WaterInterior/water-deity-halo-v03.json",
+      "triangles": 23296,
+      "materials": 2,
+      "bytes": 2378724,
+      "sha256": "74afd4804df76a638f651f4918e3594e13a4d00eba44ad7c4244f306f992d63c",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "water-deity-droplet-v03",
+      "label": "water-deity-droplet-v03",
+      "file": "assets/models/heritage/water-deity-droplet-v03.glb",
+      "source": "WaterInterior/water-deity-droplet-v03.json",
+      "triangles": 2560,
+      "materials": 1,
+      "bytes": 262608,
+      "sha256": "739150b11403ada9ea1dade4f96220b74d0666928a67a225e7a133dac567e1fd",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "direction-wheel-base-v01",
+      "label": "direction-wheel-base-v01",
+      "file": "assets/models/heritage/direction-wheel-base-v01.glb",
+      "source": "ShadowTemple/direction-wheel-base-v01.json",
+      "triangles": 2648,
+      "materials": 4,
+      "bytes": 274704,
+      "sha256": "070cf7a1957568700f21186a6b2eda35c56a5e84ecfcb36526cbc3e30fc707ec",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "direction-wheel-rotor-v01",
+      "label": "direction-wheel-rotor-v01",
+      "file": "assets/models/heritage/direction-wheel-rotor-v01.glb",
+      "source": "ShadowTemple/direction-wheel-rotor-v01.json",
+      "triangles": 2224,
+      "materials": 4,
+      "bytes": 231632,
+      "sha256": "03ad2b8ba0b0b140c969e009246c421dd5c3b7b2be5db4c3de3dbee9bcca3383",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "guardian-v01",
+      "label": "guardian-v01",
+      "file": "assets/models/heritage/guardian-v01.glb",
+      "source": "ShadowTemple/guardian-v01.json",
+      "triangles": 3454,
+      "materials": 5,
+      "bytes": 357952,
+      "sha256": "fbcb783f55a426a57a2e75126a28c249bfe1edede655705f9ffcb325a816021d",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "height-grip-base-v01",
+      "label": "height-grip-base-v01",
+      "file": "assets/models/heritage/height-grip-base-v01.glb",
+      "source": "ShadowTemple/height-grip-base-v01.json",
+      "triangles": 1852,
+      "materials": 4,
+      "bytes": 193512,
+      "sha256": "1d4be0d9f18d005d693b4733316dd5e177aa4d20704e906fc29c60e796012c87",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "height-grip-knob-v01",
+      "label": "height-grip-knob-v01",
+      "file": "assets/models/heritage/height-grip-knob-v01.glb",
+      "source": "ShadowTemple/height-grip-knob-v01.json",
+      "triangles": 368,
+      "materials": 2,
+      "bytes": 39992,
+      "sha256": "f5339c25429c90d4fdf68de4486b6e2065c94860c74a3343e713dca9d848df9e",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "hint-post-v01",
+      "label": "hint-post-v01",
+      "file": "assets/models/heritage/hint-post-v01.glb",
+      "source": "ShadowTemple/hint-post-v01.json",
+      "triangles": 924,
+      "materials": 5,
+      "bytes": 99800,
+      "sha256": "83d0b83a03faf9f3c259b2de52b84e87b316e4b6081e7e155ce0e5dd612d3902",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "light-emitter-v01",
+      "label": "light-emitter-v01",
+      "file": "assets/models/heritage/light-emitter-v01.glb",
+      "source": "ShadowTemple/light-emitter-v01.json",
+      "triangles": 2552,
+      "materials": 6,
+      "bytes": 267184,
+      "sha256": "3150f9a0546f749e7ed49315de2fce2798367e1f4a59279a01b9e9bd8380d64e",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-cart-v01",
+      "label": "mirror-cart-v01",
+      "file": "assets/models/heritage/mirror-cart-v01.glb",
+      "source": "ShadowTemple/mirror-cart-v01.json",
+      "triangles": 3124,
+      "materials": 4,
+      "bytes": 323268,
+      "sha256": "b118fb7fc30e682e112007d4ec2d698dfdb4e68943600d9b9f1baac50cb4bbaa",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-head-small-v01",
+      "label": "mirror-head-small-v01",
+      "file": "assets/models/heritage/mirror-head-small-v01.glb",
+      "source": "ShadowTemple/mirror-head-small-v01.json",
+      "triangles": 1100,
+      "materials": 4,
+      "bytes": 116744,
+      "sha256": "35c6d68dd5b5cd027a224bf090f639de35e04240600b880ff083b88ff05a8f1d",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-head-v01",
+      "label": "mirror-head-v01",
+      "file": "assets/models/heritage/mirror-head-v01.glb",
+      "source": "ShadowTemple/mirror-head-v01.json",
+      "triangles": 1208,
+      "materials": 4,
+      "bytes": 127780,
+      "sha256": "f8d4abc6f6f58d2b37c0daa07fad5857d8ad4151fd3fd4ff5a6d7cdbc01b9ff6",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-lever-v01",
+      "label": "mirror-lever-v01",
+      "file": "assets/models/heritage/mirror-lever-v01.glb",
+      "source": "ShadowTemple/mirror-lever-v01.json",
+      "triangles": 1632,
+      "materials": 5,
+      "bytes": 172068,
+      "sha256": "06f2c59a8bb6eb0e92409c4d8b9828307cd29acff77454b8a93cdd99c81d18cc",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-pedestal-v01",
+      "label": "mirror-pedestal-v01",
+      "file": "assets/models/heritage/mirror-pedestal-v01.glb",
+      "source": "ShadowTemple/mirror-pedestal-v01.json",
+      "triangles": 1612,
+      "materials": 4,
+      "bytes": 169008,
+      "sha256": "c15cd65562c834bde44cba62d8eef23fb2466a1aa90f11db4851c65f7c882161",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-rail-v01",
+      "label": "mirror-rail-v01",
+      "file": "assets/models/heritage/mirror-rail-v01.glb",
+      "source": "ShadowTemple/mirror-rail-v01.json",
+      "triangles": 2268,
+      "materials": 3,
+      "bytes": 234844,
+      "sha256": "26866c34913b7552d65ec7712a1b65992d5e0b6c3d278ca6a31cb43d23bf66a9",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "mirror-receiver-v01",
+      "label": "mirror-receiver-v01",
+      "file": "assets/models/heritage/mirror-receiver-v01.glb",
+      "source": "ShadowTemple/mirror-receiver-v01.json",
+      "triangles": 2084,
+      "materials": 7,
+      "bytes": 220500,
+      "sha256": "a4102e6659e12bbd8c7a24712ac38f28ab2266839c31db3c04665a6f5f8358eb",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "sanctum-hanger-v01",
+      "label": "sanctum-hanger-v01",
+      "file": "assets/models/heritage/sanctum-hanger-v01.glb",
+      "source": "ShadowTemple/sanctum-hanger-v01.json",
+      "triangles": 44,
+      "materials": 1,
+      "bytes": 5872,
+      "sha256": "d38d41a876ee69d054ad82fd1d9853fa643da0ef3d5f4e50fe293ff2a4727717",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "sanctum-lamp-v01",
+      "label": "sanctum-lamp-v01",
+      "file": "assets/models/heritage/sanctum-lamp-v01.glb",
+      "source": "ShadowTemple/sanctum-lamp-v01.json",
+      "triangles": 2008,
+      "materials": 4,
+      "bytes": 209576,
+      "sha256": "1302a084990711a869e6f6b0c857cc643da300b743d5b7743e2e1ea1471fd7ac",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "sanctum-trolley-v01",
+      "label": "sanctum-trolley-v01",
+      "file": "assets/models/heritage/sanctum-trolley-v01.glb",
+      "source": "ShadowTemple/sanctum-trolley-v01.json",
+      "triangles": 1888,
+      "materials": 4,
+      "bytes": 197216,
+      "sha256": "e5a003e996ba3c0ccdf5584e5ac4036531fad35cd417760c0145ef876d0ed1f8",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shade-lamp-v01",
+      "label": "shade-lamp-v01",
+      "file": "assets/models/heritage/shade-lamp-v01.glb",
+      "source": "ShadowTemple/shade-lamp-v01.json",
+      "triangles": 3204,
+      "materials": 5,
+      "bytes": 332592,
+      "sha256": "06c65cd24b50b94b9426335c6ffb549da61670380588f6672348c825c6b68ce6",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shade-pillar-v01",
+      "label": "shade-pillar-v01",
+      "file": "assets/models/heritage/shade-pillar-v01.glb",
+      "source": "ShadowTemple/shade-pillar-v01.json",
+      "triangles": 1536,
+      "materials": 3,
+      "bytes": 160184,
+      "sha256": "748221d947306ef1e65e1ea5294ee6e25f74901781781b4f5d7b0b2a01f549bd",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shade-practice-pillar-v01",
+      "label": "shade-practice-pillar-v01",
+      "file": "assets/models/heritage/shade-practice-pillar-v01.glb",
+      "source": "ShadowTemple/shade-practice-pillar-v01.json",
+      "triangles": 1664,
+      "materials": 5,
+      "bytes": 175400,
+      "sha256": "805d3d06cd70f2a68df47acb2fca64346d2bc3fb1992e70607fcc9b22dd4ac40",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-bridges-v01",
+      "label": "shadow-bridges-v01",
+      "file": "assets/models/heritage/shadow-bridges-v01.glb",
+      "source": "ShadowTemple/shadow-bridges-v01.json",
+      "triangles": 15828,
+      "materials": 9,
+      "bytes": 1624516,
+      "sha256": "7a556ef737112b5763b6810ebf4d16e0f28b9e48384ea4957e98f8b8deff5674",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-entry-v01",
+      "label": "shadow-entry-v01",
+      "file": "assets/models/heritage/shadow-entry-v01.glb",
+      "source": "ShadowTemple/shadow-entry-v01.json",
+      "triangles": 9760,
+      "materials": 10,
+      "bytes": 1006460,
+      "sha256": "4d2857212e6401476d3ccd964d70a878f1c5fc7a80edf2d23a609fcd4335de70",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-gate-exterior-v01",
+      "label": "shadow-gate-exterior-v01",
+      "file": "assets/models/heritage/shadow-gate-exterior-v01.glb",
+      "source": "ShadowTemple/shadow-gate-exterior-v01.json",
+      "triangles": 6268,
+      "materials": 8,
+      "bytes": 648204,
+      "sha256": "4c79bdd24b959ef24ba6a1581ead7d04d5330fc0e2c43ce261d8573c62823f7d",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-gate-seal-v01",
+      "label": "shadow-gate-seal-v01",
+      "file": "assets/models/heritage/shadow-gate-seal-v01.glb",
+      "source": "ShadowTemple/shadow-gate-seal-v01.json",
+      "triangles": 2452,
+      "materials": 2,
+      "bytes": 252600,
+      "sha256": "fb8a33eadc9bba1b43ec16acc5a7f58f67ecd37d0e56f9f227e57fa22715435d",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-horizon-v01",
+      "label": "shadow-horizon-v01",
+      "file": "assets/models/heritage/shadow-horizon-v01.glb",
+      "source": "ShadowTemple/shadow-horizon-v01.json",
+      "triangles": 3698,
+      "materials": 2,
+      "bytes": 379840,
+      "sha256": "01523eff14bdae55a31859c2efc745c4a2f9d88175ed7f1ec65bd62794e2d9c3",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-island-v01",
+      "label": "shadow-island-v01",
+      "file": "assets/models/heritage/shadow-island-v01.glb",
+      "source": "ShadowTemple/shadow-island-v01.json",
+      "triangles": 5072,
+      "materials": 3,
+      "bytes": 521036,
+      "sha256": "8724fd65eb84c3fe1411f5717a0999342844edad2fb758d190f2afc85b00b22f",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-room1-v01",
+      "label": "shadow-room1-v01",
+      "file": "assets/models/heritage/shadow-room1-v01.glb",
+      "source": "ShadowTemple/shadow-room1-v01.json",
+      "triangles": 26600,
+      "materials": 12,
+      "bytes": 2726112,
+      "sha256": "c82b2dcb5fccf45e648218bb9c1f9e19f8e2031b6db0357956c911748ce8f896",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-room2-v01",
+      "label": "shadow-room2-v01",
+      "file": "assets/models/heritage/shadow-room2-v01.glb",
+      "source": "ShadowTemple/shadow-room2-v01.json",
+      "triangles": 17760,
+      "materials": 13,
+      "bytes": 1825688,
+      "sha256": "10b54900a9c3c251f675324651938668b08f5af752dc12d597f074756c75738e",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-room3-v01",
+      "label": "shadow-room3-v01",
+      "file": "assets/models/heritage/shadow-room3-v01.glb",
+      "source": "ShadowTemple/shadow-room3-v01.json",
+      "triangles": 10772,
+      "materials": 10,
+      "bytes": 1109540,
+      "sha256": "e0e75fe00a6438ed37f1f52811cd5feef86cadc109ca9d846086143a6627642e",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "shadow-sanctum-v01",
+      "label": "shadow-sanctum-v01",
+      "file": "assets/models/heritage/shadow-sanctum-v01.glb",
+      "source": "ShadowTemple/shadow-sanctum-v01.json",
+      "triangles": 33744,
+      "materials": 15,
+      "bytes": 3458272,
+      "sha256": "fad1e4e79c1e0b80b538b085394bba4ba36ffbe154728ae58ac31aecd690ed75",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "silhouette-lamp-stand-v01",
+      "label": "silhouette-lamp-stand-v01",
+      "file": "assets/models/heritage/silhouette-lamp-stand-v01.glb",
+      "source": "ShadowTemple/silhouette-lamp-stand-v01.json",
+      "triangles": 3048,
+      "materials": 6,
+      "bytes": 317824,
+      "sha256": "0ba3884a115a1cb261ae6c1e4111755a6daa647a2014db5b45d4e17255c9e283",
+      "parts": [
+        "Static"
+      ]
+    },
+    {
+      "id": "silhouette-panel-cart-v01",
+      "label": "silhouette-panel-cart-v01",
+      "file": "assets/models/heritage/silhouette-panel-cart-v01.glb",
+      "source": "ShadowTemple/silhouette-panel-cart-v01.json",
+      "triangles": 2340,
+      "materials": 6,
+      "bytes": 245372,
+      "sha256": "9fdbf3f1e272b055d5f1aaedb1a6a34f39782b22a69ee6e9fe643183fd0bfc71",
+      "parts": [
+        "Static"
+      ]
+    }
+  ],
+  "data": [
+    "Meadow/leaf-profiles.json",
+    "ShadowTemple/guardian-anchors-v01.json",
+    "ShadowTemple/guardian-casters-v01.json"
+  ]
+}

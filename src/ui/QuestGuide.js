@@ -27,9 +27,22 @@ export function currentQuest(g) {
   }
   const r=g.room;
   if(!r)return null;
+  if(r.fireAdventure){const t=r.world?.target(g.roomActor);return q('fire-'+(t?.label||'loading'),t?.label||'불의 신전을 불러오는 중이다',t?.point||null,'E · 가까이 가서 장치 살펴보기');}
   if(g.cleared)return q('exit','사당 밖으로 돌아가기',point(0,17),'E · 밖으로');
+  if(r.waterAdventure&&!r.bracelet)return q('water-bracelet','물의 팔찌 찾기',r.gates[0].gate.braceletPos.clone(),'E · 팔찌 얻기');
+  if(r.spec.id==='strata'){
+    const pending=r.gates.find(g=>!g.solved);
+    if(pending?.room==='r1'){const d=pending.gate;return q(d.held?'strata-layer-place':'strata-core-read',d.held?'시추 코어에서 읽은 층의 표석에 화석 놓기':'시추 코어의 깊은 끝부터 화석 순서 읽기',d.held?point(0,d.marks[0].z):point(d.coreBit.position.x,d.fossils[0].z+2),'날 쪽이 깊은 끝 · E로 화석을 들고 표석에서 놓기');}
+    if(pending?.room==='r3')return q('strata-five-marks','수첩의 표지와 색을 보고 다섯 손잡이 맞추기',point(0,pending.gate.levers[0].z+1.5),'N · 물음 면의 표지와 색 확인');
+    if(!pending&&r.final.lit<5){const d=r.final,o=d.orbs.find(o=>!o.placed);return d.held?q('strata-offer-'+d.held.id,'제단 표지를 살펴 구슬의 짝 찾기',point(0,d.gz+7),'N · 수첩의 표지와 색 비교 · E · 바치기'):q('strata-pick-offering','선반에서 지혜의 구슬 들어 올리기',o?.home.clone()||null,'E · 구슬 들기');}
+    if(!pending&&r.final.awake<1)return q('strata-awakening','시간의 수호자가 깨어나는 모습을 지켜보기',null,'다섯 지혜가 하나의 기록으로 이어진다');
+  }
   const gate=r.gates.find(x=>!x.solved);
-  if(gate){const seg=r.dungeon.rectOf(gate.room);return q(r.spec.id+'-'+gate.room,r.goals[gate.room],point((seg.x0+seg.x1)/2,seg.z1-2),'장치를 살펴보고 퍼즐을 풀어 보자');}
+  if(gate){const seg=r.dungeon.rectOf(gate.room);
+    if(r.waterAdventure){const d=gate.gate,target=d.kind==='carry'?d.ledge.clone():d.kind==='flow'?point(0,seg.z0+1.1):d.altarPos.clone();
+      return q('water-'+gate.room,r.goals[gate.room],target,'팔찌로 물의 성질을 바꾸어 길을 만들어 보자');}
+    return q(r.spec.id+'-'+gate.room,r.goals[gate.room],point((seg.x0+seg.x1)/2,seg.z1-2),'장치를 살펴보고 퍼즐을 풀어 보자');}
+  if(r.waterAdventure)return q('water-audience','물의 신을 만나 지혜를 수첩에 담자',r.final.altar.clone(),'E · 물의 신과 이야기하기');
   if(r.final.solved || r.prize.drop>=0){
     return r.spec.id==='balance'?q('audience','마지막 문을 지나 균형의 신 만나기',point(0,-57),'신에게 다가가기'):q('prize','지혜의 구슬 받아 수첩에 기록하기',r.prize.pos.clone(),'E · 구슬 받기');
   }
@@ -103,15 +116,19 @@ export function buildQuestGuide(getGame) {
       if(trail.parent!==g.engine.scene)g.engine.scene.add(trail);trail.visible=true;
       const time=reduced.matches?0:clock;
       const end=target.clone();
+      const firePath=g.room?.fireAdventure?g.room.world.guidePoints(actor):null;
+      const lengths=firePath?.slice(1).map((p,i)=>p.distanceTo(firePath[i]));
+      const total=lengths?.reduce((a,b)=>a+b,0)||0;
       if(g.mode!=='planet')end.y=actor.floorAt(end.x,end.z);
       const side=toward.clone().cross(up).normalize();
       for(let i=0;i<count;i++){
         const phase=(i/count+time*.19)%1;
         const p=from.clone().lerp(end,phase);
+        if(total){let d=phase*total,j=0;while(j<lengths.length-1&&d>lengths[j])d-=lengths[j++];p.copy(firePath[j]).lerp(firePath[j+1],d/(lengths[j]||1));}
         p.addScaledVector(side,(seed(i)-.5)*.16+Math.sin(time*1.3+i)*.012);
         const normal=g.mode==='planet'?p.clone().normalize():up;
         if(g.mode==='planet')p.copy(g.planet.surfaceAt(normal));
-        p.addScaledVector(normal,.75+(seed(i+count)-.5)*.10+Math.sin(time*2+i)*.015);
+        p.addScaledVector(normal,(firePath?.2:.75)+(seed(i+count)-.5)*.10+Math.sin(time*2+i)*.015);
         p.toArray(positions,i*3);
         const fade=Math.min(1,phase*9,(1-phase)*6),spark=.65+.35*Math.pow(Math.sin(time*2.3+i*1.7),6);
         colors[i*3]=fade*spark;colors[i*3+1]=fade*spark*(.57+seed(i+7)*.22);colors[i*3+2]=fade*spark*.16;

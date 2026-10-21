@@ -1,0 +1,52 @@
+{
+  "checks": [
+    {
+      "name": "preview keyboard E opens guardian dialogue",
+      "pass": true
+    },
+    {
+      "name": "preview reading pauses locomotion and page",
+      "pass": true
+    },
+    {
+      "name": "preview next button records page",
+      "pass": true
+    },
+    {
+      "name": "notebook hides audience while paused",
+      "pass": true
+    },
+    {
+      "name": "closing notebook restores audience",
+      "pass": true
+    },
+    {
+      "name": "preview reload resumes exact page without award",
+      "pass": true
+    },
+    {
+      "name": "preview skip starts reward once",
+      "pass": true
+    },
+    {
+      "name": "preview reward reload automatically returns and seals",
+      "pass": true
+    },
+    {
+      "name": "preview cannot receive duplicate reward",
+      "pass": true
+    },
+    {
+      "name": "final notebook records all three experiments",
+      "pass": true
+    },
+    {
+      "name": "preview keeps main game save unchanged",
+      "pass": true
+    },
+    {
+      "name": "preview no browser errors",
+      "pass": true
+    }
+  ]
+}

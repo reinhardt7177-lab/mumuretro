@@ -1,0 +1,13 @@
+{
+  "floorTop": 0.0,
+  "rotorBottom": 2.561028841137886,
+  "spoutMinX": 30.079999923706055,
+  "parts": {
+    "static": 495,
+    "rotor": 16,
+    "stand": 3,
+    "wheel": 8,
+    "slab": 8,
+    "gate": 8
+  }
+}

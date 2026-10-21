@@ -1,0 +1,316 @@
+{
+  "version": 1,
+  "date": "2026-10-20",
+  "status": "three playable rooms with upper landing (fracture, foundry, steam); guardian and main-game replacement pending",
+  "coordinates": "Three.js x,y,z; y up; south +z; all building local floor origins y=0",
+  "palette": {
+    "basalt": "#343d44",
+    "edge": "#67727b",
+    "bronze": "#aa7f46",
+    "ash": "#c3b697",
+    "lava": "#ff742a",
+    "steam": "#8eb9c2"
+  },
+  "hub": {
+    "id": "hub",
+    "x": 0,
+    "z": 0,
+    "radius": 12,
+    "floor": 0
+  },
+  "entry": {
+    "id": "entry",
+    "x": 0,
+    "z": 23,
+    "width": 8,
+    "depth": 22,
+    "floor": 0
+  },
+  "rooms": [
+    {
+      "id": "fracture",
+      "name": "균열 회랑",
+      "x": -28,
+      "z": 1,
+      "width": 20,
+      "depth": 26,
+      "floor": 0,
+      "wallHeight": 7,
+      "pit": {
+        "z0": -3,
+        "z1": 3,
+        "floor": -3
+      },
+      "bridge": {
+        "x": -28,
+        "z": 0,
+        "width": 3.6,
+        "depth": 6.4,
+        "floor": 0
+      },
+      "sockets": [
+        [
+          -29.4,
+          4.3
+        ],
+        [
+          -26.6,
+          4.3
+        ]
+      ],
+      "braces": [
+        [
+          -32,
+          9
+        ],
+        [
+          -24,
+          9
+        ]
+      ],
+      "goal": [
+        -28,
+        -8
+      ],
+      "loop": "Observe movement → carry two brace blocks → seat both → run test → cross and latch far anchor",
+      "states": [
+        "loose",
+        "braced",
+        "testing",
+        "stable",
+        "latched"
+      ],
+      "completion": "Both braces seated AND test stable AND actor at far anchor; not merely pressing E",
+      "reset": "Keep seated braces; recover carried brace at near bank; no full-room reset"
+    },
+    {
+      "id": "foundry",
+      "name": "용암 주조실",
+      "x": 28,
+      "z": 1,
+      "width": 20,
+      "depth": 26,
+      "floor": 0,
+      "wallHeight": 7,
+      "pit": {
+        "z0": -3,
+        "z1": 3,
+        "floor": -3
+      },
+      "bridge": {
+        "x": 28,
+        "z": 0,
+        "width": 4,
+        "depth": 6.4,
+        "floor": 0
+      },
+      "controls": [
+        [
+          24,
+          7
+        ],
+        [
+          31,
+          7
+        ]
+      ],
+      "goal": [
+        28,
+        -8
+      ],
+      "source": [
+        35,
+        -9
+      ],
+      "mouldCapacity": 1,
+      "fillSeconds": 3,
+      "coolSeconds": 4,
+      "valve": [35, 9],
+      "runtimeDetail": "../foundry-v01/DESIGN.md",
+      "loop": "Rotate two channels → open source → fill bridge mould → close source → cool → cross",
+      "states": [
+        "empty",
+        "routing",
+        "filling",
+        "hot",
+        "cooling",
+        "solid",
+        "latched"
+      ],
+      "completion": "Full mould AND source closed AND cooling complete AND actor at far anchor",
+      "reset": "Misrouted lava goes into enclosed drain; preserve already solid bridge"
+    },
+    {
+      "id": "steam",
+      "runtimeDetail": "../steam-v01/DESIGN.md",
+      "name": "증기 승강실",
+      "x": 0,
+      "z": -27,
+      "width": 24,
+      "depth": 20,
+      "floor": 0,
+      "wallHeight": 8,
+      "diverter": [
+        -6,
+        -21
+      ],
+      "turbine": [
+        -7,
+        -27
+      ],
+      "accessBridge": {
+        "leaves": 2,
+        "leafWidth": 4,
+        "x": 0,
+        "z": -27,
+        "width": 8,
+        "depth": 6.4,
+        "floor": 0
+      },
+      "lift": {
+        "rideSeconds": 4,
+        "x": 7,
+        "z": -31.2,
+        "width": 3.6,
+        "depth": 3.6,
+        "low": 0,
+        "high": 3.2
+      },
+      "balcony": {
+        "x": 0,
+        "z": -35,
+        "width": 24,
+        "depth": 4,
+        "floor": 3.2
+      },
+      "loop": "Divert steam to winch → latch access bridge → divert steam to lift → board and start → upper landing",
+      "states": [
+        "bridge_closed",
+        "bridge_moving",
+        "bridge_latched",
+        "lift_ready",
+        "ascending",
+        "upper_latched"
+      ],
+      "completion": "Bridge latched AND actor rides lift to upper landing; platform cannot rise without rider",
+      "reset": "Upper call lever and safe descent; bridge stays latched; board starts motion",
+      "pit": {
+        "z0": -30,
+        "z1": -24,
+        "floor": -3
+      }
+    },
+    {
+      "id": "sanctum",
+      "name": "불꽃 수호자의 전당",
+      "x": 0,
+      "z": -49,
+      "width": 28,
+      "depth": 16,
+      "floor": 3.2,
+      "wallHeight": 9,
+      "altar": [
+        0,
+        -53
+      ],
+      "loop": "Observe three permanent seals → cross upper passage → guardian dialogue → record and exit",
+      "states": [
+        "sealed",
+        "open",
+        "audience",
+        "recorded",
+        "sealed_complete"
+      ],
+      "completion": "Three room latches AND one completed audience event",
+      "reset": "Revisit record; never award twice; restore outside after event"
+    }
+  ],
+  "corridors": [
+    {
+      "id": "west",
+      "x": -13,
+      "z": 8,
+      "width": 10,
+      "depth": 4,
+      "floor": 0
+    },
+    {
+      "id": "east",
+      "x": 13,
+      "z": 8,
+      "width": 10,
+      "depth": 4,
+      "floor": 0
+    },
+    {
+      "id": "north",
+      "x": 0,
+      "z": -14.5,
+      "width": 4.8,
+      "depth": 5,
+      "floor": 0
+    },
+    {
+      "id": "upper",
+      "x": 0,
+      "z": -39,
+      "width": 6,
+      "depth": 4,
+      "floor": 3.2
+    }
+  ],
+  "progression": [
+    "entry",
+    "hub",
+    "fracture",
+    "hub",
+    "foundry",
+    "hub",
+    "steam",
+    "sanctum",
+    "outside"
+  ],
+  "locks": {
+    "foundry": "fracture.latched",
+    "steam": "foundry.latched",
+    "sanctum": "fracture.latched && foundry.latched && steam.upper_latched"
+  },
+  "portal": {
+    "clearWidth": 4.8,
+    "clearHeight": 5.2,
+    "width": 9.6,
+    "height": 8.4,
+    "depth": 1.4,
+    "archSpring": 2.8
+  },
+  "constraints": {
+    "actorHeight": 1.5,
+    "actorRadius": 0.3,
+    "minimumPath": 2.4,
+    "mainPath": 3.6,
+    "minimumHeadroom": 2.2,
+    "cameraTargetDistance": 5,
+    "maximumStep": 0.28,
+    "floorDatum": 0,
+    "noStairsBypassingLift": true
+  },
+  "targetPlayMinutes": [
+    12,
+    18
+  ],
+  "runtimePlan": {
+    "newModule": "FireAdventure",
+    "save": "fire-specific version with legacy copy; keep mumuplanet.progress.v1",
+    "import": "Validate complete payload before applying; snapshot moving devices at stable endpoint",
+    "render": "GLB geometry + separate walk surfaces/camera occluders + runtime lava/steam VFX"
+  },
+  "currentStage": {
+    "conceptImages": true,
+    "exactBlueprint": true,
+    "blender": "map, portal, foundry kit and separate two-leaf bridge, turbine, lift and gates",
+    "runtime": "three rooms and upper passage at /fire-trial.html; FireTrial module and v2 prototype save",
+    "mainGameReplacement": false,
+    "automatedInputChecks": 103,
+    "studentPlaytest": false
+  }
+}

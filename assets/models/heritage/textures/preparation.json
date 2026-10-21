@@ -1,0 +1,41 @@
+[
+  {
+    "source": "mat0-albedo.jpg",
+    "output": "water-deity-albedo.jpg",
+    "originalSize": [
+      8192,
+      8192
+    ],
+    "webSize": [
+      2048,
+      2048
+    ],
+    "bytes": 2401633
+  },
+  {
+    "source": "mat0-orm-source.jpg",
+    "output": "water-deity-orm.jpg",
+    "originalSize": [
+      4096,
+      4096
+    ],
+    "webSize": [
+      2048,
+      2048
+    ],
+    "bytes": 1163525
+  },
+  {
+    "source": "mat0-normal-final.png",
+    "output": "water-deity-normal.png",
+    "originalSize": [
+      2048,
+      2048
+    ],
+    "webSize": [
+      2048,
+      2048
+    ],
+    "bytes": 7542553
+  }
+]

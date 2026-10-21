@@ -11,6 +11,8 @@ import { ShadeGate } from '../shrine/ShadowGates.js';
 import { checkShadowWalk } from './shadowWalkTest.js';
 import { LIGHT, SKY, FOG_DENSITY, HORIZON_U, SUN_ELEV_DEG } from '../data/lighting.js';
 import { solidBounds } from './solidBounds.js';
+import { createWaterPacket, beginWaterChange, advanceWater } from '../shrine/WaterAdventureState.js';
+import {createFireTrialState,validFireTrialState} from '../shrine/FireTrialState.js';
 
 const ENTRY_Z_TEST = 10.0;   // layouts.ENTRY_Z. 여기서만 쓰므로 import를 늘리지 않는다
 
@@ -343,6 +345,9 @@ export function installDebug(ctx) {
       const hits = [];
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
+        // Branching, multi-height fire traversal is checked with actual inputs in
+        // check-fire-adventure.cjs; a straight Z march cannot measure that route.
+        if(rm.fireAdventure||rm.waterAdventure)continue;
         const rects = rm.dungeon.rects;
         const open = rects.map((r) => r.open);
         rects.forEach((r) => { r.open = true; });    // 문을 전부 연 상태로 통로만 본다
@@ -361,7 +366,7 @@ export function installDebug(ctx) {
       }
       ra.rects = savedRects; ra.obstacles = savedObs;
       ra.setAt(savedPos.x, savedPos.z, -1);
-      log.push(`F 사당 관통 ${ctx.shrines.shrines.length}곳`
+      log.push(`F 직선형 사당 관통 ${ctx.shrines.shrines.length-2}곳 · 물·화산은 실제 기믹 동선 전용 검사`
         + (walkOK ? ' 전부' : ` 실패=${hits.join(' ')}`) + ` -> ${walkOK ? 'PASS' : 'FAIL'}`);
     }
 
@@ -437,6 +442,7 @@ export function installDebug(ctx) {
       if (ctx.lab) scan(ctx.lab.rects, '연구실', ctx.lab.scene, ctx.lab.obstacles);
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
+        if(rm.fireAdventure)continue; // measured GLB camera checks live in fire suites
         scan(rm.dungeon.rects, rm.spec.id, rm.scene, rm.obstacles);
       }
       ra.rects = savedR; ra.obstacles = savedO;
@@ -667,7 +673,7 @@ export function installDebug(ctx) {
         else if (Array.isArray(v)) v.forEach((x) => deep(x, d + 1));
         else if (v && typeof v === 'object') Object.values(v).forEach((x) => deep(x, d + 1));
       };
-      const P = { x: 0, y: 0, z: 0 };
+      const P = new THREE.Vector3();
       if (ctx.roomFor && ctx.shrines) {
         for (const sh of ctx.shrines.shrines) {
           const rm = ctx.roomFor(sh);
@@ -1009,6 +1015,7 @@ export function installDebug(ctx) {
       let n = 0, want = 0;
       for (const sh of ctx.shrines.shrines) {
         const rm = ctx.roomFor(sh);
+        if(rm.fireAdventure)continue; // fire uses its own contextual quest and hint contract
         want += rm.spec.rooms.filter((r) => r.kind === 'room').length;
         const seen = new Set();
         for (const r of rm.dungeon.rects) {
@@ -1126,18 +1133,21 @@ export function installDebug(ctx) {
     //   ③ 수첩: 깬 사당의 답 옆에 표지가 찍힌다(다섯 색의 문의 단서).
     let qOK = true; const qBad = [];
     if (ctx.roomFor && ctx.shrines && ctx.notebook) {
-      const fg5 = ctx.roomFor(ctx.shrines.shrines[4]).final;
-      if (!fg5 || !fg5.cells || fg5.phase === undefined) { qOK = false; qBad.push('용암의 신 주기 없음'); }
-      else {
-        const c = fg5.cells[0]; const r0 = c.rot;
-        fg5.phase = 'main'; fg5.interact({ x: c.x, z: c.z });
-        if (c.rot !== r0) { qOK = false; qBad.push('본진 중에 수로가 돌아감'); }
-        fg5.phase = 'calm'; fg5.interact({ x: c.x, z: c.z });
-        if (c.rot === r0) { qOK = false; qBad.push('고요할 때도 수로가 안 돌아감'); }
-        fg5.restart();
-      }
+      const freshFire=createFireTrialState(),skipFire=structuredClone(freshFire);
+      skipFire.sanctum={version:1,phase:'reward',line:3,awards:1};
+      if(!validFireTrialState(freshFire)||validFireTrialState(skipFire)) { qOK=false;qBad.push('세 실험 전 불꽃 보상 허용'); }
       const wg = ctx.roomFor(ctx.shrines.shrines[3]).final;
-      if (!wg || !wg.lever) { qOK = false; qBad.push('물의 신 손잡이 없음'); }
+      const waterRoom = ctx.roomFor(ctx.shrines.shrines[3]);
+      if(waterRoom.waterAdventure){
+        const s=createWaterPacket('carry',waterRoom.gates[0].gate.seg);
+        beginWaterChange(s,false);advanceWater(s,'carry',waterRoom.gates[0].gate.seg,1);
+        if(s.phase!=='ice'||s.mass!==1){qOK=false;qBad.push('팔찌 얼림·수량 보존');}
+        advanceWater(s,'carry',waterRoom.gates[0].gate.seg,10);
+        if(s.phase!=='ice'){qOK=false;qBad.push('팔찌가 저절로 다음 상태로 변함');}
+        beginWaterChange(s,true);advanceWater(s,'carry',waterRoom.gates[0].gate.seg,1);
+        if(s.phase!=='liquid'||s.mass!==1){qOK=false;qBad.push('팔찌 융해·수량 보존');}
+      }
+      else if (!wg || !wg.lever) { qOK = false; qBad.push('물의 신 손잡이 없음'); }
       else {
         wg.restart();
         const s0 = wg.si;
@@ -1287,9 +1297,11 @@ export function installDebug(ctx) {
     let eOK = true; const eBad = [];
     if (ctx.lab && ctx.title && ctx.endingHome) {
       const lab2 = ctx.lab;
+      const savedLab=lab2.exportState();
       const parcel = lab2.reachables && lab2.reachables.find((r) => r.name === '소포');
       if (!parcel) { eOK = false; eBad.push('소포 자리 없음'); }
       else {
+        lab2.importState({...savedLab,dials:[3,5,8],hasNote:true,read:true,open:true,parcelRecovered:true});
         lab2._resetEnd(); lab2.markDone();
         const pr = lab2.prompt({ x: parcel.x, z: parcel.z });
         if (!/소포에 넣기/.test(pr || '')) { eOK = false; eBad.push(`소포 앞 프롬프트 "${pr}"`); }
@@ -1299,6 +1311,7 @@ export function installDebug(ctx) {
         if (lab2.prompt({ x: parcel.x, z: parcel.z })) { eOK = false; eBad.push('부친 뒤에도 프롬프트가 남음'); }
         lab2._resetEnd();
       }
+      lab2.importState(savedLab);
       if (typeof ctx.title.endCard !== 'function') { eOK = false; eBad.push('끝 카드 없음'); }
       const lines = ctx.endingHome[1] || [];
       if (lines.length < 2 || lines.length > 4) { eOK = false; eBad.push(`마지막 혼잣말 ${lines.length}줄`); }

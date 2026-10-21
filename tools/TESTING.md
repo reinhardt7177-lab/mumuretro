@@ -28,6 +28,80 @@ node --experimental-vm-modules tools/check-state.cjs --break-map-restore
 
 ## 실제 브라우저 통합
 
+### 앱 전체 마감 · 2026-10-21 최신
+
+기존 소스·사용자 브라우저의 실제 기록을 수정하지 않는 격리 Edge 검사를 사용한다. 5512 제작 서버와 `AUDIT_NODE_MODULES`를 준비한다.
+
+```powershell
+node tools/check-notebook-pages.cjs
+node tools/notebook-check.cjs
+node tools/check-strata-journey.cjs
+node tools/check-chronicle-art.cjs
+node tools/check-app-progress.cjs
+node tools/check-endflow.cjs
+node tools/check-github-integration.cjs
+node tools/check-quest-guide.cjs
+```
+
+수첩 페이지 19개는 360px·가로 화면·터치·글자 크기·모든 기록 접근·숨긴 새 기록·상태 보존을 검사한다. 지층 완주 14개는 오프닝과 앞선 다섯 구슬만 준비한 뒤 코어·낙석·문·헌납·각성·마지막 구슬·범선 귀환·소포 엔딩을 실제 입력으로 진행한다. 수호자 7개는 실제 GLB 바닥·높이·고정 문양·봉인의 의미·인출/복원·버전 1 시각 저장·144개 카메라와 기본 프레이밍을 확인한다. 여섯 방 동시 저장 7개는 들고 있는 물체와 모든 비활성 방·별도 컨트롤러가 재접속/전환 후 유지되는지 확인한다.
+
+`check-notebook-pages.cjs --break-next`, `check-strata-journey.cjs --break-core-tip`, `check-chronicle-art.cjs --break-seals`는 각각 버튼·드릴 끝·봉인 ID를 검사 환경에서만 고장 낸다. **각 명령은 고장을 검출해 exit 1이어야 한다.** 정상 결과와 실패 주입 결과는 `reports/2026-10-21/evidence/app-completion/`에 따로 기록한다. A~X의 F는 직선형 네 사당만 검사하며 물·불의 완주는 아래 현재 전용 도구로 증명한다.
+
+교실 서버는 `교실서버.cmd` 또는 `node server/app.cjs 5514 --share`로 실행한다. `check-classroom-server.cjs`, `check-coop.cjs`, `check-coop-balance.cjs`, `check-coop-balance-http.cjs`는 별도 임시 포트에서 정원·소유권·서버 판정·토큰 비공개·파일 제공 범위를 확인한다. `AUDIT_URL=http://교사PC주소:5514`를 지정하고 `check-coop-room-browser.cjs`를 실행하면 독립 브라우저 3개로 공동 상태·모든 문·수호자까지 실제 보행·원래 범선 복귀·개인 저장과 대화 격리를 검사한다. 세 대의 실제 학생 기기 성능·학교 와이파이 연결 시험과 구분한다.
+
+`capture-app-review.cjs`는 1280×800 중간 화질로 실제 여덟 장면과 렌더 수치를 기록하고 `art/app-completion/review.html`을 만든다. 위치를 준비하는 검수 캡처이며 퍼즐 완주 검사로 세지 않는다. 이전의 `check-water-court.cjs`와 `check-shrine-progress.cjs`는 개편 전 퍼즐 형식의 역사적 회귀 도구다. 현재 물은 `check-water-adventure.cjs`, 불은 `check-fire-adventure.cjs`, 현재 전체 저장은 `check-app-progress.cjs`를 우선한다.
+
+### 불의 신전 전체 · 2026-10-21
+
+로컬 서버 5512와 `AUDIT_NODE_MODULES`를 준비한 뒤 아래 순서로 실행한다. 본편 검사가 실제 이동으로 얻은 전당 체크포인트를 만들며, 마지막 검사는 이 자료로 시제품의 대화 복원만 검사한다.
+
+```powershell
+node tools/check-fire-fracture.cjs
+node tools/check-fire-foundry.cjs
+node tools/check-fire-steam.cjs
+node tools/check-fire-adventure.cjs
+node tools/check-fire-migration.cjs
+node tools/check-fire-sanctum.cjs
+node tools/check-fire-adventure.cjs --break-reward
+```
+
+마지막 명령은 검사 브라우저에서 보상 커밋만 끊는다. **자동 퇴장·보상 검사에서 exit 1이 정상**이다. 그 외 여섯 도구는 33+33+37+27+21+12=163개를 검사한다. 실제 학생 재미·실기기 성능 검사와 구분한다. 새 코드의 결과는 `reports/2026-10-21/evidence/fire-adventure/`와 기존 각 방 evidence에 남는다.
+
+본편은 `mumuplanet.progress.v1` 안의 불의 신전 v3 기록, 시제품은 별도 `mumuplanet.fire-trial.v3`을 사용한다. 실제 사용자 프로필을 테스트 자료로 사용하지 않는다. 기존 원문과 다른 신전 진행 보존도 검사한다. [완성 범위·측정·공통 검사 실패](../reports/2026-10-21/FIRE_ADVENTURE_COMPLETE.md)를 함께 읽는다.
+
+### 팔찌·광선 · 2026-10-03
+
+```powershell
+node tools/check-water-bracelet-fx.cjs
+node tools/check-water-bracelet-fx.cjs --break-wrist
+node tools/capture-water-bracelet-model.cjs
+```
+
+첫 명령은 격리된 Edge에서 실제 이동·E 획득·Q/R 시전, 손목 밀착, 광선 시작·끝, 프레임별 밝기, 팔 복귀, 저장 불변, 회수·오버레이·퇴장, 저화질·동작 줄이기를 검사한다. 두 번째 명령은 검사 브라우저에서 팔찌를 본에서 떼고 0.5m 이동하므로 **exit 1이 정상**이다. 사용자 저장은 건드리지 않는다. 세 번째 명령은 실제 웹 모델 확대 캡처와 Blender 보존용 JSON을 만든다.
+
+근거는 `reports/2026-10-03/evidence/water-bracelet/`에 저장한다. 확대 화면은 `/art/water-bracelet-web/preview.html`이다. 모바일 캡처는 화면 크기 검사이며 실제 태블릿의 GPU 성능 검증이 아니다.
+
+### 현재 물 신전 · 2026-10-02 개편
+
+5512 로컬 서버를 켜고 공통 `AUDIT_NODE_MODULES` 경로를 지정해 실행한다.
+
+```powershell
+node tools/check-water-adventure.cjs
+node tools/check-water-adventure-safety.cjs
+```
+
+첫 검사는 입장만 준비하고 실제 이동·운반·점프·승강·변환으로 세 방과 신의 자동 퇴장을 확인한다. 해법 방향은 자동 조향하므로 학생 재미 검사와 구분한다. 두 번째는 구형 v1/v2 기록 10가지, 실제 운반 중 새로고침, 잘못된 저장의 원자적 거부, 키보드 반복, 모바일 버튼·수첩 정지·물 회수·요청 힌트·세 화면 크기를 확인한다. 결과와 게임 캡처는 `reports/2026-10-02/evidence/water-adventure/`에 저장한다.
+
+첫 목표 단의 충돌 높이를 0.7u 높이는 고장 주입은 다음과 같다. **이 명령은 exit 1이 정상이다.** 파일과 개인 저장은 바꾸지 않으며, 보행이 막히는 오류가 `failure-injection.json`에 남아야 한다.
+
+```powershell
+node tools/check-water-adventure.cjs --break-first-step
+```
+
+아래의 `check-water-court.cjs` 설명은 구형 물 신전 검증의 보관 기록이다. 현재 물 신전에는 집수판·온도 손잡이·세 밸브가 없으므로 현재 완주를 검증할 때 사용하지 않는다.
+
+### 공통 웹 기능과 과거 구간 검사
+
 아래 도구들은 로컬 서버와 격리된 브라우저를 직접 열고 끝나면 닫는다. 개인 브라우저의 저장 기록은 사용하지 않는다.
 
 ```powershell
@@ -148,3 +222,38 @@ node tools/check-expedition.cjs
 ## GitHub 통합 검사 상세
 
 `check-github-integration.cjs`는 공통 AUDIT_NODE_MODULES와 5512 로컬 서버를 사용한다. DPR 2에서 화질별 실제 캔버스·후처리 크기, 창 크기 변경, 자동 하향·수동 고정, 사당 조명, 설정 중 일시 정지, PC·폰·가로 화면·태블릿 버튼 겹침과 터치·키보드 조작을 검사한다. A~X 실행 전후 전체 저장 스냅샷과 화질도 같아야 한다. 렌더링 크기 갱신을 일부러 끊으면 오류를 검출해야 한다. 결과는 `reports/2026-09-09/evidence/github-integration/`에 기록한다.
+
+
+## 엔진 이전 자산 검사
+
+`node tools/check-heritage-assets.cjs`는 5512 서버와 공통 `AUDIT_NODE_MODULES`를 사용한다. 원본 보존 해시, GLB 해시, 50개 모델의 WebGL 로드·유효 정점·그리기, 최종 노멀맵을 확인한다. 게임에서는 신 모델·외관·물 신전 E 진입·수첩 넘김·18번 여닫기 후 메인 WebGL 유지·G 풀 토글·저장·낮은 화질의 풀 자동 숨김을 확인한다. 테스트 브라우저의 기록은 실제 사용자 기록과 분리된다.
+
+결과는 `reports/2026-10-02/evidence/asset-transfer/report.json`에 저장한다. `pass: true`만 전체 통과다. 장면 확인용 화면은 준비한 위치에서 촬영하며 퍼즐을 모두 직접 푼 증거는 아니다. `--runtime-only`는 해시 확인 후 이전에 검증한 모델 렌더링 목록을 재사용해 게임 연결만 다시 검사한다.
+
+## 화산 신전 · 균열 회랑 시제품
+
+현재 세 방 저장은 `mumuplanet.fire-trial.v2`다. 기존 두 방 v1과 회랑 키는 이관 입력으로 보존한다. 아래 회랑 검사도 새 묶음 저장에서 운반 상태를 읽고, 모바일 복원은 이전 회랑 형식의 실제 이관을 거친다.
+
+`node tools/check-fire-fracture.cjs`는 5512 서버와 공통 `AUDIT_NODE_MODULES`를 사용한다. `/fire-trial.html`을 격리된 Edge에서 실행한다. 본편 기록을 표식으로 만들어 변경되지 않는지 확인하며 사용자의 브라우저 기록에는 접근하지 않는다.
+
+입구 → 중앙 홀 → 균열 회랑을 실제 `Input`·`RoomActor` 이동으로 통과한다. 빈 고정구·한쪽 고정 실패, 운반과 배치, 추락·재도전, 수첩 정지, 양쪽 고정 후 시험, 실제 다리 횡단·잠금·홀 복귀, 운반 중 및 완료 후 새로고침을 검사한다. 검사 도구는 해법을 알고 조향한다. 장치로 순간 이동하거나 완료 상태를 만들어 정상 완주를 대신하지 않는다.
+
+카메라 36시점의 고체 내부 진입·시험대 시야, 390×844·844×390·1024×768 HUD, 터치 문맥 버튼·점프·이동·수첩, 잘못된 기록과 저장 용량 초과도 포함한다. 모바일 검사는 터치 가능한 브라우저 에뮬레이션이며 실제 학생 기기 성능·재미 검토가 아니다.
+
+결과와 실제 렌더는 `reports/2026-10-20/evidence/fire-fracture/`에 기록한다. 정상 결과는 `report.json`의 `pass: true`와 33개 통과다. `--smoke`는 입구 이동·자산·카메라만 확인한다. `--break-bridge`는 테스트 브라우저의 다리 충돌 높이만 일부러 잘못 바꾼다. 이때 실제 횡단 중 추락을 검출해 종료 코드 1이 나와야 하며, `failure-injection.json`에 원인이 남는다. 코드·사용자 저장·모델은 바꾸지 않는다.
+
+## 화산 신전 · 용암 주조실 연속 플레이
+
+`node tools/check-fire-foundry.cjs`는 같은 5512 서버·`AUDIT_NODE_MODULES`·격리 Edge를 사용한다. 새 게임에서 오른쪽 문에 접근해 잠금을 확인하고, 실제 입력으로 회랑을 완주해 문을 연 뒤 주조실까지 연속 진행한다. 수로 회전, 잘못된 흐름·한쪽 연결, 부분 충전과 새로고침, 열린 공급의 냉각 방지, 뜨거운 틀의 복귀, 재가열, 실제 돌길 횡단·잠금·홀 복귀를 검사한다.
+
+두 방 기록을 적용하기 전 전체 검증·원본 이관 보존·보관/용량 실패를 확인한다. Blender 실측 바닥과 주입구 통행 여유, 카메라 36시점, 다리와 일치하는 황금 가루 경로, 실제 터치 밸브, 390×844·844×390·1024×768 표시도 포함한다. 정상 결과는 `reports/2026-10-20/evidence/fire-foundry/report.json`의 `pass: true`와 33개 통과다.
+
+`--break-cold-floor`는 테스트 브라우저에서 굳은 길의 충돌 높이만 -3m로 바꾼다. 정상 경로를 걸어 횡단하다 추락을 검출해 종료 코드 1이 나와야 한다. `failure-injection.json`에 근거가 남는다. 학생 재미와 실제 기기 성능을 검증하는 도구는 아니다.
+
+## 화산 신전 · 증기 승강실과 상층
+
+`node tools/check-fire-steam.cjs`는 5512·공통 `AUDIT_NODE_MODULES`·격리 Edge를 사용한다. 입구에서 회랑·주조실을 실제 입력으로 완주해 북쪽 문을 열고 세 번째 방을 진행한다. 동력 분기, 다리 하강·잠금과 중간 복원, 빈 승강대의 첫 상승 거부, 실제 탑승·운행·점프·상층 하차, 호출과 왕복, 하층/상층 보행 구분을 확인한다.
+
+37개 검사는 승강대와 승객의 컨트롤러 업데이트 전/후 발 높이, 실제 운행 중 새로고침, v1 원문·사본 보관과 저장 실패, 모순된 기록 거부, 상층 36개 카메라 시점, 높이에 맞는 황금 가루, 터치 E·수첩과 세 화면 크기를 포함한다. 결과는 `reports/2026-10-21/evidence/fire-steam/report.json`의 `pass: true`로 확인한다. 기존 두 도구는 각 33개를 계속 실행한다. 기능 검사와 학생 재미·실제 기기 성능은 별개다.
+
+`--break-rider-transport`는 테스트 브라우저에서 승강대가 승객에게 전달한 이동량만 되돌린다. 기존 컨트롤러가 나중에 바닥 높이를 보정하기 **전** 발 높이 오차를 검출해 종료 코드 1이 나와야 한다. 정상 코드·사용자 기록은 바꾸지 않으며 `failure-injection.json`에 근거가 남는다.

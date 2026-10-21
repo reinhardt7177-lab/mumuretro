@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-21T13:14:16.683Z",
+  "checks": [
+    {
+      "name": "new water room replaces old control panels",
+      "pass": true
+    },
+    {
+      "name": "bracelet acquired with E",
+      "pass": true
+    },
+    {
+      "name": "R freezes one parcel but does not open the first door",
+      "pass": true
+    },
+    {
+      "name": "waiting does not auto-solve",
+      "pass": true
+    },
+    {
+      "name": "optional water fragment earned by actual jumping",
+      "pass": true
+    },
+    {
+      "name": "ice placement and two jumps open first room",
+      "pass": true
+    },
+    {
+      "name": "wrong lower heating never fills upper receiver",
+      "pass": true
+    },
+    {
+      "name": "malformed save rejected atomically",
+      "pass": true
+    },
+    {
+      "name": "held-ice snapshot preserves one stable parcel",
+      "pass": true
+    },
+    {
+      "name": "water physically arrives through upper drain",
+      "pass": true
+    },
+    {
+      "name": "upper platform jumping cannot bypass lift wall",
+      "pass": true,
+      "details": {
+        "minZ": -26.65870479875621,
+        "maxY": 2.4152777777777783,
+        "wallZ": -27,
+        "solved": false
+      }
+    },
+    {
+      "name": "wall blocks nearby water ability",
+      "pass": true
+    },
+    {
+      "name": "boarding rising lift and walking across opens second room",
+      "pass": true
+    },
+    {
+      "name": "ice crossing unfolds permanent stone return bridge",
+      "pass": true
+    },
+    {
+      "name": "melting reuses same parcel in lower bowl",
+      "pass": true
+    },
+    {
+      "name": "stone return bridge is walkable after thawing",
+      "pass": true
+    },
+    {
+      "name": "vapour travels through rising conduit",
+      "pass": true
+    },
+    {
+      "name": "condensation fills altar and opens third door",
+      "pass": true
+    },
+    {
+      "name": "v3 save round-trip",
+      "pass": true
+    },
+    {
+      "name": "deity event awards once and automatically exits",
+      "pass": true
+    },
+    {
+      "name": "no browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "movement": "Automatic camera steering and actual Input intents; shrine entry staged.",
+  "funVerified": false,
+  "failureInjection": false,
+  "pass": true
+}

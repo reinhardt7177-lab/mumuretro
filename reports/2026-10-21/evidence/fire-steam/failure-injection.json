@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-21",
+  "checks": [
+    {
+      "name": "north gate blocks before the foundry is complete",
+      "pass": true
+    },
+    {
+      "name": "actual first and second rooms open north gate",
+      "pass": true
+    },
+    {
+      "name": "walk across real threshold apron into third room",
+      "pass": true
+    },
+    {
+      "name": "waiting without power does not lower bridge",
+      "pass": true
+    },
+    {
+      "name": "unlowered bridge attempt recovers and preserves previous rooms",
+      "pass": true
+    },
+    {
+      "name": "switching away pauses an unfinished bridge without opening lift",
+      "pass": true
+    },
+    {
+      "name": "unfinished bridge reload uses closed safe endpoint without losing rooms",
+      "pass": true
+    },
+    {
+      "name": "powered bridge reaches floor and mechanically latches",
+      "pass": true
+    },
+    {
+      "name": "power B leaves permanent bridge and does not raise empty lift",
+      "pass": true
+    },
+    {
+      "name": "lower floor under balcony never teleports actor upstairs",
+      "pass": true
+    },
+    {
+      "name": "walk through open west gate onto lift",
+      "pass": true
+    },
+    {
+      "name": "rider rises continuously on closed cabin",
+      "pass": true
+    },
+    {
+      "name": "platform transports grounded rider before controller update",
+      "pass": false,
+      "details": {
+        "samples": 72,
+        "maxPhaseError": 0.013333333333333364,
+        "maxGroundError": 0
+      }
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "failure": "platform transports grounded rider before controller update: {\"samples\":72,\"maxPhaseError\":0.013333333333333364,\"maxGroundError\":0}"
+}

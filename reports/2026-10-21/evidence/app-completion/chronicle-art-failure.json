@@ -1,0 +1,108 @@
+{
+  "checks": [
+    {
+      "name": "decoded model starts at floor zero with two live eyes and five separate seals",
+      "pass": true,
+      "details": {
+        "loaded": true,
+        "base": 0,
+        "top": 14.038000106811523,
+        "eyes": true,
+        "seals": [
+          "balance",
+          "shadow",
+          "sift",
+          "water",
+          "fire"
+        ],
+        "meshes": 19,
+        "glyphs": [
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          },
+          {
+            "offset": 0.0700000524520874,
+            "aligned": true,
+            "dark": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "dark raised marks remain in front of each luminous seal face",
+      "pass": true,
+      "details": [
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        },
+        {
+          "offset": 0.0700000524520874,
+          "aligned": true,
+          "dark": true
+        }
+      ]
+    },
+    {
+      "name": "engraved seals follow their own offerings through arbitrary order, withdrawal and restore",
+      "pass": false,
+      "details": {
+        "failures": [
+          "offer2: balance",
+          "offer2: shadow",
+          "offer3: balance",
+          "offer3: shadow",
+          "offer4: balance",
+          "offer4: shadow",
+          "restore: balance",
+          "restore: shadow",
+          "legacy visible snapshot: balance",
+          "legacy visible snapshot: shadow"
+        ],
+        "restored": true,
+        "legacyAccepted": true,
+        "hidden": true,
+        "semanticsUnchanged": true,
+        "awake": 0.5,
+        "eye": 16762031,
+        "oldVersion": 1
+      }
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "failure": "engraved seals follow their own offerings through arbitrary order, withdrawal and restore: {\"failures\":[\"offer2: balance\",\"offer2: shadow\",\"offer3: balance\",\"offer3: shadow\",\"offer4: balance\",\"offer4: shadow\",\"restore: balance\",\"restore: shadow\",\"legacy visible snapshot: balance\",\"legacy visible snapshot: shadow\"],\"restored\":true,\"legacyAccepted\":true,\"hidden\":true,\"semanticsUnchanged\":true,\"awake\":0.5,\"eye\":16762031,\"oldVersion\":1}"
+}

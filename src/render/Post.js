@@ -18,6 +18,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { quality } from './Quality.js';
+import { LOOKS } from './LookProfiles.js';
 
 // ★ 씬을 생성 시점에 붙잡지 않고 매 프레임 engine에서 읽는다.
 // 사당 안팎이 서로 다른 Scene이라, 붙잡아 두면 전환해도 바깥 행성만 계속 그린다.
@@ -67,7 +68,7 @@ const GradeShader = {
       vec4 c = texture2D(tDiffuse, vUv);
       float l = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
       c.rgb = mix(vec3(l), c.rgb, uSaturation);
-      c.rgb = (c.rgb - 0.5) * uContrast + 0.5;
+      c.rgb = max(vec3(0.0), c.rgb * uContrast);
       vec2 d = vUv - 0.5;
       c.rgb *= 1.0 - dot(d, d) * uVignette;
       gl_FragColor = c;
@@ -78,6 +79,7 @@ const GradeShader = {
 export class Post {
   constructor(engine) {
     this.renderer = engine.renderer;
+    this.engine = engine;
     this.enabled = true;
     this.composer = new EffectComposer(engine.renderer);
     this.composer.addPass(new OutlineScenePass(engine));
@@ -105,13 +107,26 @@ export class Post {
     const pr = this.renderer.getPixelRatio();
     const dw = Math.max(1, Math.floor(w * pr)), dh = Math.max(1, Math.floor(h * pr));
     this.composer.setPixelRatio(1);
+    const samples = Math.min(this.renderer.capabilities.maxSamples || 0, quality.name === 'high' ? 4 : 0);
+    for(const target of [this.composer.renderTarget1,this.composer.renderTarget2]) {
+      if(target.samples!==samples){target.samples=samples;target.dispose();}
+    }
     this.composer.setSize(dw, dh);
     // 블룸은 흐림이다. 낮은 해상도로 흐려도 눈에 안 띈다 — 단수에 맞춰 더 줄인다.
     const s = quality.get('bloom');
     this.bloom.enabled = s > 0;
     if (s > 0) this.bloom.setSize(Math.max(1, Math.round(dw * s)), Math.max(1, Math.round(dh * s)));
   }
-  render() { this.composer.render(); }
+  render() {
+    const key=this.engine.scene.userData.lookProfile||'planet';
+    if(this.lookKey!==key){const look=LOOKS[key]||LOOKS.planet;this.lookKey=key;
+      this.grade.uniforms.uSaturation.value=look.saturation;
+      this.grade.uniforms.uContrast.value=look.contrast;
+      this.grade.uniforms.uVignette.value=look.vignette;
+      this.bloom.strength=look.bloom;
+    }
+    this.composer.render();
+  }
 
   // 검증용 훅
   set bloomStrength(v) { this.bloom.strength = v; }

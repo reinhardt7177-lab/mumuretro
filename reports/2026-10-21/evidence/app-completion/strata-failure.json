@@ -1,0 +1,26 @@
+{
+  "checks": [
+    {
+      "name": "actual drill-tip end is deepest in both flipped core layouts",
+      "pass": false,
+      "details": [
+        {
+          "flip": -1,
+          "deepest": 3
+        },
+        {
+          "flip": -1,
+          "deepest": 3
+        },
+        {
+          "flip": 1,
+          "deepest": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "failureInjection": true,
+  "setup": "Opening and five preceding orbs staged. Final temple and ship ending use actual movement/actions.",
+  "failure": "actual drill-tip end is deepest in both flipped core layouts: [{\"flip\":-1,\"deepest\":3},{\"flip\":-1,\"deepest\":3},{\"flip\":1,\"deepest\":3}]"
+}

@@ -2,14 +2,15 @@ import * as THREE from 'three';
 import { bindCoopBalance } from '../core/CoopBalance.js';
 export function attachCoop(settings,getState,hooks={}){
  const root=document.createElement('section');root.className='now';root.id='coopMenu';
- root.innerHTML='<b>친구와 함께 · 접속 시험</b><p>균형 신전 공동 실험 · 개인 기록과 별도로 진행한다.</p><input aria-label="초대 코드" placeholder="초대 코드" maxlength="8"><button type="button">방 만들기</button><button type="button">참여</button><button type="button">나가기</button><button type="button">균형 신전 함께하기</button><p role="status">최대 3명 · 기록은 각 기기에 저장</p>';
+ root.innerHTML='<b>친구와 함께</b><p>균형 신전 공동 실험 · 개인 기록과 별도로 진행한다.</p><input aria-label="초대 코드" placeholder="초대 코드" maxlength="8"><button type="button">방 만들기</button><button type="button">참여</button><button type="button">나가기</button><button type="button">균형 신전 함께하기</button><p role="status">최대 3명 · 개인 기록은 유지 · 공동 실험은 이 방에서 진행</p>';
  settings.appendSection(root);const [create,join,leave,temple]=root.querySelectorAll('button'),code=root.querySelector('input'),status=root.querySelector('[role=status]');
- const endpoint=location.hostname==='127.0.0.1'||location.hostname==='localhost'?'http://127.0.0.1:5520':null;
+ const configured=document.querySelector('meta[name="mumu-coop-endpoint"]')?.content.trim();
+ let endpoint=null;try{const u=new URL(configured||'/api/coop',location.href);if(['http:','https:'].includes(u.protocol)&&!(location.protocol==='https:'&&u.protocol==='http:'))endpoint=u.href.replace(/\/$/,'');}catch{}
  let session=null,busy=false,polling=false,binding=null,latest=null,sending=false;const markers=new Map();
  const clear=()=>{for(const m of markers.values()){m.removeFromParent();m.geometry.dispose();m.material.dispose();}markers.clear();};
- const request=async(route,body)=>{const r=await fetch(endpoint+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(5000)});const data=await r.json();if(!r.ok)throw Error(data.error);return data;};
- const showError=e=>{status.textContent=({full:'이미 3명이 있는 방이다',missing:'초대 코드를 확인하자',expired:'연결이 만료됐다. 다시 참여하자'}[e.message]||'협동 서버에 연결하지 못했다');};
- const enter=async route=>{if(busy||session)return;if(!endpoint){status.textContent='온라인 협동 서버를 준비 중이다';return;}busy=true;try{session=await request(route,{code:code.value.trim().toUpperCase()});code.value=session.code;status.textContent=`초대 코드 ${session.code} · 접속됨`;}catch(e){showError(e)}finally{busy=false;}};
+ const request=async(route,body)=>{const r=await fetch(endpoint+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(5000)});if(!r.headers.get('content-type')?.includes('application/json'))throw Error('unavailable');const data=await r.json();if(!r.ok)throw Error(data.error);return data;};
+ const showError=e=>{const text=({full:'이미 3명이 있는 방이다',missing:'초대 코드를 확인하자',expired:'연결이 만료됐다. 다시 참여하자',unavailable:'이 주소에 공동 실험 서버가 연결되어 있지 않다'}[e.message]||'협동 서버에 연결하지 못했다');if(status.textContent!==text)hooks.notice?.(text);status.textContent=text;};
+ const enter=async route=>{if(busy||session)return;if(!endpoint){status.textContent='함께하기 서버 주소를 확인하자';return;}busy=true;try{session=await request(route,{code:code.value.trim().toUpperCase()});code.value=session.code;status.textContent=`초대 코드 ${session.code} · 접속됨`;}catch(e){showError(e)}finally{busy=false;}};
  temple.onclick=()=>{if(!session||!latest||binding)return;const r=hooks.enter?.();if(!r)return;binding=bindCoopBalance(r,session.id,async command=>{if(sending)return;sending=true;try{const result=await request('/balance',{...session,command});binding?.apply(result.balance);}catch(e){showError(e)}finally{sending=false;}});binding.apply(latest);settings.setOpen(false);};
  const stopBinding=()=>{binding?.dispose();binding=null;hooks.exit?.();};
  create.onclick=()=>enter('/create');join.onclick=()=>enter('/join');leave.onclick=async()=>{const old=session;stopBinding();session=null;latest=null;clear();status.textContent='방에서 나왔다';if(old)try{await request('/leave',old)}catch{}};

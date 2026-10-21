@@ -18,3 +18,9 @@ secrets.*
 # Upstream clone and pre-integration backups
 .integration/
 *.blend1
+
+# Blender Python helper caches
+__pycache__/
+
+# Generated static deployment output
+dist/

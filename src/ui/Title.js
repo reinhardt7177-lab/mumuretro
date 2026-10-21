@@ -154,7 +154,7 @@ export function buildTitle(onStart, { save = null, saveStatus = 'empty', onNew =
   });
   const endCard = () => {
     ending = true; together.hidden=true; live = false; el.classList.add('on','end'); el.classList.remove('out');
-    el.querySelector('.lock').innerHTML = '<h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">끝</p><p class="fin">답은 뜯어내고, 물음만 남긴다 — 다음 사람을 위해.</p>';
+    el.querySelector('.lock').innerHTML = '<h1 class="t">무무 행성</h1><div class="rule"></div><p class="s1">끝</p><p class="fin">기록은 간직하고, 물음을 건넨다 — 다음 여행자에게.</p>';
     go.textContent = '시작 화면으로'; go.hidden = false; fresh.hidden = confirmRow.hidden = true;
     info.textContent = '여섯 개의 물음이 한 권의 기록이 되었다.';
     detail.textContent = '완성한 기록은 이 브라우저에 남아 있다.';

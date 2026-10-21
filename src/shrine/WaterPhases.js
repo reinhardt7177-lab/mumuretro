@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { addBoard } from './Signboard.js';
+import { loadHeritageAsset, fitHeritageHeight, heritagePart } from '../core/HeritageAssets.js';
 
 const clamp=x=>T.MathUtils.clamp(x,0,1);
 const material=(color,transparent=false)=>{const m=new T.MeshStandardMaterial({color,roughness:.45,metalness:.12,transparent,opacity:transparent?.65:1});m.userData.outlineParameters={visible:false};return m;};
@@ -141,6 +142,12 @@ export class WaterAwakening {
     this.group=new T.Group();scene.add(this.group);this.mat=material(theme.glow,true);
     this.god=new T.Mesh(new T.IcosahedronGeometry(1.6,1),this.mat);this.god.position.set(0,3,seg.z0+5);this.group.add(this.god);
     this.ring=new T.Mesh(new T.TorusGeometry(2.2,.09,8,36),glow(0xb2ebec));this.ring.position.copy(this.god.position);this.group.add(this.ring);
+    this.heritagePromise=Promise.all(['water-deity','water-deity-halo-v03','water-deity-droplet-v03'].map(loadHeritageAsset)).then(()=>{
+      const deity=fitHeritageHeight('water-deity',4.7);if(!deity)return;
+      deity.position.set(0,0,seg.z0+5);this.group.add(deity);this.deity=deity;this.god.visible=false;
+      const halo=heritagePart('water-deity-halo-v03');if(halo){halo.scale.setScalar(4.7/3.3);halo.rotation.y=Math.PI;halo.position.copy(deity.position);this.group.add(halo);this.ring.visible=false;}
+      const droplet=heritagePart('water-deity-droplet-v03');if(droplet){droplet.scale.setScalar(4.7/3.3);droplet.rotation.y=Math.PI;droplet.position.copy(deity.position);this.group.add(droplet);}
+    });
     const altar=new T.Mesh(new T.CylinderGeometry(.9,1.1,1,16),material(0x315664));altar.position.copy(this.altar).y=.5;this.group.add(altar);
     this.board=addBoard(scene,seg,-1,'다시 흐르는 성소','복구한 물의 흐름을 제단에 전하자',theme.glow);this.board.group.position.set(0,2,seg.z1-4);this.board.group.rotation.set(0,0,0);
   }

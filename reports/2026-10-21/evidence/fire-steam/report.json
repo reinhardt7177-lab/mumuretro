@@ -1,0 +1,227 @@
+{
+  "date": "2026-10-21",
+  "checks": [
+    {
+      "name": "north gate blocks before the foundry is complete",
+      "pass": true
+    },
+    {
+      "name": "actual first and second rooms open north gate",
+      "pass": true
+    },
+    {
+      "name": "walk across real threshold apron into third room",
+      "pass": true
+    },
+    {
+      "name": "waiting without power does not lower bridge",
+      "pass": true
+    },
+    {
+      "name": "unlowered bridge attempt recovers and preserves previous rooms",
+      "pass": true
+    },
+    {
+      "name": "switching away pauses an unfinished bridge without opening lift",
+      "pass": true
+    },
+    {
+      "name": "unfinished bridge reload uses closed safe endpoint without losing rooms",
+      "pass": true
+    },
+    {
+      "name": "powered bridge reaches floor and mechanically latches",
+      "pass": true
+    },
+    {
+      "name": "power B leaves permanent bridge and does not raise empty lift",
+      "pass": true
+    },
+    {
+      "name": "lower floor under balcony never teleports actor upstairs",
+      "pass": true
+    },
+    {
+      "name": "walk through open west gate onto lift",
+      "pass": true
+    },
+    {
+      "name": "rider rises continuously on closed cabin",
+      "pass": true
+    },
+    {
+      "name": "platform transports grounded rider before controller update",
+      "pass": true,
+      "details": {
+        "samples": 72,
+        "maxPhaseError": 0,
+        "maxGroundError": 0
+      }
+    },
+    {
+      "name": "notebook pauses lift and passenger together",
+      "pass": true
+    },
+    {
+      "name": "moving save stores stable departure level",
+      "pass": true,
+      "details": {
+        "version": 1,
+        "diverter": "lift",
+        "bridgeLatched": true,
+        "liftLevel": "low",
+        "rodeUp": false,
+        "upperReached": false,
+        "visited": true
+      }
+    },
+    {
+      "name": "mid-ride reload restores safe lower bank and prior progress",
+      "pass": true
+    },
+    {
+      "name": "full ride and cabin jump keep feet on moving deck",
+      "pass": true,
+      "details": {
+        "stats": {
+          "samples": 200,
+          "maxPhaseError": 0,
+          "maxGroundError": 0
+        },
+        "pos": [
+          6.8855923916425645,
+          3.2,
+          -32.40031808664903
+        ],
+        "height": 3.2,
+        "rodeUp": true,
+        "complete": false
+      }
+    },
+    {
+      "name": "golden route follows upper deck and passage at correct height",
+      "pass": true,
+      "details": {
+        "bad": 0,
+        "points": [
+          [
+            6.8855923916425645,
+            3.3000000000000003,
+            -32.40031808664903
+          ],
+          [
+            7,
+            3.3,
+            -34.5
+          ],
+          [
+            0,
+            3.3,
+            -35.5
+          ],
+          [
+            0,
+            3.3000000000000003,
+            -39.1
+          ]
+        ]
+      }
+    },
+    {
+      "name": "walk off lift across balcony and through upper passage to complete",
+      "pass": true
+    },
+    {
+      "name": "upper camera avoids walls and lift paving has no coplanar base",
+      "pass": true,
+      "details": {
+        "inside": 0,
+        "samples": 36,
+        "forward": 5.399999999999999,
+        "deckTop": -0.08999998867511749
+      }
+    },
+    {
+      "name": "upper reload restores balcony at 3.2m and three room progress",
+      "pass": true
+    },
+    {
+      "name": "upper handle sends empty lift down without moving player",
+      "pass": true
+    },
+    {
+      "name": "upper handle recalls empty lift after first earned ascent",
+      "pass": true
+    },
+    {
+      "name": "rider can descend to lower landing with same transport contract",
+      "pass": true
+    },
+    {
+      "name": "empty lift recall saves the caller on the lower bank",
+      "pass": true
+    },
+    {
+      "name": "lower handle can send and recall an empty lift after completion",
+      "pass": true
+    },
+    {
+      "name": "completed bridge permits actual return to central hub",
+      "pass": true
+    },
+    {
+      "name": "two-room v1 import backs up original before first v3 write",
+      "pass": true,
+      "details": {
+        "unchanged": true,
+        "upgrade": true,
+        "backup": true,
+        "legacyKept": true,
+        "version": 3,
+        "untouchedOnQuota": true
+      }
+    },
+    {
+      "name": "contradictory steam progress rejected without partial restore",
+      "pass": true
+    },
+    {
+      "name": "main progress remains unchanged",
+      "pass": true
+    },
+    {
+      "name": "touch context describes actual boarded lift",
+      "pass": true
+    },
+    {
+      "name": "touch E raises lift and passenger together",
+      "pass": true
+    },
+    {
+      "name": "touch notebook freezes actual lift",
+      "pass": true
+    },
+    {
+      "name": "steam HUD fits 390x844",
+      "pass": true
+    },
+    {
+      "name": "steam HUD fits 844x390",
+      "pass": true
+    },
+    {
+      "name": "steam HUD fits 1024x768",
+      "pass": true
+    },
+    {
+      "name": "no JavaScript or asset errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "pass": true
+}

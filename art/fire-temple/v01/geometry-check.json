@@ -1,0 +1,27 @@
+{
+  "status": "offline Blender architecture; not playable",
+  "meshObjects": 2654,
+  "evaluatedTriangles": 223576,
+  "maxFloorTopError": 1.0490417512443173e-07,
+  "portalBoundsRelativeToOwnOrigin": {
+    "min": [
+      -4.800000190734863,
+      0.0,
+      -0.7000007629394531
+    ],
+    "max": [
+      4.800000190734863,
+      8.399999618530273,
+      1.2450008392333984
+    ]
+  },
+  "floorDatumPass": true,
+  "designSource": "design-spec.json",
+  "remaining": [
+    "guardian character sculpt",
+    "dynamic puzzle state visuals",
+    "walk/camera collision",
+    "material texture baking and LOD",
+    "game integration and real-input playtest"
+  ]
+}

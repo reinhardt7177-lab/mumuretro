@@ -1,0 +1,2684 @@
+{
+  "date": "2026-10-21T13:36:40.784Z",
+  "base": "http://127.0.0.1:5513/",
+  "ok": true,
+  "errors": [],
+  "fontFailures": [
+    "https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap: net::ERR_FAILED"
+  ],
+  "metrics": [
+    {
+      "blocked": false,
+      "sizes": [
+        {
+          "full": false,
+          "width": 360,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 319,
+              "have": 319
+            },
+            "ask": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#2": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#3": {
+              "need": 264,
+              "have": 264
+            },
+            "field": {
+              "need": 264,
+              "have": 264
+            },
+            "field#2": {
+              "need": 264,
+              "have": 264
+            },
+            "field#3": {
+              "need": 264,
+              "have": 264
+            },
+            "mail#0": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 285
+            },
+            "mail#1": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#1:편지": {
+              "need": 285,
+              "have": 285
+            },
+            "kitchen": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#2": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#3": {
+              "need": 264,
+              "have": 264
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 317,
+              "have": 317
+            },
+            "ask": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#2": {
+              "need": 262,
+              "have": 262
+            },
+            "field": {
+              "need": 262,
+              "have": 262
+            },
+            "field#2": {
+              "need": 262,
+              "have": 262
+            },
+            "field#3": {
+              "need": 262,
+              "have": 262
+            },
+            "mail#0": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#0:편지": {
+              "need": 317,
+              "have": 283
+            },
+            "mail#1": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#1:편지": {
+              "need": 283,
+              "have": 283
+            },
+            "kitchen": {
+              "need": 262,
+              "have": 262
+            },
+            "kitchen#2": {
+              "need": 262,
+              "have": 262
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 360,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 414,
+              "have": 414
+            },
+            "ask": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#2": {
+              "need": 359,
+              "have": 359
+            },
+            "field": {
+              "need": 359,
+              "have": 359
+            },
+            "field#2": {
+              "need": 359,
+              "have": 359
+            },
+            "mail#0": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 380
+            },
+            "mail#1": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#1:편지": {
+              "need": 380,
+              "have": 380
+            },
+            "kitchen": {
+              "need": 359,
+              "have": 359
+            },
+            "kitchen#2": {
+              "need": 359,
+              "have": 359
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 412,
+              "have": 412
+            },
+            "ask": {
+              "need": 357,
+              "have": 357
+            },
+            "ask#2": {
+              "need": 357,
+              "have": 357
+            },
+            "field": {
+              "need": 357,
+              "have": 357
+            },
+            "field#2": {
+              "need": 357,
+              "have": 357
+            },
+            "mail#0": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0:편지": {
+              "need": 378,
+              "have": 378
+            },
+            "mail#1": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#1:편지": {
+              "need": 378,
+              "have": 378
+            },
+            "kitchen": {
+              "need": 357,
+              "have": 357
+            },
+            "kitchen#2": {
+              "need": 357,
+              "have": 357
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 360,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 519,
+              "have": 519
+            },
+            "ask": {
+              "need": 519,
+              "have": 519
+            },
+            "field": {
+              "need": 464,
+              "have": 464
+            },
+            "field#2": {
+              "need": 464,
+              "have": 464
+            },
+            "mail#0": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0:편지": {
+              "need": 485,
+              "have": 485
+            },
+            "mail#1": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#1:편지": {
+              "need": 485,
+              "have": 485
+            },
+            "kitchen": {
+              "need": 464,
+              "have": 464
+            },
+            "kitchen#2": {
+              "need": 464,
+              "have": 464
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 517,
+              "have": 517
+            },
+            "ask": {
+              "need": 517,
+              "have": 517
+            },
+            "field": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0:편지": {
+              "need": 483,
+              "have": 483
+            },
+            "mail#1": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#1:편지": {
+              "need": 483,
+              "have": 483
+            },
+            "kitchen": {
+              "need": 517,
+              "have": 517
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 319,
+              "have": 319
+            },
+            "ask": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#2": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#3": {
+              "need": 264,
+              "have": 264
+            },
+            "field": {
+              "need": 264,
+              "have": 264
+            },
+            "field#2": {
+              "need": 264,
+              "have": 264
+            },
+            "field#3": {
+              "need": 264,
+              "have": 264
+            },
+            "mail#0": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 226
+            },
+            "mail#1": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#1:편지": {
+              "need": 393,
+              "have": 226
+            },
+            "mail#2": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#2:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#3": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#3:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#4": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#4:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#5": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#5:편지": {
+              "need": 256,
+              "have": 226
+            },
+            "mail#6": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#6:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#7": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#7:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#8": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 226
+            },
+            "mail#9": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#9:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#10": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#10:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#11": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#11:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "kitchen": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#2": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#3": {
+              "need": 264,
+              "have": 264
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 317,
+              "have": 317
+            },
+            "ask": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#2": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#3": {
+              "need": 262,
+              "have": 262
+            },
+            "field": {
+              "need": 262,
+              "have": 262
+            },
+            "field#2": {
+              "need": 262,
+              "have": 262
+            },
+            "mail#0": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#0:편지": {
+              "need": 317,
+              "have": 254
+            },
+            "mail#1": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#1:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#2": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#2:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#3": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#3:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#4": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#4:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#5": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#5:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#6": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#6:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#7": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#7:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#8": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#8:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#9": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#9:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#10": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#10:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#11": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#11:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "kitchen": {
+              "need": 262,
+              "have": 262
+            },
+            "kitchen#2": {
+              "need": 262,
+              "have": 262
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 414,
+              "have": 414
+            },
+            "ask": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#2": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#3": {
+              "need": 359,
+              "have": 359
+            },
+            "field": {
+              "need": 359,
+              "have": 359
+            },
+            "field#2": {
+              "need": 359,
+              "have": 359
+            },
+            "mail#0": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 321
+            },
+            "mail#1": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#1:편지": {
+              "need": 425,
+              "have": 321
+            },
+            "mail#2": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#2:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#3": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#3:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#4": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#4:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#5": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#5:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#6": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#6:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#7": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#7:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#8": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 321
+            },
+            "mail#9": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#9:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#10": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#10:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#11": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#11:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "kitchen": {
+              "need": 359,
+              "have": 359
+            },
+            "kitchen#2": {
+              "need": 359,
+              "have": 359
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 412,
+              "have": 412
+            },
+            "ask": {
+              "need": 357,
+              "have": 357
+            },
+            "ask#2": {
+              "need": 357,
+              "have": 357
+            },
+            "field": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#1": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#1:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#2": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#2:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#3": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#3:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#4": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#4:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#5": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#5:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#6": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#6:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#7": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#7:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#8": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#8:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#9": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#9:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#10": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#10:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#11": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#11:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "kitchen": {
+              "need": 357,
+              "have": 357
+            },
+            "kitchen#2": {
+              "need": 357,
+              "have": 357
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 519,
+              "have": 519
+            },
+            "ask": {
+              "need": 464,
+              "have": 464
+            },
+            "ask#2": {
+              "need": 464,
+              "have": 464
+            },
+            "field": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#1": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#1:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#2": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#2:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#3": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#3:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#4": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#4:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#5": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#5:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#6": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#6:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#7": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#7:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#8": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 426
+            },
+            "mail#9": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#9:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#10": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#10:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#11": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#11:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "kitchen": {
+              "need": 464,
+              "have": 464
+            },
+            "kitchen#2": {
+              "need": 464,
+              "have": 464
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 517,
+              "have": 517
+            },
+            "ask": {
+              "need": 462,
+              "have": 462
+            },
+            "ask#2": {
+              "need": 462,
+              "have": 462
+            },
+            "field": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#1": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#1:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#2": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#2:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#3": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#3:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#4": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#4:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#5": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#5:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#6": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#6:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#7": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#7:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#8": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#8:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#9": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#9:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#10": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#10:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#11": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#11:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "kitchen": {
+              "need": 517,
+              "have": 517
+            }
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "full": false,
+          "records": [],
+          "landmarks": [],
+          "drawnText": [],
+          "waterwayRecord": "온열기를 가까이 옮기자 열이 더 잘 닿았다.",
+          "explored": 0
+        },
+        {
+          "full": true,
+          "records": [
+            {
+              "key": "trail-found",
+              "text": "바람고개에 올랐다. 낮은 들길과 얼음 수로가 내려다보였다."
+            },
+            {
+              "key": "trail-equipped",
+              "text": "접이식 활공막을 챙겼다. 뛰어오른 뒤 점프를 누르고 있으면 내려갈 때 펼쳐진다."
+            },
+            {
+              "key": "trail-water",
+              "text": "물의 사당 입구를 발견했다. 문으로 바로 들어갈 수 있다."
+            },
+            {
+              "key": "trail-restored",
+              "text": "얼음이 녹자 물레가 다시 돌았다. 물의 사당으로 이어지는 문이 열렸다. 거울의 빛을 검은 흡수판에 모으자 얼음에 열이 전달됐다."
+            }
+          ],
+          "landmarks": [
+            "바람고개",
+            "물의 사당 입구"
+          ],
+          "drawnText": [
+            "바람고개",
+            "물의 사당 입구"
+          ],
+          "waterwayRecord": "거울의 빛을 검은 흡수판에 모으자 얼음에 열이 전달됐다.",
+          "explored": 100
+        }
+      ],
+      "expeditionStable": true,
+      "stateStable": true
+    },
+    {
+      "viewport": {
+        "width": 360,
+        "height": 440
+      },
+      "blocked": false,
+      "actual": {
+        "page": {
+          "x": 7.203125,
+          "y": 17.59375,
+          "width": 345.59375,
+          "height": 404.796875,
+          "top": 17.59375,
+          "right": 352.796875,
+          "bottom": 422.390625,
+          "left": 7.203125
+        },
+        "bodyNeed": 229,
+        "bodyHave": 229,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 308.796875,
+          "y": 23.59375,
+          "width": 40,
+          "height": 40,
+          "top": 23.59375,
+          "right": 348.796875,
+          "bottom": 63.59375,
+          "left": 308.796875
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "blocked": false,
+      "actual": {
+        "page": {
+          "x": 6.40625,
+          "y": 22.71875,
+          "width": 307.1875,
+          "height": 522.546875,
+          "top": 22.71875,
+          "right": 313.59375,
+          "bottom": 545.265625,
+          "left": 6.40625
+        },
+        "bodyNeed": 342,
+        "bodyHave": 342,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 269.59375,
+          "y": 28.71875,
+          "width": 40,
+          "height": 40,
+          "top": 28.71875,
+          "right": 309.59375,
+          "bottom": 68.71875,
+          "left": 269.59375
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "blocked": false,
+      "actual": {
+        "page": {
+          "x": 16.875,
+          "y": 15.59375,
+          "width": 810.234375,
+          "height": 358.796875,
+          "top": 15.59375,
+          "right": 827.109375,
+          "bottom": 374.390625,
+          "left": 16.875
+        },
+        "bodyNeed": 184,
+        "bodyHave": 184,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 779.109375,
+          "y": 20.59375,
+          "width": 40,
+          "height": 36,
+          "top": 20.59375,
+          "right": 819.109375,
+          "bottom": 56.59375,
+          "left": 779.109375
+        }
+      }
+    },
+    {
+      "blocked": true,
+      "sizes": [
+        {
+          "full": false,
+          "width": 360,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 319,
+              "have": 319
+            },
+            "ask": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#2": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#3": {
+              "need": 264,
+              "have": 264
+            },
+            "field": {
+              "need": 264,
+              "have": 264
+            },
+            "field#2": {
+              "need": 264,
+              "have": 264
+            },
+            "field#3": {
+              "need": 264,
+              "have": 264
+            },
+            "mail#0": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 285
+            },
+            "mail#1": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#1:편지": {
+              "need": 285,
+              "have": 285
+            },
+            "kitchen": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#2": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#3": {
+              "need": 264,
+              "have": 264
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 317,
+              "have": 317
+            },
+            "ask": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#2": {
+              "need": 262,
+              "have": 262
+            },
+            "field": {
+              "need": 262,
+              "have": 262
+            },
+            "field#2": {
+              "need": 262,
+              "have": 262
+            },
+            "field#3": {
+              "need": 262,
+              "have": 262
+            },
+            "mail#0": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#0:편지": {
+              "need": 317,
+              "have": 283
+            },
+            "mail#1": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#1:편지": {
+              "need": 283,
+              "have": 283
+            },
+            "kitchen": {
+              "need": 262,
+              "have": 262
+            },
+            "kitchen#2": {
+              "need": 262,
+              "have": 262
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 360,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 414,
+              "have": 414
+            },
+            "ask": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#2": {
+              "need": 359,
+              "have": 359
+            },
+            "field": {
+              "need": 359,
+              "have": 359
+            },
+            "field#2": {
+              "need": 359,
+              "have": 359
+            },
+            "mail#0": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 380
+            },
+            "mail#1": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#1:편지": {
+              "need": 380,
+              "have": 380
+            },
+            "kitchen": {
+              "need": 359,
+              "have": 359
+            },
+            "kitchen#2": {
+              "need": 359,
+              "have": 359
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 412,
+              "have": 412
+            },
+            "ask": {
+              "need": 357,
+              "have": 357
+            },
+            "ask#2": {
+              "need": 357,
+              "have": 357
+            },
+            "field": {
+              "need": 357,
+              "have": 357
+            },
+            "field#2": {
+              "need": 357,
+              "have": 357
+            },
+            "mail#0": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0:편지": {
+              "need": 378,
+              "have": 378
+            },
+            "mail#1": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#1:편지": {
+              "need": 378,
+              "have": 378
+            },
+            "kitchen": {
+              "need": 357,
+              "have": 357
+            },
+            "kitchen#2": {
+              "need": 357,
+              "have": 357
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 360,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 519,
+              "have": 519
+            },
+            "ask": {
+              "need": 519,
+              "have": 519
+            },
+            "field": {
+              "need": 464,
+              "have": 464
+            },
+            "field#2": {
+              "need": 464,
+              "have": 464
+            },
+            "mail#0": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0:편지": {
+              "need": 485,
+              "have": 485
+            },
+            "mail#1": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#1:편지": {
+              "need": 485,
+              "have": 485
+            },
+            "kitchen": {
+              "need": 464,
+              "have": 464
+            },
+            "kitchen#2": {
+              "need": 464,
+              "have": 464
+            }
+          }
+        },
+        {
+          "full": false,
+          "width": 700,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 517,
+              "have": 517
+            },
+            "ask": {
+              "need": 517,
+              "have": 517
+            },
+            "field": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0:편지": {
+              "need": 483,
+              "have": 483
+            },
+            "mail#1": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#1:편지": {
+              "need": 483,
+              "have": 483
+            },
+            "kitchen": {
+              "need": 517,
+              "have": 517
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 319,
+              "have": 319
+            },
+            "ask": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#2": {
+              "need": 264,
+              "have": 264
+            },
+            "ask#3": {
+              "need": 264,
+              "have": 264
+            },
+            "field": {
+              "need": 264,
+              "have": 264
+            },
+            "field#2": {
+              "need": 264,
+              "have": 264
+            },
+            "field#3": {
+              "need": 264,
+              "have": 264
+            },
+            "mail#0": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 226
+            },
+            "mail#1": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#1:편지": {
+              "need": 393,
+              "have": 226
+            },
+            "mail#2": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#2:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#3": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#3:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#4": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#4:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#5": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#5:편지": {
+              "need": 256,
+              "have": 226
+            },
+            "mail#6": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#6:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#7": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#7:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#8": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 226
+            },
+            "mail#9": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#9:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#10": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#10:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "mail#11": {
+              "need": 319,
+              "have": 319
+            },
+            "mail#11:편지": {
+              "need": 226,
+              "have": 226
+            },
+            "kitchen": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#2": {
+              "need": 264,
+              "have": 264
+            },
+            "kitchen#3": {
+              "need": 264,
+              "have": 264
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 440,
+          "pages": {
+            "star": {
+              "need": 317,
+              "have": 317
+            },
+            "ask": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#2": {
+              "need": 262,
+              "have": 262
+            },
+            "ask#3": {
+              "need": 262,
+              "have": 262
+            },
+            "field": {
+              "need": 262,
+              "have": 262
+            },
+            "field#2": {
+              "need": 262,
+              "have": 262
+            },
+            "mail#0": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#0:편지": {
+              "need": 317,
+              "have": 254
+            },
+            "mail#1": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#1:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#2": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#2:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#3": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#3:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#4": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#4:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#5": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#5:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#6": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#6:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#7": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#7:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#8": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#8:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#9": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#9:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#10": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#10:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "mail#11": {
+              "need": 317,
+              "have": 317
+            },
+            "mail#11:편지": {
+              "need": 254,
+              "have": 254
+            },
+            "kitchen": {
+              "need": 262,
+              "have": 262
+            },
+            "kitchen#2": {
+              "need": 262,
+              "have": 262
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 414,
+              "have": 414
+            },
+            "ask": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#2": {
+              "need": 359,
+              "have": 359
+            },
+            "ask#3": {
+              "need": 359,
+              "have": 359
+            },
+            "field": {
+              "need": 359,
+              "have": 359
+            },
+            "field#2": {
+              "need": 359,
+              "have": 359
+            },
+            "mail#0": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#0:편지": {
+              "need": 415,
+              "have": 321
+            },
+            "mail#1": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#1:편지": {
+              "need": 425,
+              "have": 321
+            },
+            "mail#2": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#2:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#3": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#3:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#4": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#4:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#5": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#5:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#6": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#6:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#7": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#7:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#8": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 321
+            },
+            "mail#9": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#9:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#10": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#10:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "mail#11": {
+              "need": 414,
+              "have": 414
+            },
+            "mail#11:편지": {
+              "need": 321,
+              "have": 321
+            },
+            "kitchen": {
+              "need": 359,
+              "have": 359
+            },
+            "kitchen#2": {
+              "need": 359,
+              "have": 359
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 540,
+          "pages": {
+            "star": {
+              "need": 412,
+              "have": 412
+            },
+            "ask": {
+              "need": 357,
+              "have": 357
+            },
+            "ask#2": {
+              "need": 357,
+              "have": 357
+            },
+            "field": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#0:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#1": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#1:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#2": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#2:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#3": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#3:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#4": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#4:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#5": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#5:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#6": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#6:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#7": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#7:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#8": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#8:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#9": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#9:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#10": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#10:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "mail#11": {
+              "need": 412,
+              "have": 412
+            },
+            "mail#11:편지": {
+              "need": 349,
+              "have": 349
+            },
+            "kitchen": {
+              "need": 357,
+              "have": 357
+            },
+            "kitchen#2": {
+              "need": 357,
+              "have": 357
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 360,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 519,
+              "have": 519
+            },
+            "ask": {
+              "need": 464,
+              "have": 464
+            },
+            "ask#2": {
+              "need": 464,
+              "have": 464
+            },
+            "field": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#0:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#1": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#1:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#2": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#2:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#3": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#3:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#4": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#4:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#5": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#5:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#6": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#6:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#7": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#7:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#8": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#8:편지": {
+              "need": 427,
+              "have": 426
+            },
+            "mail#9": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#9:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#10": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#10:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "mail#11": {
+              "need": 519,
+              "have": 519
+            },
+            "mail#11:편지": {
+              "need": 426,
+              "have": 426
+            },
+            "kitchen": {
+              "need": 464,
+              "have": 464
+            },
+            "kitchen#2": {
+              "need": 464,
+              "have": 464
+            }
+          }
+        },
+        {
+          "full": true,
+          "width": 700,
+          "height": 660,
+          "pages": {
+            "star": {
+              "need": 517,
+              "have": 517
+            },
+            "ask": {
+              "need": 462,
+              "have": 462
+            },
+            "ask#2": {
+              "need": 462,
+              "have": 462
+            },
+            "field": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#0:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#1": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#1:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#2": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#2:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#3": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#3:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#4": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#4:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#5": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#5:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#6": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#6:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#7": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#7:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#8": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#8:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#9": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#9:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#10": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#10:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "mail#11": {
+              "need": 517,
+              "have": 517
+            },
+            "mail#11:편지": {
+              "need": 454,
+              "have": 454
+            },
+            "kitchen": {
+              "need": 517,
+              "have": 517
+            }
+          }
+        }
+      ],
+      "fixtures": [
+        {
+          "full": false,
+          "records": [],
+          "landmarks": [],
+          "drawnText": [],
+          "waterwayRecord": "온열기를 가까이 옮기자 열이 더 잘 닿았다.",
+          "explored": 0
+        },
+        {
+          "full": true,
+          "records": [
+            {
+              "key": "trail-found",
+              "text": "바람고개에 올랐다. 낮은 들길과 얼음 수로가 내려다보였다."
+            },
+            {
+              "key": "trail-equipped",
+              "text": "접이식 활공막을 챙겼다. 뛰어오른 뒤 점프를 누르고 있으면 내려갈 때 펼쳐진다."
+            },
+            {
+              "key": "trail-water",
+              "text": "물의 사당 입구를 발견했다. 문으로 바로 들어갈 수 있다."
+            },
+            {
+              "key": "trail-restored",
+              "text": "얼음이 녹자 물레가 다시 돌았다. 물의 사당으로 이어지는 문이 열렸다. 거울의 빛을 검은 흡수판에 모으자 얼음에 열이 전달됐다."
+            }
+          ],
+          "landmarks": [
+            "바람고개",
+            "물의 사당 입구"
+          ],
+          "drawnText": [
+            "바람고개",
+            "물의 사당 입구"
+          ],
+          "waterwayRecord": "거울의 빛을 검은 흡수판에 모으자 얼음에 열이 전달됐다.",
+          "explored": 100
+        }
+      ],
+      "expeditionStable": true,
+      "stateStable": true
+    },
+    {
+      "viewport": {
+        "width": 360,
+        "height": 440
+      },
+      "blocked": true,
+      "actual": {
+        "page": {
+          "x": 7.203125,
+          "y": 17.59375,
+          "width": 345.59375,
+          "height": 404.796875,
+          "top": 17.59375,
+          "right": 352.796875,
+          "bottom": 422.390625,
+          "left": 7.203125
+        },
+        "bodyNeed": 229,
+        "bodyHave": 229,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 308.796875,
+          "y": 23.59375,
+          "width": 40,
+          "height": 40,
+          "top": 23.59375,
+          "right": 348.796875,
+          "bottom": 63.59375,
+          "left": 308.796875
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 320,
+        "height": 568
+      },
+      "blocked": true,
+      "actual": {
+        "page": {
+          "x": 6.40625,
+          "y": 22.71875,
+          "width": 307.1875,
+          "height": 522.546875,
+          "top": 22.71875,
+          "right": 313.59375,
+          "bottom": 545.265625,
+          "left": 6.40625
+        },
+        "bodyNeed": 342,
+        "bodyHave": 342,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 269.59375,
+          "y": 28.71875,
+          "width": 40,
+          "height": 40,
+          "top": 28.71875,
+          "right": 309.59375,
+          "bottom": 68.71875,
+          "left": 269.59375
+        }
+      }
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "blocked": true,
+      "actual": {
+        "page": {
+          "x": 16.875,
+          "y": 15.59375,
+          "width": 810.234375,
+          "height": 358.796875,
+          "top": 15.59375,
+          "right": 827.109375,
+          "bottom": 374.390625,
+          "left": 16.875
+        },
+        "bodyNeed": 184,
+        "bodyHave": 184,
+        "horizontalOverflow": 0,
+        "close": {
+          "x": 779.109375,
+          "y": 20.59375,
+          "width": 40,
+          "height": 36,
+          "top": 20.59375,
+          "right": 819.109375,
+          "bottom": 56.59375,
+          "left": 779.109375
+        }
+      }
+    }
+  ],
+  "streamNotices": [
+    {
+      "url": "http://127.0.0.1:5513/assets/characters/sky-navigator/props-v02.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/planet-nature-v01.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/weight-exterior.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/explorer-notebook.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/glacier-temple.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/characters/sky-navigator/navigator-v01.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/starsail-v02.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/balance-temple-v04.glb",
+      "context": 0,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/planet-nature-v01.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/weight-exterior.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/characters/sky-navigator/props-v02.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/explorer-notebook.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/heritage/glacier-temple.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/characters/sky-navigator/navigator-v01.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/starsail-v02.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/balance-temple-v04.glb",
+      "context": 1,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/starsail-v02.glb",
+      "context": 2,
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:5513/assets/models/balance-temple-v04.glb",
+      "context": 2,
+      "status": 200
+    }
+  ],
+  "decodedAssets": [
+    {
+      "/assets/characters/sky-navigator/navigator-v01.glb": true,
+      "/assets/characters/sky-navigator/props-v02.glb": true,
+      "/assets/models/planet-nature-v01.glb": true,
+      "/assets/models/balance-temple-v04.glb": true,
+      "/assets/models/starsail-v02.glb": true,
+      "/assets/models/heritage/glacier-temple.glb": true,
+      "/assets/models/heritage/weight-exterior.glb": true,
+      "/assets/models/heritage/explorer-notebook.glb": true
+    },
+    {
+      "/assets/characters/sky-navigator/navigator-v01.glb": true,
+      "/assets/characters/sky-navigator/props-v02.glb": true,
+      "/assets/models/planet-nature-v01.glb": true,
+      "/assets/models/balance-temple-v04.glb": true,
+      "/assets/models/starsail-v02.glb": true,
+      "/assets/models/heritage/glacier-temple.glb": true,
+      "/assets/models/heritage/weight-exterior.glb": true,
+      "/assets/models/heritage/explorer-notebook.glb": true
+    },
+    {
+      "/assets/characters/sky-navigator/navigator-v01.glb": true,
+      "/assets/characters/sky-navigator/props-v02.glb": true,
+      "/assets/models/planet-nature-v01.glb": true,
+      "/assets/models/balance-temple-v04.glb": true,
+      "/assets/models/starsail-v02.glb": true,
+      "/assets/models/heritage/glacier-temple.glb": true,
+      "/assets/models/heritage/weight-exterior.glb": true,
+      "/assets/models/heritage/explorer-notebook.glb": true
+    }
+  ],
+  "persistence": {
+    "same": true,
+    "sanitized": {
+      "version": 1,
+      "tab": "kitchen",
+      "mailSel": 0,
+      "seen": {
+        "star": "1|0|0|0",
+        "ask": "1",
+        "field": "0/0",
+        "mail": "",
+        "kitchen": "0"
+      },
+      "lit": [
+        "ask:balance"
+      ]
+    },
+    "invalidRejected": true
+  },
+  "keyboard": {
+    "opened": {
+      "open": true,
+      "focus": "nb-tab-ask"
+    },
+    "arrow": {
+      "tab": "field",
+      "focus": "nb-tab-field"
+    },
+    "end": {
+      "tab": "kitchen",
+      "focus": "nb-tab-kitchen"
+    },
+    "trapped": true,
+    "closed": {
+      "open": false,
+      "focus": "tcNote"
+    }
+  },
+  "brief": {
+    "open": true,
+    "focus": "ok",
+    "overlay": true,
+    "closedByEnter": true
+  },
+  "mobile": {
+    "openedByTap": true,
+    "closedByTap": true,
+    "heldJump": {
+      "x": 0,
+      "y": 0,
+      "run": false,
+      "action": false,
+      "jump": true,
+      "jumpHeld": true,
+      "waterPower": null,
+      "waterTool": null
+    },
+    "releasedJump": {
+      "x": 0,
+      "y": 0,
+      "run": false,
+      "action": false,
+      "jump": false,
+      "jumpHeld": false,
+      "waterPower": null,
+      "waterTool": null
+    }
+  },
+  "overflows": []
+}

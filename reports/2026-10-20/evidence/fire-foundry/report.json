@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-20",
+  "checks": [
+    {
+      "name": "right-hand gate blocks entry before first experiment",
+      "pass": true
+    },
+    {
+      "name": "real first-room completion opens Blender gate",
+      "pass": true
+    },
+    {
+      "name": "walk from hub to actual foundry controls",
+      "pass": true
+    },
+    {
+      "name": "Blender kit keeps bridge datum and clear passage",
+      "pass": true
+    },
+    {
+      "name": "misrouted supply visibly drains and never fills mould",
+      "pass": true
+    },
+    {
+      "name": "flow must be stopped before turning hot channels",
+      "pass": true
+    },
+    {
+      "name": "one aligned channel cannot fill the mould",
+      "pass": true
+    },
+    {
+      "name": "both physical channel ports can be aligned from safe bank",
+      "pass": true
+    },
+    {
+      "name": "partial fill is saved with source safely closed",
+      "pass": true,
+      "details": {
+        "version": 1,
+        "channels": [
+          0,
+          0
+        ],
+        "valve": false,
+        "fill": 0.3722222222222219,
+        "cooling": 0,
+        "solid": false,
+        "latched": false,
+        "visited": true,
+        "returned": false
+      }
+    },
+    {
+      "name": "reload restores partial mould, both rooms and near-bank checkpoint",
+      "pass": true
+    },
+    {
+      "name": "full flowing mould remains hot and non-walkable",
+      "pass": true
+    },
+    {
+      "name": "waiting with supply open cannot cool bridge",
+      "pass": true
+    },
+    {
+      "name": "hot mould crossing recovers and preserves full mould",
+      "pass": true
+    },
+    {
+      "name": "notebook freezes cooling and controller",
+      "pass": true
+    },
+    {
+      "name": "reopening supply reheats unfinished surface",
+      "pass": true
+    },
+    {
+      "name": "closing supply creates actual basalt floor after cooling",
+      "pass": true
+    },
+    {
+      "name": "golden guide crosses actual bridge from off-axis valve",
+      "pass": true,
+      "details": {
+        "unsafe": 0,
+        "waypoints": [
+          [
+            34.91435983353032,
+            0.1,
+            10.148469548964577
+          ],
+          [
+            28,
+            0.1,
+            4.2
+          ],
+          [
+            28,
+            0.1,
+            -4.2
+          ],
+          [
+            28,
+            0.1,
+            -8
+          ]
+        ]
+      }
+    },
+    {
+      "name": "foundry camera avoids measured walls in 36 views",
+      "pass": true,
+      "details": {
+        "inside": 0,
+        "samples": 36
+      }
+    },
+    {
+      "name": "real cooled bridge crossing and far latch",
+      "pass": true
+    },
+    {
+      "name": "completed bridge stays permanent after supply reopens",
+      "pass": true
+    },
+    {
+      "name": "walk back to hub records second experiment",
+      "pass": true
+    },
+    {
+      "name": "completed reload preserves both bridges and closes supply",
+      "pass": true
+    },
+    {
+      "name": "main game record is unchanged",
+      "pass": true
+    },
+    {
+      "name": "malformed and cross-room contradictions rejected atomically",
+      "pass": true,
+      "details": {
+        "atomic": true,
+        "rejects": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "name": "legacy import and failed backup/write preserve originals",
+      "pass": true,
+      "details": {
+        "migrated": true,
+        "legacyIntact": true,
+        "backupSafe": true,
+        "quotaSafe": true
+      }
+    },
+    {
+      "name": "mobile context action describes real foundry valve",
+      "pass": true
+    },
+    {
+      "name": "touch source valve starts actual filling",
+      "pass": true
+    },
+    {
+      "name": "touch same action can stop actual filling",
+      "pass": true
+    },
+    {
+      "name": "foundry golden route points to current objective",
+      "pass": true
+    },
+    {
+      "name": "foundry HUD fits 390x844",
+      "pass": true
+    },
+    {
+      "name": "foundry HUD fits 844x390",
+      "pass": true
+    },
+    {
+      "name": "foundry HUD fits 1024x768",
+      "pass": true
+    },
+    {
+      "name": "no JavaScript/resource errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "failureInjection": false,
+  "realInputMovement": true,
+  "studentFunVerified": false,
+  "pass": true
+}

@@ -19,7 +19,6 @@ import { buildDungeon } from './Dungeon.js';
 import { TileGate, LaserGate, PlateGate } from './Gates.js';
 import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.js';
 import { SieveGate, MagnetGate, EvaporateGate, SiftGod } from './SiftGates.js';
-import { MeltBridge, CondenseLift, RestoreCourt, WaterAwakening } from './WaterPhases.js';
 import { QuakeGate, HexLavaGate, GeyserGate, FireGod } from './FireGates.js';
 import { ShaftGate, FiveDoorsGate, GrandGod } from './StrataGates.js';
 import { StrataOrderGate } from './StrataOrder.js';
@@ -28,8 +27,6 @@ import { WeighGate } from './WeighGate.js';
 import { Prize } from './Prize.js';
 import { toon } from '../render/Toon.js';
 import { addBoard } from './Signboard.js';
-import { buildWaterCourt } from './WaterCourt.js';
-import { attachWaterPhaseProgress } from './WaterPhaseProgress.js';
 import { attachShrineProgress } from './ShrineProgress.js';
 import { withSeed } from '../util/rand.js';
 import { deviceProgress } from './DeviceProgress.js';
@@ -43,6 +40,9 @@ import { buildEvaporationCourt } from './EvaporationCourt.js';
 import { buildSiftSanctum } from './SiftSanctum.js';
 import { buildBalanceDungeon } from './BalanceTemple.js';
 import { BalanceOrder, TwinBalance, LeverSix } from './BalanceTrials.js';
+import { addEntranceMarkers } from './EntranceMarkers.js';
+import { buildWaterAdventure } from './WaterAdventure.js';
+import { buildFireAdventure } from './FireAdventure.js';
 
 const GATES = {
   balanceOrder: BalanceOrder, twinBalance: TwinBalance,
@@ -50,13 +50,12 @@ const GATES = {
   tile: TileGate, laser: LaserGate,                            // (내려 둠 — 무게와 무관했다)
   shade: ShadeGate, mirror: MirrorGate, silhouette: SilhouetteGate,  // 02 그림자
   sieve: SieveGate, magnet: MagnetGate, evaporate: EvaporateGate,    // 03 분리
-  freeze: MeltBridge, slide: CondenseLift, steam: RestoreCourt,      // 04 물
   quake: QuakeGate, hexlava: HexLavaGate, geyser: GeyserGate,        // 05 화산
   strataOrder: StrataOrderGate, shaft: ShaftGate, fiveDoors: FiveDoorsGate,  // 06 지층
 };
 
 const FINALS = {
-  mirrorGod: MirrorGod, siftGod: SiftGod, waterGod: WaterAwakening,
+  mirrorGod: MirrorGod, siftGod: SiftGod,
   fireGod: FireGod, grand: GrandGod,
 };
 
@@ -117,14 +116,22 @@ function makeFinal(kind, scene, seg, theme) {
 }
 
 export function buildRoom(spec, seed = Math.floor(Math.random() * 4294967296)) {
+  if (spec.id === 'fire') return buildFireAdventure(spec,seed,()=>buildLegacyFireRoom(spec,seed));
   return withSeed(seed, () => assembleRoom(spec, seed));
 }
+// Retained only to validate/migrate the old save contracts; never an entry route.
+export function buildLegacyFireRoom(spec,seed){
+  if(spec.id!=='fire')throw new Error('Legacy fire migration requires a fire spec');
+  return withSeed(seed,()=>assembleRoom(spec,seed));
+}
 function assembleRoom(spec, seed) {
+  if (spec.id === 'water') return buildWaterAdventure(spec, seed);
   const scene = new THREE.Scene();
+  scene.userData.lookProfile = spec.id;
   scene.background = new THREE.Color(spec.theme.bg);
   const dungeon = spec.id === 'balance' ? buildBalanceDungeon(scene,spec.rooms,spec.theme) : buildDungeon(scene, spec.rooms, spec.theme);
-  const court = spec.id === 'water' ? buildWaterCourt(scene, dungeon.rectOf('r3'),
-    dungeon.rectOf('shrine'), spec.theme, dungeon.rects) : null;
+  const entranceObstacles = addEntranceMarkers(scene, spec);
+  const court = null; // The water temple uses its own traversal/state implementation above.
 
   const gates = [];
   for (const r of spec.rooms) {
@@ -229,7 +236,7 @@ function assembleRoom(spec, seed) {
       h.level++;
       return h.texts[h.level - 1];
     },
-    obstacles: [...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
+    obstacles: [...entranceObstacles, ...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
     shrineSeg,
     // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
     // 새 도전은 깬 개수에 맞추고, 진행 중인 도전은 첫 입장 단계를 유지한다.
@@ -265,9 +272,13 @@ function assembleRoom(spec, seed) {
   };
   const restart = api.restart.bind(api);
   api.restart = () => withSeed((seed ^ 0x51a7e) >>> 0, restart);
-  if (court) attachWaterPhaseProgress(api);
-  else attachShrineProgress(api);
-  if(court)api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]));
+  attachShrineProgress(api);
+  if(spec.id==='strata'){
+    const sr=dungeon.rectOf('shrine');
+    dungeon.rects.cameraLookHeightZones=[{...sr,lookHeight:7,minDistance:10,maxDistance:13,distanceScale:2}];
+    final.heritagePromise.then(()=>{if(final.artReady)(dungeon.rects.cameraOccluders??=[]).push(...final.cameraOccluders);});
+    const restore=api.importState;api.importState=s=>{const ok=restore(s);if(ok)final.syncArt?.();return ok;};
+  }
   if(spec.id==='balance'){
     api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]),{x:0,z:-60,r:1.7});
     const restore=api.importState;

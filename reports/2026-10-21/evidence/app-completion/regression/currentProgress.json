@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "name": "all six current room formats are present in one save",
+      "pass": true
+    },
+    {
+      "name": "active balance room contains a real held object",
+      "pass": true
+    },
+    {
+      "name": "held object and active room survive full restart",
+      "pass": true
+    },
+    {
+      "name": "all inactive rooms preserve exact semantic progress and seed",
+      "pass": true
+    },
+    {
+      "name": "fire and water use their own floor/controller and inactive fire freezes",
+      "pass": true,
+      "details": {
+        "fire": true,
+        "clean": true,
+        "frozen": true
+      }
+    },
+    {
+      "name": "personal progress not awarded by room switching",
+      "pass": true
+    },
+    {
+      "name": "no browser errors",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "pass": true
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "legacy 0 stages validates and preserves original",
+    "pass": true
+  },
+  {
+    "name": "legacy 0 stages maps to earned safe progress",
+    "pass": true
+  },
+  {
+    "name": "legacy 0 malformed data rejected atomically",
+    "pass": true
+  },
+  {
+    "name": "migrated 0 native round trip",
+    "pass": true
+  },
+  {
+    "name": "legacy 1 stages validates and preserves original",
+    "pass": true
+  },
+  {
+    "name": "legacy 1 stages maps to earned safe progress",
+    "pass": true
+  },
+  {
+    "name": "legacy 1 malformed data rejected atomically",
+    "pass": true
+  },
+  {
+    "name": "migrated 1 native round trip",
+    "pass": true
+  },
+  {
+    "name": "legacy 2 stages validates and preserves original",
+    "pass": true
+  },
+  {
+    "name": "legacy 2 stages maps to earned safe progress",
+    "pass": true
+  },
+  {
+    "name": "legacy 2 malformed data rejected atomically",
+    "pass": true
+  },
+  {
+    "name": "migrated 2 native round trip",
+    "pass": true
+  },
+  {
+    "name": "legacy 3 stages validates and preserves original",
+    "pass": true
+  },
+  {
+    "name": "legacy 3 stages maps to earned safe progress",
+    "pass": true
+  },
+  {
+    "name": "legacy 3 malformed data rejected atomically",
+    "pass": true
+  },
+  {
+    "name": "migrated 3 native round trip",
+    "pass": true
+  },
+  {
+    "name": "legacy 4 stages validates and preserves original",
+    "pass": true
+  },
+  {
+    "name": "legacy 4 stages maps to earned safe progress",
+    "pass": true
+  },
+  {
+    "name": "legacy 4 malformed data rejected atomically",
+    "pass": true
+  },
+  {
+    "name": "migrated 4 native round trip",
+    "pass": true
+  },
+  {
+    "name": "prototype v2 upgrades with original and backup intact",
+    "pass": true
+  }
+]

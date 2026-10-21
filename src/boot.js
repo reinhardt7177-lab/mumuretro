@@ -10,6 +10,11 @@ import { Loop } from './core/Loop.js';
 import { Sky } from './render/Sky.js';
 import { Post } from './render/Post.js';
 import { buildScatter } from './world/Scatter.js';
+import { loadNatureAssets } from './world/NatureAssets.js';
+import { loadHeritageCore } from './core/HeritageAssets.js';
+import { buildWaterBracelet } from './ui/WaterBracelet.js';
+import { WaterBraceletFx } from './render/WaterBraceletFx.js';
+import { loadMeadowProfiles, buildMeadowDetail } from './world/MeadowDetail.js';
 import { buildGrassCarpet } from './world/GrassCarpet.js';
 import { pickShrineSpots, buildShrines } from './world/Shrine.js';
 import { SHRINES, ENTRY_Z, EXIT_Z } from './shrine/layouts.js';
@@ -20,6 +25,7 @@ import { buildTouchControls } from './ui/TouchControls.js';
 import { buildDialogue } from './ui/Dialogue.js';
 import { buildNotebook } from './ui/Notebook.js';
 import { KEEPERS, ENDING, ENDING_HOME, nextHint, OPENING } from './shrine/dialogue.js';
+import { FIRE_AUDIENCE } from './shrine/SanctumState.js';
 import { buildLab } from './world/Lab.js';
 import { installStarsail } from './world/Starsail.js';
 import { buildLanding } from './world/Landing.js';
@@ -57,7 +63,7 @@ const planetScene = engine.scene;   // 사당에서 돌아올 때 갈아 끼울 
 engine.attachPost(new Post(engine));
 const sky = new Sky(engine, planet);
 
-await loadNavigator();
+await Promise.all([loadNavigator(), loadNatureAssets(), loadHeritageCore(), loadMeadowProfiles()]);
 const player = new Player(planet);
 player.setLatLon(6, -18);           // 주 랜드마크(lat 30 / lon 0)가 정면에 들어오는 자리
 engine.scene.add(player.mesh);
@@ -109,6 +115,7 @@ const scatter = buildScatter(engine.scene, planet, {
 // 잔디 카펫 — 지면을 덮는 한 장. 풀을 개수로 흩뿌리는 대신 바닥이 통째로 흐물거린다.
 // 산포물과 같은 바이옴 판정을 쓰므로 둘이 어긋날 수 없다.
 const carpet = buildGrassCarpet(engine.scene, planet, { grassAt: scatter.grassAt, pathAt: trailPlan.pathAt });
+const meadow = buildMeadowDetail(engine.scene,planet,carpet,{grassAt:scatter.grassAt,exclude:nearShrine});
 
 // 사당 — 이 세계에서 유일하게 각진 것. 빛기둥이 능선 너머에서도 "저기 뭔가 있다"를 만든다.
 // 겉모습도 사당마다 다르다. 능선 너머에서는 색과 윤곽만 남으므로
@@ -133,7 +140,7 @@ const roomActor = new RoomActor(player.mesh, player.body, player.footOffset, [])
 // 사당마다 자기 내부를 갖는다. 처음 들어갈 때 짓고 캐시한다 —
 // 여섯을 미리 지으면 첫 로딩이 길어지고, 아이가 한 판에 여섯을 다 도는 일은 드물다.
 const rooms = new Map();
-let coopBackupRoom = null, coopRunning = false;
+let coopBackupRoom = null, coopRunning = false, coopOrigin = null;
 function roomFor(shrine) {
   const i = shrines.shrines.indexOf(shrine);
   const key = i < 0 ? 0 : i % SHRINES.length;
@@ -228,7 +235,15 @@ function failTo(seg, msg) {
 }
 const segOf = (id) => room.dungeon.rectOf(id);
 
+let enteringFire = null;
 function enterShrine(shrine) {
+  const candidate=roomFor(shrine);
+  if(candidate.fireAdventure && shrine.cleared){noteMsg='불의 신전은 밀봉되었다 — 수첩에 지혜가 남았다';noteT=3;return;}
+  if(candidate.fireAdventure && candidate.loading){
+    if(enteringFire!==shrine){enteringFire=shrine;noteMsg='불의 신전을 불러오는 중이다';noteT=10;candidate.ready.then(()=>{if(enteringFire===shrine){enteringFire=null;enterShrine(shrine);}});}
+    return;
+  }
+  if(candidate.error){noteMsg='신전 자료를 불러오지 못했다 · 새로 고침 후 다시 시도하자';noteT=8;return;}
   if(!coopRunning && shrine?.cleared && shrines.shrines.indexOf(shrine)===0){noteMsg='균형의 사당은 밀봉되었다 — 수첩에 지혜가 남았다';noteT=3;return;}
   room = roomFor(shrine);
   lastSeg = null;
@@ -247,9 +262,11 @@ function enterShrine(shrine) {
     if (!room.hasProgress) room.finishLegacy?.();
   }
   roomActor.rects = room.dungeon.rects;
+  delete roomActor._in;
+  if(room.fireAdventure)roomActor._in=(x,z)=>room.world.contains(x,z,roomActor.position.y);
   roomActor.obstacles = room.obstacles;
   roomActor.slip = 0;                  // 얼음 방에서 나가다 만 상태가 다음 사당에 묻지 않게
-  roomActor.freeCam = !!room.dungeon.open;   // 하늘의 섬 — 천장이 없으니 카메라를 푼다
+  roomActor.freeCam = !!room.dungeon.open || !!room.fireAdventure;
   cleared = coopRunning ? false : shrine.cleared;
   savedPlanet.pos.copy(player.position);
   savedPlanet.heading.copy(player.heading);
@@ -271,19 +288,23 @@ function enterShrine(shrine) {
   sceneBgm(room.spec.id);
   refreshHint();
   noteMsg = `⛩ ${room.spec.name} — ${room.spec.unit} · 여섯 중 ${tier + 1}번째`;
+  if(room.migratedWater){noteMsg='물의 신전이 새로워졌다 · 완료 방과 보상은 유지된다';room.migratedWater=false;}
+  if(room.migratedFire){noteMsg='불의 신전이 새로워졌다 · 완료 구간과 기존 기록은 유지된다';room.migratedFire=false;}
   noteT = 3.4;
   setPrompt(null);
   saveProgress();
 }
 
 function exitShrine() {
+  const origin=coopRunning?coopOrigin:null;
   room?.captureCheckpoint?.(roomActor);
   brief.hide(); briefWant = null;
   roomActor.freeCam = false;
+  delete roomActor._in;
   sceneBgm('planet');
   // 구슬을 주울 때 이미 기록했다. 여긴 그물 — markCleared는 두 번 불려도 아무 일도 안 한다.
   if (cleared && !coopRunning) shrines.markCleared(activeShrine);
-  if(coopRunning){if(coopBackupRoom)rooms.set(0,coopBackupRoom);else rooms.delete(0);coopBackupRoom=null;coopRunning=false;}
+  if(coopRunning){if(coopBackupRoom)rooms.set(0,coopBackupRoom);else rooms.delete(0);coopBackupRoom=null;coopRunning=false;coopOrigin=null;}
   mode = 'planet';
   if (room) room.scene.remove(player.mesh);
   engine.setScene(planetScene);
@@ -295,6 +316,12 @@ function exitShrine() {
   engine.camFwd.copy(player.heading); engine.camUp.copy(player.up);
   engine._camPlaced = false;
   activeShrine = null;
+  if(origin?.mode==='lab'){
+    mode='lab';planetScene.remove(player.mesh);lab.scene.add(player.mesh);contact.visible=false;
+    roomActor.rects=lab.rects;roomActor.obstacles=lab.obstacles;roomActor.freeCam=!!lab.starsail;
+    roomActor.setAt(origin.position.x,origin.position.z,-1,origin.position.y);roomActor.heading.copy(origin.heading);roomActor.camYaw=origin.yaw;roomActor.syncMesh();
+    engine.setScene(lab.scene);roomActor.updateCamera(engine.camera,input,0);sceneBgm('lab');
+  }
   refreshHint();
   input.reset(); saveProgress();
   setPrompt(null);
@@ -324,7 +351,7 @@ function onOrb() {
 function playEnding(i = 0) {
   if (i >= ENDING.length) {
     gameDone = true; lab.markDone(); saveProgress();
-    noteMsg = '✨ 수첩을 다 채웠다 — 집으로 가자'; noteT = 3.4; return;
+    noteMsg = '✨ 수첩을 다 채웠다 — 범선으로 돌아가자'; noteT = 3.4; return;
   }
   const [id, who, lines] = ENDING[i];
   dialogue.play(id, who, lines, () => playEnding(i + 1));
@@ -359,12 +386,13 @@ const _cUp = new THREE.Vector3();
 const _CZ = new THREE.Vector3(0, 0, 1);   // CircleGeometry의 법선은 +Z다
 
 function step(dt) {
-  if(mode==='room'&&room?.spec.id==='balance'&&room.final.eventStarted&&dialogue.active&&!hasOpenOverlay()&&!document.hidden){
+  if(mode==='room'&&(room?.spec.id==='balance'||room?.waterAdventure)&&room.final.eventStarted&&dialogue.active&&!hasOpenOverlay()&&!document.hidden){
     room.final.eventClock=(room.final.eventClock||0)+dt;
     if(room.final.eventClock>=4.5){room.final.eventClock=0;dialogue.next();}
   }
   shipView.update();
   questGuide.update(dt, hasOpenOverlay() || dialogue.active || brief.isOpen || title.isEnding);
+  waterBracelet.update(hasOpenOverlay() || dialogue.active || brief.isOpen || title.isEnding || document.hidden);
   touch.update();
   const intent = input.poll();
   if (mode === 'lab' && notebook.has && notebook.isOpen) sawNote = true;
@@ -377,6 +405,7 @@ function step(dt) {
   else if (brief.isOpen && intent.action) { brief.hide(); intent.action = false; }
   fill.intensity = mode === 'planet' ? 0 : mode === 'lab' ? FILL_LAB : FILL_ROOM;
   if (!debugDepth && (document.hidden || title.isEnding || reading || resumeFrame)) {
+    waterBraceletFx.update(dt,mode==='room'?room:null,roomActor,engine.camera,true);
     input.reset();
     // 닫는 프레임에 남아 있던 점프·이동이 한 번 더 실행되지 않게 한다.
     resumeFrame = reading;
@@ -385,11 +414,13 @@ function step(dt) {
   }
   if (noteT > 0) noteT -= dt;
   setNote(noteT > 0 && !dialogue.active ? noteMsg : null);
-  if (mode === 'title') { stepTitle(dt); return; }
+  if (mode === 'title') { waterBraceletFx.hide();stepTitle(dt); return; }
   if (mode === 'lab') stepLab(dt, intent);
   else if (mode === 'room') stepRoom(dt, intent);
   else stepPlanet(dt, intent);
-  if (intent.action) saveProgress(true);
+  // Wrist matrices are sampled after the actor's animation and room update.
+  waterBraceletFx.update(dt,mode==='room'?room:null,roomActor,engine.camera,hasOpenOverlay()||dialogue.active||brief.isOpen);
+  if (intent.action || intent.waterPower || intent.waterTool) saveProgress(true);
 }
 
 // ── 시작 화면 ────────────────────────────────────────────────────────────────
@@ -502,6 +533,7 @@ function stepTitle(dt) {
   _windT += dt;
   scatter.update(_windT);
   carpet.update(_windT);
+  meadow.update(_windT,player.position);
   landing.update(dt);
 }
 
@@ -652,7 +684,34 @@ function returnToLab() {
 }
 
 // 실내 — 관문 셋을 지나 신전으로. 통로 끝을 넘어서면 밖으로 나간다.
+function stepFireRoom(dt,intent){
+  const w=room.world;if(!w)return;
+  w.setLow(quality.name==='low'||quality.name==='min');
+  if(intent.action && roomActor.position.z>26 && !w.sanctum.frozen){exitShrine();return;}
+  if(intent.action)w.interact(roomActor);
+  w.animate(dt,roomActor);
+  if(!w.sanctum.frozen){roomActor.update(dt,intent,engine.camera);w.afterMove(roomActor);}
+  roomActor.updateCamera(engine.camera,input,dt);
+  setPrompt(roomActor.position.z>26?'E — 사당 밖으로':w.prompt(roomActor));
+  if(w.message){noteMsg=w.message;noteT=1.4;}
+  if(w.sanctum.dialogue && !dialogue.active){
+    const activeRoom=room,s=w.sanctum.mechanics;
+    dialogue.play('fire-audience-v3','불꽃 수호자',FIRE_AUDIENCE.slice(s.state.line),()=>{
+      if(room!==activeRoom||mode!=='room')return;
+      w.sanctum.skip();saveProgress(true);
+    },()=>{s.next();saveProgress(true);});
+  }
+  if(room.finishReward(roomActor)){
+    cleared=true;shrines.markCleared(activeShrine);notebook.draw();
+    const last=shrines.clearedCount()===SHRINES.length;
+    exitShrine();flash.play('#ffdf9a',1100);sfx('orb_take');
+    noteMsg='불꽃의 지혜를 얻었다 — 신전이 밀봉되었다';noteT=5;saveProgress();if(last)playEnding();return;
+  }
+  if(w.dirty){saveProgress(true);w.clearDirty();}
+}
+
 function stepRoom(dt, intent) {
+  if(room.fireAdventure){stepFireRoom(dt,intent);return;}
   room.dungeon.update?.(dt);
   roomActor.update(dt, intent, engine.camera);
   roomActor.updateCamera(engine.camera, input, dt);
@@ -671,7 +730,7 @@ function stepRoom(dt, intent) {
     const goal = room.goals[seg.id];
     if (seg.id === 'shrine' && room.spec.id!=='balance') {
       const k = KEEPERS[room.spec.id];
-      dialogue.play(`arrive-${room.spec.id}`, k.who, k.arrive);
+      dialogue.play(`arrive-${room.spec.id}`, k.who, room.waterAdventure?['네가 다시 흐르게 한 물이 이곳까지 왔구나. 가까이 와 보렴.']:k.arrive);
     }
     // ★ 예전엔 여기서 3.6초짜리 알림 한 줄만 띄웠다. 눈을 깜빡이면 사라지고
     //   다시 못 본다. 게다가 **목표만** 말하고 손이 무엇을 하는지는 안 말했다 —
@@ -686,6 +745,11 @@ function stepRoom(dt, intent) {
     briefWant = null;
   }
   if (!debugDepth && (brief.isOpen || dialogue.active)) { input.reset(); return; }
+  if (room.waterAdventure) {
+    if (intent.waterPower) room.changeWater(intent.waterPower === 'heat', roomActor);
+    if (intent.waterTool === 'recover') room.recoverWater(roomActor);
+    if (intent.waterTool === 'hint') waterBracelet.showHint(room.hint(roomActor));
+  }
 
   // 관문 — 자기 구간에 있을 때만 돈다. 레이저는 방 밖에서도 움직여야 자연스럽지만
   // 판정은 방 안에서만 한다(통로에서 맞으면 부당하다).
@@ -722,13 +786,22 @@ function stepRoom(dt, intent) {
     if(final.solvedBy(roomActor))dungeon.openDoor('shrine');
     if(final.solved && seg?.id==='audience' && roomActor.position.z < -56 && !prize.taken && !final.eventStarted){
       final.eventStarted=true;brief.hide();briefWant=null;input.reset();
-      dialogue.play('balance-audience-v2','균형의 신',['눈으로 크기를 보던 너는 이제 무게를 비교하는구나.','두 판을 채우고, 받치는 자리를 옮겨 수평을 찾았지.','무게와 거리가 함께 균형을 만든다. 이 지혜를 가지고 다음 길로 가거라.','이 신전은 이제 잠든다. 너의 기록은 수첩에 남으리라.'],()=>{
+      dialogue.play(coopRunning?'balance-audience-coop-v2':'balance-audience-v2','균형의 신',['눈으로 크기를 보던 너는 이제 무게를 비교하는구나.','두 판을 채우고, 받치는 자리를 옮겨 수평을 찾았지.','무게와 거리가 함께 균형을 만든다. 이 지혜를 가지고 다음 길로 가거라.','이 신전은 이제 잠든다. 너의 기록은 수첩에 남으리라.'],()=>{
         if(coopRunning){exitShrine();noteMsg='협동 실험 완료 — 개인 신전 기록은 유지된다';noteT=5;return;}
         prize.taken=true;prize.drop=1;prize.group.visible=false;cleared=true;shrines.markCleared(activeShrine);notebook.draw();
         const last=shrines.clearedCount()===SHRINES.length;exitShrine();flash.play('#fff0c4',1100);sfx('orb_take');
         noteMsg='균형의 지혜를 얻었다 — 신전이 밀봉되었다';noteT=5;saveProgress();if(last)playEnding();
       });
       return;
+    }
+  } else if(room.waterAdventure) {
+    if(final.active && !prize.taken && !final.eventStarted){
+      final.eventStarted=true;brief.hide();briefWant=null;input.reset();
+      dialogue.play('water-audience-v3','물의 신',['얼음은 발판이 되고, 흐르는 물은 좁은 틈을 지나왔지.','길로 썼던 물이 다시 위로 올라와 여기 모였구나.','보이는 김은 작은 물방울이다. 기체인 수증기는 눈에 보이지 않지.','물은 모습을 바꾸어도 같은 물이다. 이 지혜를 수첩에 담아 가거라.'],()=>{
+        prize.taken=true;prize.drop=1;prize.group.visible=false;cleared=true;shrines.markCleared(activeShrine);notebook.draw();
+        const last=shrines.clearedCount()===SHRINES.length;exitShrine();flash.play('#c9f4ef',900);sfx('orb_take');
+        noteMsg='물의 지혜를 얻었다 · 수첩에 기록했다';noteT=5;saveProgress();if(last)playEnding();
+      });return;
     }
   } else if (final.solvedBy(roomActor)) prize.reveal();
   prize.update(dt);
@@ -803,6 +876,7 @@ function stepPlanet(dt, intent) {
   _windT += dt;
   scatter.update(_windT);
   carpet.update(_windT);
+  meadow.update(_windT,player.position);
 
   // 사당 진입 — 기단 가까이 오면 프롬프트, E로 들어간다.
   const near = shrines.nearest(player.position);
@@ -846,7 +920,7 @@ function stepPlanet(dt, intent) {
   // 내림판 — 사당보다 먼저 본다. 판 위에 사당이 겹칠 일은 없지만(사당 자리를 먼저 잡고
   // 그 밖에 스폰한다) 겹치면 **돌아갈 길이 막히는 쪽**이 더 나쁘다.
   if (landing.near(player.position)) {
-    say('E — 연구실로 돌아가기');
+    say('E — 범선으로 돌아가기');
     if (intent.action && !dialogue.active) returnToLab();
     return;
   }
@@ -909,8 +983,8 @@ function stepPlanet(dt, intent) {
       // 지킴이의 첫마디. 들어가기 전에 한 번만.
       dialogue.play(`enter-${sp.id}`, KEEPERS[sp.id].who, KEEPERS[sp.id].enter);
       say(`E — ${sp.name}에 들어가기 (${sp.unit})`);
-    } else if (near.shrine.cleared && sp.id==='balance') {
-      canEnter=false;say('🔒 균형의 사당 — 지혜를 전하고 밀봉되었다');
+    } else if (near.shrine.cleared && ['balance','fire'].includes(sp.id)) {
+      canEnter=false;say(`🔒 ${sp.name} — 지혜를 전하고 밀봉되었다`);
     } else if (near.shrine.cleared) {
       say(`E — ${sp.name} · 이미 깬 곳이다`);
     } else {
@@ -946,15 +1020,19 @@ const brief = buildRoomBrief(() => touch.visible);
 buildMuteButton();
 // 화면 설정 — 화질을 손으로 고른다. 기본은 자동이라 아무도 안 건드려도 된다.
 const settings = buildSettings(() => engine);
+meadow.attachSetting();
 attachSaveBackup(settings, captureProgress);
-attachCoop(settings, () => ({mode:coopRunning&&mode==='room'?'balance':mode, cooperative:coopRunning, position:mode==='room'?roomActor.position:player.position, scene:mode==='room'?room.scene:mode==='lab'?lab.scene:planetScene}), {
- enter(){if(mode==='room'||mode==='title')return null;saveProgress(true);if(mode==='lab')landOnPlanet();coopBackupRoom=rooms.get(0)||null;const r=buildRoom(SHRINES[0],7132026);rooms.set(0,r);coopRunning=true;enterShrine(shrines.shrines[0]);return r;},
- exit(){if(coopRunning)exitShrine();}
+attachCoop(settings, () => ({mode:coopRunning&&mode==='room'?'balance':mode, cooperative:coopRunning, position:mode==='planet'?player.position:roomActor.position, scene:mode==='room'?room.scene:mode==='lab'?lab.scene:planetScene}), {
+ enter(){if(mode==='room'||mode==='title')return null;saveProgress(true);coopOrigin={mode,position:roomActor.position.clone(),heading:roomActor.heading.clone(),yaw:roomActor.camYaw};coopBackupRoom=rooms.get(0)||null;const r=buildRoom(SHRINES[0],7132026);rooms.set(0,r);coopRunning=true;enterShrine(shrines.shrines[0]);return r;},
+ exit(){if(coopRunning)exitShrine();},
+ notice(text){noteMsg=text;noteT=5;}
 });
 const lab = await installStarsail(buildLab());
 await loadBalanceTemple();
 const shipView = buildShipView({camera:engine.camera,input,available:()=>mode==='lab'&&!dialogue.active&&!title.isEnding});
 const questGuide = buildQuestGuide(() => game);
+const waterBracelet = buildWaterBracelet(() => game);
+const waterBraceletFx = new WaterBraceletFx();
 const landing = buildLanding(planetScene, planet, landingDir);
 
 // 들 — 위에서 잡아 둔 자리에 짓는다.
@@ -1125,9 +1203,9 @@ loop.onFrame = makeAutoQuality((name, med) => {
 });
 
 const game = {
-  step, planet, player, engine, input, loop, sky, scatter, carpet, shrines, contact,
+  step, planet, player, engine, input, loop, sky, scatter, carpet, meadow, shrines, contact,
   roomActor, planetScene, roomFor, SHRINES, mapPage, touch, dialogue, notebook, flash, forage, title,
-  brief, kitchen, settings, shipView, questGuide, waterway, firstTrail, save: saveProgress, snapshot: captureProgress,
+  brief, kitchen, settings, shipView, questGuide, waterBracelet, waterBraceletFx, waterway, firstTrail, save: saveProgress, snapshot: captureProgress,
   get saveStatus() { return saveStore.status; },
   titleInfo: () => ({ spin: titleSpin, clear: titleClear, awayDeg: TITLE_AWAY_DEG }),
   get room() { return room; },
@@ -1158,8 +1236,9 @@ window.__selftest = () => {
   const existingRooms = new Set(rooms.keys());
   const actorState = { p: roomActor.position.clone(), h: roomActor.heading.clone(), yaw: roomActor.camYaw,
     rects: roomActor.rects, obstacles: roomActor.obstacles, vy: roomActor.vy, grounded: roomActor.grounded,
-    vel: roomActor.vel.clone(), slip: roomActor.slip, freeCam: roomActor.freeCam };
+    vel: roomActor.vel.clone(), slip: roomActor.slip, freeCam: roomActor.freeCam, bounds: Object.hasOwn(roomActor,'_in')?roomActor._in:null };
   debugDepth++;
+  delete roomActor._in;
   try { return selftest(); } finally {
     kitchen.importState(testedProgress.kitchen);
     mapPage.importState(testedProgress.map);
@@ -1176,6 +1255,7 @@ window.__selftest = () => {
     roomActor.position.copy(actorState.p); roomActor.heading.copy(actorState.h); roomActor.camYaw = actorState.yaw;
     roomActor.vy = actorState.vy; roomActor.grounded = actorState.grounded; roomActor.vel.copy(actorState.vel);
     roomActor.slip = actorState.slip; roomActor.freeCam = actorState.freeCam;
+    if(actorState.bounds)roomActor._in=actorState.bounds;else delete roomActor._in;
     if (mode === 'room' || mode === 'lab') {
       roomActor.syncMesh(); roomActor._camPlaced = false; roomActor.updateCamera(engine.camera, input, 0);
     }

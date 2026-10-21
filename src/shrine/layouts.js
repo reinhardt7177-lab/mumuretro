@@ -17,7 +17,6 @@ import { BALANCE_TEMPLE } from '../data/balanceTemple.js';
 //   · gate가 붙은 방은 그 관문을 풀어야 **다음 통로**가 열린다(door로 잇는다).
 //   · 초등 과학의 여섯 주제를 다룬다. 특정 교육과정의 전체 단원 충족을 뜻하지 않는다.
 import { SHRINE_THEMES as T } from '../data/lighting.js';
-import { WATER_COURT } from '../data/waterCourt.js';
 import { MIRROR_GALLERY } from '../data/mirrorGallery.js';
 import { SHADE_COURT } from '../data/shadeCourt.js';
 import { SILHOUETTE_COURT } from '../data/silhouetteCourt.js';
@@ -126,23 +125,24 @@ export const SHRINES = [
   },
 
   // ── 04 · 과학 4-2 「물의 상태 변화」 ─────────────────────────────────────
-  // 높다. 수위가 오르고 발밑이 미끄럽다. 방의 모양이 시간에 따라 바뀌는 유일한 사당.
+  // 같은 물을 얼려 옮기고, 녹여 흐르게 하고, 기화·응결해 다시 쓴다.
   {
     id: 'water', name: '세 모습의 사당', unit: '물의 상태 변화', theme: T.water,
     rooms: spine({
       entryTo: 6.0,
       rooms: [
-        { id: 'r1', name: '녹여 보내고 얼려 건너기', w: 10, len: 16, h: 7.0, gate: 'freeze', act: 'turn',
-            goal: '얼음 마개를 녹여 도랑에 물을 보내고, 그 물을 얼려 다리를 만들어라.',
-            hints: ['빈 도랑은 얼릴 수 없다. 먼저 물을 막는 얼음 마개를 살펴보자.', '가열 방향을 마개에 맞추고, 물이 차면 도랑 냉각을 켜라. 도랑을 가열하면 다리가 녹는다.'] },
-        { id: 'r2', name: '위쪽에서 물 모으기', w: 10, len: 14, h: 7.0, gate: 'slide', act: 'turn',
-            goal: '물을 가열하고 위쪽에서 식혀, 물받이로 수조를 채워라.',
-            hints: ['용기를 가열하면 물이 위쪽 관으로 이동한다. 차가운 집수판에서 물방울이 맺힌다.', '물방울이 떨어지는 곳을 보자. 집수판을 물받이 바로 위로 옮겨라.'] },
-        { id: 'r3', name: '세 모습의 회랑', w: 26, len: 26, h: 7.0, gate: 'steam', act: 'turn',
-            goal: WATER_COURT.goal, hints: WATER_COURT.hints },
-        { id: 'shrine', name: '신전', w: 18, len: 18, h: 10, act: 'turn',
-            goal: '복구한 물의 흐름을 제단에 전하고 세 모습의 지킴이를 깨워라.',
-            hints: ['제단 가까이에서 E를 눌러라.', '같은 물을 얼리고 녹이고, 가열하고 식혀 성소를 복구했다.'] },
+        { id: 'r1', name: '물로 만든 발판', w: 18, len: 18, h: 8, gate: 'waterCarry', act: 'waterBracelet',
+            goal: '높은 출구 발판에 올라가자.',
+            hints: ['출구가 높다. 발밑에 놓을 수 있는 것은 없을까?', '얼린 물은 옮기고 밟을 수 있다.', '얼음을 높은 단 가까이에 놓고 두 번 올라가 보자.'] },
+        { id: 'r2', name: '틈을 지나는 물', w: 18, len: 18, h: 8, gate: 'waterFlow', act: 'waterBracelet',
+            goal: '승강 발판을 올려 건너편 출구로 가자.',
+            hints: ['물길은 위쪽에서 건너편 받이로 이어진다.', '얼음으로 나르면 높은 곳에도 물을 가져갈 수 있다.', '위쪽 물길에서 얼음을 녹이고, 가운데 발판에 올라타 보자.'] },
+        { id: 'r3', name: '다시 쓰는 물', w: 20, len: 24, h: 10, gate: 'waterCycle', act: 'waterBracelet',
+            goal: '높은 제단의 물그릇을 채우자.',
+            hints: ['이 방의 물은 하나다. 다리와 제단에 두 번 쓸 수 없을까?', '건너편에 도착하면 돌다리가 열린다. 얼음 다리는 다시 녹일 수 있다.', '회수된 물을 데워 위로 보내고, 위쪽에서 식혀 물방울로 모아 보자.'] },
+        { id: 'shrine', name: '물의 신의 성소', w: 16, len: 14, h: 10, act: 'waterAudience',
+            goal: '물의 신을 만나 지혜를 수첩에 담자.',
+            hints: ['신 앞의 물그릇으로 다가가자.', 'E로 물의 신에게 말을 걸어 보자.'] },
       ],
     }),
     final: 'waterGod',
@@ -185,8 +185,8 @@ export const SHRINES = [
       rooms: [
         { id: 'r1', name: '층의 순서', w: 10, len: 16, h: 6.0, gate: 'strataOrder', act: 'carry',
             goal: '눕혀 둔 시추 코어를 읽고, 같은 순서로 벽에 꽂아라. 어느 끝이 위인가?',
-            hints: ['시추는 위에서 아래로 뚫는다. 드릴 날이 박힌 쪽이 땅 위다.',
-              '날의 반대편 끝이 가장 깊은 곳 — 그게 벽의 1층이다.'] },
+            hints: ['시추할 때 날이 뚫고 들어간 끝이 깊은 쪽이다.',
+              '이 코어는 뒤집히지 않은 지층이다. 날 쪽 끝부터 벽의 아래 층으로 옮겨 보자.'] },
         { id: 'r2', name: '내려가는 갱도', w: 8, len: 18, h: 9.0, gate: 'shaft', act: 'avoid',
             goal: '바닥에 그림자가 뜨면 그 자리로 바위가 떨어진다.',
             hints: ['바닥 그림자가 커지면 그 자리로 떨어진다.', '그림자를 보고 옆으로 한 걸음이면 된다.'] },

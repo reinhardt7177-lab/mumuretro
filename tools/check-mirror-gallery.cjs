@@ -1,6 +1,6 @@
 const fs = require('node:fs'), path = require('node:path'), assert = require('node:assert/strict');
 const { chromium } = require(path.join(process.env.AUDIT_NODE_MODULES || '', 'playwright'));
-const base = process.env.AUDIT_URL || 'http://127.0.0.1:5512';
+const base = (process.env.AUDIT_URL || 'http://127.0.0.1:5512').replace(/\/$/, '');
 const evidence = path.resolve(__dirname, '../reports/2026-09-08/evidence/mirror-gallery');
 const out = path.resolve(__dirname, '../tmp/mirror-gallery'); fs.mkdirSync(out, { recursive: true });
 const legacy = fs.readFileSync(path.join(evidence, 'legacy-save.json'), 'utf8');

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1120" viewBox="0 0 1700 1120"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#263943" stroke-width=".5"/></pattern><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="none" stroke="#e8bd72" stroke-width="1.2"/></marker></defs><rect width="1700" height="1120" fill="#101e27"/><rect width="1700" height="1120" fill="url(#grid)"/><g font-family="Malgun Gothic,Arial,sans-serif">
+<text x="42" y="52" font-size="34" fill="#e9e4d4">흔들리는 사당 · 화산과 지진 신전</text>
+<text x="43" y="85" font-size="18" fill="#93bac7">V01 / 2026.10.20     정확한 제작 평면도 · 1칸=5m · 웹 Y↑ / 북쪽 −Z</text>
+<rect x="25" y="113" width="355" height="940" rx="14" fill="#172a34" stroke="#465d68"/>
+<text x="48" y="150" font-size="24" fill="#e9e4d4">게임의 흐름</text>
+<rect x="44" y="167" width="317" height="116" rx="8" fill="#20343f" stroke="#465964"/>
+<text x="58" y="192" font-size="21" fill="#ecc589">01 · 중앙 홀</text>
+<text x="58" y="223" font-size="14" fill="#e9e4d4">먼저 목적지를 보고, 방을 하나씩 연다.</text>
+<text x="58" y="249" font-size="14" fill="#e9e4d4">완료 표지는 중앙 홀에 계속 남는다.</text>
+<text x="192" y="298" font-size="24" fill="#ecc589">↓</text>
+<rect x="44" y="309" width="317" height="116" rx="8" fill="#20343f" stroke="#465964"/>
+<text x="58" y="334" font-size="21" fill="#ecc589">02 · 균열 회랑</text>
+<text x="58" y="365" font-size="14" fill="#e9e4d4">받침 두 개로 다리를 고정하고 시험한다.</text>
+<text x="58" y="391" font-size="14" fill="#e9e4d4">흔들림이 멎은 다리를 직접 건너 잠근다.</text>
+<text x="192" y="440" font-size="24" fill="#ecc589">↓</text>
+<rect x="44" y="451" width="317" height="116" rx="8" fill="#20343f" stroke="#465964"/>
+<text x="58" y="476" font-size="21" fill="#ecc589">03 · 용암 주조실</text>
+<text x="58" y="507" font-size="14" fill="#e9e4d4">수로를 잇고 용암으로 빈 틀을 채운다.</text>
+<text x="58" y="533" font-size="14" fill="#e9e4d4">흐름을 끊고 굳은 돌길을 건넌다.</text>
+<text x="192" y="582" font-size="24" fill="#ecc589">↓</text>
+<rect x="44" y="593" width="317" height="116" rx="8" fill="#20343f" stroke="#465964"/>
+<text x="58" y="618" font-size="21" fill="#ecc589">04 · 증기 승강실</text>
+<text x="58" y="649" font-size="14" fill="#e9e4d4">증기로 접근 다리를 내려 영구 고정한다.</text>
+<text x="58" y="675" font-size="14" fill="#e9e4d4">동력을 승강기로 바꿔 탑승한 뒤 올라간다.</text>
+<text x="192" y="724" font-size="24" fill="#ecc589">↓</text>
+<rect x="44" y="735" width="317" height="116" rx="8" fill="#20343f" stroke="#465964"/>
+<text x="58" y="760" font-size="21" fill="#ecc589">05 · 수호자의 전당</text>
+<text x="58" y="791" font-size="14" fill="#e9e4d4">세 문양이 열린 상층 통로로 진입한다.</text>
+<text x="58" y="817" font-size="14" fill="#e9e4d4">신과 대화 → 기록 → 바깥으로 자동 퇴장.</text>
+<text x="48" y="951" font-size="18" fill="#a7d1cd">실패해도 해결한 부분은 보존</text>
+<text x="48" y="980" font-size="14" fill="#e9e4d4">낙하 → 가까운 안전 발판에서 재시도</text>
+<text x="48" y="1008" font-size="14" fill="#e9e4d4">대기·회전 중 저장 → 안정 상태로 복원</text>
+<rect x="657.8" y="642.4" width="79" height="31.6" rx="0" fill="#57656a" stroke="#b5b4a3"/>
+<rect x="863.2" y="642.4" width="79" height="31.6" rx="0" fill="#57656a" stroke="#b5b4a3"/>
+<rect x="781.04" y="460.7" width="37.92" height="39.5" rx="0" fill="#57656a" stroke="#b5b4a3"/>
+<rect x="776.3" y="271.09999999999997" width="47.400000000000006" height="31.6" rx="0" fill="#57656a" stroke="#b5b4a3"/>
+<rect x="768.4" y="689.8" width="63.2" height="173.8" rx="0" fill="#57656a" stroke="#b5b4a3"/>
+<circle cx="800" cy="595" r="94.80000000000001" fill="#586167" stroke="#c6a76b" stroke-width="3"/>
+<rect x="499.8" y="500.2" width="158" height="205.4" rx="0" fill="#3b4b51" stroke="#b5b4a3"/>
+<rect x="502.16999999999996" y="571.3" width="153.26" height="47.400000000000006" rx="0" fill="#1b1717" stroke="#df7d46"/>
+<rect x="564.5799999999999" y="569.72" width="28.44" height="50.56" rx="0" fill="#b3a68b" stroke="#b5b4a3"/>
+<text x="509.8" y="523.2" font-size="17" fill="#e8c383">균열 회랑</text>
+<text x="509.8" y="544.2" font-size="12" fill="#a9cad1">20 × 26m / 바닥 +0.0m</text>
+<rect x="942.2" y="500.2" width="158" height="205.4" rx="0" fill="#3b4b51" stroke="#b5b4a3"/>
+<rect x="944.57" y="571.3" width="153.26" height="47.400000000000006" rx="0" fill="#1b1717" stroke="#df7d46"/>
+<rect x="1005.4" y="569.72" width="31.6" height="50.56" rx="0" fill="#b96b40" stroke="#b5b4a3"/>
+<text x="952.2" y="523.2" font-size="17" fill="#e8c383">용암 주조실</text>
+<text x="952.2" y="544.2" font-size="12" fill="#a9cad1">20 × 26m / 바닥 +0.0m</text>
+<rect x="705.2" y="302.7" width="189.60000000000002" height="158" rx="0" fill="#3b4b51" stroke="#b5b4a3"/>
+<rect x="707.57" y="358" width="184.85999999999999" height="47.400000000000006" rx="0" fill="#1b1717" stroke="#df7d46"/>
+<text x="715.2" y="325.7" font-size="17" fill="#e8c383">증기 승강실</text>
+<text x="715.2" y="346.7" font-size="12" fill="#a9cad1">24 × 20m / 바닥 +0.0m</text>
+<rect x="689.4" y="144.7" width="221.20000000000002" height="126.4" rx="0" fill="#3b4b51" stroke="#b5b4a3"/>
+<text x="699.4" y="167.7" font-size="17" fill="#e8c383">불꽃 수호자의 전당</text>
+<text x="699.4" y="188.7" font-size="12" fill="#a9cad1">28 × 16m / 바닥 +3.2m</text>
+<rect x="563.74" y="624.97" width="8" height="8" rx="0" fill="#e6bd75" stroke="#63737b"/>
+<rect x="585.86" y="624.97" width="8" height="8" rx="0" fill="#e6bd75" stroke="#63737b"/>
+<rect x="542.2" y="661.1" width="10" height="10" rx="0" fill="#a6bec1" stroke="#63737b"/>
+<rect x="605.4" y="661.1" width="10" height="10" rx="0" fill="#a6bec1" stroke="#63737b"/>
+<polyline points="1076.5,523.9 1076.5,547.6 1021.2,547.6 1021.2,618.7" fill="none" stroke="#fa873f" stroke-width="6"/>
+<rect x="768.4" y="356.41999999999996" width="63.2" height="50.56" rx="0" fill="#9e906c" stroke="#b5b4a3"/>
+<rect x="841.08" y="334.3" width="28.44" height="28.44" rx="0" fill="#b59b68" stroke="#b5b4a3"/>
+<rect x="705.2" y="302.7" width="189.60000000000002" height="31.6" rx="0" fill="#7b938f" stroke="#b5b4a3"/>
+<path d="M752.6 429.1L752.6 381.7L800 373.79999999999995M752.6 429.1L855.3 429.1L855.3 350.1" fill="none" stroke="#93c3cf" stroke-width="3"/>
+<text x="770" y="591" font-size="20" fill="#f1d29b">중앙 홀</text>
+<text x="765" y="615" font-size="14" fill="#e9e4d4">지름 24m</text>
+<text x="784.2" y="784.6" font-size="18" fill="#e9e4d4">입구</text>
+<polyline points="800,832 800,658.2 697.3,658.2 618.3,658.2 578.8,626.6 578.8,531.8" fill="none" stroke="#e8bd72" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<polyline points="800,650.3 902.7,658.2 989.6,658.2 1021.2,626.6 1021.2,531.8" fill="none" stroke="#e8bd72" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<polyline points="800,547.6 800,437 752.6,429.1 752.6,373.79999999999995 855.3,373.79999999999995 855.3,350.1 855.3,318.5 800,286.9 800,200" fill="none" stroke="#e8bd72" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+<text x="441" y="1060" font-size="17" fill="#e9e4d4">← 서 / −X</text>
+<text x="1038" y="1060" font-size="17" fill="#e9e4d4">동 / +X →</text>
+<text x="772" y="118" font-size="16" fill="#e9e4d4">북 / −Z ↑</text>
+<text x="752" y="916" font-size="16" fill="#e9e4d4">남 / +Z ↓</text>
+<rect x="1190" y="113" width="485" height="940" rx="14" fill="#172a34" stroke="#465d68"/>
+<text x="1215" y="151" font-size="24" fill="#e9e4d4">높이와 제작 기준</text>
+<text x="1214" y="196" font-size="18" fill="#e8bd72">단면 A–A · 입구 → 상층 전당</text>
+<path d="M1218 330L1430 330" stroke="#b9c5c0" stroke-width="2" fill="none"/>
+<path d="M1430 330L1430 255" stroke="#b9c5c0" stroke-width="2" fill="none"/>
+<path d="M1430 255L1640 255" stroke="#b9c5c0" stroke-width="2" fill="none"/>
+<rect x="1395" y="314" width="53" height="16" rx="0" fill="#a78d5b" stroke="#63737b"/>
+<path d="M1421 309L1421 261" stroke="#94c4d0" stroke-width="2" fill="none"/>
+<text x="1220" y="358" font-size="14" fill="#e9e4d4">±0.00m 기준 바닥</text>
+<text x="1453" y="242" font-size="14" fill="#e9e4d4">+3.20m 상층 바닥</text>
+<text x="1394" y="392" font-size="15" fill="#cbd8cf">승강기만 연결 / 우회 계단 없음</text>
+<text x="1214" y="450" font-size="18" fill="#e8bd72">정문 모듈 · 아래 면은 바닥 y=0</text>
+<rect x="1280" y="494" width="300" height="210" rx="0" fill="#26383f" stroke="#c4a166"/>
+<rect x="1355" y="574" width="150" height="130" rx="0" fill="#17242d" stroke="#d0ad70"/>
+<path d="M1355 574A75 75 0 0 1 1505 574" fill="#17242d" stroke="#d0ad70" stroke-width="2"/>
+<path d="M1218 704L1640 704" stroke="#8fb8c2" stroke-width="2" fill="none"/>
+<text x="1305" y="730" font-size="15" fill="#e9e4d4">전체 9.6m × 8.4m × 깊이 1.4m</text>
+<text x="1280" y="759" font-size="15" fill="#e9e4d4">유효 개구부 4.8m × 최고 5.2m</text>
+<text x="1215" y="810" font-size="14" fill="#a4c9d1">기본 통로</text>
+<text x="1380" y="810" font-size="14" fill="#e9e4d4">3.6m / 최소 2.4m</text>
+<text x="1215" y="845" font-size="14" fill="#a4c9d1">캐릭터 / 머리 여유</text>
+<text x="1380" y="845" font-size="14" fill="#e9e4d4">키 1.5m / 최소 2.2m</text>
+<text x="1215" y="880" font-size="14" fill="#a4c9d1">건축물 기준</text>
+<text x="1380" y="880" font-size="14" fill="#e9e4d4">밑면 y=0 · 각 층 바닥에 배치</text>
+<text x="1215" y="915" font-size="14" fill="#a4c9d1">승강 높이</text>
+<text x="1380" y="915" font-size="14" fill="#e9e4d4">3.2m · 탑승 확인 후 움직임</text>
+<text x="1215" y="950" font-size="14" fill="#a4c9d1">균열 간격</text>
+<text x="1380" y="950" font-size="14" fill="#e9e4d4">6.0m · 점프로 건너뛰기 방지</text>
+<text x="1215" y="985" font-size="14" fill="#a4c9d1">미구현 구분</text>
+<text x="1380" y="985" font-size="14" fill="#e9e4d4">설계·Blender 모델 / 게임 연결 전</text>
+<text x="42" y="1092" font-size="16" fill="#a1c1cc">설계 제안이며 게임에 적용된 화면이 아닙니다. 배치·바닥·치수는 design-spec.json이 기준입니다.</text>
+</g></svg>

@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { shuffle, randInt } from '../util/rand.js';
+import {attachChronicleArt} from './ChronicleArt.js';
 
 const glowMat = (c, o = {}) => {
   const m = new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -293,6 +294,9 @@ export class GrandGod {
       return { mat: m, color: s.c };
     });
 
+    const legacySculpt=[...g.children];
+    this.heritagePromise=attachChronicleArt(scene,this,legacySculpt,cx).catch(error=>{this.artError=error;console.warn('[chronicle] keeping legacy sculpture:',error.message);});
+
     // ── 제단 다섯 — 반원으로 ────────────────────────────────────────────
     // ★ 예전엔 **아무 제단에나** 올려도 됐다 — 힌트가 그렇다고 못 박기까지 했다.
     //   게임의 마지막 방인데 손이 하는 일은 심부름 다섯 번이었다(비평 ①).
@@ -366,6 +370,7 @@ export class GrandGod {
   }
 
   update(dt, actor) {
+    this.syncArt?.();
     if (this.no > 0) this.no -= dt;
     if (this.held) {
       this.held.mesh.position.set(actor.position.x + actor.heading.x * 0.7, 1.15,
@@ -439,5 +444,6 @@ export class GrandGod {
     for (const p of this.panels) p.mat.color.set(0x2a2430);
     for (const a of this.altars) { a.got = null; a.ringMat.color.set(0x3f3748); }
     for (const o of this.orbs) { o.placed = false; o.mesh.position.copy(o.home); }
+    this.syncArt?.();
   }
 }

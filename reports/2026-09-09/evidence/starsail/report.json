@@ -87,29 +87,29 @@
       "details": [
         {
           "q": "high",
-          "calls": 374,
-          "triangles": 67823,
+          "calls": 252,
+          "triangles": 186349,
           "width": 1440,
           "height": 900
         },
         {
           "q": "mid",
-          "calls": 374,
-          "triangles": 67823,
+          "calls": 252,
+          "triangles": 186349,
           "width": 1440,
           "height": 900
         },
         {
           "q": "low",
-          "calls": 361,
-          "triangles": 67810,
+          "calls": 239,
+          "triangles": 186336,
           "width": 1440,
           "height": 900
         },
         {
           "q": "min",
-          "calls": 144,
-          "triangles": 33300,
+          "calls": 110,
+          "triangles": 93108,
           "width": 1152,
           "height": 720
         }
@@ -125,29 +125,29 @@
   "metrics": [
     {
       "q": "high",
-      "calls": 374,
-      "triangles": 67823,
+      "calls": 252,
+      "triangles": 186349,
       "width": 1440,
       "height": 900
     },
     {
       "q": "mid",
-      "calls": 374,
-      "triangles": 67823,
+      "calls": 252,
+      "triangles": 186349,
       "width": 1440,
       "height": 900
     },
     {
       "q": "low",
-      "calls": 361,
-      "triangles": 67810,
+      "calls": 239,
+      "triangles": 186336,
       "width": 1440,
       "height": 900
     },
     {
       "q": "min",
-      "calls": 144,
-      "triangles": 33300,
+      "calls": 110,
+      "triangles": 93108,
       "width": 1152,
       "height": 720
     }

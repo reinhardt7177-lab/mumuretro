@@ -1,0 +1,11 @@
+# 웹 게임은 index.html · src · assets · vendor만 쓴다(src에서 아래 폴더를 부르는 곳 0).
+# Blender 원본·엔진 이전 참고 자료·검증 기록은 사이트로 내보내지 않는다.
+# unity/는 폐기한 엔진 프로젝트가 다시 생겨도 배포되지 않도록 유지한다.
+unity/
+art/
+reports/
+tools/*
+!tools/build-web.cjs
+server/
+교실서버.cmd
+dist/

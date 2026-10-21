@@ -1,0 +1,2 @@
+# Pinned upstream files are checked byte-for-byte on Windows and Vercel alike.
+/vendor/** -text

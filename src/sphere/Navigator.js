@@ -4,7 +4,7 @@ let source,props,clips;
 // Three r160 parse overwrites UUID with json.uuid, even when absent.
 // Missing IDs make AnimationMixer reuse idle for every named action.
 export async function loadNavigator(){
-  try{const loader=new GLTFLoader();const [s,p,response]=await Promise.all([loader.loadAsync('assets/characters/sky-navigator/navigator-v01.glb'),loader.loadAsync('assets/characters/sky-navigator/props-v01.glb'),fetch('assets/characters/sky-navigator/motions-v01.json')]);if(!response.ok)throw Error('Motion download failed');clips=Object.fromEntries(Object.entries(await response.json()).map(([n,c])=>[n,T.AnimationClip.parse({...c,uuid:c.uuid||T.MathUtils.generateUUID()})]));source=s.scene;props=p.scene;return true;}catch(e){console.warn('[navigator] Loading failed; keeping existing explorer.',e);return false;}
+  try{const loader=new GLTFLoader();const [s,p,response]=await Promise.all([loader.loadAsync('assets/characters/sky-navigator/navigator-v01.glb'),loader.loadAsync('assets/characters/sky-navigator/props-v02.glb'),fetch('assets/characters/sky-navigator/motions-v01.json')]);if(!response.ok)throw Error('Motion download failed');clips=Object.fromEntries(Object.entries(await response.json()).map(([n,c])=>[n,T.AnimationClip.parse({...c,uuid:c.uuid||T.MathUtils.generateUUID()})]));source=s.scene;props=p.scene;return true;}catch(e){console.warn('[navigator] Loading failed; keeping existing explorer.',e);return false;}
 }
 function cloneSkin(root){const clone=root.clone(true),map=new Map();function pair(a,b){map.set(a,b);a.children.forEach((c,i)=>pair(c,b.children[i]));}pair(root,clone);root.traverse(o=>{if(o.isSkinnedMesh){const c=map.get(o);c.skeleton=o.skeleton.clone();c.skeleton.bones=o.skeleton.bones.map(b=>map.get(b));c.bind(c.skeleton,o.bindMatrix);}});return clone;}
 export function buildNavigator(glider){
@@ -90,6 +90,11 @@ export function buildNavigator(glider){
         }
       }
       if(carrying>.01||reading){const w=reading?1:carrying;reach(side,new T.Vector3(x*(reading?.105:.26),reading?.98:.91,reading?.30:.34),w);}
+    }
+    // Sampled after locomotion, with the same two-bone reach as the held props.
+    // The VFX controller owns the smooth envelope; carrying/reading retain priority.
+    if(u.waterCasting?.weight>.001&&carrying<.01&&!reading&&!pose.airborne){
+      reach('Left',u.waterCasting.target,u.waterCasting.weight);
     }
     if(reading){if(book.parent!==k){k.add(book);book.position.set(0,.99,.37);book.rotation.set(-.8,0,Math.PI/2);}bones.Head.rotation.x+=.12;}else if(book.parent!==bookSlot){bookSlot.add(book);book.position.set(0,0,0);book.rotation.set(0,0,0);}
     book.visible=u.hasNotebook!==false;scope.rotation.z=-.06+Math.sin(time*4)*.015*locomotion;

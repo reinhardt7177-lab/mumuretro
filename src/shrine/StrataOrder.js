@@ -101,8 +101,8 @@ export class StrataOrderGate {
     // ★ 코어가 **똑바로 서** 있었다. 위가 위고 아래가 아래라 벽에 그대로 베끼면
     //   끝이었다 — 추론은 "코어의 아래가 벽의 아래" 한 번뿐(비평 ④).
     //   이제 코어는 받침 위에 **눕혀** 둔다. 어느 끝이 위인지는 **드릴 날**이
-    //   말한다 — 시추는 위에서 아래로 뚫으니 날이 박힌 쪽이 땅 위, 반대쪽이
-    //   가장 깊은 곳이다. 그 한 번의 추론이 이 방의 문제다. 눕힌 방향도 판마다
+    //   말한다 — 시추는 위에서 아래로 뚫으니 날이 박힌 쪽이 땅속의
+    //   가장 깊은 곳이다. 그 끝부터 벽의 아래 층으로 읽는다. 눕힌 방향도 판마다
     //   섞는다(왼쪽이 늘 위면 외운다).
     const flip = random() < 0.5 ? 1 : -1;       // +1: 드릴 날이 +x쪽(오른쪽)
     for (const dz of [-1.0, 1.0]) {
@@ -111,23 +111,24 @@ export class StrataOrderGate {
     }
     const cradle = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.16, 0.9), dark);
     cradle.position.set(coreX, 0.78, coreZ); g.add(cradle);
+    this.coreBands=[];
     for (let i = 0; i < 4; i++) {
-      // i=0 이 맨 아래(가장 오래됨). 눕히면 드릴 날 **반대편**이 i=0이다.
+      // i=0 이 맨 아래(가장 오래됨). 눕히면 드릴 날 쪽이 i=0이다.
       const off = (1.5 - i) * 0.92 * flip;
       const band = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.9, 8), toon(BAND_C[i]));
       band.rotation.z = Math.PI / 2;
       band.position.set(coreX + off, 1.32, coreZ);
-      g.add(band);
+      g.add(band);this.coreBands.push({level:i,mesh:band});
       const f = FOSSILS[this.order[i]];
       const emb = new THREE.Mesh(new THREE.DodecahedronGeometry(f.r * 0.8, 0), toon(f.c));
       emb.position.set(coreX + off, 1.32, coreZ + 0.42);
       g.add(emb);
     }
-    // 드릴 날 — 이 끝이 땅 위다. 날은 위에서 아래로 들어간다.
+    // 드릴 날 — 이 끝이 깊은 곳이다. 날은 위에서 아래로 들어간다.
     const bit = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.9, 6), lite);
     bit.rotation.z = -flip * Math.PI / 2;
     bit.position.set(coreX + flip * 2.35, 1.32, coreZ);
-    g.add(bit);
+    g.add(bit);this.coreBit=bit;
     const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.3, 8), lite);
     collar.rotation.z = Math.PI / 2;
     collar.position.set(coreX + flip * 1.95, 1.32, coreZ);
@@ -201,7 +202,7 @@ export class StrataOrderGate {
     if (m && m.slot.got) return `E — ${m.slot.level + 1}층에서 되빼기`;
     const f = this._nearFossil(pos);
     if (f) return `E — ${f.name} 들기`;
-    if (this._atCore(pos)) return '⛏ 시추 코어 — 아래부터 쌓인 순서 그대로다';
+    if (this._atCore(pos)) return '⛏ 시추 코어 — 날 쪽이 깊은 끝이다. 그 끝부터 벽의 아래 층으로';
     const n = this.fossils.filter((x) => x.slot).length;
     return `🦴 코어를 읽고 같은 순서로 벽에 꽂아라 (${n}/4)`;
   }

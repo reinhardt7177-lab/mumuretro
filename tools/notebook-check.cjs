@@ -26,13 +26,34 @@ function pageOverflows(metrics) {
 
 (async () => {
   let browser;
-  const result = { date: new Date().toISOString(), base, ok: false, errors: [], fontFailures: [], metrics: [] };
+  const result = { date: new Date().toISOString(), base, ok: false, errors: [], fontFailures: [], metrics: [], streamNotices:[], decodedAssets:[] };
   fs.mkdirSync(outputDir, { recursive: true });
   const observe = (page) => {
+    const context=result.decodedAssets.length;result.decodedAssets.push(null);page.__assetAudit=context;
+    const responses=new Map();page.on('response',r=>responses.set(r.request(),r.status()));
     page.on('pageerror', (e) => result.errors.push(String(e)));
     page.on('requestfailed', (req) => {
+      // Edge can label an already-decoded streamed GLB as ERR_ABORTED. Retain
+      // that notice and require a 200 response AND the actual decoded asset below.
+      if(req.failure()?.errorText==='net::ERR_ABORTED'&&req.url().endsWith('.glb')){result.streamNotices.push({url:req.url(),context,status:responses.get(req)});return;}
       (fontRequest(req.url()) ? result.fontFailures : result.errors).push(req.url() + ': ' + req.failure()?.errorText);
     });
+  };
+  const verifyDecodedAssets=async page=>{
+    result.decodedAssets[page.__assetAudit]=await page.evaluate(async()=>{
+      const {heritagePart}=await import('/src/core/HeritageAssets.js'),{natureGeometry}=await import('/src/world/NatureAssets.js'),{templePart}=await import('/src/shrine/BalanceTemple.js');
+      const nature=natureGeometry('rockA'),hasNature=!!nature?.attributes.position.count;nature?.dispose();
+      const assets={
+        '/assets/characters/sky-navigator/navigator-v01.glb':!!game.player.body.userData.navigator,
+        '/assets/characters/sky-navigator/props-v02.glb':!!game.player.body.getObjectByName('notebook')&&!!game.player.body.getObjectByName('telescope'),
+        '/assets/models/planet-nature-v01.glb':hasNature,
+        '/assets/models/balance-temple-v04.glb':!!templePart('hall_entry'),
+        '/assets/models/starsail-v02.glb':!!game.lab.starsail?.model?.children.length,
+      };
+      for(const id of ['glacier-temple','weight-exterior','explorer-notebook'])assets[`/assets/models/heritage/${id}.glb`]=!!heritagePart(id)?.children.length;
+      return assets;
+    });
+    assert(Object.values(result.decodedAssets[page.__assetAudit]).every(Boolean),'Every required GLB must actually decode; procedural fallback does not count');
   };
   try {
     browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -43,6 +64,7 @@ function pageOverflows(metrics) {
       observe(page);
       await page.goto(base, { waitUntil: 'networkidle', timeout: 120000 });
       await page.waitForFunction(() => !!window.game, null, { timeout: 60000 });
+      await verifyDecodedAssets(page);
       await page.evaluate(() => {
         game.loop.stop();
         while (game.dialogue.active) game.dialogue.next();
@@ -149,6 +171,7 @@ function pageOverflows(metrics) {
     observe(phone);
     await phone.goto(base, { waitUntil: 'networkidle' });
     await phone.waitForFunction(() => !!window.game, null, { timeout: 60000 });
+    await verifyDecodedAssets(phone);
     await phone.evaluate(() => {
       game.loop.stop(); document.body.classList.remove('titling');
       document.getElementById('title').style.display = 'none';
@@ -169,6 +192,7 @@ function pageOverflows(metrics) {
     // Fail the process, rather than merely printing measurements, on any regression.
     result.overflows = pageOverflows(result.metrics);
     assert.deepEqual(result.errors, [], 'No runtime errors or failed non-font requests');
+    assert(result.streamNotices.every(n=>n.status===200&&result.decodedAssets[n.context]?.[new URL(n.url).pathname]),'Every streamed GLB cancellation notice must have actual decoded-model evidence');
     const runs = result.metrics.filter((m) => m.sizes);
     assert.equal(runs.length, 2, 'Both normal and font-blocked contexts ran');
     for (const run of runs) {
@@ -182,7 +206,9 @@ function pageOverflows(metrics) {
         if (fixture.full) {
           assert.ok(fixture.records.at(-1).text.endsWith(fixture.waterwayRecord), 'Final paragraph includes the waterway observation');
           assert.equal(fixture.explored, 100, 'Full fixture reveals the map');
-          for (const label of ['바람고개', '물길 유적']) assert.ok(fixture.drawnText.includes(label), `Map canvas rendered ${label}`);
+          // The opened water entrance is named "물의 사당 입구"; use the
+          // discovered landmark names, then independently verify real canvas text.
+          for (const label of fixture.landmarks) assert.ok(fixture.drawnText.includes(label), `Map canvas rendered ${label}`);
         }
       }
       for (const size of run.sizes) {
