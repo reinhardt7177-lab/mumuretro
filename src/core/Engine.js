@@ -5,7 +5,8 @@ import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 import { quality } from '../render/Quality.js';
 import { orthonormalizeHeading } from '../sphere/SurfaceTransform.js';
 import { smoothK } from '../util/math.js';
-import { LIGHT, SKY as SKY_C, INTENSITY, FOG_DENSITY, SUN_ELEV_DEG, SUN_AZIM_DEG } from '../data/lighting.js';
+import { prepareInteriorScene, syncInteriorScene } from '../render/InteriorDirection.js';
+import { LIGHT, SKY as SKY_C, INTENSITY, FOG_DENSITY, SUN_ELEV_DEG, SUN_AZIM_DEG, OUTDOOR } from '../data/lighting.js';
 
 const SKY = SKY_C.horizon;   // 배경·안개는 반드시 하늘 지평선 색과 같아야 한다(§3)
 const _ray = new THREE.Raycaster();
@@ -46,7 +47,7 @@ export class Engine {
     // 대신 광원 강도를 올려 형태 대비는 유지한다.
     renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = quality.get('shadow') > 0;
-    // PCFSoft는 그림자 한 점마다 표본을 여러 번 뜬다. 낮은 단수에서는 PCF로 내린다.
+    // 화질별 기본 필터. 실내의 중간 화질 보간 선택은 applySceneShadows에서 적용한다.
     renderer.shadowMap.type = quality.get('soft') ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     this.renderer = renderer;
     // 외곽선 — 굵으면 화면이 색칠공부처럼 된다. 레퍼런스(로우폴리 툰)는 외곽선이 아예 없고
@@ -60,11 +61,9 @@ export class Engine {
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(SKY);
-    // ── 대기 원근 (§3) ──────────────────────────────────────────────────
-    // 구버전엔 이게 사실상 없어서 근경과 원경의 채도가 같았다 — 화면이 납작해 보인 진짜 원인.
-    // 선형 안개 대신 지수 안개를 쓴다: 1 − exp(−(d·k)²)라 근경은 거의 손대지 않고
-    // 원경만 빠르게 대기색으로 간다. k는 "지평선 28u에서 0.60 수렴"에서 역산한 값이다.
-    scene.fog = new THREE.FogExp2(SKY, FOG_DENSITY);
+    // Preview: keep the platform/near path clear, then separate middle and distant layers.
+    scene.fog = new THREE.Fog(SKY, OUTDOOR.fogNear, OUTDOOR.fogFar);
+    this.outdoorScene = scene;
     this.scene = scene;
 
     // far: 가시 지오메트리는 전부 구 표면 위 → 지평선 림까지 √(L²−R²) 정도면 충분. R*3이면 넉넉.
@@ -76,7 +75,7 @@ export class Engine {
     // ── 조명 (§2) ───────────────────────────────────────────────────────
     // 규칙 하나: 빛은 따뜻하게, 그림자는 차갑게. 그림자는 "빛이 없는 곳"이 아니라
     // "하늘이 비추는 곳"이다. 반구광의 하늘색이 곧 그림자 색이 된다.
-    this.hemi = new THREE.HemisphereLight(LIGHT.air, 0x8a8560, INTENSITY.hemi);
+    this.hemi = new THREE.HemisphereLight(LIGHT.air, OUTDOOR.ground, INTENSITY.hemi);
     scene.add(this.hemi);
     const sun = new THREE.DirectionalLight(LIGHT.sun, INTENSITY.sun);
     sun.castShadow = quality.get('shadow') > 0;
@@ -96,7 +95,7 @@ export class Engine {
     // 반대편 약한 보조광 — 이게 없으면 그림자 면이 단색 판이 되어 형태가 사라진다.
     const fill = new THREE.DirectionalLight(LIGHT.shadow, INTENSITY.fill);
     fill.position.set(-26, 20, -18);
-    scene.add(fill);
+    scene.add(fill); scene.add(fill.target);
     this.fill = fill;
 
     // 카메라 접선 프레임(이동 입력 기준). 첫 프레임은 lookHeight 위를 봄.
@@ -114,7 +113,6 @@ export class Engine {
     // 화질 단수가 바뀌면 픽셀비·그림자를 다시 건다(스스로 내려갈 때 쓴다).
     quality.onChange((t) => {
       renderer.shadowMap.enabled = t.shadow > 0;
-      renderer.shadowMap.type = t.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
       this.sun.castShadow = t.shadow > 0;
       if (t.shadow > 0) this.sun.shadow.mapSize.set(t.shadow, t.shadow);
       // 그림자맵 크기를 바꾸면 이미 만든 타깃을 버려야 새 크기로 다시 만든다.
@@ -155,19 +153,23 @@ export class Engine {
     const target = player.position.clone().addScaledVector(up, this.lookHeight + this._cameraLift);
     let camDist = dist;
 
-    // 카메라 충돌 — 시선표적→희망카메라 사이에 건물이 있으면 그 앞으로 당김(파고듦 방지). town.html:294 패턴.
-    if (this.camColliders.length) {
-      _camOff.copy(dir);
-      _ray.set(target, _camOff); _ray.far = dist;
-      const hit = _ray.intersectObjects(this.camColliders, false);
-      if (hit.length) camDist = Math.max(2.5, hit[0].distance - 0.5);
-    }
+    // Both obstruction rays use the same world transforms in this update.
+    // Prepare once; retain both rays to keep interpolation out of thin walls.
+    for(const m of this.camColliders)m.updateWorldMatrix(true,false);
+    const avoid = p => {
+      if(!this.camColliders.length)return;
+      _camOff.subVectors(p,target);const length=_camOff.length();if(length<.01)return;
+      _ray.set(target,_camOff.divideScalar(length));_ray.far=length+.25;
+      const hit=_ray.intersectObjects(this.camColliders,false).find(h=>{for(let o=h.object;o;o=o.parent)if(!o.visible)return false;return true;});
+      if(hit)p.copy(target).addScaledVector(_camOff,Math.max(.12,hit.distance-.35));
+    };
     const desired = target.clone().addScaledVector(dir, camDist);
     // 능선을 등지고 활공할 때 카메라가 뒤쪽 언덕 속으로 들어가지 않게 한다.
     if (player.planet?.surfaceAt) {
       player.planet.surfaceAt(_ground.copy(desired).normalize(), _ground);
       if (desired.length() < _ground.length() + 0.8) desired.setLength(_ground.length() + 0.8);
     }
+    avoid(desired);
 
     if (!this._camPlaced) { this.camera.position.copy(desired); this._camPlaced = true; }
     else this.camera.position.lerp(desired, smoothK(0.0008, dt));
@@ -175,6 +177,8 @@ export class Engine {
       player.planet.surfaceAt(_ground.copy(this.camera.position).normalize(), _ground);
       if (this.camera.position.length() < _ground.length() + 0.8) this.camera.position.setLength(_ground.length() + 0.8);
     }
+    // Rotation/interpolation can cross a thin wall even when the desired end is clear.
+    avoid(this.camera.position);
     const fov = THREE.MathUtils.lerp(this.camera.fov, player.gliding ? 68 : 62, 1 - Math.exp(-3 * dt));
     if (Math.abs(fov - this.camera.fov) > 0.001) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
 
@@ -191,6 +195,14 @@ export class Engine {
     //
     // 방위는 **카메라가 아니라 지역 좌표계**에 건다. camRight에 걸면 시점을 돌릴 때마다
     // 그림자가 같이 돌아서 형태를 못 읽는다. worldY에서 유도한 지역 북쪽을 기준으로 고정한다.
+    this.syncOutdoorLighting(player);
+  }
+
+  // Low frequency, linear radiance from sky and ground; no geometry or texture edits.
+  // PMREM is reused until local up changes by 8 degrees. Direct sun remains a light.
+  // Shared outdoor lighting entry point: gameplay camera and fresh-title sky.
+  syncOutdoorLighting(player) {
+    const up=player.up;
     const ref = Math.abs(up.y) > 0.99 ? _WX : _WY;
     _east.crossVectors(ref, up).normalize();
     _north.crossVectors(up, _east).normalize();
@@ -202,21 +214,71 @@ export class Engine {
     this.sun.position.copy(player.position).addScaledVector(_sunDir, SUN_HEIGHT);
     this.sun.target.position.copy(player.position);
     this.sun.target.updateMatrixWorld();
+    // All exterior lights use the same spherical local frame as the ground.
+    this.hemi.position.copy(up);
+    this.fill.position.copy(player.position).addScaledVector(up,38).addScaledVector(_north,24).addScaledVector(_east,-28);
+    this.fill.target.position.copy(player.position);this.fill.target.updateMatrixWorld();
+    this._updateOutdoorEnvironment(up, _sunDir);
+    this._lightingPosition??=new THREE.Vector3();this._lightingPosition.copy(player.position);
+  }
+
+  _updateOutdoorEnvironment(up,sunDir) {
+    if(this._environmentUp&&this._environmentUp.dot(up)>.9903)return;
+    this._environmentUp??=new THREE.Vector3();this._environmentUp.copy(up);
+    const w=OUTDOOR.environmentWidth,h=OUTDOOR.environmentHeight;
+    const top=new THREE.Color(SKY_C.top),air=new THREE.Color(SKY),ground=new THREE.Color(OUTDOOR.ground),key=new THREE.Color(LIGHT.sun),c=new THREE.Color(),d=new THREE.Vector3(),data=new Float32Array(w*h*4);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const phi=(x+.5)/w*Math.PI*2,theta=(y+.5)/h*Math.PI;
+      // DataTexture flipY=false; invert equirectUv(u,v), whose v=0 is -Y.
+      d.set(-Math.sin(theta)*Math.cos(phi),-Math.cos(theta),-Math.sin(theta)*Math.sin(phi));
+      const altitude=d.dot(up),skyMix=THREE.MathUtils.smoothstep(altitude,-.18,.24);
+      c.copy(ground).lerp(air,skyMix).lerp(top,THREE.MathUtils.smoothstep(altitude,.18,.92)*.55).multiplyScalar(OUTDOOR.environmentGain);
+      const glow=Math.pow(Math.max(0,d.dot(sunDir)),12)*OUTDOOR.environmentKey;
+      c.r+=key.r*glow;c.g+=key.g*glow;c.b+=key.b*glow;
+      const i=(y*w+x)*4;data[i]=c.r;data[i+1]=c.g;data[i+2]=c.b;data[i+3]=1;
+    }
+    const texture=new THREE.DataTexture(data,w,h,THREE.RGBAFormat,THREE.FloatType);
+    texture.mapping=THREE.EquirectangularReflectionMapping;texture.colorSpace=THREE.LinearSRGBColorSpace;texture.needsUpdate=true;
+    this._outdoorPmrem??=new THREE.PMREMGenerator(this.renderer);
+    const previous=this._outdoorEnvironment;this._outdoorEnvironment=this._outdoorPmrem.fromEquirectangular(texture);texture.dispose();
+    this.outdoorScene.environment=this._outdoorEnvironment.texture;previous?.dispose();
+    this.outdoorScene.userData.outdoorLighting={localUp:up.toArray(),linearEnvironment:[w,h],environmentGain:OUTDOOR.environmentGain,key:OUTDOOR.environmentKey,lights:3,additionalRealtimeLights:0};
   }
 
   // 후처리를 붙이면 컴포저가 외곽선 패스까지 감싸서 그린다. 없으면 기존 경로 그대로.
   attachPost(post) { this.post = post; this.applySize(); }
 
   // 사당 안팎 전환. 배경·안개는 씬마다 다르므로 씬 자신이 들고 있고, 여기선 갈아 끼우기만 한다.
-  setScene(scene) { this.scene = scene; this.applySceneShadows(); }
+  setScene(scene) { this.scene = scene; this.interiorArt=prepareInteriorScene(this.renderer,scene);this.applySceneShadows(); }
 
   // 사당의 태양도 현재 화질을 따른다. 아직 방문하지 않은 씬은 입장할 때 맞춘다.
   applySceneShadows() {
     const size = quality.get('shadow');
+    // Keep the authored scene's interpolated edge at the existing map size.
+    // Low/min tiers and scenes without this setting retain their default filter.
+    this.renderer.shadowMap.type = quality.get('soft') ||
+      (quality.name === 'mid' && this.scene.userData.softMidShadows)
+      ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
+    // Three r160 compiles the shadow filter into each material program. A
+    // renderer setting alone can leave previously drawn surfaces on the old
+    // filter after changing quality or returning to a scene.
+    this._sceneShadowVariants ??= new WeakMap();
+    const variant = `${size > 0}:${this.renderer.shadowMap.type}`;
+    if (this._sceneShadowVariants.get(this.scene) !== variant) {
+      const materials = new Set();
+      this.scene.traverse(o => {
+        if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) materials.add(m);
+      });
+      materials.forEach(m => { m.needsUpdate = true; });
+      this._sceneShadowVariants.set(this.scene, variant);
+    }
     if (!size) return;
     this.scene.traverse(light => {
       if (!light.isLight || !light.castShadow || !light.shadow) return;
-      if(light.isDirectionalLight){light.shadow.normalBias=.035;light.shadow.bias=-.00015;}
+      if(light.isDirectionalLight){
+        light.shadow.normalBias=light.userData.authoredShadowNormalBias??.035;
+        light.shadow.bias=light.userData.authoredShadowBias??-.00015;
+      }
       if (light.shadow.mapSize.x === size && light.shadow.mapSize.y === size) return;
       light.shadow.mapSize.set(size, size);
       if (light.shadow.map) { light.shadow.map.dispose(); light.shadow.map = null; }
@@ -227,6 +289,7 @@ export class Engine {
   // 그리기 호출 151번·삼각형 104k·화면 한 장어치 픽셀이 여기서 나간다.
   // 가장 낮은 단수에서만 뺀다 — 실루엣이 뭉개지므로 마지막에 버릴 것이다.
   drawScene() {
+    syncInteriorScene(this.scene);
     if (quality.get('outline')) this.outline.render(this.scene, this.camera);
     else this.renderer.render(this.scene, this.camera);
   }

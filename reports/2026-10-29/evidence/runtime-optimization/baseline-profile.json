@@ -1,0 +1,254 @@
+{
+  "phase": "baseline",
+  "browser": "156.0.4314.50",
+  "files": [
+    {
+      "file": "src/world/PlanetCameraOcclusion.js",
+      "sha256": "55d8d1ff21641b64ef101f7f2e25a4d4fe13e231fca787f52024cf3bc382fc42"
+    },
+    {
+      "file": "src/core/Engine.js",
+      "sha256": "f43a3a57cff73bc61aebaf663c3c4622d16ab90beb97e3fb704e118cdeff3d72"
+    },
+    {
+      "file": "src/world/Scatter.js",
+      "sha256": "7d2e9d7fd5f884d73babd09f074a249286ffaf18b08b978a6025d013011a9a16"
+    },
+    {
+      "file": "src/render/InteriorDirection.js",
+      "sha256": "c16ff8bc65074e68da8c7b1401008566382817aeed146954890886bc68bb40d3"
+    }
+  ],
+  "run": {
+    "scope": "Instrumented synchronous 240 fixed updates/renders; CPU attribution, not FPS or GPU timing. Inclusive method rows overlap.",
+    "updates": 240,
+    "methods": {
+      "camera broad phase": {
+        "calls": 240,
+        "ms": 449.30000004172325
+      },
+      "camera complete": {
+        "calls": 240,
+        "ms": 32.59999988973141
+      },
+      "scatter body collision": {
+        "calls": 240,
+        "ms": 126.69999995827675
+      },
+      "scatter focus": {
+        "calls": 240,
+        "ms": 0.7999999672174454
+      },
+      "sky": {
+        "calls": 240,
+        "ms": 5.099999904632568
+      },
+      "grass": {
+        "calls": 240,
+        "ms": 0.5999999940395355
+      },
+      "player": {
+        "calls": 240,
+        "ms": 4.000000014901161
+      },
+      "render submission": {
+        "calls": 240,
+        "ms": 17774.200000032783
+      }
+    },
+    "meanCalls": 453,
+    "meanTriangles": 3277274,
+    "cameraEntries": 11816,
+    "selectedCameraEntries": 24,
+    "actor": [
+      64.62320132218167,
+      7.141712441913236,
+      -20.997350943201212
+    ]
+  },
+  "self": [
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#update",
+      "ms": 288.837,
+      "percent": 1.4864476039532177
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/world/PlanetCameraOcclusion.js#query",
+      "ms": 266.192,
+      "percent": 1.3699091895827575
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#traverse",
+      "ms": 179.046,
+      "percent": 0.9214279946731472
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#projectObject",
+      "ms": 174.418,
+      "percent": 0.897610826127928
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#setProgram",
+      "ms": 147.449,
+      "percent": 0.7588197244650028
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#applyMatrix4",
+      "ms": 113.666,
+      "percent": 0.5849615989327768
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#updateMatrixWorld",
+      "ms": 111.861,
+      "percent": 0.5756724914945485
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#renderObject",
+      "ms": 111.345,
+      "percent": 0.5730169904207945
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/effects/OutlineEffect.js#cleanupCache",
+      "ms": 109.755,
+      "percent": 0.5648343417632969
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/world/Scatter.js#resolve",
+      "ms": 108.018,
+      "percent": 0.5558951840789742
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#multiplyMatrices",
+      "ms": 92.01,
+      "percent": 0.4735128949536782
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#updateWorldMatrix",
+      "ms": 86.387,
+      "percent": 0.44457513809763505
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#WebGLRenderer.renderBufferDirect",
+      "ms": 84.042,
+      "percent": 0.43250701790780377
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#copy",
+      "ms": 83.114,
+      "percent": 0.42773123303097504
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#getParameters",
+      "ms": 62.469,
+      "percent": 0.3214854584812664
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#toArray",
+      "ms": 56.176,
+      "percent": 0.2890996672852715
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/effects/OutlineEffect.js#restoreOriginalMaterial",
+      "ms": 46.451,
+      "percent": 0.23905170615686672
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/effects/OutlineEffect.js#isCompatible",
+      "ms": 34.572,
+      "percent": 0.17791857194151248
+    }
+  ],
+  "inclusive": [
+    {
+      "key": "http://127.0.0.1:5512/src/render/Post.js#render",
+      "ms": 17994.604,
+      "percent": 92.60598884452818
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/core/Engine.js#render",
+      "ms": 17994.604,
+      "percent": 92.60598884452818
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/postprocessing/EffectComposer.js#render",
+      "ms": 17992.717,
+      "percent": 92.59627773885731
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/core/Engine.js#drawScene",
+      "ms": 17841.35,
+      "percent": 91.81729473298346
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/effects/OutlineEffect.js#OutlineEffect.render",
+      "ms": 17841.047,
+      "percent": 91.8157353980506
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#WebGLRenderer.render",
+      "ms": 17505.618,
+      "percent": 90.08951045683315
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#renderObject",
+      "ms": 16643.836,
+      "percent": 85.65450459182968
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#WebGLRenderer.renderBufferDirect",
+      "ms": 16324.099,
+      "percent": 84.00903570264585
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#renderScene",
+      "ms": 16113.651,
+      "percent": 82.92600297014707
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#renderObjects",
+      "ms": 16110.773,
+      "percent": 82.911191861445
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#renderInstances",
+      "ms": 9447.444,
+      "percent": 48.61956915936048
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#setup",
+      "ms": 6174.708,
+      "percent": 31.777022721156793
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#setupVertexAttributes",
+      "ms": 6014.673,
+      "percent": 30.9534314142998
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#vertexAttribPointer",
+      "ms": 3042.752,
+      "percent": 15.658975199935815
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/boot.js#step",
+      "ms": 857.501,
+      "percent": 4.412974469467167
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/examples/jsm/effects/OutlineEffect.js#OutlineEffect.renderOutline",
+      "ms": 794.617,
+      "percent": 4.089353288223094
+    },
+    {
+      "key": "http://127.0.0.1:5512/src/boot.js#stepPlanet",
+      "ms": 680.829,
+      "percent": 3.503763838261252
+    },
+    {
+      "key": "http://127.0.0.1:5512/vendor/three/build/three.module.js#projectObject",
+      "ms": 584.149,
+      "percent": 3.0062176293261187
+    }
+  ],
+  "errors": []
+}

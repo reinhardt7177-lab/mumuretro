@@ -1,0 +1,13 @@
+const fs=require('node:fs'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const A='art/arrival-dais/v01',B='reports/2026-10-26/evidence/arrival-dais';
+assert(!fs.existsSync(B+'/baseline.json'),'Preserve existing baseline');
+fs.mkdirSync(A+'/exports',{recursive:true});fs.mkdirSync(B,{recursive:true});
+const previous=JSON.parse(fs.readFileSync('reports/2026-10-26/evidence/wayfarer-terraces/baseline.json'));
+for(const [file,expected]of Object.entries(previous.inventory))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),expected,file);
+const files=['src/boot.js','src/world/Landing.js','src/world/LandmarkAssets.js'];
+for(const file of files)fs.copyFileSync(file,B+'/before-'+file.replaceAll('/','__'));
+for(const view of ['front','side','rear'])fs.copyFileSync('reports/2026-10-26/evidence/forest-render/after-landing-'+view+'.png',B+'/before-'+view+'.png');
+fs.writeFileSync(B+'/baseline.json',JSON.stringify({createdUtc:new Date().toISOString(),previousGoalTurn:'Progress: completed requested C-drive cleanup; three first terrain references and protected-height preview exist but are not installed. User identifies arrival-platform/background quality mismatch; fix landmark craftsmanship before terrain rollout.',runtimeFiles:previous.runtimeFiles,inventory:previous.inventory,files,scope:'Landing physical art and same-surface conformity. Other terrain previews remain uninstalled; preserve all originals and personal progress.'},null,2));
+const spec={version:1,role:'Original Mumu design; previous AI targets kept primitive platform and are superseded only for this object',radius:2.64,walkRadius:2.4,sourceFloor:0,sourceWalkHeight:.22,runtimeSurfaceOffset:.006,topTolerance:.05,palette:{stone:'#b2aa91',shadow:'#686d63',brass:'#a88a4a',inlay:'#6ba6a9',moss:'#637347'},budget:{webMeshes:4,materials:4,triangles:14000,texture:512},top:{sectors:8,angularSamples:96,radialStep:.28,inlayInner:1.69,inlayOuter:1.745,medallionRadius:.35},lenses:{count:4,radius:2.22,diameter:.29,uprightPosts:0},placement:'Source floor0. Runtime top is conformed to actual planet height at each vertex; foundation buried, no raised walking collision or extra false flat floor. Measure actual triangles versus ground before install.',camera:{fov:62,distance:7.6,pitch:.32},references:['front','side','rear'],preserve:['Existing entry/return/prompt radius','Landing VFX, notebook pause, jump and isolated save','All other assets and terrain/path/signature']};
+fs.writeFileSync(A+'/design-spec.json',JSON.stringify(spec,null,2));
+console.log('Prepared arrival landmark baseline463; no runtime change.');

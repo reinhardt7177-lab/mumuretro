@@ -6,6 +6,10 @@
 import * as THREE from 'three';
 import { animateLimbs } from '../sphere/Character.js';
 import { smoothK } from '../util/math.js';
+import { frameSubject } from '../render/SubjectCamera.js';
+import { frameTask,relaxWorkspace } from '../render/TaskCamera.js';
+import { SceneRayQuery } from '../render/SceneRayQuery.js';
+import { followVisibleCamera } from '../render/VisibleCameraFollow.js';
 
 const SPEED = 3.6, RUN = 6.0, TURN = 12;
 // 점프 높이 ≈ v²/2g = 0.9u. 레이저 낮은 줄(0.75u)을 넘고 높은 줄(2.2u)에는 안 닿는다.
@@ -29,6 +33,7 @@ export class RoomActor {
     this.position = new THREE.Vector3();
     this.heading = new THREE.Vector3(0, 0, -1);
     this.moving = false; this.running = false;
+    this.travelSpeed=0;
     // 카메라 자체 방위. 바깥과 달리 up이 항상 +Y라 각도 하나면 된다.
     this.camYaw = Math.PI;
     this.freeCam = false;                // 열린 사당 — boot이 켠다
@@ -57,6 +62,8 @@ export class RoomActor {
     this.camYaw = Math.atan2(-this.heading.x, -this.heading.z);
     this._camPlaced = false;
     this.syncMesh();
+    this._workspaceOffset=null;this._workspaceCameraOffset=null;this._workspaceCache=null;this._workspaceAge=0;
+    this._cameraForecast=null;this._cameraMotionFoot=null;this._cameraWasAnticipating=false;
   }
 
   // 이 점이 열린 영역 **아무 데나** 들어 있는가(여백 없음).
@@ -85,6 +92,8 @@ export class RoomActor {
   // 벽에 부딪히면 멈추지 않고 **미끄러진다.** 정면으로 막히면 옆으로 흐르게 —
   // 안 그러면 좁은 통로 입구에서 걸려 아이가 "못 지나간다"고 느낀다.
   _move(from, dx, dz) {
+    const work=this.body?.userData.workContact;
+    if(work?.modern&&work.limits&&from.z>=work.limits.z0-.1&&from.z<=work.limits.z1+.1)dz=THREE.MathUtils.clamp(from.z+dz,work.limits.z0,work.limits.z1)-from.z;
     const can = (x, z) => this._walkable(x, z) && this.floorAt(x, z, from.y) <= from.y + 0.26;
     if (can(from.x + dx, from.z + dz)) { from.x += dx; from.z += dz; return; }
     if (can(from.x + dx, from.z)) { from.x += dx; return; }
@@ -109,8 +118,19 @@ export class RoomActor {
   //
   //   반복을 늘리는 것으로는 안 고쳐진다. 두 원이 만나는 점은 자유 공간의 진짜
   //   오목 모서리라서, 몇 번을 돌려도 거기로 수렴할 뿐이다. 모양을 고쳐야 한다.
-  _pushOut(p) {
-    for (const o of this.obstacles) {
+  _pushOut(p, obstacles=this.obstacles) {
+    for (const o of obstacles) {
+      if(o.disabled===true)continue;
+      if(o.maxY!==undefined&&(p.y>=o.maxY||p.y+1.65<=o.minY))continue;
+      if(o.shape==='box'){
+        const pad=o.padding??.28,cx=THREE.MathUtils.clamp(p.x,o.x0,o.x1),cz=THREE.MathUtils.clamp(p.z,o.z0,o.z1),dx=p.x-cx,dz=p.z-cz,d=Math.hypot(dx,dz);
+        if(d>=pad)continue;
+        if(d>1e-6){p.x=cx+dx/d*pad;p.z=cz+dz/d*pad;}
+        else if(o.escapeX){p.x=(o.escapeX<0?o.x0-pad:o.x1+pad);}
+        else if(o.escapeZ){p.z=(o.escapeZ<0?o.z0-pad:o.z1+pad);}
+        else{const sides=[{axis:'x',v:o.x0-pad},{axis:'x',v:o.x1+pad},{axis:'z',v:o.z0-pad},{axis:'z',v:o.z1+pad}];sides.sort((a,b)=>Math.abs(p[a.axis]-a.v)-Math.abs(p[b.axis]-b.v));p[sides[0].axis]=sides[0].v;}
+        continue;
+      }
       let cx = o.x, cz = o.z;
       if (o.x2 !== undefined) {                     // 캡슐 — 스핀 위 가장 가까운 점
         const vx = o.x2 - o.x, vz = o.z2 - o.z;
@@ -122,18 +142,23 @@ export class RoomActor {
       const dx = p.x - cx, dz = p.z - cz;
       const d = Math.hypot(dx, dz);
       if (d < o.r && d > 1e-6) { p.x = cx + dx / d * o.r; p.z = cz + dz / d * o.r; }
+      else if(d<1e-6&&o.escapeX!==undefined){p.x=cx+o.escapeX*o.r;p.z=cz+o.escapeZ*o.r;}
     }
   }
 
   update(dt, intent, camera) {
+    const startX=this.position.x,startZ=this.position.z;
+    const work=this.body?.userData.workContact;
     // 카메라 기준 이동 — 화면에서 위로 밀면 화면 안쪽으로 간다
     const cf = _fwd.set(-Math.sin(this.camYaw), 0, -Math.cos(this.camYaw));
     const cr = _right.set(cf.z, 0, -cf.x);
     _move.set(0, 0, 0).addScaledVector(cf, intent.y).addScaledVector(cr, intent.x);
+    const strength=Math.min(1,_move.length());
     this.moving = _move.lengthSq() > 1e-6;
-    this.running = !!intent.run && this.moving;
+    this.running = !!intent.run && this.moving&&!work?.modern;
 
-    const sp = this.running ? RUN : SPEED;
+    const sp = work?.modern?2.4:this.running?RUN:SPEED;
+    (this._cameraIntentStep??=new THREE.Vector3()).copy(_move).normalize().multiplyScalar(sp*strength*dt);
     if (this.slip > 0) {
       // 얼음 — 미는 힘은 약하고 멈추는 힘은 더 약하다. 그래서 미리 감속해야 한다.
       const accel = 9.0 * (1 - this.slip * 0.72);
@@ -151,17 +176,17 @@ export class RoomActor {
     } else if (this.moving) {
       this.vel.set(0, 0);
       _move.normalize();
-      this._move(this.position, _move.x * sp * dt, _move.z * sp * dt);
+      this._move(this.position, _move.x * sp * strength * dt, _move.z * sp * strength * dt);
       this._pushOut(this.position);
       // 진행 방향으로 부드럽게 돈다
-      const target = Math.atan2(_move.x, _move.z);
+      if(!work){const target = Math.atan2(_move.x, _move.z);
       const cur = Math.atan2(this.heading.x, this.heading.z);
       let d = target - cur;
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
       const step = Math.max(-TURN * dt, Math.min(TURN * dt, d));
       const na = cur + step;
-      this.heading.set(Math.sin(na), 0, Math.cos(na));
+      this.heading.set(Math.sin(na), 0, Math.cos(na));}
     }
 
     // 점프 — 레이저 관문에서만 쓰지만 어디서든 뛸 수 있어야 한다.
@@ -182,7 +207,12 @@ export class RoomActor {
       if (this.position.y <= floor) { this.position.y = floor; this.vy = 0; this.grounded = true; }
     }
 
-    animateLimbs(this.body, dt, this.moving, this.running, { airborne: !this.grounded, vy: this.vy });
+    const handAction=this.body?.userData.navigator?.poseLayer?.use,handTarget=this.body?.userData.actionTargetWorld;
+    if(work&&this.grounded)this.heading.lerp(work.facing,1-Math.exp(-dt*18)).normalize();
+    if(!this.moving&&handAction&&handTarget){const wanted=_move.copy(handTarget).sub(this.position).setY(0);if(wanted.lengthSq()>.001){wanted.normalize();this.heading.lerp(wanted,1-Math.exp(-dt*14)).normalize();}}
+    this.travelSpeed=dt>0?Math.hypot(this.position.x-startX,this.position.z-startZ)/dt:0;
+    const reverse=!!work&&((this.position.x-startX)*work.facing.x+(this.position.z-startZ)*work.facing.z)<-.00001;
+    animateLimbs(this.body, dt, this.travelSpeed>.01, this.running, { airborne: !this.grounded, vy: this.vy, speed:this.travelSpeed,reverse,runBlend:work?0:undefined });
     this.syncMesh();
   }
 
@@ -242,16 +272,47 @@ export class RoomActor {
     return lo === Infinity ? 0 : lo;
   }
 
-  lookHeight() {
-    const p = this.position, zone = this.rects.cameraLookHeightZones?.find(r => p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1);
-    return zone?.lookHeight ?? 1.25;
+  cameraProfile() {
+    const p=this.position,zone=this.rects.cameraLookHeightZones?.find(r=>p.x>=r.x0&&p.x<=r.x1&&p.z>=r.z0&&p.z<=r.z1);
+    if(!zone?.overview)return zone;
+    const wide=zone.overview,zoom=this._cameraInput?.camDist??9,pitch=this._cameraInput?.camPitch??.5;
+    // Looking up provides the same optional overview on touch, without stealing
+    // the existing two-thumb movement/look gesture or adding another HUD mode.
+    const request=Math.max(THREE.MathUtils.smoothstep(zoom,wide.zoomStart,wide.zoomEnd),
+      1-THREE.MathUtils.smoothstep(pitch,wide.lookUpEnd,wide.lookUpStart));
+    const heading=Number.isFinite(wide.focusZ)?Math.atan2(p.x-wide.focusX,p.z-wide.focusZ):this.camYaw;
+    const facing=wide.facingStart===undefined?1:THREE.MathUtils.smoothstep(Math.cos(this.camYaw-heading),wide.facingStart,wide.facingFull);
+    const mix=request*facing,narrow=wide.narrow?1-THREE.MathUtils.smoothstep(this._cameraAspect??1,wide.narrow.aspectEnd,wide.narrow.aspectStart):0;
+    const profile={overviewMix:mix,minPitch:THREE.MathUtils.lerp(.12,wide.minPitch??.12,request)};
+    for(const key of ['lookHeight','minDistance','maxDistance','distanceScale']){
+      const overview=THREE.MathUtils.lerp(wide[key],wide.narrow?.[key]??wide[key],narrow);
+      profile[key]=THREE.MathUtils.lerp(zone[key],overview,mix);
+    }
+    return profile;
   }
 
+  lookHeight() { return this.cameraProfile()?.lookHeight??1.25; }
+
   updateCamera(camera, input, dt) {
+    const previousRotation=this.rects.workspaceAspectFit&&this._camPlaced&&dt>0?camera.quaternion.clone():null;
+    this._cameraInput=input;
+    this._cameraAspect=camera.aspect;
+    if(this.rects.workspaceAspectFit||this._workspaceLensActive){
+      const fit=this.rects.workspaceAspectFit?Math.max(1,1/camera.aspect):1;
+      const wanted=Math.min(100,THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(62)/2)*fit)));
+      const fov=this._camPlaced&&dt>0?THREE.MathUtils.lerp(camera.fov,wanted,1-Math.exp(-8*dt)):wanted;
+      if(Math.abs(camera.fov-fov)>.00001){camera.fov=fov;camera.updateProjectionMatrix();}
+      this._workspaceLensActive=!!this.rects.workspaceAspectFit||Math.abs(fov-62)>.001;
+    }
     this.camYaw += input.consumeYaw();
-    let pitch = Math.max(0.12, Math.min(0.7, input.camPitch));
-    const p=this.position,zone=this.rects.cameraLookHeightZones?.find(r=>p.x>=r.x0&&p.x<=r.x1&&p.z>=r.z0&&p.z<=r.z1);
-    const dist = Math.max(zone?.minDistance??3.2, Math.min(zone?.maxDistance??6.5, input.camDist*(zone?.distanceScale??1)));
+    const zone=this.cameraProfile();
+    let pitch = Math.max(zone?.minPitch??0.12, Math.min(0.7, input.camPitch));
+    let dist = Math.max(zone?.minDistance??3.2, Math.min(zone?.maxDistance??6.5, input.camDist*(zone?.distanceScale??1)));
+    const requestedDistance=dist;
+    for(const focus of this.rects.cameraApproachZones||[]){
+      const near=1-THREE.MathUtils.smoothstep(Math.hypot(this.position.x-focus.x,this.position.z-focus.z),focus.near,focus.far);
+      dist=Math.min(dist,THREE.MathUtils.lerp(requestedDistance,Math.min(requestedDistance,focus.distance),near));
+    }
     const wantedHeight = this.lookHeight();
     this._cameraLookHeight = this._camPlaced
       ? this._cameraLookHeight + (wantedHeight - this._cameraLookHeight) * smoothK(0.0009, dt) : wantedHeight;
@@ -289,17 +350,32 @@ export class RoomActor {
     }
     const camDist = Math.max(1.4, dist * t);      // 너무 붙으면 캐릭터 안이 보인다
     const desired = _des.copy(target).addScaledVector(dir, camDist);
+    const subjectZone=this.rects.cameraSubjectZones?.find(zone=>this.position.x>=zone.x0&&this.position.x<=zone.x1&&this.position.z>=zone.z0&&this.position.z<=zone.z1);
+    let cameraMotion=null;
+    if(subjectZone?.anticipateMotion){
+      const previous=this._cameraMotionFoot??=this.position.clone(),motion=this._cameraSubjectMotion??=new THREE.Vector3();
+      motion.subVectors(this.position,previous).setY(0);if(!this._camPlaced||!this._cameraWasAnticipating||motion.lengthSq()>.25)motion.set(0,0,0);previous.copy(this.position);cameraMotion=motion;
+      // Forecast the controller's actual boundary slides, rather than extending
+      // the clipped velocity through a bridge post when the passage widens.
+      const step=this._cameraIntentStep,path=this._cameraForecast??=Array.from({length:16},()=>new THREE.Vector3());
+      const predicted=this.position.clone();
+      if(step&&this.grounded&&!this.slip)for(const point of path){this._move(predicted,step.x,step.z);this._pushOut(predicted);point.copy(predicted);}
+      else for(let i=0;i<path.length;i++)path[i].copy(this.position).addScaledVector(motion,i+1);
+    }
+    this._cameraWasAnticipating=!!subjectZone?.anticipateMotion;
+    const preferredSubjectCamera=subjectZone?(subjectZone.minRetreat>0?target.clone().addScaledVector(dir,dist):desired.clone()):null;
 
     // 입체 회랑의 옆면은 기존 사각형 경계만으로 알 수 없다. 실제 메시로 시선 충돌을 푼다.
     const occluders = this.rects.cameraOccluders;
+    const visible = (occluders||[]).filter(m => { if(m.userData.cameraIgnored)return false;for (let o = m; o; o = o.parent) if (!o.visible) return false; return true; });
+    for (const m of visible) m.updateWorldMatrix(true, false);
+    const queries=this._cameraRayQuery??=new SceneRayQuery();queries.update(visible);visible.rayQuery=queries;
     const avoid = p => {
       if (!occluders) return;
       _rayDir.subVectors(p, target); const length = _rayDir.length();
       if (length < 0.01) return;
       _ray.set(target, _rayDir.divideScalar(length)); _ray.far = length + 0.25;
-      const visible = occluders.filter(m => { for (let o = m; o; o = o.parent) if (!o.visible) return false; return true; });
-      for (const m of visible) m.updateWorldMatrix(true, false);
-      const hit = _ray.intersectObjects(visible, false)[0];
+      const hit = queries.closest(_ray);
       // 벽 바로 앞에서는 0.6u 최소 거리도 벽 너머가 된다. 충돌면 앞의 여유를 우선한다.
       if (hit) p.copy(target).addScaledVector(_rayDir, Math.max(0.12, hit.distance - 0.35));
     };
@@ -319,8 +395,14 @@ export class RoomActor {
       }
     }
 
+    if(subjectZone)frameSubject(this,target,desired,visible,p=>this._inside(p),avoid,preferredSubjectCamera,dt,subjectZone.halfWidth||0,subjectZone.pitchAssist||0,subjectZone.minRetreat||0,subjectZone.yawAssist??.5);
+    else{this._subjectOffset=0;this._subjectCameraCache=null;this._subjectCacheAge=0;this.cameraReadability=null;}
+    const taskZone=this.rects.cameraTaskZones?.find(zone=>zone.active()&&this.position.x>=zone.x0&&this.position.x<=zone.x1&&this.position.z>=zone.z0&&this.position.z<=zone.z1&&zone.facing(this.camYaw));
+    if(taskZone)frameTask(this,camera,target,desired,visible,taskZone,p=>this._inside(p),avoid,dt);
+    else{relaxWorkspace(this,target,desired,visible,avoid,dt);this._taskOffset=undefined;this._taskAge=0;this.taskReadability=null;}
     if (!this._camPlaced) { camera.position.copy(desired); this._camPlaced = true; }
-    else camera.position.lerp(desired, smoothK(0.0009, dt));
+    else if(subjectZone?.smoothOcclusion&&dt>0)this.cameraTransition=followVisibleCamera(camera.position,desired,target,this.position,visible,p=>this._inside(p),smoothK(0.0009,dt),dt,subjectZone.halfWidth||.22,cameraMotion,this._cameraForecast);
+    else {camera.position.lerp(desired, smoothK(0.0009, dt));this.cameraTransition=null;}
     avoid(camera.position);
 
     if (this.shake > 0.001) {
@@ -331,7 +413,8 @@ export class RoomActor {
       this.shake = Math.max(0, this.shake - dt * 2.4);
     }
     camera.up.set(0, 1, 0);
-    camera.lookAt(target);
+    camera.lookAt(this._workspaceOffset?target.clone().add(this._workspaceOffset):target);
+    if(previousRotation){const wanted=camera.quaternion.clone();camera.quaternion.copy(previousRotation).rotateTowards(wanted,10*dt);}
   }
 }
 

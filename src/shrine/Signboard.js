@@ -16,6 +16,16 @@ import * as THREE from 'three';
 const PX = 512, PY = 160;          // 텍스처 해상도
 const W = 3.4, H = 1.06;           // 판 크기(u)
 
+function paintPlaque(cv,title,body,dim,bodyWeight=500){
+  const c=cv.getContext('2d'),w=cv.width,h=cv.height;
+  c.fillStyle='#eee7d3';c.fillRect(0,0,w,h);c.strokeStyle='#927244';c.lineWidth=6;c.strokeRect(8,8,w-16,h-16);
+  c.textBaseline='top';c.fillStyle=dim?'#68685f':'#2d3936';c.font='700 50px "Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif';c.fillText(title,32,24);
+  c.fillStyle='#baa16a';c.fillRect(32,91,w-64,3);
+  let font=48,lines;do{c.font=`${bodyWeight} ${font}px "Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif`;lines=wrap(c,body,w-64);if(lines.length*font*1.2<=h-144)break;font-=2;}while(font>=28);
+  c.fillStyle=dim?'#68685f':'#24312e';lines.forEach((line,i)=>c.fillText(line,32,112+i*font*1.2));
+  return{title,body,dim,font,lines,maxLineWidth:Math.max(0,...lines.map(v=>c.measureText(v).width)),fits:lines.length*font*1.2<=h-144,width:w,height:h};
+}
+
 // 한글은 단어 단위로 자르면 줄이 들쭉날쭉해진다. 글자 수로 접는다.
 function wrap(ctx, text, maxW) {
   const out = [];
@@ -64,7 +74,8 @@ export function addBoard(scene, seg, side, title, body, glowHex, dim = false) {
   mat.userData.outlineParameters = { visible: false };
 
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat));
+  g.userData.shrineSignboard = true;
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(W,H),mat);g.add(face);
   // 뒤판 — 벽에서 살짝 띄워 두께를 준다. 판이 벽에 그려진 그림이 아니라
   // **걸린 물건**으로 보여야 "읽을 것"으로 읽힌다.
   const back = new THREE.Mesh(new THREE.BoxGeometry(W + 0.16, H + 0.16, 0.1),
@@ -73,11 +84,12 @@ export function addBoard(scene, seg, side, title, body, glowHex, dim = false) {
   back.position.z = -0.07;
   g.add(back);
 
+  let post;
   if (seg.field) {
     // ★ 열린 사당에는 걸 벽이 없다. 판을 **기둥에 세운다** — 난간 안쪽,
     //   들어서는 자리에서 비스듬히 마주 보게. 벽에 걸린 판은 옆을 봐야 읽혔는데
     //   세운 판은 앞을 보고 걸어도 읽힌다. 굴에서 못 읽던 이유 하나가 여기서 사라진다.
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.9, 0.16),
+    post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.9, 0.16),
       new THREE.MeshBasicMaterial({ color: 0x1a262c }));
     post.material.userData.outlineParameters = { visible: false };
     post.position.set(0, -H / 2 - 0.95 + 0.06, -0.06);
@@ -90,8 +102,9 @@ export function addBoard(scene, seg, side, title, body, glowHex, dim = false) {
   }
   scene.add(g);
 
-  return {
-    group: g,
-    set(t, b, d = false) { paint(cv, t, b, glowHex, d); tex.needsUpdate = true; },
+  let plaque=false,plaqueWeight=500,metrics=null,state={title,body,dim},foot;
+  return {group:g,face,back,get state(){return {...state};},get post(){return post;},get shell(){return[back,post,foot].filter(Boolean);},get metrics(){return metrics;},
+    usePlaque(options={}){if(plaque)return;plaque=true;plaqueWeight=options.bodyWeight===700?700:500;cv.width=1024;cv.height=384;face.geometry.dispose();face.geometry=new THREE.PlaneGeometry(2.4,.9);face.position.set(0,1.35,.111);back.geometry.dispose();back.geometry=new THREE.BoxGeometry(2.62,1.10,.16);back.position.set(0,1.35,0);if(post){post.geometry.dispose();post.geometry=new THREE.BoxGeometry(.24,.74,.24);post.position.set(0,.55,-.06);}foot=new THREE.Mesh(new THREE.BoxGeometry(.82,.18,.64),back.material);foot.position.set(0,.09,-.03);g.add(foot);metrics=paintPlaque(cv,state.title,state.body,state.dim,plaqueWeight);tex.needsUpdate=true;},
+    set(t,b,d=false){state={title:t,body:b,dim:d};if(plaque)metrics=paintPlaque(cv,t,b,d,plaqueWeight);else paint(cv,t,b,glowHex,d);tex.needsUpdate=true;},
   };
 }

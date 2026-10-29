@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),{chromium}=require(path.join(process.env.AUDIT_NODE_MODULES||'.','playwright'));
+const B='reports/2026-10-26/evidence/workspace-camera';fs.mkdirSync(B,{recursive:true});
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true}),report={rooms:[],errors:[]};try{
+ for(const kind of['balance','sift']){const p=await browser.newPage({viewport:{width:1280,height:800}});p.on('pageerror',e=>report.errors.push(e.message));await p.route('**/src/shrine/Room.js',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync('src/shrine/Room.js','utf8').replace('seed = Math.floor(Math.random() * 4294967296)','seed = 20261022')}));await p.goto('http://127.0.0.1:5512/?q=mid');await p.waitForFunction(()=>window.game&&document.getElementById('load').style.display==='none',null,{timeout:120000,polling:100});await p.evaluate(()=>game.loop.stop());await p.locator('#title .go').click({force:true});const row=await p.evaluate(async kind=>{
+  game.loop.stop();game.enterShrine(game.shrines.shrines[kind==='balance'?0:2]);await game.room.ready;await game.engine.interiorArt?.ready;game.dialogue.close();game.brief.hide();const T=await import('three'),r=game.room;
+  const object=o=>{o.updateWorldMatrix(true,true);const b=new T.Box3().setFromObject(o);return{name:o.name,type:o.type,at:o.getWorldPosition(new T.Vector3()).toArray(),min:b.min.toArray(),max:b.max.toArray()};};
+  const fields=o=>Object.fromEntries(Object.entries(o).filter(([k,v])=>v?.isObject3D||Array.isArray(v)&&v.some(x=>x?.isObject3D)).map(([k,v])=>[k,Array.isArray(v)?v.filter(x=>x?.isObject3D).map(object):object(v)]));
+  return{kind,segments:r.gates.map(v=>v.gate.seg),gates:r.gates.map(v=>({fields:fields(v.gate),workshop:v.gate.workshop?fields(v.gate.workshop):null})),balance:r.balanceArt?.mechanisms.map(v=>({keys:Object.keys(v),fields:fields(v)})),sieve:r.sieveCourt?{keys:Object.keys(r.sieveCourt),fields:fields(r.sieveCourt)}:null};
+ },kind);report.rooms.push(row);console.log('INSPECTED '+kind);await p.close();}
+ report.pass=!report.errors.length;
+}catch(e){report.failure=e.stack;console.error(e);process.exitCode=1;}finally{fs.writeFileSync(B+'/inspection.json',JSON.stringify(report,null,2));await browser.close();}})();

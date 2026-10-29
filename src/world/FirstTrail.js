@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { FIRST_TRAIL, TRAIL_TEXT, TRAIL_COLORS as C } from '../data/expedition.js';
-import { naturePart } from './NatureAssets.js';
 import { fitHeritageFootprint } from '../core/HeritageAssets.js';
+import { observatoryPart, landmarkFrame, landmarkSpec } from './LandmarkAssets.js';
+import { buildMeshGroundCollider } from './MeshGroundCollider.js';
 
 // 산포보다 먼저 계획한다. 길은 지면을 따르고 충돌 바닥을 따로 만들지 않는다.
 export function planFirstTrail(planet) {
@@ -20,9 +21,9 @@ export function planFirstTrail(planet) {
     pathAt(d) {
       let dot = -1;
       for (const p of samples) dot = Math.max(dot, d.dot(p));
-      if (dot < Math.cos(2.4 / planet.R)) return 0;
+      if (dot < Math.cos(1.6 / planet.R)) return 0;
       const distance = Math.acos(Math.min(1, dot)) * planet.R;
-      const t = THREE.MathUtils.clamp((distance - 1.0) / 1.4, 0, 1);
+      const t = THREE.MathUtils.clamp((distance - 1.0) / .6, 0, 1);
       return 1 - t * t * (3 - 2 * t);
     },
   };
@@ -46,23 +47,33 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   // 능선의 작은 관측대. 높은 바닥 없이 장비와 바람자루가 실루엣을 만든다.
   const camp = at(plan.overlook);
   const equipment = new THREE.Group(); camp.add(equipment);
+  equipment.position.x=landmarkSpec.overlookSite.equipmentSideOffset;
   add(equipment, new THREE.BoxGeometry(1.4, 0.13, 0.7), wood, 0, 0.45, 0);
   for (const x of [-0.52, 0.52]) add(equipment, new THREE.CylinderGeometry(0.04, 0.07, 0.5, 5), brass, x, 0.25, 0);
   const folded = add(equipment, new THREE.ConeGeometry(0.48, 1.22, 4), cloth, 0, 0.76, 0);
   folded.rotation.z = Math.PI / 2; folded.scale.z = 0.3;
-  const flagDir = plan.overlook.clone().addScaledVector(new THREE.Vector3().crossVectors(plan.overlook, plan.waterway).normalize(), 2.4 / planet.R).normalize();
+  const flagDir = plan.overlook.clone().addScaledVector(new THREE.Vector3().crossVectors(plan.overlook, plan.waterway).normalize(), landmarkSpec.observatory.mastOffsetFromOverlook / planet.R).normalize();
   const mast = at(flagDir);
   add(mast, new THREE.CylinderGeometry(0.035, 0.09, 4.1, 7), wood, 0, 2.05, 0);
   const flag = add(mast, new THREE.ConeGeometry(0.26, 1.5, 8, 1, true), cloth, 0.65, 3.8, 0);
   flag.rotation.z = -Math.PI / 2;
-  // 낮은 돌 조각 몇 개만 길 가장자리에 둔다. 표지판과 화살표는 필요 없다.
-  plan.samples.filter((_, i) => i % 7 === 0).forEach((d, i) => {
-    const side = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0)).normalize();
-    const edge = d.clone().addScaledVector(side, (i % 2 ? 1 : -1) * 1.35 / planet.R).normalize();
-    const g = at(edge), detail = naturePart('trail_stone');
-    if (detail) { g.add(detail); detail.rotation.y = i * 1.7; }
-    else { const m = add(g, new THREE.DodecahedronGeometry(0.22, 0), stone, 0, 0.09, 0); m.scale.set(1.4, 0.55, 0.9); m.rotation.y = i * 1.7; }
-  });
+  const observatory=observatoryPart();
+  if(observatory){
+    mast.children.forEach(child=>child.visible=false);
+    const frame=landmarkFrame(planet,flagDir,d=>carpet.liftAt(d));
+    mast.position.copy(frame.position);mast.quaternion.copy(frame.quaternion);mast.add(observatory);
+    // The full bottom contour is seated, not only the origin at its centre.
+    let maxGap=-Infinity;
+    const baseRadius=landmarkSpec.observatory.plinth.radius;
+    for(let i=0;i<12;i++){const a=i*Math.PI/6,point=new THREE.Vector3(Math.cos(a)*baseRadius,0,Math.sin(a)*baseRadius).applyQuaternion(frame.quaternion).add(mast.position),d=point.clone().normalize();maxGap=Math.max(maxGap,point.length()-planet.surfaceAt(d).length()-carpet.liftAt(d));}
+    mast.position.addScaledVector(frame.normal,-(maxGap+.012)/frame.normal.dot(flagDir));
+    mast.userData.adventureAsset='observatory-v03';
+  }
+  const landmarkCollider=buildMeshGroundCollider(planet,mast);
+  const equipmentCollider=buildMeshGroundCollider(planet,equipment);
+  const movingRing=observatory?.getObjectByName('survey_ring');
+  // The soil belongs to the actual terrain. Small horizontal marker tiles
+  // floated on steep relief; keep their source asset but retire that decoration.
 
   // 기존 물 사당의 두 번째 입구. 기존 월드 사당과 저장 ID는 그대로다.
   const gateDir = waterway.localToWorld(0, 9).normalize();
@@ -80,11 +91,13 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
   let t = 0;
   const near = (position, d, radius) => position.clone().normalize().dot(d) > Math.cos(radius / planet.R);
   const entryOpen=()=>waterway.entranceOpen||state.restored;
-  function sync() { equipment.visible = !state.glider; gateMat.opacity = entryOpen() ? 0.24 : 0.035; }
+  function sync() { folded.visible = !state.glider; gateMat.opacity = entryOpen() ? 0.24 : 0.035; }
   return {
-    group, plan, gateDir, equipment, gateModel,
+    group, plan, gateDir, equipment, gateModel, mast, observatory, flagDir, landmarkCollider,
+    resolve(position,radius,height){return landmarkCollider.resolve(position,radius,height)+equipmentCollider.resolve(position,radius,height);},
     update(dt, player) {
       t += dt; flag.rotation.y = Math.sin(t * 1.8) * 0.12; ring.rotation.z = entryOpen() ? t * 0.13 : 0;
+      if(movingRing)movingRing.rotation.y=Math.sin(t*.18)*.22;
       let message = null;
       if (!state.overlook && near(player.position, plan.overlook, 4.5)) { state.overlook = true; message = TRAIL_TEXT.found; }
       if (!state.water && (waterway.discovered||waterway.entranceOpen&&near(player.position,gateDir,8))) { state.water = true; message = waterway.entranceOpen?'물의 사당 입구를 찾았다. 문으로 바로 들어갈 수 있다.':TRAIL_TEXT.water; }
@@ -92,12 +105,12 @@ export function buildFirstTrail(scene, planet, plan, carpet, waterway) {
       sync(); return message;
     },
     getPrompt(position) {
-      if (!state.glider && near(position, plan.overlook, 2.1)) return 'E — 접이식 활공막 챙기기';
+      if (!state.glider && near(position, plan.overlook, landmarkSpec.observatory.gliderReachPreserved)) return 'E — 접이식 활공막 챙기기';
       if (near(position, gateDir, 2.6)) return entryOpen() ? 'E — 물의 사당에 들어가기' : '멈춘 물레와 이어진 문이다';
       return null;
     },
     interact(position) {
-      if (!state.glider && near(position, plan.overlook, 2.1)) { state.glider = true; state.overlook = true; sync(); return { kind: 'glider', message: TRAIL_TEXT.equipped }; }
+      if (!state.glider && near(position, plan.overlook, landmarkSpec.observatory.gliderReachPreserved)) { state.glider = true; state.overlook = true; sync(); return { kind: 'glider', message: TRAIL_TEXT.equipped }; }
       if (entryOpen() && near(position, gateDir, 2.6)) return { kind: 'water-shrine' };
       return null;
     },

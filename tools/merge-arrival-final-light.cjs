@@ -1,0 +1,9 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const A='art/arrival-coherence/v01/combined',m=JSON.parse(fs.readFileSync(A+'/manifest.json')),sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+for(const row of JSON.parse(fs.readFileSync('art/arrival-coherence/v01/lighting/final/files.json')).sources){if(row.file==='src/world/Scatter.js')continue;const dest=m.files.find(r=>r.file===row.file);assert(dest);fs.copyFileSync(row.source,dest.preview);}
+const row=m.files.find(r=>r.file==='src/world/Scatter.js');let s=fs.readFileSync(row.preview,'utf8');assert(!s.includes('mats.rock.vertexColors = !!geos.rockA'));
+const marker='mats.canopy.vertexColors = !!geos.canopyA.attributes.color && !!geos.canopyB.attributes.color;';assert(s.includes(marker));s=s.replace(marker,marker+'\n  mats.rock.vertexColors = !!geos.rockA.attributes.color && !!geos.rockB.attributes.color;');
+const tint=fs.readFileSync('art/arrival-coherence/v01/static-ground/preview-rock-tint-src__world__Scatter.js','utf8'),start=tint.indexOf('// Only the new authored limestone'),end=tint.indexOf('// Same placements, smaller render batches.');assert(start>=0&&end>start);
+s=s.replace('// Same placements, smaller render batches.',tint.slice(start,end)+'// Same placements, smaller render batches.');
+const style="const rockStyle=boulders.rockA?.material.clone();if(rockStyle){rockStyle.color.set(0xffffff);rockStyle.userData.outlineParameters={visible:false};}";assert(s.includes(style));s=s.replace(style,style+'\n  applyNewBoulderTint(rockStyle);');fs.writeFileSync(row.preview,s);
+for(const r of m.files)r.previewSha256=sha(fs.readFileSync(r.preview));m.updatedUtc=new Date().toISOString();fs.writeFileSync(A+'/manifest.json',JSON.stringify(m,null,2));console.log('Merged exact final lighting, geometry-aware Toon colours and authored-rock tint; ground calls preserved.');

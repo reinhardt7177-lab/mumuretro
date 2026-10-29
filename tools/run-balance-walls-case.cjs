@@ -1,0 +1,3 @@
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
+const file=path.resolve('tools/run-balance-paving-case.cjs'),source=fs.readFileSync(file,'utf8').replaceAll('reports/2026-10-24/evidence/balance-paving','reports/2026-10-25/evidence/balance-walls');
+const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(source,file);

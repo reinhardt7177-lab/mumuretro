@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { shuffle } from '../util/rand.js';
 import { templePart } from './BalanceTemple.js';
+import { mixedHomeRanks } from './BalanceOrderHomes.js';
 
 const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.65,metalness:.25});
 const gold=mat(0xb58b43),stone=mat(0xc7c5aa),teal=mat(0x216878),wood=mat(0x987044);
@@ -9,8 +10,8 @@ export function label(text,x,y,z,size=1,parent){
   const cv=document.createElement('canvas'),width=text.length<=2?128:text.length<=5?256:512;cv.width=width;cv.height=128;
   const c=cv.getContext('2d');c.fillStyle='#102e39';c.fillRect(0,0,width,128);c.strokeStyle='#baab73';c.lineWidth=5;c.strokeRect(4,4,width-8,120);
   c.fillStyle='#fff5ce';c.font='bold '+(text.length<=2?64:48)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(text,width/2,67,width-16);
-  const m=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv)});m.userData.outlineParameters={visible:false};
-  const p=new THREE.Mesh(new THREE.PlaneGeometry(size,size*128/width),m);p.position.set(x,y,z);parent.add(p);return p;
+  const texture=new THREE.CanvasTexture(cv);texture.colorSpace=THREE.SRGBColorSpace;const m=new THREE.MeshBasicMaterial({map:texture});m.userData.outlineParameters={visible:false};
+  const p=new THREE.Mesh(new THREE.PlaneGeometry(size,size*128/width),m);p.position.set(x,y,z);p.userData.balancePlaque=true;parent.add(p);return p;
 }
 const box=(w,h,d,m,x,y,z,parent)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);return o;};
 function crate(w,unknown,index){const g=templePart('crate')||new THREE.Group();if(!g.children.length)box(.7,.7,.7,wood,0,.35,0,g);g.scale.setScalar(unknown?[.82,1.1,.94,1.23,1][index]:1);label(unknown?['☽','◇','✦','○','△'][index]:`${w}`,0,.43,.42,.48,g);return g;}
@@ -36,18 +37,24 @@ class CarryTrial {
 
 export class BalanceOrder extends CarryTrial {
   constructor(scene,seg){super(scene,seg);this.count=5;this.instruction='상자 3·4·5개를 고른 뒤 가벼운 순서로 놓아라';this.addStock([1,2,3,4,5],true);
+    this.legacyHomeRanks=this.stock.map(b=>b.homeRank);this.mixedRanks=mixedHomeRanks(this.legacyHomeRanks);this.homeLayout=2;
+    this.progressCodec={capture:()=>({version:4,fields:this.state()}),valid:s=>(s?.version===3&&s.fields?.layout===undefined||s?.version===4&&[1,2].includes(s.fields?.layout))&&this.valid(s.fields),restore:s=>this.restore(s.fields)};
     this.pads=[];for(let i=0;i<5;i++){const p=pad(this.root,(i-2)*2,seg.z0+3);label(String(i+1),0,.5,.82,.6,p.group);this.pads.push(p);this.cells.push({...p,y:.24});}
     this.scale=templePart('scale')||new THREE.Group();this.scale.position.set(0,0,(seg.z0+seg.z1)/2);this.root.add(this.scale);
     this.scaleBeam=this.scale.getObjectByName('scale_beam');this.panGroups=[this.scale.getObjectByName('pan_left'),this.scale.getObjectByName('pan_right')];
     for(const x of [-1.9,1.9])this.cells.push({x,z:this.scale.position.z,y:.7});
-    this.choices=[3,4,5].map((n,i)=>{const x=(i-1)*1.4,z=seg.z1-1.8;const p=pad(this.root,x,z,.5);label(`${n}개`,x,.9,z+.25,.9,this.root);return {n,x,z,mat:p.mat};});this.select(5);this.tilt=0;this.obstacles=[{x:0,z:this.scale.position.z,r:.7}];
+    this.choices=[3,4,5].map((n,i)=>{const x=(i-1)*1.4,z=seg.z1-1.8;const p=pad(this.root,x,z,.5),text=label(`${n}개`,x,.9,z+.25,.9,this.root);return {n,x,z,mat:p.mat,group:p.group,label:text};});this.select(5);this.tilt=0;this.obstacles=[{x:0,z:this.scale.position.z,r:.7}];
     this.statusLabel=label('선택한 상자를 가벼운 순서대로',0,2.1,seg.z0+1.3,4.8,this.root);
   }
-  select(n){if(this.solved||![3,4,5].includes(n))return false;this.restart();this.count=n;const order=this.stock.slice(0,n).map((b,i)=>({i,key:b.homeRank})).sort((a,b)=>a.key-b.key);order.forEach((v,j)=>this.stock[v.i].home.x=(j-(n-1)/2)*2);this.stock.forEach((b,i)=>{b.mesh.visible=i<n;});this.pads.forEach((p,i)=>{p.group.visible=i<n;p.mat.color.set(0x56c9c1);this.cells[i].visible=i<n;});this.choices.forEach(c=>c.mat.color.set(c.n===n?0xffdc85:0x36938c));this.sync();return true;}
-  interact(p){const c=this.choices.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);return c?this.select(c.n):super.interact(p);}
+  useHomeLayout(layout){this.homeLayout=layout;const ranks=layout===1?this.legacyHomeRanks:this.mixedRanks;this.stock.forEach((b,i)=>b.homeRank=ranks[i]);this.layoutHomes();}
+  layoutHomes(){const order=this.stock.slice(0,this.count).map((b,i)=>({i,key:b.homeRank})).sort((a,b)=>a.key-b.key);order.forEach((v,j)=>this.stock[v.i].home.x=(j-(this.count-1)/2)*2);}
+  restart(){super.restart();if(this.legacyHomeRanks){this.useHomeLayout(2);this.sync();this.check();}}
+  select(n){if(this.solved||![3,4,5].includes(n))return false;this.restart();this.count=n;this.layoutHomes();this.stock.forEach((b,i)=>{b.mesh.visible=i<n;});this.pads.forEach((p,i)=>{p.group.visible=i<n;p.mat.color.set(0x56c9c1);this.cells[i].visible=i<n;});this.choices.forEach(c=>c.mat.color.set(c.n===n?0xffdc85:0x36938c));this.sync();return true;}
+  choiceNear(p){return this.choices.map(c=>({c,d:Math.hypot(p.x-c.x,p.z-c.z)})).filter(v=>v.d<1.15).sort((a,b)=>a.d-b.d)[0]?.c;}
+  interact(p){const c=this.choiceNear(p);return c?this.select(c.n):super.interact(p);}
   orderStatus(){const active=this.stock.slice(0,this.count),placed=active.filter(b=>b.at>=0&&b.at<this.count).length;
     return this.solved?`${this.count}개 순서 성공! 중앙 문으로 이동`:`${this.count}개 도전 · ${placed}/${this.count} 배치 · ${placed===this.count?'순서가 달라요 — 저울로 다시 비교':'왼쪽 1번부터 가벼운 순서'}`;}
-  prompt(p){const c=this.choices.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);if(c&&!this.solved)return `E — ${c.n}개로 도전 (현재 배치 초기화)`;if(this.held===null&&!this.near(p))return this.orderStatus();return super.prompt(p);}
+  prompt(p){const c=this.choiceNear(p);if(c&&!this.solved)return `E — ${c.n}개로 도전 (현재 배치 초기화)`;if(this.held===null&&!this.near(p))return this.orderStatus();return super.prompt(p);}
   check(){this.solved=this.stock.slice(0,this.count).every((b,i)=>b.at===i);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));
     const text=this.orderStatus();if(this.statusLabel&&text!==this.lastStatus){
       const map=this.statusLabel.material.map,cv=map.image,c=cv.getContext('2d');c.fillStyle='#102e39';c.fillRect(0,0,cv.width,cv.height);c.strokeStyle=this.solved?'#ffd27a':'#baab73';c.lineWidth=5;c.strokeRect(4,4,cv.width-8,120);c.fillStyle=this.solved?'#ffd27a':'#fff5ce';c.font='bold 30px sans-serif';c.textAlign='center';c.textBaseline='middle';
@@ -59,14 +66,14 @@ export class BalanceOrder extends CarryTrial {
     // Only selected crates participate; scale pans never count as answer pads.
     this.check();
     const l=this.stock.find(b=>b.at===5)?.w||0,r=this.stock.find(b=>b.at===6)?.w||0;const target=Math.sign(l-r)*.18;this.tilt+=(target-this.tilt)*Math.min(1,dt*5);if(this.scaleBeam)this.scaleBeam.rotation.z=this.tilt;this.panGroups.forEach(p=>{if(p)p.rotation.z=-this.tilt;});for(let i=0;i<2;i++)this.cells[i+5].y=.75+(i===0?-1:1)*Math.sin(this.tilt)*1.9;return super.update(dt,actor);}
-  state(){return {...super.state(),count:this.count};}
-  valid(s){return super.valid(s)&&[3,4,5].includes(s.count)&&s.at.every((a,i)=>i<s.count?(a<s.count||a>=5):a===-1)&&s.solved===s.at.slice(0,s.count).every((a,i)=>a===i);}
-  restore(s){this.solved=false;this.select(s.count);super.restore(s);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));}
+  state(){return {...super.state(),count:this.count,layout:this.homeLayout};}
+  valid(s){return super.valid(s)&&[3,4,5].includes(s.count)&&(s.layout===undefined||[1,2].includes(s.layout))&&s.at.every((a,i)=>i<s.count?(a<s.count||a>=5):a===-1)&&s.solved===s.at.slice(0,s.count).every((a,i)=>a===i);}
+  restore(s){this.solved=false;this.select(s.count);this.useHomeLayout(s.layout??1);super.restore(s);this.pads.forEach(p=>p.mat.color.set(this.solved?0xffd27a:0x56c9c1));}
 }
 
 export class TwinBalance extends CarryTrial {
   constructor(scene,seg){super(scene,seg);this.instruction='각 판의 두 칸을 채워 양쪽 무게를 같게 만들어라';this.addStock([1,2,3,4]);this.plates=[];
-    for(const side of [-1,1]){const p=pad(this.root,side*3,seg.z0+5,1.6);this.plates.push(p);for(const dx of [-.6,.6]){this.cells.push({x:p.x+dx,z:p.z,y:.3});box(1.05,.07,1.2,teal,p.x+dx,.25,p.z,this.root);}
+    this.plateTiles=[];for(const side of [-1,1]){const p=pad(this.root,side*3,seg.z0+5,1.6);this.plates.push(p);for(const dx of [-.6,.6]){this.cells.push({x:p.x+dx,z:p.z,y:.3});this.plateTiles.push(box(1.05,.07,1.2,teal,p.x+dx,.25,p.z,this.root));}
       p.bars=[];for(let i=0;i<10;i++){const m=glow(0x174047);box(.55,.13,.12,m,p.x+side*1.9,.4+i*.2,p.z-.8,this.root);p.bars.push(m);}label('두 칸',p.x,.6,p.z+1.5,1.2,this.root);
     }this.link=templePart('twin_scale');if(this.link){this.link.position.z=seg.z0+5;this.root.add(this.link);}this.sync();}
   sums(at=this.stock.map(b=>b.at)){return [0,1].map(side=>this.stock.reduce((v,b,i)=>v+(at[i]>=side*2&&at[i]<side*2+2?b.w:0),0));}
@@ -78,7 +85,7 @@ export class TwinBalance extends CarryTrial {
 export class LeverSix extends CarryTrial {
   constructor(scene,seg){super(scene,seg);this.instruction='두 추를 지지대 양쪽에 놓고 지지대 위치를 바꿔 수평을 맞춰라';this.addStock([2,6]);this.pivot=2;this.originZ=seg.z1-9;this.tilt=0;
     this.beam=templePart('lever')||new THREE.Group();this.root.add(this.beam);this.fulcrum=templePart('fulcrum')||new THREE.Group();this.root.add(this.fulcrum);
-    for(let i=0;i<6;i++){this.cells.push({x:(i-2.5)*1.4,z:this.originZ,y:1.4});label(String(i+1),(i-2.5)*1.4,1.15,this.originZ+.45,.65,this.root);}
+    this.cellLabels=[];for(let i=0;i<6;i++){this.cells.push({x:(i-2.5)*1.4,z:this.originZ,y:1.4});this.cellLabels.push(label(String(i+1),(i-2.5)*1.4,1.15,this.originZ+.45,.65,this.root));}
     this.controls=[-1,1].map((d,i)=>{const x=(i===0?-1:1)*1.25,z=this.originZ+2;pad(this.root,x,z,.5);label(d<0?'◀ 지지대':'지지대 ▶',x,.85,z+.2,1.6,this.root);return {d,x,z};});this.prizePos=new THREE.Vector3(0,0,-59);this.godZ=-59;this.doorProgress=0;this.eventStarted=false;this.sync();}
   torques(at=this.stock.map(b=>b.at),pivot=this.pivot){let l=0,r=0;this.stock.forEach((b,i)=>{if(at[i]<0)return;const arm=(at[i]+.5)-pivot;if(arm<0)l+=b.w*-arm;else r+=b.w*arm;});return [l,r];}
   check(){const [l,r]=this.torques();this.solved=this.stock.every(b=>b.at>=0)&&l>0&&r>0&&Math.abs(l-r)<1e-6;}

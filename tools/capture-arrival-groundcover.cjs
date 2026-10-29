@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),fixture=require('./arrival-groundcover-fixture.cjs'),{A,B}=fixture,{chromium}=require(path.join(process.env.AUDIT_NODE_MODULES,'playwright'));
+const phase=process.argv[2]||'goal',report={phase,prepared:true,actualTraversal:false,shots:[],errors:[]};
+(async()=>{const browser=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await browser.newPage({viewport:{width:1280,height:800}});p.on('pageerror',e=>report.errors.push(e.message));p.on('console',m=>{if(m.type()==='error'&&/shader|WebGL|THREE/i.test(m.text()))report.errors.push(m.text());});await fixture.prepare(p,phase);
+ const sites=JSON.parse(fs.readFileSync('reports/2026-10-26/evidence/world-horizon/sites.json')),landing=sites.find(s=>s.id==='landing'),before=JSON.parse(fs.readFileSync('reports/2026-10-26/evidence/arrival-dais/before.json'));
+ for(const [view,yaw]of [['front',0],['side',Math.PI/2],['rear',Math.PI]]){
+  const locked=before.shots.find(s=>s.view===view),data=await p.evaluate(({landing,yaw,locked})=>{fieldProbe.stage(landing.dir,landing.target,yaw);const c=game.engine.camera;c.position.fromArray(locked.camera);c.quaternion.fromArray(locked.quaternion);c.up.fromArray(locked.up);c.fov=locked.fov;c.updateProjectionMatrix();c.updateMatrixWorld(true);game.sky.update(game.player,c);game.engine.render();game.engine.render();const meshes=game.meadow.group.children;return{...fieldProbe.shot(),tufts:meshes.map(m=>({count:m.count,triangles:(m.geometry.index?.count||m.geometry.attributes.position.count)/3,accentVertices:m.geometry.attributes.plantAccent?Array.from(m.geometry.attributes.plantAccent.array).filter(x=>x>0).length:0,wind:m.material.userData.meadowWindAmplitude})),field:game.meadowField};},{landing,yaw,locked});
+  await p.screenshot({path:B+'/'+phase+'-'+view+'.png'});report.shots.push({view,...data});
+ }
+ if(report.errors.length)throw Error(report.errors.join(';'));report.pass=true;console.log(JSON.stringify({phase,shots:3,tufts:report.shots[0].tufts,source:report.shots[0].meadow.source,pass:true}));
+}catch(e){report.pass=false;report.failure=e.stack;console.error(e);process.exitCode=1;}finally{fs.writeFileSync(B+'/'+phase+'.json',JSON.stringify(report,null,2));await browser.close();}})();

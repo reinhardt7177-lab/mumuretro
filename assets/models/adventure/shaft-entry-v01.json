@@ -1,0 +1,200 @@
+{
+  "model": "assets/models/adventure/shaft-entry-v01.glb",
+  "palette": {
+    "stone": [
+      0.32,
+      0.36,
+      0.37
+    ],
+    "pale": [
+      0.6,
+      0.57,
+      0.49
+    ],
+    "dark": [
+      0.09,
+      0.12,
+      0.13
+    ],
+    "bronze": [
+      0.48,
+      0.34,
+      0.18
+    ]
+  },
+  "parts": {
+    "ShaftExitFrame": {
+      "solids": [
+        {
+          "name": "Solid pocket wall",
+          "position": [
+            -3.32,
+            1.95,
+            -0.54
+          ],
+          "size": [
+            2.38,
+            3.9,
+            0.28
+          ]
+        },
+        {
+          "name": "Solid pocket wall",
+          "position": [
+            -3.32,
+            1.95,
+            0.54
+          ],
+          "size": [
+            2.38,
+            3.9,
+            0.28
+          ]
+        },
+        {
+          "name": "Outer pocket pier",
+          "position": [
+            -4.55,
+            2,
+            0
+          ],
+          "size": [
+            0.3,
+            4,
+            1.6
+          ]
+        },
+        {
+          "name": "Grounded pocket plinth",
+          "position": [
+            -3.35,
+            0.12,
+            0
+          ],
+          "size": [
+            2.44,
+            0.24,
+            1.7
+          ]
+        },
+        {
+          "name": "Solid pocket wall",
+          "position": [
+            3.32,
+            1.95,
+            -0.54
+          ],
+          "size": [
+            2.38,
+            3.9,
+            0.28
+          ]
+        },
+        {
+          "name": "Solid pocket wall",
+          "position": [
+            3.32,
+            1.95,
+            0.54
+          ],
+          "size": [
+            2.38,
+            3.9,
+            0.28
+          ]
+        },
+        {
+          "name": "Outer pocket pier",
+          "position": [
+            4.55,
+            2,
+            0
+          ],
+          "size": [
+            0.3,
+            4,
+            1.6
+          ]
+        },
+        {
+          "name": "Grounded pocket plinth",
+          "position": [
+            3.35,
+            0.12,
+            0
+          ],
+          "size": [
+            2.44,
+            0.24,
+            1.7
+          ]
+        },
+        {
+          "name": "Supported head track",
+          "position": [
+            0,
+            3.88,
+            0
+          ],
+          "size": [
+            9.4,
+            0.52,
+            1.2
+          ]
+        }
+      ]
+    },
+    "ShaftExitLeaf": {
+      "solids": [
+        {
+          "name": "Sliding solid slab",
+          "position": [
+            0,
+            1.75,
+            0
+          ],
+          "size": [
+            2.12,
+            3.5,
+            0.48
+          ]
+        }
+      ]
+    },
+    "ShaftExitFoundation": {
+      "solids": [
+        {
+          "name": "Door landing foundation",
+          "position": [
+            0,
+            0.375,
+            0
+          ],
+          "size": [
+            9.65,
+            0.75,
+            2.0
+          ]
+        }
+      ]
+    }
+  },
+  "doorZ": -34.1,
+  "halfWidth": 1.06,
+  "leafCenter": 1.05,
+  "travel": 2.2,
+  "duration": 1.1,
+  "height": 3.5,
+  "recordPositions": [
+    [
+      -2.75,
+      0,
+      -17.3
+    ],
+    [
+      2.75,
+      0,
+      -17.3
+    ]
+  ]
+}

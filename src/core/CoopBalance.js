@@ -4,7 +4,7 @@ export function bindCoopBalance(room,id,send){
  const devices=[...room.gates.map(g=>g.gate),room.final],originals=devices.map(g=>({interact:g.interact,check:g.check}));let snapshot=null;
  devices.forEach((g,stage)=>{g.check=()=>{g.solved=!!snapshot?.stages[stage].solved;};g.interact=p=>{
   if(!snapshot||snapshot.stages[stage].solved)return false;
-  const choice=g.choices?.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);
+  const choice=g.choiceNear?.(p)??g.choices?.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.7);
   const control=g.controls?.find(c=>Math.hypot(p.x-c.x,p.z-c.z)<.85);
   const n=g.near(p),held=snapshot.stages[stage].owners.indexOf(id);let command;
   if(choice)command={type:'count',value:choice.n};

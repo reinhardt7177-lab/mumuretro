@@ -34,11 +34,12 @@ export function currentQuest(g) {
     const pending=r.gates.find(g=>!g.solved);
     if(pending?.room==='r1'){const d=pending.gate;return q(d.held?'strata-layer-place':'strata-core-read',d.held?'시추 코어에서 읽은 층의 표석에 화석 놓기':'시추 코어의 깊은 끝부터 화석 순서 읽기',d.held?point(0,d.marks[0].z):point(d.coreBit.position.x,d.fossils[0].z+2),'날 쪽이 깊은 끝 · E로 화석을 들고 표석에서 놓기');}
     if(pending?.room==='r3')return q('strata-five-marks','수첩의 표지와 색을 보고 다섯 손잡이 맞추기',point(0,pending.gate.levers[0].z+1.5),'N · 물음 면의 표지와 색 확인');
-    if(!pending&&r.final.lit<5){const d=r.final,o=d.orbs.find(o=>!o.placed);return d.held?q('strata-offer-'+d.held.id,'제단 표지를 살펴 구슬의 짝 찾기',point(0,d.gz+7),'N · 수첩의 표지와 색 비교 · E · 바치기'):q('strata-pick-offering','선반에서 지혜의 구슬 들어 올리기',o?.home.clone()||null,'E · 구슬 들기');}
+    if(!pending&&r.final.lit<5){const d=r.final,o=d.orbs.find(o=>!o.placed);return d.held?q('strata-offer-'+d.held.id,'제단 표지를 살펴 구슬의 짝 찾기',point(0,d.gz+7),'N · 수첩의 표지와 색 비교 · E · 바치기'):q('strata-pick-offering','입구에서 지혜의 구슬 들어 올리기',o?.home.clone()||null,'E · 구슬 들기');}
     if(!pending&&r.final.awake<1)return q('strata-awakening','시간의 수호자가 깨어나는 모습을 지켜보기',null,'다섯 지혜가 하나의 기록으로 이어진다');
   }
   const gate=r.gates.find(x=>!x.solved);
   if(gate){const seg=r.dungeon.rectOf(gate.room);
+    if(r.spec.id==='shadow'&&gate.room==='r3'&&gate.gate.theatre?.mode==='twin'){const d=gate.gate;return q('shadow-twin-'+d.round,d.theatre.objective(),d.theatre.guide(),'E · 가림판 잡기/놓기 · 등불 손잡이로 간격 바꾸기');}
     if(r.waterAdventure){const d=gate.gate,target=d.kind==='carry'?d.ledge.clone():d.kind==='flow'?point(0,seg.z0+1.1):d.altarPos.clone();
       return q('water-'+gate.room,r.goals[gate.room],target,'팔찌로 물의 성질을 바꾸어 길을 만들어 보자');}
     return q(r.spec.id+'-'+gate.room,r.goals[gate.room],point((seg.x0+seg.x1)/2,seg.z1-2),'장치를 살펴보고 퍼즐을 풀어 보자');}
@@ -102,7 +103,9 @@ export function buildQuestGuide(getGame) {
   button.addEventListener('click',()=>{enabled=!enabled;try{localStorage.setItem('mumu.guide.enabled',String(enabled));}catch{}getGame().input.reset();button.setAttribute('aria-pressed',String(enabled));});
   return {get enabled(){return enabled;},get current(){return quest;},update(dt,hidden=false){
     trail.visible=false;clock+=dt;
-    const g=getGame();quest=currentQuest(g);el.hidden=hidden||!quest;if(el.hidden)return;
+    const g=getGame();
+    document.body.classList.toggle('chronicle-overview',!hidden&&g.mode==='room'&&g.room?.spec.id==='strata'&&(g.roomActor?.cameraProfile()?.overviewMix??0)>.9);
+    quest=currentQuest(g);el.hidden=hidden||!quest;if(el.hidden)return;
     if(quest.id!==lastId){lastId=quest.id;label.textContent=quest.text;}
     button.querySelector('small').textContent=enabled?'현재 퀘스트 · 안내 끄기':'현재 퀘스트 · 눌러서 길 안내';
     direction.hidden=!enabled;if(!enabled)return;

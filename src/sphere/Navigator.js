@@ -1,10 +1,11 @@
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { loadActionPoses, createActionPoseLayer } from './ActionPoses.js';
 let source,props,clips;
 // Three r160 parse overwrites UUID with json.uuid, even when absent.
 // Missing IDs make AnimationMixer reuse idle for every named action.
 export async function loadNavigator(){
-  try{const loader=new GLTFLoader();const [s,p,response]=await Promise.all([loader.loadAsync('assets/characters/sky-navigator/navigator-v01.glb'),loader.loadAsync('assets/characters/sky-navigator/props-v02.glb'),fetch('assets/characters/sky-navigator/motions-v01.json')]);if(!response.ok)throw Error('Motion download failed');clips=Object.fromEntries(Object.entries(await response.json()).map(([n,c])=>[n,T.AnimationClip.parse({...c,uuid:c.uuid||T.MathUtils.generateUUID()})]));source=s.scene;props=p.scene;return true;}catch(e){console.warn('[navigator] Loading failed; keeping existing explorer.',e);return false;}
+  try{const loader=new GLTFLoader();const [s,p,response]=await Promise.all([loader.loadAsync('assets/characters/sky-navigator/navigator-v01.glb'),loader.loadAsync('assets/characters/sky-navigator/props-v02.glb'),fetch('assets/characters/sky-navigator/motions-v01.json'),loadActionPoses(loader)]);if(!response.ok)throw Error('Motion download failed');clips=Object.fromEntries(Object.entries(await response.json()).map(([n,c])=>[n,T.AnimationClip.parse({...c,uuid:c.uuid||T.MathUtils.generateUUID()})]));source=s.scene;props=p.scene;return true;}catch(e){console.warn('[navigator] Loading failed; keeping existing explorer.',e);return false;}
 }
 function cloneSkin(root){const clone=root.clone(true),map=new Map();function pair(a,b){map.set(a,b);a.children.forEach((c,i)=>pair(c,b.children[i]));}pair(root,clone);root.traverse(o=>{if(o.isSkinnedMesh){const c=map.get(o);c.skeleton=o.skeleton.clone();c.skeleton.bones=o.skeleton.bones.map(b=>map.get(b));c.bind(c.skeleton,o.bindMatrix);}});return clone;}
 export function buildNavigator(glider){
@@ -16,7 +17,7 @@ export function buildNavigator(glider){
   const book=props.getObjectByName('notebook').clone(true),scope=new T.Group();scope.add(props.getObjectByName('telescope').clone(true));
   // Independent sockets retain global orientation when attached to the hips.
   function socket(name,x,y,z){const o=new T.Group();o.name=name;o.position.set(x,y,z);k.add(o);k.updateMatrixWorld(true);bones.Hips.attach(o);return o;}
-  const bookSlot=socket('Notebook hip socket',-.145,.73,.04),scopeSlot=socket('Telescope hip socket',.14,.70,.02);
+  const bookSlot=socket('Notebook hip socket',-.145,.73,.04),scopeSlot=socket('Telescope hip socket',.14,.70,.02),inspectionSlot=socket('Inspection tool belt socket',.22,.85,-.16);
   bookSlot.add(book);scopeSlot.add(scope);scope.rotation.z=-.18;scope.scale.setScalar(.95);
   const leather=new T.MeshStandardMaterial({color:0x654129,roughness:.9}),brass=new T.MeshStandardMaterial({color:0xb58b43,metalness:.55,roughness:.5});
   function loop(parent,x,y,z,w,h){const strap=new T.Mesh(new T.BoxGeometry(w,h,.014),leather);strap.name='Belt attachment strap';strap.position.set(x,y,z);parent.add(strap);const buckle=new T.Mesh(new T.TorusGeometry(w*.55,.004,6,16),brass);buckle.position.set(x,y+h*.22,z+.009);parent.add(buckle);}
@@ -30,7 +31,7 @@ export function buildNavigator(glider){
   // Restore the authored pose before sampling: procedural offsets must not
   // accumulate on bones whose idle tracks are constant or absent.
   const authoredRotations=Object.entries(bones).map(([name,b])=>[b,b.quaternion.clone()]);
-  let locomotion=0,carrying=0,air=0,time=0,wasAirborne=false,landing=0,tuck=0,travelJump=false;
+  let locomotion=0,runBlend=0,carrying=0,working=0,air=0,time=0,wasAirborne=false,landing=0,tuck=0,travelJump=false;
   const world=new T.Vector3(),at=new T.Vector3(),parentQ=new T.Quaternion(),q=new T.Quaternion();
   function aim(name,child,target,weight){const b=bones[name],c=bones[child];if(!b||!c||weight<.001)return;k.updateMatrixWorld(true);b.getWorldPosition(at);const dir=c.getWorldPosition(new T.Vector3()).sub(at).normalize();world.copy(target);k.localToWorld(world);world.sub(at).normalize();q.setFromUnitVectors(dir,world);b.getWorldQuaternion(parentQ);q.multiply(parentQ);b.parent.getWorldQuaternion(parentQ).invert();q.premultiply(parentQ);b.quaternion.slerp(q,weight);}
   function reach(side,target,weight){
@@ -38,6 +39,9 @@ export function buildNavigator(glider){
     const l1=a.distanceTo(b),l2=b.distanceTo(c),axis=target.clone().sub(a),d=T.MathUtils.clamp(axis.length(),Math.abs(l1-l2)+.001,l1+l2-.001);axis.normalize();
     const bend=new T.Vector3(side==='Left'?1:-1,-.6,-.3);bend.addScaledVector(axis,-bend.dot(axis)).normalize();const along=(l1*l1-l2*l2+d*d)/(2*d),elbow=a.clone().addScaledVector(axis,along).addScaledVector(bend,Math.sqrt(Math.max(0,l1*l1-along*along)));
     aim(side+'Arm',side+'ForeArm',elbow,weight);aim(side+'ForeArm',side+'Hand',target,weight);
+  }
+  function raiseWorkingFoot(side,amount){
+    k.updateMatrixWorld(true);const foot=bones[side+'Foot'],orientation=foot.getWorldQuaternion(new T.Quaternion()),local=b=>k.worldToLocal(b.getWorldPosition(new T.Vector3())),a=local(bones[side+'UpLeg']),b=local(bones[side+'Leg']),c=local(foot),target=c.clone().add(new T.Vector3(0,amount,0)),axis=target.clone().sub(a),l1=a.distanceTo(b),l2=b.distanceTo(c),d=T.MathUtils.clamp(axis.length(),Math.abs(l1-l2)+.001,l1+l2-.001);axis.normalize();let bend=b.clone().sub(a).addScaledVector(axis,-b.clone().sub(a).dot(axis));if(bend.lengthSq()<1e-6)bend.set(0,0,1).addScaledVector(axis,-axis.z);bend.normalize();const along=(l1*l1-l2*l2+d*d)/(2*d),joint=a.clone().addScaledVector(axis,along).addScaledVector(bend,Math.sqrt(Math.max(0,l1*l1-along*along)));aim(side+'UpLeg',side+'Leg',joint,1);aim(side+'Leg',side+'Foot',target,1);foot.parent.getWorldQuaternion(gripParentQ).invert();foot.quaternion.copy(gripParentQ.multiply(orientation));
   }
   // Express flexion around each joint, not absolute targets near the floor.
   // This keeps the knee bend anatomical at different hip heights and poses.
@@ -50,18 +54,53 @@ export function buildNavigator(glider){
     aim(side+'Leg',side+'Foot',joint.add(new T.Vector3(0,-Math.cos(thigh-knee),Math.sin(thigh-knee))),weight);
   }
   const u=k.userData;Object.assign(u,{bob:0,glider,head:bones.Head,armL:bones.LeftArm,armR:bones.RightArm,legL:bones.LeftUpLeg,legR:bones.RightUpLeg});
+  const poseLayer=createActionPoseLayer(k,bones);
+  const gripQ=new T.Quaternion(),gripParentQ=new T.Quaternion(),gripScale=new T.Vector3(),gripOffset=new T.Vector3(),gripTarget=new T.Vector3();
+  function gripWorld(side,out=new T.Vector3()){
+    const socket=poseLayer?.grips[side];if(!socket)return null;k.updateMatrixWorld(true);return out.copy(socket.position).applyMatrix4(bones[side+'Hand'].matrixWorld);
+  }
+  function solvePalm(side,target,weight,orientation=null){
+      const socket=poseLayer.grips[side],hand=bones[side+'Hand'];
+      k.updateMatrixWorld(true);k.getWorldQuaternion(gripQ);if(orientation)gripQ.multiply(orientation);gripQ.multiply(socket.quaternion.clone().invert());
+      hand.getWorldScale(gripScale);gripOffset.copy(socket.position).multiply(gripScale).applyQuaternion(gripQ);
+      gripTarget.copy(target);k.localToWorld(gripTarget);gripTarget.sub(gripOffset);k.worldToLocal(gripTarget);
+      reach(side,gripTarget,weight);
+      hand.parent.getWorldQuaternion(gripParentQ).invert();gripParentQ.multiply(gripQ);hand.quaternion.slerp(gripParentQ,weight);
+      k.updateMatrixWorld(true);const actual=k.worldToLocal(gripWorld(side));return actual.distanceTo(target);
+  }
+  function applyCarryTargets(){
+    if(!poseLayer||!u.carryTargets||carrying<.001)return;
+    const errors={};for(const side of ['Left','Right'])if(u.carryTargets[side])errors[side]=solvePalm(side,u.carryTargets[side],carrying);
+    u.carryGripErrors=errors;
+  }
+  function applyUseTarget(){
+    const action=poseLayer?.use;if(!action||u.carrying||!u.actionTargetWorld)return;
+    const t=action.time/poseLayer.spec.timing.useSeconds,weight=Math.sin(Math.PI*T.MathUtils.clamp(t,0,1));
+    const local=k.worldToLocal(u.actionTargetWorld.clone());u.useGripError=solvePalm(action.side,local,weight);
+  }
+  const workOrientation=new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),Math.PI/2);
+  function applyWorkTargets(){if(!poseLayer||!u.workTargets||working<.001)return;const errors={};for(const side of['Left','Right'])errors[side]=solvePalm(side,k.worldToLocal(u.workTargets[side].clone()),working,workOrientation);u.workGripErrors=errors;}
   u.armL.userData.lower=bones.LeftForeArm;u.armR.userData.lower=bones.RightForeArm;u.legL.userData.lower=bones.LeftLeg;u.legR.userData.lower=bones.RightLeg;
-  u.navigator={mixer,bones,book,scope,update(dt,moving,running,pose={}){
+  u.navigator={mixer,bones,book,scope,inspectionSlot,poseLayer,gripWorld,applyCarryTargets,applyUseTarget,applyWorkTargets,get carryAmount(){return carrying;},get workAmount(){return working;},setCarryImmediate(value){carrying=value?1:0;},setWorkImmediate(value){working=value?1:0;},update(dt,moving,running,pose={}){
     if(!wasAirborne&&pose.airborne){travelJump=!!(pose.traveling??moving);landing=0;}
-    if(wasAirborne&&!pose.airborne)landing=1;wasAirborne=!!pose.airborne;landing=Math.max(0,landing-dt*4);time+=dt;const f=1-Math.exp(-dt*16);locomotion=T.MathUtils.lerp(locomotion,moving&&!pose.airborne?1:0,f);carrying=T.MathUtils.lerp(carrying,u.carrying&&!pose.gliding?1:0,f);air=T.MathUtils.lerp(air,pose.airborne?1:0,f);
+    if(wasAirborne&&!pose.airborne)landing=1;wasAirborne=!!pose.airborne;landing=Math.max(0,landing-dt*4);time+=dt;const f=1-Math.exp(-dt*16);
+    const speed=pose.speed??(moving?(running?6:3.6):0),amount=moving&&!pose.airborne?T.MathUtils.clamp(speed/.75,0,1):0;
+    locomotion=T.MathUtils.lerp(locomotion,amount,f);runBlend=T.MathUtils.lerp(runBlend,pose.runBlend??T.MathUtils.smoothstep(speed,1.8,3.4),f);
+    carrying=T.MathUtils.lerp(carrying,u.carrying&&!pose.gliding?1:0,f);air=T.MathUtils.lerp(air,pose.airborne?1:0,f);
+    working=T.MathUtils.lerp(working,u.workContact&&!pose.reading&&!pose.airborne?1:0,f);
     for(const [bone,rotation] of authoredRotations)bone.quaternion.copy(rotation);
-    actions.idle.setEffectiveWeight(1-locomotion);actions.walk.setEffectiveWeight(locomotion*(running?0:1));actions.run.setEffectiveWeight(locomotion*(running?1:0));mixer.update(dt);
+    actions.idle.setEffectiveWeight(1-locomotion);actions.walk.setEffectiveWeight(locomotion*(1-runBlend));actions.run.setEffectiveWeight(locomotion*runBlend);
+    // Median backward toe speed while both samples are below .055m at 120Hz:
+    // walk 1.2073, run 4.0315 m/s. Measured from our current asset, not Zelda.
+    actions.walk.setEffectiveTimeScale(T.MathUtils.clamp(speed/1.2073,.2,3.2)*(pose.reverse?-1:1));
+    actions.run.setEffectiveTimeScale(T.MathUtils.clamp(speed/4.0315,.2,3.2)*(pose.reverse?-1:1));
+    mixer.update(dt);u.gait={speed,runBlend,walkRate:actions.walk.getEffectiveTimeScale(),runRate:actions.run.getEffectiveTimeScale()};
     for(const [bone,rotation] of authoredRotations)rotation.copy(bone.quaternion);
     // Velocity distinguishes takeoff/apex/descent without delaying the actual jump.
     tuck=T.MathUtils.lerp(tuck,pose.airborne&&!pose.gliding?T.MathUtils.smoothstep(pose.vy||0,-3,3):0,f);
-    body.position.y=restBodyY-.085*landing;
+    body.position.y=restBodyY-Math.max(.085*landing,.10*working);
     u.bob=0;u.airBlend=air;u.glideBlend=pose.gliding?1:0;glider.visible=!!pose.gliding;
-    const reading=!!pose.reading;
+    const reading=!!pose.reading&&!u.carrying;
     hinge.rotation.y=T.MathUtils.lerp(hinge.rotation.y,reading?-2.25:0,f);
     const lean=landing*.22+(!pose.gliding&&travelJump?air*.12:0);
     if(lean>.001&&bones.Spine&&!reading){
@@ -89,8 +128,13 @@ export function buildNavigator(glider){
           aim(side+'ForeArm',side+'Hand',new T.Vector3(x*(travelJump?.31:.28),travelJump?(lead?.96+tuck*.12:.76):.78+tuck*.12,travelJump?(lead?.28:-.13):.16),air);
         }
       }
-      if(carrying>.01||reading){const w=reading?1:carrying;reach(side,new T.Vector3(x*(reading?.105:.26),reading?.98:.91,reading?.30:.34),w);}
+      if((carrying>.01&&(!poseLayer||!u.carryProfile))||reading){const w=reading?1:carrying;reach(side,new T.Vector3(x*(reading?.105:.26),reading?.98:.91,reading?.30:.34),w);}
     }
+    if(working>.001&&!pose.airborne)for(const side of['Left','Right'])raiseWorkingFoot(side,.10*working);
+    poseLayer?.update(dt,reading?null:u.carryProfile,carrying,!!pose.reading&&u.carrying,!!u.inspectMagnet&&!reading&&!pose.airborne,reading?0:working);
+    if(!reading)applyCarryTargets();
+    if(!reading)applyUseTarget();
+    if(!reading)applyWorkTargets();
     // Sampled after locomotion, with the same two-bone reach as the held props.
     // The VFX controller owns the smooth envelope; carrying/reading retain priority.
     if(u.waterCasting?.weight>.001&&carrying<.01&&!reading&&!pose.airborne){

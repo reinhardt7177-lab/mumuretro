@@ -1,0 +1,16 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const A='art/arrival-refinement/v01',B='reports/2026-10-27/evidence/arrival-refinement',sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+assert(!fs.existsSync(A+'/manifest.json'),'Preserve previous package');
+const surface=JSON.parse(fs.readFileSync('art/arrival-surfaces/v01/runtime-manifest.json')),cost=JSON.parse(fs.readFileSync('art/arrival-cost/v01/preview-manifest.json'));
+const phase=JSON.parse(fs.readFileSync('reports/2026-10-27/evidence/arrival-coherence/final-validation.json'));assert(phase.pass&&phase.runtimeFiles===474);
+const chosen=surface.variants.find(v=>v.variant==='a0');assert(chosen);
+for(const row of surface.baseline)assert.equal(sha(row.file),row.sha256,row.file);
+const release=JSON.parse(fs.readFileSync('reports/2026-10-27/evidence/arrival-coherence/build-release.json'));
+const baseInventory=Object.keys(release.files).map(file=>({file,sha256:sha(file)}));assert.equal(baseInventory.length,474);
+const files=[...chosen.files,...cost.files].map(r=>({...r,beforeSha256:fs.existsSync(r.file)?sha(r.file):null,sha256:sha(r.preview)}));
+assert.equal(new Set(files.map(r=>r.file)).size,files.length,'No conflicting preview source owners');
+for(const row of cost.files)assert.equal(files.find(r=>r.file===row.file).beforeSha256,row.beforeSha256,row.file);
+const asset={...chosen.asset,beforeSha256:null};assert(!fs.existsSync(asset.file));assert.equal(asset.sha256,sha(asset.preview));
+fs.mkdirSync(A,{recursive:true});fs.mkdirSync(B,{recursive:true});
+fs.writeFileSync(A+'/manifest.json',JSON.stringify({scope:'Isolated selected A0 colours + exact indexed terrain, not installed',baseInventory,files,assets:[asset],sourceSnapshots:['art/arrival-surfaces/v01/runtime-manifest.json','art/arrival-cost/v01/preview-manifest.json'].map(file=>({file,sha256:sha(file)})),createdUtc:new Date().toISOString()},null,2));
+console.log(JSON.stringify({prepared:true,baseline:474,sources:files.length,assets:1,newRuntimeFiles:2,rootUnchanged:true}));

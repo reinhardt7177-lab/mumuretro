@@ -1,0 +1,12 @@
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
+let code=fs.readFileSync('tools/capture-strata-inlays.cjs','utf8').replace("B='reports/2026-10-24/evidence/strata-inlays'","B='reports/2026-10-24/evidence/strata-surround'").replace("out=B+'/'+phase","out=phase==='goal'?'art/strata-surround/v01/goal':B+'/'+phase");
+code=code.replace('report.contract=await p.evaluate(async()=>{','report.contract=await p.evaluate(async phase=>{').replace('order:g.order};});','order:g.order};},phase);');
+code=code.replace('const g=game.room.gates[0].gate;return',"if(phase==='goal'){const {installStrataSurround}=await import('./src/shrine/StrataSurround.js');await installStrataSurround(game.room,'art/strata-surround/v01/preview.json');}const g=game.room.gates[0].gate;return");
+code=code.replace('for(const shot of shots)',"shots.push({id:'entry-front',camera:[0,3.3,18],target:[0,1,5]},{id:'entry-side',camera:[12,4,11],target:[0,.6,10]},{id:'entry-rear',camera:[0,4.5,2],target:[0,.7,16]});for(const shot of shots)");
+code=code.replace('modelMetrics:game.room.strataInlays',"surround:game.room.strataSurround?{loaded:game.room.strataSurround.loaded,metrics:game.room.strataSurround.metrics}:null,modelMetrics:game.room.strataInlays");
+code=code.replace('for(const shot of shots)',"shots.push(...[{\"id\":\"court-front\",\"camera\":[0,10.5,-57],\"target\":[0,6,-73.4],\"fov\":65},{\"id\":\"court-side\",\"camera\":[7,12,-65.4],\"target\":[0,8,-73.4],\"fov\":76},{\"id\":\"court-rear\",\"camera\":[-5.4,20,-81],\"target\":[0,8,-73.4],\"fov\":65}]);for(const shot of shots)");
+code=code.replace('await game.room.ready;','await game.room.ready;await game.room.final.heritagePromise;');
+code=code.replace('a.setAt(0,3);c.position',"a.setAt(0,shot.id.startsWith('court-')?game.room.final.gz+11:3);c.position").replace('c.fov=52;','c.fov=shot.fov||52;');
+code=code.replace('five first-room views','eleven surround views');
+if(process.argv[2]==='goal')code=code.replace("'seed = 20261022')","'seed = 20261022').replace("+JSON.stringify("if(spec.id==='strata')finished.ready=Promise.resolve(finished.ready).then(()=>installStrataSurround(finished));")+",'')");
+const file=path.resolve('tools/_strata-surround-capture.cjs'),m=new Module(file,module);m.filename=file;m.paths=module.paths;m._compile(code,file);

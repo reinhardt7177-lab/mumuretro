@@ -1,0 +1,14 @@
+// Redirect previous test output into this phase; preserve prior evidence.
+const fs=require('node:fs'),path=require('node:path'),{spawn}=require('node:child_process');
+const focused=process.argv.includes('--focused'),ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'reports/2026-10-22/evidence/separation-journey',focused?'focused-regressions':'regressions');fs.mkdirSync(OUT,{recursive:true});
+const report={cases:[],preservesPreviousEvidence:true,wholeGoalComplete:false};
+async function run(name,file,extraEnv={}){console.log('START '+name);const dest=path.join(OUT,name);fs.mkdirSync(dest,{recursive:true});
+ const script=`const fs=require('node:fs'),path=require('node:path'),Module=require('node:module');const file=${JSON.stringify(path.join(ROOT,'tools',file))};let s=fs.readFileSync(file,'utf8');s=s.replace(/\\b(OUT|out)=path\\.(?:join|resolve)\\([^)]*\\)/,(_,key)=>key+'='+${JSON.stringify(JSON.stringify(dest))});const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(s,file);`;
+ let log='';const code=await new Promise((resolve,reject)=>{const c=spawn(process.execPath,['--experimental-vm-modules','-e',script],{cwd:ROOT,env:{...process.env,...extraEnv},windowsHide:true});c.on('error',reject);c.stdout.on('data',b=>log+=b);c.stderr.on('data',b=>log+=b);c.on('close',resolve);});
+ fs.writeFileSync(path.join(OUT,name+'.log'),log);const r={name,file,code,pass:code===0,checks:(log.match(/^PASS /gm)||[]).length};report.cases.push(r);console.log((r.pass?'PASS ':'FAIL ')+name+' checks '+r.checks);}
+(async()=>{
+ const tests=focused?[['sort','check-sort-court.cjs'],['evap','check-evaporation-court.cjs'],['shadow-camera','check-shadow-readability.cjs']]:[['sieve','check-sieve-court.cjs'],['sieve-motion','check-sieve-motion.cjs'],['actions','check-adventure-actions.cjs'],['notebook','check-notebook-pages.cjs'],['jump','check-navigator-jump.cjs'],['locomotion','check-navigator-locomotion.cjs'],['sift-final','check-sift-sanctum.cjs'],['water','check-water-adventure.cjs'],['fire','check-fire-adventure.cjs'],['strata','check-strata-journey.cjs'],['app-save','check-app-progress.cjs']];
+ let index=0;await Promise.all([0,1].map(async()=>{while(index<tests.length){const[n,f]=tests[index++];await run(n,f);}}));
+ if(!focused){const{createAppServer}=require('../server/app.cjs'),server=createAppServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));try{await run('classroom','check-coop-room-browser.cjs',{AUDIT_URL:'http://127.0.0.1:'+server.address().port});}finally{await new Promise(r=>server.close(r));}}
+ report.pass=report.cases.every(v=>v.pass);fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2));if(!report.pass)process.exitCode=1;
+})().catch(e=>{report.error=e.stack;report.pass=false;fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,2));console.error(e);process.exitCode=1;});

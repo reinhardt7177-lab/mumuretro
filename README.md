@@ -1,5 +1,7 @@
 # 무무 행성 (Mumu Planet)
 
+**2026-10-29 웹 최적화 릴리스:** 현재 웹 실행 파일 476개와 카메라·후처리 최적화를 반영했습니다. 로컬 착륙지 ABBA 측정 평균 프레임 간격은 27.99→25.90ms이며 전체 게임·학교 기기 성능을 뜻하지 않습니다. PC/터치 이동·점프·격리 저장, 21조건 색 비교와 지정 고장 검출을 확인했습니다. [최적화 보고서](reports/2026-10-29/PERFORMANCE_OPTIMIZATION.md). 대형 Blender 원본·전체 제작/검증 보관함은 로컬에 유지합니다. 장기 그래픽 확장은 일시중지 상태입니다.
+
 **웹 배포 · 2026-10-22:** 공개 주소는 [mumuretro.vercel.app](https://mumuretro.vercel.app/)입니다. `main` 변경을 기존 Vercel 연결이 배포하며, `node tools/build-web.cjs`로 실행 파일만 `dist/`에 만듭니다. 공개 `/assets/release.json`의 소스 해시·커밋과 실제 파일을 비교해 반영 여부를 확인할 수 있습니다. 교실 함께하기는 아래 교사 PC 서버를 사용합니다. [배포 구성과 원본 보존 범위](DEPLOYMENT.md).
 
 **앱 전체 기능 마감 · 2026-10-21:** 읽기 쉬운 수첩 페이지, 마지막 시간의 수호자 Blender 모델, 여섯 신전과 귀환·소포 엔딩, 현재 저장 형식과 교실 함께하기를 점검·연결했습니다. 이전 공통 검사 3개 실패도 해결했습니다. [전체 결과와 검증 범위](reports/2026-10-21/APP_COMPLETION_AUDIT.md) · [실제 여덟 장면](art/app-completion/review.html) · [새 수호자 시안 비교](art/chronicle-temple/v01/review.html).

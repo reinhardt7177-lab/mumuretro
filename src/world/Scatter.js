@@ -15,10 +15,34 @@ import { LIGHT, FOLIAGE as PALETTE } from '../data/lighting.js';
 import { fbm } from '../util/noise.js';
 import { natureGeometry } from './NatureAssets.js';
 import { quality } from '../render/Quality.js';
+import { woodlandPart } from './LandmarkAssets.js';
+import { woodlandMaterials, injectFoliageFade, setFoliageFocus } from './WoodlandStyle.js';
+import { buildMeshGroundCollider } from './MeshGroundCollider.js';
+import { fieldBoulderPart } from './WorldArt.js';
 
-// 구를 나누는 셀 — 위도 4띠 × 경도 6구간 = 24셀.
-// 지평선이 28u(각 23.6°)라 보통 두세 셀만 프러스텀에 들어온다.
-const LAT_BANDS = 4, LON_SECTORS = 6;
+// Only the new authored limestone uses this tint correction. The stored
+// instance colours, seeded placement and legacy tier materials stay intact.
+export function applyNewBoulderTint(material){
+  if(material?.name!=='Wayfarer limestone mineral')return false;
+  const previous=material.onBeforeCompile;
+  material.onBeforeCompile=shader=>{
+    previous?.(shader);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`
+      #if defined(USE_COLOR_ALPHA)
+        diffuseColor*=vec4(mix(vColor.rgb,vec3(1.0),.8),vColor.a);
+      #elif defined(USE_COLOR)
+        diffuseColor.rgb*=mix(vColor,vec3(1.0),.8);
+      #endif
+    `);
+  };
+  material.customProgramCacheKey=()=> 'mumu-wayfarer-limestone-instance-white80-v1';
+  material.needsUpdate=true;return true;
+}
+
+
+// Same placements, smaller render batches. The local Iris Xe comparison of
+// 24/96/216/384 cells favoured 96 for high quality without excessive draw calls.
+const LAT_BANDS = 8, LON_SECTORS = 12;
 
 // ── 배치 규칙 ───────────────────────────────────────────────────────────────
 // 구역 데이터를 따로 두지 않고 **지형 자신**에서 유도한다. 높이와 경사 두 축이면
@@ -199,7 +223,15 @@ export function buildScatter(scene, planet, opts = {}) {
     rockA: rockGeo(3), rockB: rockGeo(11),
     bush: bushGeo(),
   };
-  const detailedGeos = Object.fromEntries(Object.keys(geos).map(k => [k, natureGeometry(k) || geos[k]]));
+  const woodland=Object.fromEntries(['trunk','canopyA','canopyB'].map(k=>[k,woodlandPart(k)]));
+  const boulders={rockA:fieldBoulderPart(0),rockB:fieldBoulderPart(1)};
+  // Same physical shape in all tiers. Only the mineral texture is reduced.
+  for(const [key,part]of Object.entries(boulders))if(part)geos[key]=part.geometry;
+  const detailedGeos = Object.fromEntries(Object.keys(geos).map(k => [k, woodland[k]?.geometry || natureGeometry(k) || geos[k]]));
+  for(const [key,part]of Object.entries(boulders))if(part)detailedGeos[key]=part.geometry;
+  const treeStyle=woodlandMaterials(woodland.trunk,woodland.canopyA,uTime);
+  const rockStyle=boulders.rockA?.material.clone();if(rockStyle){rockStyle.color.set(0xffffff);rockStyle.userData.outlineParameters={visible:false};}
+  applyNewBoulderTint(rockStyle);
   // 시각 메시의 윗부분에 기울기 여유를 더한 보수적인 충돌 높이.
   // 지상 반경은 이전과 같고, 발이 이 높이보다 위에 있을 때만 지나갈 수 있다.
   const heightOf = (keys, tilt) => {
@@ -235,6 +267,11 @@ export function buildScatter(scene, planet, opts = {}) {
     m.userData.outlineParameters = { visible: false };
   });
   injectWind(mats.canopy, 0.16, uTime);   // 수관도 흔들려야 한다. 풀만 흔들리면 나무가 말뚝이 된다
+  injectFoliageFade(mats.canopy);
+  // The low/min canopy has no vertex color attribute. Its tint comes from
+  // instanceColor; enabling USE_COLOR here multiplies it by a missing color.
+  mats.canopy.vertexColors = !!geos.canopyA.attributes.color && !!geos.canopyB.attributes.color;
+  mats.rock.vertexColors = !!geos.rockA.attributes.color && !!geos.rockB.attributes.color;
   injectWind(mats.bush, 0.35, uTime);
 
   // 셀별 수집통
@@ -266,6 +303,7 @@ export function buildScatter(scene, planet, opts = {}) {
   // 걷는 게 답답해지고, 아이는 "왜 여기서 막히지"를 이해하지 못한다.
   // 방향 + 반경만 저장한다. 구면이라 이 둘이면 각거리 비교로 끝난다.
   const colliders = [];
+  const treePairs=[];
 
   const place = (cell, kind, size, tilt, color) => {
     up.copy(dir);
@@ -279,7 +317,7 @@ export function buildScatter(scene, planet, opts = {}) {
     }
     scl.setScalar(size);
     m.compose(pos, q, scl);
-    bins[cell][kind].push({ m: m.clone(), c: color.clone() });
+    const item={m:m.clone(),c:color.clone()};bins[cell][kind].push(item);return item;
   };
 
   for (let i = 0; i < samples; i++) {
@@ -295,18 +333,19 @@ export function buildScatter(scene, planet, opts = {}) {
     if (roll < d.tree) {
       const b = rnd() < 0.5;
       const sz = 0.80 + rnd() * 0.60;   // 전체 4.6~8.4u = 캐릭터(1.5u)의 3~5.6배
-      place(cell, 'trunk', sz, 0.10, col.set(PALETTE.trunk));
-      colliders.push({ dir: dir.clone(), r: 0.26 * sz + 0.06, height: collisionHeights.tree * sz });
+      const wood=place(cell, 'trunk', sz, 0.10, col.set(PALETTE.trunk));
+      const treeBody={ dir: dir.clone(), r: 0.26 * sz + 0.06, height: collisionHeights.tree * sz,kind:'tree',matrix:wood.m };colliders.push(treeBody);
       const pal = h > 5.5 ? PALETTE.canopyDry : PALETTE.canopy;
-      place(cell, b ? 'canopyA' : 'canopyB', sz, 0.10,
+      const crown=place(cell, b ? 'canopyA' : 'canopyB', sz, 0.10,
         col.set(pal[Math.floor(rnd() * pal.length)]).multiplyScalar(0.88 + rnd() * 0.24));
+      treePairs.push({wood,crown,body:treeBody,size:sz,sample:i});
       counts.tree++;
     } else if (roll < d.tree + d.rock) {
       const rsz = 0.5 + rnd() * 1.5;
       const rockKind = rnd() < 0.5 ? 'rockA' : 'rockB';
-      place(cell, rockKind, rsz, 0.6,
+      const rock=place(cell, rockKind, rsz, 0.6,
         col.set(PALETTE.rock[Math.floor(rnd() * PALETTE.rock.length)]).multiplyScalar(0.85 + rnd() * 0.3));
-      colliders.push({ dir: dir.clone(), r: 0.52 * rsz, height: collisionHeights[rockKind] * rsz });
+      colliders.push({ dir: dir.clone(), r: 0.52 * rsz, height: collisionHeights[rockKind] * rsz,kind:'rock',geometryKind:rockKind,matrix:rock.m });
       counts.rock++;
     } else if (roll < d.tree + d.rock + d.bush) {
       place(cell, 'bush', 0.6 + rnd() * 0.8, 0.15,
@@ -315,13 +354,30 @@ export function buildScatter(scene, planet, opts = {}) {
     }
   }
 
+  // Curated physical approach spaces. Consume the original RNG in full first:
+  // all untouched trees, rocks and bushes retain their previous transforms.
+  const approachClearance={originalTrees:counts.tree,removed:[],corridors:(opts.portalClearings||[]).map(s=>({...s,forward:new THREE.Vector3(0,0,1).applyQuaternion(s.quaternion),right:new THREE.Vector3(1,0,0).applyQuaternion(s.quaternion)}))};
+  const tangent=new THREE.Vector3();
+  for(const pair of treePairs)for(const corridor of approachClearance.corridors){
+    const dot=pair.body.dir.dot(corridor.dir);if(dot<Math.cos(26/R))continue;
+    tangent.copy(pair.body.dir).addScaledVector(corridor.dir,-dot).multiplyScalar(R);
+    const z=tangent.dot(corridor.forward),x=tangent.dot(corridor.right),allowance=1.7*pair.size;
+    if(z<3-allowance||z>18+allowance||Math.abs(x)>THREE.MathUtils.lerp(2.8,4.2,THREE.MathUtils.clamp((z-3)/15,0,1))+allowance)continue;
+    pair.wood.approachPruned=pair.crown.approachPruned=pair.body.approachPruned=true;
+    approachClearance.removed.push({portal:corridor.id,sample:pair.sample,dir:pair.body.dir.toArray(),size:pair.size,wood:pair.wood.m.toArray(),crown:pair.crown.m.toArray()});counts.tree--;break;
+  }
+  for(const cell of bins)for(const kind of kinds)cell[kind]=cell[kind].filter(item=>!item.approachPruned);
+  for(let i=colliders.length-1;i>=0;i--)if(colliders[i].approachPruned)colliders.splice(i,1);
+
   // 셀 × 종류마다 InstancedMesh 하나. 등 뒤 셀은 프러스텀에서 통째로 빠진다.
   const meshes = [];
   let tris = 0;
   const geoOf = (k) => (quality.name === 'high' || quality.name === 'mid' ? detailedGeos : geos)[k];
-  const matOf = (k) => k === 'trunk' ? mats.trunk
+  const matOf = (k) => treeStyle&&(quality.name==='high'||quality.name==='mid')&&k==='trunk'?treeStyle.bark
+    :treeStyle&&(quality.name==='high'||quality.name==='mid')&&k.startsWith('canopy')?treeStyle.leaves
+    :k === 'trunk' ? mats.trunk
     : k.startsWith('canopy') ? mats.canopy
-    : k.startsWith('rock') ? mats.rock : mats.bush;
+    : k.startsWith('rock') ? (rockStyle&&(quality.name==='high'||quality.name==='mid')?rockStyle:mats.rock) : mats.bush;
 
   for (let c = 0; c < cellCount; c++) {
     for (const k of kinds) {
@@ -337,6 +393,8 @@ export function buildScatter(scene, planet, opts = {}) {
       inst.computeBoundingSphere();          // 인스턴스 행렬 반영 — 없으면 컬링이 엉뚱하게 걸린다
       inst.name = `sc_${c}_${k}`;
       inst.userData.natureKind = k;
+      if(k.startsWith('canopy')){inst.userData.cameraOccluder=false;inst.customDepthMaterial=treeStyle&&(quality.name==='high'||quality.name==='mid')?treeStyle.depth:undefined;}
+      if(woodland[k])inst.userData.adventureAsset='woodland-v03';
       scene.add(inst);
       meshes.push(inst);
       tris += list.length * (geo.index ? geo.index.count / 3 : geo.attributes.position.count / 3);
@@ -346,6 +404,8 @@ export function buildScatter(scene, planet, opts = {}) {
   quality.onChange(() => {
     for (const inst of meshes) {
       inst.geometry = geoOf(inst.userData.natureKind);
+      inst.material=matOf(inst.userData.natureKind);
+      if(inst.userData.natureKind.startsWith('canopy'))inst.customDepthMaterial=treeStyle&&(quality.name==='high'||quality.name==='mid')?treeStyle.depth:undefined;
       inst.computeBoundingSphere();
     }
   });
@@ -368,13 +428,14 @@ export function buildScatter(scene, planet, opts = {}) {
   const _up = new THREE.Vector3(), _tan = new THREE.Vector3();
   // 셀프테스트가 구면 보행 코어만 재려면 충돌을 잠깐 꺼야 한다 —
   // 충돌이 있는 세계에서 "직진하면 제자리로 돌아온다"는 성립하지 않는다.
-  const api = { enabled: true };
+  const api = { enabled: true, branches:true };
   const resolve = (position, playerR = 0.32, footHeight = 0) => {
     if (!api.enabled) return 0;
     _up.copy(position).normalize();
     let hit = 0;
     for (const c of colliders) {
       if (footHeight > c.height + 0.10) continue;
+      if(c.kind==='rock'&&boulders[c.geometryKind])continue;
       const cosA = _up.dot(c.dir);
       if (cosA <= 0) continue;                       // 행성 반대편
       const need = (c.r + playerR) / R;
@@ -388,12 +449,30 @@ export function buildScatter(scene, planet, opts = {}) {
       }
     }
     if (hit) { position.copy(_up); planet.projectToSurface(position); }
+    // Exposed wooden branches are solid during a jump, while leaf sprays are
+    // visual. Build a reusable narrow phase only for actually nearby trees.
+    for(const c of colliders){
+      const rock=c.kind==='rock'&&boulders[c.geometryKind];
+      if(!(rock||c.kind==='tree'&&footHeight>.65&&api.branches)||footHeight>c.height+.1||_up.dot(c.dir)<Math.cos(2.8/planet.R))continue;
+      const kind=rock?c.geometryKind:'trunk';
+      if(!c.branchCollider){const proxy=new THREE.Mesh(geoOf(kind),matOf(kind));proxy.matrixAutoUpdate=false;proxy.matrix.copy(c.matrix);proxy.matrixWorld.copy(c.matrix);c.branchCollider=buildMeshGroundCollider(planet,proxy,{recoverInterior:!!rock});}
+      c.branchCollider.meshes[0].geometry=geoOf(kind);
+      hit+=c.branchCollider.resolve(position,playerR,footHeight);
+    }
     return hit;
   };
 
   return {
-    meshes, counts, tris, biomeAt, zoneAt, grassAt,
+    meshes, counts, tris, biomeAt, zoneAt, grassAt, treeStyle, woodland, boulders,
     colliders, resolve, collision: api,
+    reseat(){
+      let moved=0,maxDelta=0;
+      const matrix=new THREE.Matrix4(),position=new THREE.Vector3();
+      for(const mesh of meshes){let changed=false;for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);position.setFromMatrixPosition(matrix);const old=position.length(),radius=planet.groundSurfaceAt(position.clone().normalize()).length(),delta=radius-old;if(Math.abs(delta)<1e-5)continue;position.setLength(radius);matrix.setPosition(position);mesh.setMatrixAt(i,matrix);moved++;maxDelta=Math.max(maxDelta,Math.abs(delta));changed=true;}if(changed){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();}}
+      for(const c of colliders)if(c.matrix){c.matrix.setPosition(planet.groundSurfaceAt(c.dir));delete c.branchCollider;}
+      return{moved,maxDelta,directionsPreserved:true};
+    },
     update(t) { uTime.value = t; },
+    updateFocus:setFoliageFocus,approachClearance,
   };
 }

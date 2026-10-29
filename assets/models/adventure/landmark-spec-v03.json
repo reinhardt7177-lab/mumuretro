@@ -1,0 +1,74 @@
+{
+  "version": 3,
+  "observatory": {
+    "height": 4.1,
+    "plinth": {
+      "radius": 0.6,
+      "height": 0.16,
+      "sides": 12
+    },
+    "shaft": {
+      "baseRadius": 0.27,
+      "topRadius": 0.17,
+      "top": 2.7
+    },
+    "armillary": {
+      "centreHeight": 3.3,
+      "outerRadius": 0.7,
+      "tube": 0.024,
+      "radialSegments": 48,
+      "tubeSegments": 6
+    },
+    "mastOffsetFromOverlook": 2.4,
+    "gliderReachPreserved": 2.1,
+    "localBottom": 0,
+    "maxTriangles": 16000,
+    "maxMaterials": 4,
+    "maxDrawMeshes": 5
+  },
+  "overlookSite": {
+    "latitude": 22,
+    "longitude": 0,
+    "levelRadius": 3.4,
+    "blendRadius": 8.0,
+    "equipmentSideOffset": 1.25,
+    "preserveUnitDirectionsAndSiteIds": true,
+    "reseatExistingScatterWithoutReroll": true
+  },
+  "trees": {
+    "height": 6.1,
+    "baseRadius": 0.25,
+    "branchStartHeight": 2.3,
+    "variants": 2,
+    "leafLength": [
+      0.13,
+      0.23
+    ],
+    "leafClusters": 12,
+    "leafTrianglesPerVariantMax": 7000,
+    "trunkTrianglesPerVariantMax": 5000,
+    "preserveScatterMatricesAndGroundColliders": true,
+    "lowQualityUsesExistingFallback": true,
+    "foliageCameraCollision": "fade visual leaves near camera, raycast woody geometry",
+    "wind": {
+      "speed": 1.25,
+      "phaseX": 0.4,
+      "phaseZ": 0.3
+    }
+  },
+  "camera": {
+    "viewport": [
+      1440,
+      900
+    ],
+    "verticalFov": 62,
+    "distance": 7.6,
+    "pitch": 0.32,
+    "lookHeight": 1.2,
+    "yawDegrees": [
+      0,
+      90,
+      180
+    ]
+  }
+}

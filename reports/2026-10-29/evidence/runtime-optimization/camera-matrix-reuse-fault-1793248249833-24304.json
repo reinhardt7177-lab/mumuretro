@@ -1,0 +1,10 @@
+{
+  "scope": "Offline real Engine.updateCamera, pinned Three r160 triangle raycasts; constructor/rendering/PMREM/storage excluded. Deterministic call counts, no timing or FPS claim.",
+  "fault": "omit-second-avoid",
+  "checks": [],
+  "updates": 0,
+  "beforeMatrixUpdates": 0,
+  "afterMatrixUpdates": 0,
+  "pass": false,
+  "failure": "thin-wall: actual camera state and obstruction world matrices match preserved Engine\n+ actual - expected\n... Skipped lines\n\n  {\n    cameraUp: [\n      0,\n      1,\n      0\n...\n    position: [\n+     -1.4809070762484975,\n-     -0.7089016055236647,\n      101.2,\n+     -5.5190929237515025\n-     -2.6419576875768924\n    ],\n    projection: [\n      0.9361572088221666,\n      0,\n      0,\n"
+}

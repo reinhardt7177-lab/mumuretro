@@ -86,20 +86,23 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
 
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('aGrass', new THREE.BufferAttribute(grassAmt, 1));
+  // Exposed rock has a single soil surface; the raised meadow cannot cross its faces.
+  if(!geo.getAttribute('aExposedRock'))geo.setAttribute('aExposedRock',new THREE.Float32BufferAttribute(new Float32Array(n),1));
   // 원래 지형의 연속 법선을 유지한다. 가려진 카펫 가장자리를 밑으로 넣은 변위가
   // 위쪽 잔디의 조명까지 꺾어 어두운 띠를 만들면 안 된다.
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.userData.outlineParameters = { visible: false };   // 지면에 외곽선은 그물망이 된다
 
-  // 흐물거림 — 표면 법선 방향으로 흐르는 파도. 풀이 없는 곳(aGrass=0)은 움직이지 않는다.
+  // 토양과 잔디 바탕은 고정한다. 바람은 별도의 실제 풀잎에서만 표현한다.
   // 월드 위치를 위상으로 쓰므로 파도가 지면을 가로질러 흘러간다.
   mat.onBeforeCompile = (shader) => {
     shader.uniforms.uCarpetT = uTime;
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uCarpetT;\nattribute float aGrass;')
+      .replace('#include <common>', '#include <common>\nuniform float uCarpetT;\nattribute float aGrass;\nattribute float aExposedRock;\nvarying float vExposedRock;')
       .replace('#include <begin_vertex>', `
         #include <begin_vertex>
-        float gw = aGrass;
+        vExposedRock=aExposedRock;
+        float gw = 0.0;
         if (gw > 0.01) {
           vec3 rd = normalize(transformed);
           float ph = transformed.x * ${RIPPLE.freq.toFixed(3)} + transformed.z * ${(RIPPLE.freq * 0.83).toFixed(3)};
@@ -108,6 +111,7 @@ export function buildGrassCarpet(scene, planet, opts = {}) {
           transformed += rd * (w * ${RIPPLE.amp.toFixed(3)} * gw);
         }
       `);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float vExposedRock;').replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(vExposedRock>.5)discard;');
   };
 
   addSurfaceDetail(mat, true);

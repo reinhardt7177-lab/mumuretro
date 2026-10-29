@@ -1,0 +1,200 @@
+{
+  "model": "assets/models/adventure/archive-hall-v01.glb",
+  "palette": {
+    "stone": [
+      0.32,
+      0.36,
+      0.37
+    ],
+    "pale": [
+      0.6,
+      0.57,
+      0.49
+    ],
+    "dark": [
+      0.09,
+      0.12,
+      0.13
+    ],
+    "bronze": [
+      0.48,
+      0.34,
+      0.18
+    ]
+  },
+  "parts": {
+    "ArchiveStation": {
+      "solids": [
+        {
+          "name": "Grounded station foot",
+          "position": [
+            0,
+            0.1,
+            0
+          ],
+          "size": [
+            1.24,
+            0.2,
+            0.7
+          ]
+        },
+        {
+          "name": "Stone waist",
+          "position": [
+            0,
+            0.59,
+            -0.04
+          ],
+          "size": [
+            0.94,
+            0.78,
+            0.56
+          ]
+        },
+        {
+          "name": "Mechanism support",
+          "position": [
+            0,
+            1.05,
+            0
+          ],
+          "size": [
+            1.12,
+            0.2,
+            0.67
+          ]
+        },
+        {
+          "name": "Back tablet support",
+          "position": [
+            0,
+            1.52,
+            -0.14
+          ],
+          "size": [
+            0.28,
+            1.04,
+            0.23
+          ]
+        },
+        {
+          "name": "Carved mark tablet",
+          "position": [
+            0,
+            1.75,
+            -0.07
+          ],
+          "size": [
+            1.06,
+            0.8,
+            0.3
+          ]
+        }
+      ]
+    },
+    "ArchiveWheel": {
+      "solids": [],
+      "datum": "rotation axis at origin"
+    },
+    "MarkBar": {
+      "solids": []
+    },
+    "MarkCircle": {
+      "solids": []
+    },
+    "MarkDisc": {
+      "solids": []
+    },
+    "MarkDiamond": {
+      "solids": []
+    },
+    "MarkTriangle": {
+      "solids": []
+    },
+    "ArchiveFloor": {
+      "solids": []
+    },
+    "ArchiveBridge": {
+      "solids": []
+    }
+  },
+  "contract": {
+    "seg": {
+      "id": "r3",
+      "kind": "room",
+      "x0": -6,
+      "x1": 6,
+      "z0": -54,
+      "z1": -40,
+      "h": 6,
+      "camH": 80,
+      "open": true,
+      "glow": 10257872,
+      "name": "다섯 색의 문",
+      "gate": "fiveDoors",
+      "act": "turn",
+      "field": true
+    },
+    "mid": -47,
+    "levers": [
+      {
+        "x": -4.4,
+        "z": -51,
+        "si": 2,
+        "ci": -1
+      },
+      {
+        "x": -2.2,
+        "z": -51,
+        "si": 3,
+        "ci": -1
+      },
+      {
+        "x": 0,
+        "z": -51,
+        "si": 4,
+        "ci": -1
+      },
+      {
+        "x": 2.2,
+        "z": -51,
+        "si": 1,
+        "ci": -1
+      },
+      {
+        "x": 4.4,
+        "z": -51,
+        "si": 0,
+        "ci": -1
+      }
+    ],
+    "door": {
+      "id": "c3",
+      "kind": "corridor",
+      "x0": -2.1,
+      "x1": 2.1,
+      "z0": -60,
+      "z1": -54,
+      "h": 4.2,
+      "camH": 80,
+      "open": false,
+      "glow": 10784215,
+      "field": true
+    }
+  },
+  "wheelY": 1.12,
+  "wheelZ": 0.47,
+  "turnDuration": 0.22,
+  "recordPositions": [
+    [
+      -4.7,
+      0,
+      -41.5
+    ],
+    [
+      4.7,
+      0,
+      -41.5
+    ]
+  ]
+}

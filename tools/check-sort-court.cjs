@@ -20,7 +20,8 @@ async function fresh(raw=legacy,mobile=false,broken=false){
 
 const {c,p}=await fresh();
 const migrated=await p.evaluate(()=>({seed:game.room.seed,state:game.room.exportState(),pos:game.roomActor.position.toArray()}));
-check('Legacy water test, criterion order, hints and doors resume',migrated.seed===baseline.seed&&migrated.state.devices[1].version===2&&JSON.stringify(migrated.state.devices[1].fields)===JSON.stringify(baseline.state.devices[1].fields)&&migrated.state.hints.r2.t===60,migrated);
+const migratedFields={...migrated.state.devices[1].fields};delete migratedFields.observations;
+check('Legacy water test, criterion order, hints and doors resume with unknown observations',migrated.seed===baseline.seed&&migrated.state.devices[1].version===3&&migrated.state.devices[1].fields.observations.every(v=>v.every(x=>x===null))&&JSON.stringify(migratedFields)===JSON.stringify(baseline.state.devices[1].fields)&&migrated.state.hints.r2.t===60,migrated);
 await p.evaluate(()=>st.render());await p.screenshot({path:path.join(out,'after-comparison.png')});
 report.metrics=await p.evaluate(()=>{const i=game.engine.renderer.info,a=i.autoReset;i.autoReset=false;i.reset();game.engine.render();const r={...i.render};i.autoReset=a;return r;});
 const observation=page=>page.evaluate(async()=>{const g=game.room.gates[1].gate,D=(await import('/src/data/sortCourt.js')).SORT_COURT,s=g.progressCodec.capture();const rows=[];for(const it of g.items){g.held=null;g.testItem=it;g.testT=1;g.workshop.sync();const y=g.testMesh.position.y;rows.push({name:it.name,floats:it.floats,iron:it.iron,y,above:y>D.waterY,submerged:y+D.sampleSize/2<D.waterY,visible:g.testMesh.visible&&!it.mesh.visible});}g.progressCodec.restore(s);return rows;});

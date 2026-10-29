@@ -1,0 +1,23 @@
+FAIL initial: ordered original sources, matrices and spheres match preserved source
++ actual - expected
+... Skipped lines
+
+  {
+    count: 99,
+    entries: [
+      {
+        geometry: 2,
+...
+      [
+-       8,
+-       -1
+-     ],
+-     [
+        10,
+        2
+      ],
+      [
+        10,
+
+(node:24372) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

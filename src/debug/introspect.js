@@ -5,6 +5,7 @@
 //
 // installDebug에 넘기는 인자 목록이 곧 "이 게임의 상태 전부"다. 늘어나기 시작하면 그게 경고다.
 import * as THREE from 'three';
+import { boulderRecoveryTest } from './boulderRecoveryTest.js';
 import { PlateGate } from '../shrine/Gates.js';
 import { checkPlateCarry } from './plateCarryTest.js';
 import { ShadeGate } from '../shrine/ShadowGates.js';
@@ -105,10 +106,12 @@ export function installDebug(ctx) {
       const R = planet.R;
       const marks = PEAKS.map(p => {
         const la = p.lat * Math.PI / 180, lo = p.lon * Math.PI / 180;
+        const dir=new THREE.Vector3(Math.cos(la)*Math.cos(lo),Math.sin(la),Math.cos(la)*Math.sin(lo));
+        const height=Math.max(0,planet.heightAt(dir));
         return {
-          dir: new THREE.Vector3(Math.cos(la) * Math.cos(lo), Math.sin(la), Math.cos(la) * Math.sin(lo)),
-          maxAng: (HORIZON_U + Math.sqrt(2 * R * p.h)) / R,
-          h: p.h,
+          dir,
+          maxAng: (HORIZON_U + Math.sqrt(2 * R * height)) / R,
+          h: height,
         };
       });
       const hist = {}; let worst = 99, sum = 0;
@@ -193,7 +196,7 @@ export function installDebug(ctx) {
     get budget() {
       const g = planet.mesh.geometry;
       return {
-        terrainTris: g.attributes.position.count / 3,
+        terrainTris: (g.index?.count||g.attributes.position.count) / 3,
         scatterTris: scatter ? Math.round(scatter.tris) : 0,
         carpetTris: carpet ? carpet.tris : 0,
         carpetCoveredPct: carpet ? +(carpet.coveredPct * 100).toFixed(1) : 0,
@@ -205,6 +208,7 @@ export function installDebug(ctx) {
     },
     // ★ "맵에 구분이 있는가" — 이걸 안 재서 온 행성이 균일한 숲이 된 걸 놓쳤다.
     // 바이옴이 골고루 나오고, 특히 시야가 트인 구획(meadow)이 충분해야 §1이 성립한다.
+    boulderRecovery(){return boulderRecoveryTest(ctx);},
     biomes(samples = 8000) {
       if (!scatter || !scatter.biomeAt) return null;
       const v = new THREE.Vector3(); const tally = {};
@@ -262,7 +266,7 @@ export function installDebug(ctx) {
     for (let i = 0; i < nSteps; i++) {
       step(dt);
       v.copy(player.position).normalize();
-      const dev = Math.abs(player.position.length() - (planet.R + planet.heightAt(v)));
+      const dev = Math.abs(player.position.length() - (planet.R + planet.groundHeightAt(v)));
       if (dev > maxDev) maxDev = dev;
       const q = player.mesh.quaternion;
       if (Number.isNaN(player.position.x) || Number.isNaN(q.x) || Number.isNaN(q.w)) nan = true;
@@ -306,7 +310,7 @@ export function installDebug(ctx) {
     // C) §1 — 어디에 서도 랜드마크가 최소 2개 보이는가
     const cov = window.__dbg.landmarkCoverage(400);
     const covOK = cov.worst >= 2;
-    log.push(`C 랜드마크 최소 가시수=${cov.worst} (>=2) -> ${covOK ? 'PASS' : 'FAIL'}`);
+    log.push(`C 랜드마크 거리 기반 최소 후보=${cov.worst} (>=2) -> ${covOK ? 'PASS' : 'FAIL'}`);
 
     // D) §3 — 안개 색이 하늘 지평선 색과 같은가
     const fogOK = window.__dbg.fog.matchesSky;
@@ -319,7 +323,7 @@ export function installDebug(ctx) {
     if (scatter && scatter.colliders && scatter.colliders.length) {
       const me = player.position.clone().normalize();
       let best = null, bd = 9;
-      for (const c of scatter.colliders) { const d = me.angleTo(c.dir); if (d < bd) { bd = d; best = c; } }
+      for (const c of scatter.colliders) { if(c.kind==='rock'&&scatter.boulders?.rockA)continue;const d = me.angleTo(c.dir); if (d < bd) { bd = d; best = c; } }
       const tan = new THREE.Vector3().copy(me).addScaledVector(best.dir, -me.dot(best.dir)).normalize();
       const deep = (0.2 * best.r) / Rp;
       player.position.copy(best.dir).multiplyScalar(Math.cos(deep))
@@ -329,6 +333,8 @@ export function installDebug(ctx) {
       const after = player.position.clone().normalize().angleTo(best.dir) * Rp;
       colOK = after >= best.r + 0.32 - 0.03;
       log.push(`E 충돌 밀어내기 ${after.toFixed(2)}u (>=${(best.r + 0.32).toFixed(2)}) -> ${colOK ? 'PASS' : 'FAIL'}`);
+      const rocks=boulderRecoveryTest(ctx);colOK&&=rocks.pass;
+      log.push(`E 실제 바위 내부 복원 ${rocks.fixtures||0}곳 · 몸 관통 ${rocks.results?.reduce((n,r)=>n+r.penetrations,0)||0} -> ${rocks.pass?'PASS':'FAIL'}`);
     }
 
     // ── F 사당을 걸어서 끝까지 지날 수 있는가 ─────────────────────────────

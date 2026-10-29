@@ -2,16 +2,17 @@ import * as THREE from 'three';
 import { EVAPORATION_COURT as D } from '../data/evaporationCourt.js';
 import { SIEVE_PALETTE as C, EVAPORATION_PALETTE as P } from '../data/lighting.js';
 import { evaporationProgress } from './EvaporationProgress.js';
+import { attachSeparationProcess } from './SeparationProcess.js';
 
 export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
   g.group.removeFromParent(); const group = new THREE.Group(); group.name = '거름과 증발 작업장'; scene.add(group); g.group = group;
-  const obstacles = [], cameraOccluders = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);
+  const obstacles = [], cameraOccluders = [], tableParts = [], architectureParts = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);let layer='architecture';
   const mat = color => { const m = new THREE.MeshStandardMaterial({ color, roughness: .86, emissive: color, emissiveIntensity: .35, side: THREE.DoubleSide });
     m.userData.outlineParameters = { visible: false }; return m; };
   const stone = mat(C.stone), pale = mat(C.pale), floor = mat(C.floor), alt = mat(C.floorAlt), wood = mat(C.wood), edge = mat(C.edge), brass = mat(C.brass);
   const iron = mat(P.iron), sand = mat(P.sand), salt = mat(P.salt), paper = mat(P.paper), clay = mat(P.clay);
   function box(w, h, d, x, y, z, material, solid = true) {
-    const key = material.uuid + solid; if (!batches.has(key)) batches.set(key, { material, solid, parts: [] });
+    const key = material.uuid + solid+layer; if (!batches.has(key)) batches.set(key, { material, solid, layer, parts: [] });
     batches.get(key).parts.push({ w, h, d, x, y, z });
   }
   function mesh(geometry, material, parent, x = 0, y = 0, z = 0, solid = false) {
@@ -42,12 +43,13 @@ export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
     ctx.fillStyle = '#' + C.edge.toString(16); ctx.font = 'bold 43px "Malgun Gothic", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 384, 96, 720);
     const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }); material.userData.outlineParameters = { visible: false };
-    mesh(new THREE.PlaneGeometry(2.35, .59), material, group, x, y, z);
+    mesh(new THREE.PlaneGeometry(2.35, .59), material, group, x, y, z, true);
     box(.12, y, .12, x, y / 2, z - .08, wood);
   }
+  layer='devices';
   for (const name of ['magnet', 'filter', 'burner']) {
-    const s = g[name]; box(2.05, .15, 1.85, s.x, .72, s.z, wood);
-    for (const dx of [-.82, .82]) for (const dz of [-.7, .7]) box(.16, .65, .16, s.x + dx, .325, s.z + dz, edge);
+    const s = g[name]; tableParts.push(mesh(new THREE.BoxGeometry(2.05,.15,1.85),wood,group,s.x,.72,s.z,true));
+    for (const dx of [-.82, .82]) for (const dz of [-.7, .7]) tableParts.push(mesh(new THREE.BoxGeometry(.16,.65,.16),edge,group,s.x+dx,.325,s.z+dz,true));
     obstacles.push({ x: s.x, z: s.z, r: D.stationRadius });
     s.mat = new THREE.MeshBasicMaterial({ color: C.brass }); mesh(new THREE.BoxGeometry(.8, .04, .07), s.mat, group, s.x, .82, s.z + .96);
   }
@@ -60,12 +62,12 @@ export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
   for (let k = 0; k < 14; k++) mesh(new THREE.IcosahedronGeometry(.055, 0), iron, extractedIron, mx + (k % 2 ? .42 : -.42) + Math.sin(k * 7) * .07, 1.38 + (k % 3) * .055, mz + Math.cos(k * 5) * .06);
   const fx = g.filter.x, fz = g.filter.z;
   // 옆면과 종이 바닥은 깔때기 모양이고 위가 열려 있다. 모래는 종이 안에 남는다.
-  const funnel = mesh(new THREE.CylinderGeometry(D.filterRadius, .12, .82, 28, 1, true), paper, group, fx, D.filterY, fz, true);
-  ring(D.filterRadius, .035, group, fx, D.filterY + .41, fz);
-  for (const side of [-1, 1]) box(.07, 1.3, .07, fx + side * .9, 1.4, fz, brass);
+  const funnel = mesh(new THREE.CylinderGeometry(D.filterRadius, .12, D.filterHeight, 28, 1, true), paper, group, fx, D.filterY, fz, true);
+  ring(D.filterRadius, .035, group, fx, D.filterY + D.filterHeight/2, fz);
+  for (const side of [-1, 1]) box(.07, 1.10, .07, fx + side * .86, 1.23, fz, brass);
   const residue = new THREE.Group(); group.add(residue);
-  mesh(new THREE.CylinderGeometry(.59, .09, .62, 24), sand, residue, fx, 1.60, fz);
-  for (let k = 0; k < 19; k++) { const a = k * 2.4, r = .11 * Math.sqrt(k);
+  mesh(new THREE.CylinderGeometry(.59, .09, .36, 24), sand, residue, fx, 1.47, fz);
+  for (let k = 0; k < 19; k++) { const a = k * 2.4, r = .10 * Math.sqrt(k);
     mesh(new THREE.IcosahedronGeometry(.065, 0), sand, residue, fx + Math.cos(a) * r, D.sandY + (k % 3) * .025, fz + Math.sin(a) * r); }
   const glass = new THREE.MeshBasicMaterial({ color: P.glass, transparent: true, opacity: .15, depthWrite: false, side: THREE.DoubleSide }); glass.userData.outlineParameters = { visible: false };
   mesh(new THREE.CylinderGeometry(.43, .43, .46, 20, 1, true), glass, group, fx, 1.03, fz);
@@ -87,7 +89,7 @@ export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
   for (const [name, material] of [['iron', iron], ['sand', sand], ['salt', salt], ['lump', mat(P.charcoal)]]) {
     g.pot.add(grains[name]); for (let k = 0; k < 13; k++) { const a = k * 2.4, r = .075 * Math.sqrt(k);
       const geo = name === 'salt' ? new THREE.BoxGeometry(.09, .08, .09) : new THREE.IcosahedronGeometry(name === 'lump' ? .115 : .04, 0);
-      mesh(geo, material, grains[name], Math.cos(a) * r, .5 + (k % 3) * .025, Math.sin(a) * r); }
+      mesh(geo, material, grains[name], Math.cos(a) * r, (name==='salt'?.10:.5) + (k % 3) * .025, Math.sin(a) * r); }
   }
   g.potHome.y = D.potY; const hx = g.potHome.x, hz = g.potHome.z;
   box(1.45, .13, 1.35, hx, .71, hz, wood); for (const side of [-1, 1]) box(.17, .65, 1.0, hx + side * .52, .325, hz, edge);
@@ -96,7 +98,7 @@ export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
   mesh(new THREE.CylinderGeometry(.66, .58, .82, 14), wood, group, tx, .41, tz, true); ring(.66, .035, group, tx, .73, tz); ring(.61, .035, group, tx, .12, tz);
   box(.12, .52, .12, tx + .5, 1, tz, brass); box(.5, .12, .12, tx + .3, 1.24, tz, brass);
   label('물 · 다시 시작', tx, 2, tz - .7); obstacles.push({ x: tx, z: tz, r: 1.0 });
-  const api = { group, obstacles, cameraOccluders, residue, extractedIron, grains, funnel, flame,
+  const api = { group, obstacles, cameraOccluders, tableParts, architectureParts, residue, extractedIron, grains, funnel, flame,
     sync() {
       extractedIron.visible = ['demag', 'filtered', 'salt'].includes(g.state);
       residue.visible = ['filtered', 'salt'].includes(g.state);
@@ -109,10 +111,11 @@ export function buildEvaporationCourt(scene, seg, rects, g, legacy) {
   };
   g.workshop = api; g._paint(); api.sync(); g.progressCodec = evaporationProgress(g, legacy);
   const dummy = new THREE.Object3D();
-  for (const { material, solid, parts } of batches.values()) {
+  for (const { material, solid, parts, layer } of batches.values()) {
     const m = new THREE.InstancedMesh(cube, material, parts.length); parts.forEach((v, i) => { dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.w, v.h, v.d); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
-    group.add(m); m.castShadow = solid; m.receiveShadow = true; if (solid) cameraOccluders.push(m);
+    group.add(m); m.castShadow = solid; m.receiveShadow = true; if (solid) cameraOccluders.push(m);if(layer==='architecture')architectureParts.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders]; rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];
+  attachSeparationProcess(g,scene,api);
   return api;
 }

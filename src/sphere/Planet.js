@@ -1,18 +1,13 @@
-// 구면 행성 — 아트 바이블 §1 "삼각형 규칙".
-//
-// ★ 이전 버전은 FBM 노이즈 4옥타브 + 능선 노이즈로 지형을 만들었다. 폐기했다.
-//   절차 노이즈는 균일하게 울퉁불퉁할 뿐이라 **눈을 아무 데로도 유도하지 않는다.**
-//   어디에 서도 보이는 것이 같고, 가야 할 이유가 생기는 지점이 없다.
-//
-// 대신 봉우리를 **손으로 배치**한다. BotW 아트 디렉터 타키자와가 GDC에서 밝힌 삼각형 규칙:
-// 삼각형 언덕은 (1) 눈을 정상으로 유도하고 (2) 그 너머를 가려 궁금하게 만들고
-// (3) 넘어갈지 돌아갈지 선택을 준다. 노이즈는 셋 중 아무것도 못 한다.
-//
-// 노이즈는 완전히 버리지 않고 **표면 잔결**로 강등한다(±0.8u). 실루엣은 절대 건드리지 않는다.
+// 구면 행성. 아래 봉우리/분지는 기존 저장과 장소 선택의 기준 높이장이다.
+// 장소를 확정한 뒤 Landscape의 자체 설계 능선과 건축 부지를 적용한다.
+// 원작의 내부 지형 알고리즘이나 개발 수치를 복원했다는 의미가 아니다.
 import * as THREE from 'three';
+import { PlanetSurfaceIndex } from './PlanetSurfaceIndex.js';
 import { fbm } from '../util/noise.js';
 import { GROUND, PATH } from '../data/lighting.js';
 import { addSurfaceDetail } from '../render/SurfaceDetail.js';
+import { createLandscape } from '../world/Landscape.js';
+import { createTerracedRelief } from '../world/TerracedRelief.js';
 
 // 고도와 경사로 지면 색을 고른다.
 // ★ 지도(ui/MapPage.js)가 이 함수를 그대로 쓴다. 지도용 색을 따로 적으면
@@ -27,10 +22,11 @@ const _sand = new THREE.Color(GROUND.sand);
 export function terrainColor(h, slopeDeg, out) {
   // 고도 t: 분지 바닥(−3) → 최고봉(15)
   const t = Math.min(1, Math.max(0, (h + 3) / 18));
-  if (slopeDeg > 34) out.copy(slopeDeg > 46 ? _rockD : _rock);      // 급경사는 노출암
-  else if (t < 0.10) out.copy(_sand).lerp(_gLow, t / 0.10);          // 저지대 마른 흙 → 풀
+  if (t < 0.10) out.copy(_sand).lerp(_gLow, t / 0.10);          // 저지대 마른 흙 → 풀
   else if (t > 0.72) out.copy(_gHigh).lerp(_peak, (t - 0.72) / 0.28); // 정상부는 밝게
   else out.copy(_gLow).lerp(_gHigh, (t - 0.10) / 0.62);
+  out.lerp(_rock, THREE.MathUtils.smoothstep(slopeDeg, 30, 40));
+  out.lerp(_rockD, THREE.MathUtils.smoothstep(slopeDeg, 44, 52));
   return out;
 }
 
@@ -117,6 +113,7 @@ export class Planet {
   constructor(scene) {
     this.R = R;
     this.scene = scene;
+    this.levelSites=[];
     this.mesh = this._build();
     if (scene) scene.add(this.mesh);
   }
@@ -145,7 +142,47 @@ export class Planet {
   //
   // 봉우리 기여는 acos 없이 내적으로 끝낸다. 정점 27,000개 × 봉우리 12개를 매번
   // acos로 돌면 빌드가 눈에 띄게 멈춘다. cos(반경)과 비교해 영향권을 먼저 거른다.
-  heightAt(dir) {
+  heightAt(dir,referenceProfile=false) {
+    let height=this.baseHeightAt(dir);
+    if(this.landscape)height+=this.landscape.delta(dir);
+    if(this.terraces)height+=(referenceProfile?this.terraces.refinementDelta:this.terraces.delta)(dir,height);
+    for(const site of this.levelSites){
+      const dot=THREE.MathUtils.clamp(dir.x*site.dir.x+dir.y*site.dir.y+dir.z*site.dir.z,-1,1);if(dot<=site.cosOuter)continue;
+      const distance=Math.acos(dot)*this.R,amount=1-THREE.MathUtils.smoothstep(distance,site.inner,site.outer);
+      // A plane perpendicular to local gravity, rather than a smaller sphere.
+      const flat=(this.R+site.height)/dot-this.R;
+      height=THREE.MathUtils.lerp(height,flat,amount);
+    }
+    if(this.arrivalSupport)height+=this.arrivalSupport.delta(dir);
+    return height;
+  }
+
+  applyLandscape(spec,protectedSites,trailSamples){
+    this.landscape=createLandscape(this,PEAKS,spec,protectedSites,trailSamples);
+    return this.landscape;
+  }
+
+  applyTerraces(spec,protectedSites,trailSamples){
+    this.terraces=createTerracedRelief(this,spec,protectedSites,trailSamples);return this.terraces;
+  }
+
+  colorAt(dir,height,slope,out,exposure){terrainColor(height,slope,out);return this.terraces?this.terraces.colorAt(dir,height,slope,out,exposure):out;}
+
+  levelSite(id,direction,inner,outer,rebuild=true){
+    if(this.levelSites.some(s=>s.id===id))return this.levelSites.find(s=>s.id===id);
+    const dir=direction.clone().normalize(),height=this.heightAt(dir),beforeSlope=this.slopeDegAt(dir);
+    const site={id,dir,height,inner,outer,cosOuter:Math.cos(outer/this.R),beforeSlope};this.levelSites.push(site);
+    if(rebuild)this.rebuildTerrain();
+    site.afterSlope=this.slopeDegAt(dir);return site;
+  }
+
+  rebuildTerrain(){
+    this._groundIndex?.dispose(); this._groundIndex=null;
+    const replacement=this._build();this.mesh.geometry.dispose();this.mesh.material.dispose();
+    this.mesh.geometry=replacement.geometry;this.mesh.material=replacement.material;this._unpaintedColors=null;
+  }
+
+  baseHeightAt(dir) {
     let h = 0;
     for (const p of _peaks) {
       const c = dir.x * p.dir.x + dir.y * p.dir.y + dir.z * p.dir.z;
@@ -174,10 +211,34 @@ export class Planet {
     return out.multiplyScalar(R + this.heightAt(out));
   }
 
-  // 제자리에서 표면으로 투영 — SurfaceTransform이 매 이동마다 부른다.
+  // Authoring heightAt/surfaceAt remain analytic, so site choice, RNG,
+  // static anchors and source GLB conforming do not silently change.
+  enableMeshGround(options={}) {
+    this._meshGroundEnabled=true;this._groundOptions=options;
+    this._groundIndex?.dispose();this._groundIndex=new PlanetSurfaceIndex(this.mesh,options);
+    return this._groundIndex;
+  }
+  get meshGroundActive() { return !!this._meshGroundEnabled; }
+  meshGroundIndex() {
+    if(!this._meshGroundEnabled)return null;
+    if(!this._groundIndex?.isCurrent()) {
+      this._groundIndex?.dispose();this._groundIndex=new PlanetSurfaceIndex(this.mesh,this._groundOptions);
+    }
+    return this._groundIndex;
+  }
+  groundHeightAt(dir) {
+    const index=this.meshGroundIndex();if(!index)return this.heightAt(dir);
+    const radius=index.radiusAt(dir);
+    if(!Number.isFinite(radius))throw Error('Rendered terrain contact missing');
+    return radius-this.R+(this.arrivalSupport?.delta(dir)||0);
+  }
+  groundSurfaceAt(dir,out=new THREE.Vector3()) {
+    out.copy(dir).normalize();return out.multiplyScalar(this.R+this.groundHeightAt(out));
+  }
+  // Existing SurfaceTransform.moveOnSphere already calls this for every move,
+  // including climb probes and collision recovery; jumpH remains independent.
   projectToSurface(v) {
-    v.normalize();
-    return v.multiplyScalar(R + this.heightAt(v));
+    v.normalize();return v.multiplyScalar(this.R+this.groundHeightAt(v));
   }
 
   latLonToPos(latDeg, lonDeg) {
@@ -223,7 +284,10 @@ export class Planet {
   // 지형 모양은 그대로 두고 공유 꼭짓점의 색·법선만 이어 준다.
   // 풀밭의 면 경계가 먼저 읽히던 현상을 줄이고, 돌 소품의 각진 면과 구분한다.
   _build() {
-    const geo = new THREE.IcosahedronGeometry(R, DETAIL);
+    const buildStarted=performance.now();
+    const base = new THREE.IcosahedronGeometry(R, DETAIL);
+    const refineSites=[...this.levelSites,...(this.terraces?.refinementSites||[])];
+    const geo = refineSites.length?refineLevelSites(base,refineSites,R,this.terraces?.contract.refinementRounds||2,this.terraces?d=>this.heightAt(d,true):null):base;
     const pos = geo.attributes.position;
     const n = pos.count;
     const colors = new Float32Array(n * 3);
@@ -236,12 +300,15 @@ export class Planet {
     const heights = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       d.set(pos.getX(i), pos.getY(i), pos.getZ(i)).normalize();
-      const h = this.heightAt(d);
+      // The raised walkable floor is rendered by its real Blender mesh.
+      // Keep soil underneath rather than drawing soil through the platform.
+      const h = this.heightAt(d)-(this.arrivalSupport?.delta(d)||0);
       heights[i] = h;
       d.multiplyScalar(R + h);
       pos.setXYZ(i, d.x, d.y, d.z);
     }
 
+    const rockFaceFlags=new Uint8Array(n/3);
     // 2) 면마다 색 — 고도와 경사 두 축으로 고른다
     for (let f = 0; f < n; f += 3) {
       a.set(pos.getX(f), pos.getY(f), pos.getZ(f));
@@ -254,7 +321,9 @@ export class Planet {
       const up = _t4.copy(a).add(b).add(c).normalize();
       const slope = Math.acos(Math.min(1, Math.max(-1, Math.abs(nx.dot(up))))) * 180 / Math.PI;
 
-      terrainColor(hAvg, slope, col);
+      const exposure=this.terraces?this.terraces.influence(up):0;
+      this.colorAt(up,hAvg,slope,col,exposure);
+      if(slope>18&&exposure>.12)rockFaceFlags[f/3]=1;
 
       // 면마다 아주 살짝 흔든다. 완전히 같은 색이 넓게 이어지면 로우폴리가 저해상도로 보인다.
       const j = 0.965 + ((f * 2654435761) % 1000) / 1000 * 0.07;
@@ -267,16 +336,23 @@ export class Planet {
       }
     }
 
+    // Constant per triangle, so the carpet clone can discard exposed-rock
+    // fragments without moving any soil/collision vertices or changing UVs.
+    const exposedRock=new Uint8Array(n);
+    for(let f=0;f<rockFaceFlags.length;f++){const i=f*3;exposedRock[i]=exposedRock[i+1]=exposedRock[i+2]=rockFaceFlags[f];}
+    geo.setAttribute('aExposedRock',new THREE.Uint8BufferAttribute(exposedRock,1,false));
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geo.computeVertexNormals();
 
-    softenTerrainSurface(geo);
+    softenTerrainSurface(geo,rockFaceFlags,25);
+    geo.userData.rockFaceNormals.exposedAttributeBytes=exposedRock.byteLength;
     const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
     addSurfaceDetail(mat);
     mat.userData.outlineParameters = { visible: false };   // 지형에 외곽선은 그물망이 된다
     const mesh = new THREE.Mesh(geo, mat);
     mesh.receiveShadow = true;
     mesh.castShadow = false;                                // 구 전체가 자기 그림자를 던지면 얼룩진다
+    geo.userData.surfaceBuildMs=performance.now()-buildStarted;
     return mesh;
   }
 
@@ -286,22 +362,53 @@ export class Planet {
 
 // 비인덱스 지형의 겹치는 꼭짓점만 묶어 음영을 부드럽게 한다.
 // 좌표·인덱스·높이장에는 손대지 않으므로 보행/지도/산포의 표면 계약이 유지된다.
-function softenTerrainSurface(geo) {
-  const p = geo.attributes.position, n = geo.attributes.normal, c = geo.attributes.color;
-  const shared = new Map(), keys = new Array(p.count);
-  for (let i = 0; i < p.count; i++) {
-    const key = `${Math.round(p.getX(i) * 10000)},${Math.round(p.getY(i) * 10000)},${Math.round(p.getZ(i) * 10000)}`;
-    keys[i] = key;
-    let s = shared.get(key);
-    if (!s) { s = [0, 0, 0, 0, 0, 0, 0]; shared.set(key, s); }
-    s[0] += n.getX(i); s[1] += n.getY(i); s[2] += n.getZ(i);
-    s[3] += c.getX(i); s[4] += c.getY(i); s[5] += c.getZ(i); s[6]++;
+// Shared positions stay shared. Only exposed limestone contacts reject normals
+// across a 25 degree crease; grassy terrain keeps the original full smoothing.
+function softenTerrainSurface(geo,rockFaces,creaseDegrees=25) {
+  const started=performance.now(),p=geo.attributes.position,n=geo.attributes.normal,c=geo.attributes.color,groups=new Map();
+  for(let i=0;i<p.count;i++){
+    const key=`${Math.round(p.getX(i)*10000)},${Math.round(p.getY(i)*10000)},${Math.round(p.getZ(i)*10000)}`;
+    let group=groups.get(key);if(!group){group=[];groups.set(key,group);}group.push(i);
   }
-  for (let i = 0; i < p.count; i++) {
-    const s = shared.get(keys[i]), len = Math.hypot(s[0], s[1], s[2]) || 1;
-    n.setXYZ(i, s[0] / len, s[1] / len, s[2] / len);
-    c.setXYZ(i, s[3] / s[6], s[4] / s[6], s[5] / s[6]);
+  const cosine=Math.cos(creaseDegrees*Math.PI/180);let scratch=new Float64Array(192),sharpGroups=0,sharpCorners=0,rejected=0,maxMembers=0;
+  for(const group of groups.values()){
+    maxMembers=Math.max(maxMembers,group.length);const sharp=group.some(i=>rockFaces[Math.floor(i/3)]!==0);
+    if(!sharp){let nx=0,ny=0,nz=0,r=0,g=0,b=0;for(const i of group){nx+=n.getX(i);ny+=n.getY(i);nz+=n.getZ(i);r+=c.getX(i);g+=c.getY(i);b+=c.getZ(i);}const len=Math.hypot(nx,ny,nz)||1;for(const i of group){n.setXYZ(i,nx/len,ny/len,nz/len);c.setXYZ(i,r/group.length,g/group.length,b/group.length);}continue;}
+    sharpGroups++;sharpCorners+=group.length;if(scratch.length<group.length*6)scratch=new Float64Array(group.length*6);
+    // Finish the entire group before overwriting its original face normals.
+    for(let k=0;k<group.length;k++){
+      const i=group[k],x=n.getX(i),y=n.getY(i),z=n.getZ(i);let nx=0,ny=0,nz=0,r=0,g=0,b=0,count=0;
+      for(const j of group){if(x*n.getX(j)+y*n.getY(j)+z*n.getZ(j)<cosine){rejected++;continue;}nx+=n.getX(j);ny+=n.getY(j);nz+=n.getZ(j);r+=c.getX(j);g+=c.getY(j);b+=c.getZ(j);count++;}
+      const len=Math.hypot(nx,ny,nz)||1,o=k*6;scratch[o]=nx/len;scratch[o+1]=ny/len;scratch[o+2]=nz/len;scratch[o+3]=r/count;scratch[o+4]=g/count;scratch[o+5]=b/count;
+    }
+    for(let k=0;k<group.length;k++){const i=group[k],o=k*6;n.setXYZ(i,scratch[o],scratch[o+1],scratch[o+2]);c.setXYZ(i,scratch[o+3],scratch[o+4],scratch[o+5]);}
   }
+  geo.userData.rockFaceNormals={creaseDegrees,sharpGroups,sharpCorners,rejectedNormalPairs:rejected,rockFaces:rockFaces.reduce((a,b)=>a+b,0),maxSharedCorners:maxMembers,normalBuildMs:performance.now()-started};
+}
+
+// Refine only authored building sites. Shared edge midpoints are registered
+// before triangulation, so neighbouring faces stitch without T-junction cracks.
+// A local flat height function alone was not enough on the old ~2m mesh edges.
+function refineLevelSites(source,sites,radius,rounds=2,heightAt=null){
+  let positions=Array.from(source.attributes.position.array);source.dispose();
+  const a=new THREE.Vector3(),b=new THREE.Vector3(),c=new THREE.Vector3(),mid=new THREE.Vector3(),centre=new THREE.Vector3();
+  const key=v=>`${Math.round(v.x*1e4)},${Math.round(v.y*1e4)},${Math.round(v.z*1e4)}`;
+  const edgeKey=(a,b)=>{const x=key(a),y=key(b);return x<y?x+'|'+y:y+'|'+x;};
+  const cosines=sites.map(s=>Math.cos((s.outer+2)/radius));
+  for(let round=0;round<rounds;round++){
+    const edges=new Map();
+    for(let i=0;i<positions.length;i+=9){a.fromArray(positions,i);b.fromArray(positions,i+3);c.fromArray(positions,i+6);
+      for(const[x,y]of[[a,b],[b,c],[c,a]]){mid.addVectors(x,y).normalize();if(!sites.some((s,j)=>round<(s.rounds||2)&&mid.dot(s.dir)>cosines[j]))continue;if(round>=3&&heightAt){const hx=heightAt(x.clone().normalize()),hy=heightAt(y.clone().normalize());if(Math.abs(heightAt(mid)-(hx+hy)*.5)<.012)continue;}const k=edgeKey(x,y);if(!edges.has(k))edges.set(k,mid.clone().multiplyScalar(radius));}
+    }
+    const next=[];const push=v=>next.push(v.x,v.y,v.z);
+    for(let i=0;i<positions.length;i+=9){a.fromArray(positions,i);b.fromArray(positions,i+3);c.fromArray(positions,i+6);const ab=edges.get(edgeKey(a,b)),bc=edges.get(edgeKey(b,c)),ca=edges.get(edgeKey(c,a));
+      if(!ab&&!bc&&!ca){push(a);push(b);push(c);continue;}
+      const boundary=[a,...(ab?[ab]:[]),b,...(bc?[bc]:[]),c,...(ca?[ca]:[])];centre.copy(a).add(b).add(c).normalize().multiplyScalar(radius);
+      for(let j=0;j<boundary.length;j++){push(centre);push(boundary[j]);push(boundary[(j+1)%boundary.length]);}
+    }
+    positions=next;
+  }
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));return geometry;
 }
 
 const _Y = new THREE.Vector3(0, 1, 0), _X = new THREE.Vector3(1, 0, 0);

@@ -25,6 +25,8 @@ export function buildKitchen(scene, planet, landing, carpet, forage) {
   const east = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), dir).normalize();
   const kdir = dir.clone().addScaledVector(east, 6.5 / R).normalize();
   const fr = planet.frameAt(planet.surfaceAt(kdir), 0);
+  // Height only: preserve kdir, local axes, recipe coordinates and interaction.
+  fr.position.copy(planet.groundSurfaceAt(kdir));
   const g = new THREE.Group();
   g.position.copy(fr.position);
   g.quaternion.copy(fr.quaternion);
@@ -34,7 +36,14 @@ export function buildKitchen(scene, planet, landing, carpet, forage) {
   const groundY = (x, z) => {
     g.updateMatrixWorld();
     const w = g.localToWorld(_gv.set(x, 0, z));
-    return R + planet.heightAt(_gn.copy(w).normalize()) - w.length() + lift;
+    let y=R + planet.groundHeightAt(_gn.copy(w).normalize()) - w.length();
+    if(planet.meshGroundActive){
+      // Correct only local height; the kitchen axes and recipe positions stay.
+      const base=w.clone(),axis=new THREE.Vector3(0,1,0).transformDirection(g.matrixWorld),probe=new THREE.Vector3(),normal=new THREE.Vector3();
+      const gap=height=>{probe.copy(base).addScaledVector(axis,height);return probe.length()-R-planet.groundHeightAt(normal.copy(probe).normalize());};
+      for(let i=0;i<4;i++){const error=gap(y);if(Math.abs(error)<1e-7)break;const derivative=(gap(y+.01)-error)/.01;if(!Number.isFinite(derivative)||Math.abs(derivative)<.05)break;y-=error/derivative;}
+    }
+    return y+lift;
   };
   const stone = toon(0x6e7078), dark = toon(0x3a3230), wood = toon(0x6b4f36);
   const glow = (c, o = {}) => {

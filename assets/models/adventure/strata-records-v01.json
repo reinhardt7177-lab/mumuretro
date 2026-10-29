@@ -1,0 +1,85 @@
+{
+  "model": "assets/models/adventure/panel-workshop-v01.glb",
+  "source": "art/panel-workshop/v01/panel-workshop-v01.blend",
+  "part": "ObservationPlaque",
+  "scale": 0.65,
+  "placements": [
+    {
+      "id": "goal",
+      "position": [
+        3.9,
+        0,
+        4.6
+      ]
+    },
+    {
+      "id": "hint",
+      "position": [
+        3.9,
+        0,
+        2.4
+      ]
+    }
+  ],
+  "palette": {
+    "paper": "#eee7d3",
+    "ink": "#24312e",
+    "bronze": "#927244"
+  },
+  "solids": [
+    {
+      "position": [
+        0,
+        0.09,
+        -0.03
+      ],
+      "size": [
+        0.82,
+        0.18,
+        0.64
+      ]
+    },
+    {
+      "position": [
+        0,
+        0.2,
+        -0.03
+      ],
+      "size": [
+        0.66,
+        0.05,
+        0.48
+      ]
+    },
+    {
+      "position": [
+        0,
+        0.57,
+        -0.06
+      ],
+      "size": [
+        0.24,
+        0.7,
+        0.24
+      ]
+    },
+    {
+      "position": [
+        0,
+        1.35,
+        0.01
+      ],
+      "size": [
+        2.62,
+        1.1,
+        0.26
+      ]
+    }
+  ],
+  "read": {
+    "halfWidth": 1.05,
+    "near": 0.35,
+    "far": 1.8,
+    "maxFootHeight": 0.25
+  }
+}

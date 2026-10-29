@@ -1,0 +1,9 @@
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
+const file=path.resolve('tools/capture-fire-paving.cjs');let s=fs.readFileSync(file,'utf8');s=s.replace("B='reports/2026-10-24/evidence/fire-paving'","B='reports/2026-10-24/evidence/fire-masonry'");
+s=s.replace("await p.locator('#title .go').click();","await p.locator('#title .go').click({noWaitAfter:true,timeout:90000});");
+const start=s.indexOf("if(phase==='before')"),end=s.indexOf('await p.goto',start);s=s.slice(0,start)+`if(phase==='before')for(const [k,v]of [['fracture','v02'],['foundry','v01'],['steam','v01'],['sanctum','v02']])await p.route('**/'+k+'-static-v03.glb',r=>r.fulfill({contentType:'model/gltf-binary',body:fs.readFileSync('assets/models/fire-temple/'+k+'-static-'+v+'.glb')}));if(phase==='goal')for(const k of ['fracture','foundry','steam','sanctum'])await p.route('**/'+k+'-static-v03.glb',r=>r.fulfill({contentType:'model/gltf-binary',body:fs.readFileSync('art/fire-masonry/v01/'+k+'-static-v03.glb')}));\n`+s.slice(end);
+s=s.replace('for(const [id,camera',`poses.push(['wall-front',[8,5,-53],[8,5,-57],[2,-49,3.2]],['wall-side',[4.8,5,-53],[8,5,-57],[2,-49,3.2]],['wall-back',[8,5,-61],[8,5,-57],[2,-49,3.2]],['foundry-wall',[28,3,-5],[28,3,-12],[28,6,0]],['steam-wall',[6,4,-25],[12,4,-25],[0,-20,0]]);for(const [id,camera`);
+s=s.replace('game.roomActor.syncMesh();','game.roomActor.syncMesh();game.room.world.animate(0,game.roomActor);');
+s=s.replace('const c=game.engine.camera;',`if(['no-shadow','goal-no-shadow'].includes(${JSON.stringify(process.argv[2])}))game.engine.renderer.shadowMap.enabled=false;const c=game.engine.camera;`);
+s=s.replace("if(phase==='goal')for","if(phase.startsWith('goal'))for");
+const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(s,file);

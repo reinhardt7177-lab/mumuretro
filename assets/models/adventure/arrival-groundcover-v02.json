@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "routeSignature": "f2a7ee29",
+  "surface": {
+    "width": 1024,
+    "height": 512,
+    "channels": "sRGB albedo and linear path mask alpha",
+    "coordinates": "planet-centred equirectangular, longitude repeat, latitude clamp",
+    "routeSignatureRequired": true,
+    "geometryChanged": false,
+    "colourCover": "shared layered patch field, actual planet.colorAt and routes",
+    "groundWind": false,
+    "arrivalSite": "physical plane3.2m,blend5.2m",
+    "rockShading": "Actual triangle-slope vertex colour is retained on aExposedRock; the field colours non-rock terrain"
+  },
+  "variants": [
+    {
+      "name": "MeadowTuft_0",
+      "kind": "low broad rosette",
+      "vertices": 108,
+      "triangles": 90,
+      "height": 0.1599999964237213,
+      "minimumY": 0,
+      "radius": 0.20889960238455346,
+      "accentVertices": 0
+    },
+    {
+      "name": "MeadowTuft_1",
+      "kind": "mixed arching grass and low leaves",
+      "vertices": 108,
+      "triangles": 90,
+      "height": 0.3400000035762787,
+      "minimumY": 0,
+      "radius": 0.19531995406268565,
+      "accentVertices": 0
+    },
+    {
+      "name": "MeadowTuft_2",
+      "kind": "cream meadow bloom",
+      "vertices": 90,
+      "triangles": 70,
+      "height": 0.35999998450279236,
+      "minimumY": 0,
+      "radius": 0.11320469280611041,
+      "accentVertices": 30
+    },
+    {
+      "name": "MeadowTuft_3",
+      "kind": "small golden meadow bloom",
+      "vertices": 90,
+      "triangles": 70,
+      "height": 0.3799999952316284,
+      "minimumY": 0,
+      "radius": 0.12385541604558561,
+      "accentVertices": 30
+    }
+  ],
+  "placement": {
+    "cellStepMetres": 3.5,
+    "samplesPerCell": 70,
+    "maximumPerVariantMid": [
+      900,
+      900,
+      300,
+      300
+    ],
+    "maximumPerVariantHigh": [
+      900,
+      900,
+      300,
+      300
+    ],
+    "radiusMetres": 17,
+    "cacheCellLimit": 256,
+    "rootsFollowActualCarpet": "rendered soil triangle + existing analytic carpet lift, not a new carpet raycast",
+    "reuseExistingExclusionFunctions": true,
+    "flowerCandidateWeight": 0.095,
+    "patchThreshold": 0.43,
+    "maximumTotal": 2400,
+    "horizontalAxisVariation": [
+      0.68,
+      1.32
+    ]
+  },
+  "tufts": {
+    "variants": 4,
+    "bladesPerVariant": [
+      9,
+      9,
+      4,
+      4
+    ],
+    "segmentsPerBlade": 5,
+    "maximumTrianglesPerVariant": 90,
+    "maximumMeshes": 4,
+    "maximumMaterials": 1,
+    "localBottom": 0,
+    "heights": [
+      0.1599999964237213,
+      0.3400000035762787,
+      0.35999998450279236,
+      0.3799999952316284
+    ],
+    "bladeWidthRange": [
+      0.024,
+      0.046
+    ],
+    "maximumRadius": 0.43,
+    "windAmplitude": 0.075,
+    "bodyBend": 0.14,
+    "rootDistribution": "3x3 patch with deterministic jitter",
+    "source": "arrival-groundcover-v02",
+    "layeredKinds": true,
+    "trianglesPerVariant": [
+      90,
+      90,
+      70,
+      70
+    ]
+  },
+  "palette": {
+    "meadow": [
+      "#6c9557",
+      "#789e60",
+      "#83a669",
+      "#91ae73"
+    ],
+    "soil": "#bc975c",
+    "stone": "#858b94",
+    "air": "#c2dce6"
+  },
+  "source": "art/arrival-coherence/v01/groundcover-v02/arrival-groundcover-v02.blend",
+  "accentUV": "u>1.5 preserves authored petal colours; V is height-normalized bending",
+  "model": "arrival-groundcover-v02.glb",
+  "runtimeMaterials": {
+    "colour": 4,
+    "shadow": 4
+  }
+}

@@ -7,7 +7,7 @@ import { buildSieveMotion } from './SieveMotion.js';
 export function buildSieveCourt(scene, seg, rects, g, legacy) {
   const orders = [...g.orders], group = new THREE.Group(); group.name = '체와 두 접시의 작업장';
   g.group.removeFromParent(); g.group = group; scene.add(group);
-  const cameraOccluders = [], obstacles = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);
+  const cameraOccluders = [], obstacles = [], architectureParts = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);let layer='architecture';
   const material = color => { const m = new THREE.MeshStandardMaterial({ color, roughness: 0.86, emissive: color, emissiveIntensity: 0.35 });
     m.userData.outlineParameters = { visible: false }; return m; };
   const floor = material(C.floor), alt = material(C.floorAlt), stone = material(C.stone), pale = material(C.pale), wood = material(C.wood), edge = material(C.edge), brass = material(C.brass), wire = material(C.mesh);
@@ -16,7 +16,7 @@ export function buildSieveCourt(scene, seg, rects, g, legacy) {
     if (solid) cameraOccluders.push(m); return m;
   };
   const box = (w, h, d, x, y, z, mat, solid = true) => {
-    const key = mat.uuid + solid; if (!batches.has(key)) batches.set(key, { mat, solid, items: [] });
+    const key = mat.uuid + solid+layer; if (!batches.has(key)) batches.set(key, { mat, solid, layer, items: [] });
     batches.get(key).items.push({ w, h, d, x, y, z });
   };
   const cz = (seg.z0 + seg.z1) / 2;
@@ -31,6 +31,7 @@ export function buildSieveCourt(scene, seg, rects, g, legacy) {
     box(0.48, 0.25, D.length, side * 6.2, 3.82, cz, pale);
   }
   for (const m of scene.children) if (m.userData.doorFrame === 'r1') m.material = pale;
+  layer='devices';
   // 둥근 테두리 안이 빈 작업대. 알갱이를 가리는 불투명 상판은 놓지 않는다.
   const { x: fx, z: fz } = g.frame;
   for (const side of [-1, 1]) {
@@ -96,7 +97,7 @@ export function buildSieveCourt(scene, seg, rects, g, legacy) {
   mesh(new THREE.BoxGeometry(0.8, 0.04, 0.1), g.slotMat, group, fx, D.tableY + 0.02, fz + 1.45, false);
   mesh(new THREE.BoxGeometry(0.75, 0.04, 0.08), g.trayMat, group, tx, 0.32, tz + 0.79, false);
   const api = {
-    group, cameraOccluders, obstacles,
+    group, cameraOccluders, obstacles, architectureParts,
     sync() {
       const sv = g.fitted >= 0 ? g.sieves[g.fitted].spec : null, up = g._aboveSet(sv);
       g.sieves.forEach((s, i) => {
@@ -122,10 +123,10 @@ export function buildSieveCourt(scene, seg, rects, g, legacy) {
   api.update = dt => { api.sync(); motion.update(dt); };
   g.workshop = api; api.sync(); g.progressCodec = sieveProgress(g, legacy, orders);
   const dummy = new THREE.Object3D();
-  for (const { mat, solid, items } of batches.values()) {
+  for (const { mat, solid, items, layer } of batches.values()) {
     const m = new THREE.InstancedMesh(cube, mat, items.length);
     items.forEach((v, i) => { dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.w, v.h, v.d); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
-    m.castShadow = solid; m.receiveShadow = true; group.add(m); if (solid) cameraOccluders.push(m);
+    m.castShadow = solid; m.receiveShadow = true; group.add(m); if (solid) cameraOccluders.push(m);if(layer==='architecture')architectureParts.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders];
   rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];

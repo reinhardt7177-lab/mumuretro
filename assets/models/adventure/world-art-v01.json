@@ -1,0 +1,127 @@
+{
+  "version": 1,
+  "status": "local-integrated-verified",
+  "identity": "Mumu Planet science pilgrimage, original space navigator architecture",
+  "camera": {
+    "viewport": [
+      1440,
+      900
+    ],
+    "verticalFov": 62,
+    "distance": 7.6,
+    "pitch": 0.32,
+    "yawDegrees": [
+      0,
+      90,
+      180
+    ]
+  },
+  "palette": {
+    "limestone": "#d6ceb5",
+    "ivory": "#e7e0cc",
+    "slate": "#536774",
+    "bronze": "#927349",
+    "dark": "#293c46",
+    "soil": "#bc975c",
+    "ice": "#a2d5de"
+  },
+  "gate": {
+    "width": 6.2,
+    "depth": 3,
+    "doorWidth": 2.3,
+    "doorHeight": 3.4,
+    "localBottom": 0,
+    "sidePlinthHeight": 0.16,
+    "centreFloorHeight": 0,
+    "maximumTriangles": 14000,
+    "maximumMaterials": 6,
+    "maximumMeshes": 7,
+    "levelRadius": 4,
+    "blendRadius": 7,
+    "portalZ": -0.75
+  },
+  "temples": [
+    {
+      "id": "balance",
+      "height": 6.1,
+      "silhouette": "triangular pediment with suspended balance",
+      "accent": "#7ee0c7"
+    },
+    {
+      "id": "shadow",
+      "height": 6.6,
+      "silhouette": "split slate fins and a brass lunette",
+      "accent": "#d3dcee"
+    },
+    {
+      "id": "sift",
+      "height": 5.7,
+      "silhouette": "three broad perforated sieve crowns",
+      "accent": "#e8b66c"
+    },
+    {
+      "id": "water",
+      "height": 6.5,
+      "silhouette": "wave arch and planar glacier sheets",
+      "accent": "#84d9dd"
+    },
+    {
+      "id": "fire",
+      "height": 6.3,
+      "silhouette": "vented chimney and fluted casting buttresses",
+      "accent": "#ffaf6c"
+    },
+    {
+      "id": "strata",
+      "height": 6.7,
+      "silhouette": "offset strata twin pylons and orbital arm",
+      "accent": "#c7afd8"
+    }
+  ],
+  "relief": {
+    "enabled": true,
+    "ridgeAspect": 1.28,
+    "capRadius": 0.12,
+    "gullyAmplitude": 0.065,
+    "terraceAmplitude": 0.22,
+    "preserveFirstTrailInner": 2,
+    "preserveFirstTrailOuter": 4,
+    "preserveSiteInner": 3,
+    "preserveSiteOuter": 6,
+    "maximumHeightDelta": 4.5,
+    "protectFirstTrailHeights": false
+  },
+  "boulders": {
+    "variants": 2,
+    "radius": 0.5,
+    "height": [
+      0.72,
+      0.61
+    ],
+    "ringVertices": 12,
+    "rings": 5,
+    "maximumTrianglesPerPart": 180,
+    "maximumMaterials": 1,
+    "textureSize": 512,
+    "samePlacementAndScale": true,
+    "groundBottom": 0
+  },
+  "routes": {
+    "nodeSpacingMetres": 1.5,
+    "pathHalfWidth": 0.95,
+    "feather": 0.65,
+    "actorRadius": 0.32,
+    "bodyMargin": 0.1,
+    "maximumPreferredSlopeDegrees": 34,
+    "keepDirectGoldGuide": true
+  },
+  "preserve": [
+    "Three 0.160.0",
+    "all existing shrine/forage/legend IDs and unit directions",
+    "mumuplanet.progress.v1",
+    "first trail input traversal and glider reward",
+    "water direct entry",
+    "classroom three-person balance experiment",
+    "original source models and Blender backups"
+  ]
+}

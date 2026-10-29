@@ -1,0 +1,7 @@
+const fs=require('node:fs'),path=require('node:path'),upstream=require('./workspace-camera-fixture.cjs'),A='art/camera-cost/v01',B='reports/2026-10-26/evidence/camera-cost',base=()=>JSON.parse(fs.readFileSync(B+'/baseline.json'));exports.A=A;exports.B=B;
+exports.hashes=phase=>Object.fromEntries([...base().files,...(phase==='before'?[]:['src/render/RayBoxRange.js','src/render/ForecastVisibilityScore.js'])].map(f=>[f,require('node:crypto').createHash('sha256').update(exports.source(f,phase)).digest('hex')]));
+exports.source=(file,phase='after')=>{const relative=path.relative(path.resolve('.'),path.resolve(file)).replaceAll('\\','/'),preview=phase==='goal',useBefore=phase==='before';if(base().files.includes(relative))return fs.readFileSync(useBefore?B+'/before-'+relative.replaceAll('/','__'):preview?A+'/preview-'+relative.replaceAll('/','__'):relative,'utf8');if(['src/render/RayBoxRange.js','src/render/ForecastVisibilityScore.js'].includes(relative)&&preview)return fs.readFileSync(A+'/preview-'+relative.replaceAll('/','__'),'utf8');return fs.readFileSync(file,'utf8');};
+exports.prepare=async(p,kind,phase='after',options={})=>{
+ const files=[...base().files,'src/render/RayBoxRange.js','src/render/ForecastVisibilityScore.js'];for(const file of files)if(phase!=='before'||base().files.includes(file))await p.route('**/'+file,route=>route.fulfill({contentType:'text/javascript',body:exports.source(file,phase)}));
+ return upstream.prepare(p,kind,'after',{...options,transform:(file,body)=>base().files.includes(file)?exports.source(file,phase):body});
+};

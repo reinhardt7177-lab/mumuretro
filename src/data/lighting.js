@@ -11,21 +11,21 @@
 // 규칙: 빛은 따뜻하게, 그림자는 차갑게, 둘의 색상 거리는 최소 90°.
 // 그림자는 "빛이 없는 곳"이 아니라 "하늘이 비추는 곳"이다. 절대 검정으로 두지 않는다.
 export const LIGHT = {
-  sun:    0xffe8b8,   // 직사광 — 따뜻한 크림
-  shadow: 0x5e7396,   // 그림자 — 차가운 청슬레이트
-  air:    0xc2dce6,   // 대기 · 원경 · 안개 — 옅은 하늘
+  sun:    0xffe6b0,   // 직사광 — 따뜻한 크림
+  shadow: 0xb8c9d6,   // 그림자 — 차가운 청슬레이트
+  air:    0xa9cde5,   // 대기 · 원경 · 안개 — 옅은 하늘
 };
 
 // 태양 방향(고정). 고도 42°, 방위는 카메라 기본 진행 방향에서 살짝 왼쪽 뒤 —
 // 정면광은 형태를 지우고 완전 역광은 지면을 죽인다. 측광이 실루엣과 면을 동시에 살린다.
-export const SUN_ELEV_DEG = 42;
+export const SUN_ELEV_DEG = 46;
 export const SUN_AZIM_DEG = -35;
 
 // ── 하늘 ────────────────────────────────────────────────────────────────────
 // 지평선 색은 반드시 LIGHT.air와 같아야 한다. 다르면 원경이 하늘에 붙지 않고
 // 지형이 하늘 앞에 오려붙인 것처럼 뜬다(§3 규칙).
 export const SKY = {
-  top:     0x4e9bd4,
+  top:     0x4b9fdf,
   horizon: LIGHT.air,
   mtnFar:  0x9db8cc,
   mtnNear: 0x7b93ad,
@@ -42,15 +42,15 @@ export const SKY = {
 //   28u에서 0.40으로 다시 잡는다:
 //   1 − exp(−(28k)²) = 0.40  →  28k = 0.715  →  k = 0.0255
 // 탐험 구간의 중경을 남긴다. 28u에서 약 30%, 50u에서 약 69%가 대기색으로 간다.
-export const FOG_DENSITY = 0.0215;
+export const FOG_DENSITY = 0.0175;
 export const HORIZON_U = 28;      // 카메라 고도 6.3u, R 68u 기준 지평선 거리
 
 // ── 광원 강도 ───────────────────────────────────────────────────────────────
 // ACES 톤매핑이 전체를 눌러서, 노출 1.0을 쓰려면 광원을 그만큼 올려야 한다.
 export const INTENSITY = {
   sun:   2.45,
-  hemi:  1.05,   // 수관 아래도 재질색이 남도록 하늘빛을 조금 더 받는다
-  fill:  0.28,
+  hemi:  1.15,   // 수관 아래도 재질색이 남도록 하늘빛을 조금 더 받는다
+  fill:  0.35,
   rim:   0.16,   // 밝은 윤곽이 면 전체를 덮지 않게 절제한다
 };
 
@@ -63,7 +63,7 @@ export const FOLIAGE = {
   bush:      [0x587e4c, 0x698d55, 0x507647],
 };
 export const MEADOW = [0x6c9557, 0x789e60, 0x83a669, 0x91ae73];
-export const PATH = { soil: 0xb1a07b };
+export const PATH = { soil: 0xbc975c };
 
 // ── 사당 (§5 형태 언어) ─────────────────────────────────────────────────────
 // 세계의 나머지는 전부 둥근 유기물이다(원뿔 나무 · 덩어리 바위 · 매끈한 지형).
@@ -191,7 +191,7 @@ export const SHRINE_THEMES = {
     glow: 0x7fe8db, glowDim: 0x259baf, ink: 0x186a97,
     court: { water: 0x299eb9, foam: 0xd4fff0, bronze: 0xb4a36f, moss: 0x77935b },
     bg: 0x061018, amb: [0x4a7d99, 0x14202a, 0.60], lamp: 1.0,
-    // 물의 신전 — 레퍼런스 그 자체. 맑은 낮, 흰 돌섬, 물이 흐른다.
+    // 물의 신전의 자체 설계 — 맑은 낮, 흰 돌섬, 물이 흐른다.
     open: { top: 0x4b9dce, horizon: 0xa5d3df, ground: 0xd7d3ba, rim: 0x748c88,
       sun: 0xffedc4, sunI: 2.4, sunEl: 52, sunAz: -35, cloud: 0xffffff, stars: 0 },
   },
@@ -204,14 +204,18 @@ export const SHRINE_THEMES = {
     open: { top: 0x3a2a2c, horizon: 0xc9613f, ground: 0x3d312e, rim: 0x1e1614,
       sun: 0xffb08a, sunI: 1.3, sunEl: 30, sunAz: 160, cloud: 0x5a4442, stars: 0 },
   },
-  // 06 지층과 화석 — 지하 깊은 곳. 자수정빛.
+  // 06 지층과 화석 — 청회색 황혼과 따뜻한 측광. 자체 미술 설계값.
   strata: {
-    stone: 0x6a5f72, stoneDark: 0x3f3748, stoneLite: 0x8b7f97,
+    stone: 0x717573, stoneDark: 0x3e484c, stoneLite: 0xa0a79f,
     glow: 0xab94df, glowDim: 0x6b52a0, ink: 0x63499c,
     bg: 0x0a0710, amb: [0x453a5e, 0x0e0a14, 0.45], lamp: 0.90,
     // 협곡 황혼. 노출된 지층 절벽이 곧 이 사당의 교재다.
-    open: { top: 0x3c2f6e, horizon: 0xd4a3b8, ground: 0x8a7c92, rim: 0x4a3f5a,
-      sun: 0xffc7e0, sunI: 1.4, sunEl: 12, sunAz: -110, cloud: 0xe7c6d6, stars: 90 },
+    open: { top: 0x263d59, horizon: 0x8caaa9, ground: 0x717773, rim: 0x424f59,
+      sun: 0xfff0d4, sunI: 2.2, sunEl: 38, sunAz: -35, cloud: 0xb9cbc9, stars: 90,
+      ambientSky:0xc2d6e3, ambientIntensity:1.1,
+      shadowBias:-.001, shadowNormalBias:.05,
+      softMidShadows:true,
+      fill:{color:0xc5d8e6,intensity:.65,position:[30,36,-70],target:[0,0,-20]} },
   },
 };
 
@@ -247,3 +251,12 @@ export const STARSAIL_PALETTE = {
   stars: 0xb7d5f1, planet: 0x4b896b, continents: 0x9baa62,
   rope: 0xa48a59, brass: 0xb88d45, parcel: 0x9a7951,
 };
+
+// Authored fire court atmosphere; own values, not original-game measurements.
+export const FIRE_COURT_LIGHT={top:'#354b62',horizon:'#8b9ba4',fogNear:65,fogFar:220,sky:'#bfd4e1',ground:'#65584a',ambient:2.0,sun:'#ffe2b7',sunIntensity:2.7,bias:-.001,normalBias:.05};
+
+// Original Mumu distant cliff palette; not an original-game parameter.
+export const HORIZON=Object.freeze({layers:Object.freeze([SKY.mtnFar,SKY.mtnNear,0x697f91]),shade:.24});
+
+// Preview values authored for Mumu; not measured from another game.
+export const OUTDOOR = Object.freeze({fogNear:12,fogFar:100,skyTransition:.22,ground:0xb2a98a,environmentGain:.18,environmentKey:.20,environmentWidth:256,environmentHeight:128,planetBloom:.035,planetSaturation:1.02,planetContrast:1.015,planetVignette:.14});

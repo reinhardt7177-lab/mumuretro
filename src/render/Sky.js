@@ -3,12 +3,13 @@
 // 하늘의 일은 두 가지뿐이다.
 //  1) 지평선 색이 대기색(LIGHT.air)과 **정확히 같을 것.** 다르면 원경 지형이 하늘에 붙지 않고
 //     오려붙인 것처럼 뜬다. 대기 원근(§3)이 수렴하는 목적지가 곧 이 색이다.
-//  2) 원경 레이어를 만들 것. 산 실루엣 두 겹이 지평선 너머에 깊이를 만든다 —
+//  2) 원경 레이어를 만들 것. 편집한 입체 돌산 세 층이 지평선 너머에 깊이를 만든다 —
 //     실제로 갈 수 있는 곳이 아니어도 "저 너머가 있다"는 감각이 화면을 넓힌다.
 //
 // 돔은 플레이어 up을 따라 회전한다. 구면 행성이라 걸어가면 '위'가 바뀌기 때문이다.
 import * as THREE from 'three';
-import { SKY, LIGHT } from '../data/lighting.js';
+import { SKY, LIGHT, OUTDOOR } from '../data/lighting.js';
+import {buildHorizonBackdrop,horizonAssets} from './HorizonBackdrop.js';
 
 const VERT = `
   varying vec3 vLocal;
@@ -21,11 +22,23 @@ const VERT = `
 // 지평선 → 천정 그라데이션. t를 그대로 쓰면 띠가 보이므로 smoothstep으로 부드럽게 민다.
 const FRAG = `
   uniform vec3 uTop, uHorizon;
+  uniform float uSkyTime, uSkyTransition;
   varying vec3 vLocal;
+  float skyHash(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
+  float skyNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(skyHash(i),skyHash(i+vec2(1.,0.)),f.x),mix(skyHash(i+vec2(0.,1.)),skyHash(i+1.),f.x),f.y);}
+  float skyFbm(vec2 p){return .57*skyNoise(p)+.28*skyNoise(p*2.03+9.)+.15*skyNoise(p*4.11-7.);}
   void main() {
-    float t = clamp(normalize(vLocal).y, 0.0, 1.0);
-    t = smoothstep(0.0, 0.62, t);
-    gl_FragColor = vec4(mix(uHorizon, uTop, t), 1.0);
+    vec3 d=normalize(vLocal);
+    float t = clamp(d.y, 0.0, 1.0);
+    t = smoothstep(0.0, uSkyTransition, t);
+    vec3 color=mix(uHorizon,uTop,t);
+    // Soft bounded cloud banks. Their opacity fades at the same horizon as fog.
+    vec2 uv=d.xz/(max(.0,d.y)+.22)*1.65+vec2(uSkyTime*.006,uSkyTime*.0028);
+    float bank=skyFbm(uv),detail=skyNoise(uv*8.);
+    float mask=smoothstep(.48,.68,bank+detail*.07)*smoothstep(.01,.15,d.y)*(1.-smoothstep(.7,.98,d.y));
+    vec3 cloud=mix(uHorizon,vec3(.94,.96,.96),.62+.32*detail);
+    color=mix(color,cloud,mask*.88);
+    gl_FragColor = vec4(color, 1.0);
   }
 `;
 
@@ -38,6 +51,8 @@ export class Sky {
     this.uniforms = {
       uTop:     { value: new THREE.Color(SKY.top) },
       uHorizon: { value: new THREE.Color(SKY.horizon) },
+      uSkyTime: { value: 0 },
+      uSkyTransition: { value: OUTDOOR.skyTransition },
     };
 
     // 돔 — 안쪽에서 보므로 BackSide. depthWrite를 끄고 renderOrder를 낮춰 항상 맨 뒤에 둔다.
@@ -51,7 +66,7 @@ export class Sky {
     this.dome.frustumCulled = false;
     engine.scene.add(this.dome);
 
-    // ── 원경 산맥 세 겹 ──────────────────────────────────────────────────────
+    // ── 새 원경 자산을 읽지 못할 때 사용하는 기존 산맥 세 겹 ───────────────
     // ★ 처음엔 세그먼트마다 독립 삼각형을 세웠다. 밑변이 서로 붙지 않아 사이가 비었고,
     //   폭이 전부 같아서 산맥이 아니라 **판지로 오린 피라미드 줄**로 보였다(실사용 확인).
     //   닫힌 스트립 하나로 바꾸고 능선 높이를 다중 옥타브로 흔든다.
@@ -64,6 +79,8 @@ export class Sky {
     for (const m of this.ridges) engine.scene.add(m);
 
     this._up = new THREE.Vector3(0, 1, 0);
+    this._ground = new THREE.Vector3();
+    this.backdrop=null;this._scene=engine.scene;
   }
 
   // 능선 하나. 닫힌 띠라서 봉우리 사이가 비지 않는다.
@@ -116,11 +133,19 @@ export class Sky {
     return m;
   }
 
-  // 돔과 산은 카메라를 따라다니고, 플레이어의 up을 '위'로 삼는다.
-  update(player, camera) {
+  // 돔은 카메라를, 입체 원경은 실제 지면을 따른다. 둘 다 구면의 up을 쓴다.
+  update(player, camera, dt=0) {
+    // Title owns its camera directly, but uses the same globe lighting frame.
+    if(!this.engine._lightingPosition?.equals(player.position))this.engine.syncOutdoorLighting(player);
+    this.uniforms.uSkyTime.value+=Math.max(0,dt);
     const up = this._up.copy(player.position).normalize();
     const q = new THREE.Quaternion().setFromUnitVectors(_Y, up);
-    for (const m of [this.dome, ...this.ridges]) {
+    if(!this.backdrop&&horizonAssets.loaded){
+      this.backdrop=buildHorizonBackdrop();
+      if(this.backdrop){for(const old of this.ridges){this._scene.remove(old);old.geometry.dispose();old.material.dispose();}this.ridges=this.backdrop.meshes;this._scene.add(this.backdrop.group);}
+    }
+    if(this.backdrop){this._ground.copy(this.planet.surfaceAt(up));this.backdrop.update(up,this._ground,q,this.engine.sun);}
+    for (const m of this.backdrop?[this.dome]:[this.dome, ...this.ridges]) {
       m.position.copy(camera.position);
       m.quaternion.copy(q);
     }

@@ -1,0 +1,8 @@
+const fs=require('node:fs'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{A,B}=require('./forest-render-fixture.cjs'),hash=file=>crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const baseline=JSON.parse(fs.readFileSync(B+'/baseline.json'));for(const[file,expected]of Object.entries(baseline.inventory))assert.equal(hash(file),expected,'Baseline changed: '+file);
+for(const file of['check-goal.json','input-goal.json','fault-validation.json','variants-goal.json','performance-goal.json','performance-goal-reverse.json']){const report=JSON.parse(fs.readFileSync(B+'/'+file));assert(report.pass,'Preview has not passed: '+file);}
+assert(!fs.existsSync('src/world/StaticMeshBatch.js'),'Do not overwrite an existing batching module');
+for(const file of['src/world/Forage.js','src/world/StaticMeshBatch.js'])fs.copyFileSync(A+'/preview-'+file.replaceAll('/','__'),file);
+const inventory={...baseline.inventory};for(const file of['src/world/Forage.js','src/world/StaticMeshBatch.js'])inventory[file]=hash(file);
+const receipt={pass:true,installedUtc:new Date().toISOString(),runtimeFiles:Object.keys(inventory).length,changed:['src/world/Forage.js','src/world/StaticMeshBatch.js'],preservedRuntime:461,preservedAssets:Object.keys(baseline.inventory).filter(f=>f.startsWith('assets/')).length,inventory,scope:'Same candidate logic/materials/world surfaces;static child drawing batched,original camera geometry retained'};
+assert.equal(receipt.runtimeFiles,463);fs.writeFileSync(B+'/installation.json',JSON.stringify(receipt,null,2));console.log('Installed463 runtime files;461 previous files/all227 assets unchanged.');

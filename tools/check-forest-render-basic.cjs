@@ -1,0 +1,4 @@
+require('./forest-render-output-guard.cjs');
+const fs=require('node:fs'),{spawnSync}=require('node:child_process'),{B}=require('./forest-render-fixture.cjs'),rows=[];
+for(const[name,args]of [['source',['--experimental-vm-modules','tools/check-source.cjs']],['save',['tools/check-save.mjs']],['audio',['tools/check-audio.cjs']]]){const result=spawnSync(process.execPath,args,{encoding:'utf8',env:process.env});fs.writeFileSync(B+'/'+name+'-check.log',result.stdout+result.stderr);rows.push({name,exit:result.status,output:result.stdout.trim()});console.log(result.stdout.trim());if(result.status!==0)break;}
+const report={pass:rows.length===3&&rows.every(row=>row.exit===0),finishedUtc:new Date().toISOString(),rows};fs.writeFileSync(B+'/basic-checks.json',JSON.stringify(report,null,2));if(!report.pass)process.exitCode=1;

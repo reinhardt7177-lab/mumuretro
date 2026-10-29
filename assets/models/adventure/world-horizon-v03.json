@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "revision": "v03",
+  "planetRadius": 68,
+  "localBottom": 0,
+  "anchorBelowGround": 26,
+  "fadeHeight": [
+    2,
+    19
+  ],
+  "meshes": [
+    {
+      "name": "HorizonFar",
+      "editablePieces": 7,
+      "vertices": 5390,
+      "triangles": 10738,
+      "minimumY": 0.0,
+      "maximumY": 50.34367752075195,
+      "radius": 158,
+      "haze": 0.55
+    },
+    {
+      "name": "HorizonMiddle",
+      "editablePieces": 6,
+      "vertices": 4620,
+      "triangles": 9204,
+      "minimumY": 0.0,
+      "maximumY": 46.12860870361328,
+      "radius": 133,
+      "haze": 0.4
+    },
+    {
+      "name": "HorizonNear",
+      "editablePieces": 5,
+      "vertices": 3850,
+      "triangles": 7670,
+      "minimumY": 0.0,
+      "maximumY": 37.352317810058594,
+      "radius": 112,
+      "haze": 0.26
+    }
+  ],
+  "editablePieces": 18,
+  "materials": 1,
+  "walkable": false,
+  "collisionMeshes": 0,
+  "purpose": "Distant atmosphere; actual explorable terrain remains the planet",
+  "source": "world-horizon-v03.blend",
+  "runtimeScale": 0.9
+}

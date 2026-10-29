@@ -16,7 +16,6 @@
 //   · 밝히기는 **칸 단위**다. 부드럽게 번지게 할 수도 있지만, 이 게임은
 //     로우폴리라 각진 편이 오히려 결에 맞는다.
 import * as THREE from 'three';
-import { terrainColor } from '../sphere/Planet.js';
 import { SHRINE } from '../data/lighting.js';
 
 const CW = 800, CH = 400;          // 지도 그림 크기(2:1)
@@ -58,7 +57,7 @@ export function buildMapPage(planet, player, shrines, specs, getLanding, getLand
       const arc = EPS * R;
       const dh1 = (planet.heightAt(_d1) - h) / arc, dh2 = (planet.heightAt(_d2) - h) / arc;
       const slope = Math.atan(Math.hypot(dh1, dh2)) * 180 / Math.PI;
-      terrainColor(h, slope, _c);
+      planet.colorAt(_d, h, slope, _c);
       // 위에서 내리쬐는 빛을 흉내 낸 음영 — 없으면 산맥이 안 읽힌다
       const shade = 1 - Math.min(0.42, Math.max(0, dh2) * 0.30);
       const i = (py * CW + px) * 4;

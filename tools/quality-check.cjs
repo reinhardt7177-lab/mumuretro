@@ -119,19 +119,22 @@ const KEY = 'mumuplanet.progress.v1', BACKUP = 'mumuplanet.progress.previous.v1'
       game.mapPage.reveal(game.shrines.shrines[3].dir);
       game.notebook.go('field'); game.notebook.setOpen(false);
       game.enterShrine(game.shrines.shrines[4]); game.brief.hide();
-      const q = game.room.gates.find(g => g.gate.constructor.name === 'QuakeGate').gate;
+      await game.roomFor(game.shrines.shrines[4]).ready;
+      if(game.mode!=='room'||game.room?.spec.id!=='fire')game.enterShrine(game.shrines.shrines[4]);
+      const q = game.room.world;
       game.notebook.setOpen(true);
-      const t = q.t; for (let i = 0; i < 120; i++) game.step(1 / 60);
-      const frozen = q.t === t; game.notebook.setOpen(false);
+      const t = JSON.stringify(q.snapshot(game.roomActor)); for (let i = 0; i < 120; i++) game.step(1 / 60);
+      const frozen = JSON.stringify(q.snapshot(game.roomActor)) === t; game.notebook.setOpen(false);
       const snapshot = game.snapshot(); game.save();
       return { frozen, snapshot, map: game.mapPage.stats(), recipe: RECIPES[0].id };
     });
-    check('Notebook also freezes quake clock', staged.frozen);
+    check('Notebook also freezes the current fire adventure state', staged.frozen);
     const raw = await p.evaluate(KEY => localStorage.getItem(KEY), KEY);
     check('Versioned checkpoint contains expected progress', JSON.parse(raw).progress.lab.open === true);
     await boot(p);
     check('Continue offered after reload', await p.locator('#title .go').innerText() === '이어서 탐사');
     await p.locator('#title .go').click(); await p.waitForTimeout(550);
+    await p.waitForFunction(()=>game.mode==='room'&&game.room?.spec.id==='fire'&&!game.room.loading,null,{timeout:90000});
     await p.evaluate(() => game.loop.stop());
     const restored = await p.evaluate(() => ({ snapshot: game.snapshot(), count: game.shrines.clearedCount(), mode: game.mode, map: game.mapPage.stats(), has: game.notebook.has }));
     check('Progress survives reload and resumes active fire shrine', restored.mode === 'room' && restored.snapshot.shrineRuns.active === 'fire' && restored.count === 1 && restored.has

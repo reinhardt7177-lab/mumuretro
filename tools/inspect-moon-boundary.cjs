@@ -1,0 +1,10 @@
+// Stroke-scale diagnostic; no mutation of puzzle geometry or prior evidence.
+const fs=require('node:fs');
+(async()=>{const precise=process.argv.includes('--precise'),shade=fs.readFileSync('src/shrine/ShadeProjection.js','utf8'),uri='data:text/javascript;base64,'+Buffer.from(shade).toString('base64'),source=fs.readFileSync('src/shrine/SanctumOptics.js','utf8').replace("'./ShadeProjection.js'",JSON.stringify(uri)),{projectStatue,shadowBoundary,shadowContains,preciseShadowContains}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
+const spec=JSON.parse(fs.readFileSync('art/moon-sanctum/v01/design-spec.json')),parts=spec.guardian.casters.map(p=>p.vertices.map(v=>({x:v[0],y:v[1],z:v[2]}))),rows=[];
+for(let a=0;a<8;a++)for(let h=0;h<3;h++){const theta=a*Math.PI/4,lamp={x:-Math.cos(theta)*5,y:[4.16,5.33,6.825][h],z:-Math.sin(theta)*5},polys=projectStatue(parts,lamp,{x0:-10.6,x1:10.6,z0:-7.6,z1:7.6}),edges=shadowBoundary(polys),keep=precise?edges:edges.filter(([p,q])=>Math.hypot(q.x-p.x,q.z-p.z)>=.055/2);
+function distance(p,[u,v]){const x=v.x-u.x,z=v.z-u.z,t=Math.max(0,Math.min(1,((p.x-u.x)*x+(p.z-u.z)*z)/(x*x+z*z)));return Math.hypot(p.x-u.x-t*x,p.z-u.z-t*z);}
+const contains=precise?preciseShadowContains:shadowContains;
+const bad=keep.filter(([p,q])=>{const x=q.x-p.x,z=q.z-p.z,k=(precise?.00005:.003)/Math.hypot(x,z),px=(p.x+q.x)/2,pz=(p.z+q.z)/2;return!contains(polys,px-z*k,pz+x*k)||contains(polys,px+z*k,pz-x*k);});
+const maxMiss=Math.max(...edges.flatMap(([p,q])=>[p,q,{x:(p.x+q.x)/2,z:(p.z+q.z)/2}]).map(p=>Math.min(...keep.map(e=>distance(p,e)))));rows.push({a,h,raw:edges.length,keep:keep.length,bad:bad.length,badLengths:bad.map(([p,q])=>Math.hypot(q.x-p.x,q.z-p.z)),maxMiss});}
+fs.writeFileSync('reports/2026-10-22/evidence/moon-sanctum/'+(precise?'boundary-precision-diagnostic':'boundary-diagnostic')+'.json',JSON.stringify({rows},null,2));console.log(JSON.stringify({worstMiss:Math.max(...rows.map(r=>r.maxMiss)),bad:rows.filter(r=>r.bad),range:[Math.min(...rows.map(r=>r.keep)),Math.max(...rows.map(r=>r.keep))]}));})();

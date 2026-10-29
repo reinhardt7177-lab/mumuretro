@@ -258,7 +258,7 @@ const TABS = [
   { id: 'kitchen', key: '5', name: '부엌' },
 ];
 
-export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, getTrail) {
+export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, getTrail, getObservations) {
   const style = document.createElement('style');
   style.textContent = CSS + `
 #nb .hw{font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif!important;font-weight:600;letter-spacing:0;}
@@ -361,7 +361,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
 
   const sigOf = (id) => {
     const fg = getForage && getForage();
-    if (id === 'ask') return `${clearedCount()}`;
+    if (id === 'ask') {const observed=getObservations?.();return `${clearedCount()}${observed?.some(v=>v.some(x=>x!==null))?'|'+JSON.stringify(observed):''}`;}
     if (id === 'field') {
       return fg ? Object.values(fg.found).filter(Boolean).length
         + '/' + BEASTS.filter((b) => fg.caught[b.id] > 0).length : '0';
@@ -399,6 +399,13 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
         <div class="qno">${String(i + 1).padStart(2, '0')}</div>
         <div><div class="qq hw">${note.q}</div>${a ? a.replace('<b ', mk + '<b ') : a}</div></div>`;
     }).join('');
+    const observations=getObservations?.();
+    if(observations?.some(v=>v.some(x=>x!==null))){
+      for(let pair=0;pair<3;pair++){
+        const lines=[pair*2,pair*2+1].map(i=>{const [magnet,water]=observations[i];return `<div class="qa" style="font:16px/1.5 system-ui,sans-serif">시료 ${i+1} · 자석 ${magnet===null?'미확인':magnet?'붙음':'반응 없음'}<br>물 ${water===null?'미확인':water?'뜸':'가라앉음'}</div>`;}).join('');
+        elBody.insertAdjacentHTML('beforeend',`<div class="qrow" data-k="obs:${pair}"><div class="qno">관찰</div><div><div class="qq">분리 작업장에서 확인한 것</div>${lines}</div></div>`);
+      }
+    }
   };
 
   const drawField = () => {
@@ -716,6 +723,7 @@ export function buildNotebook(shrines, specs, getForage, mapPage, getKitchen, ge
         }
       }
       const allowed = new Set([
+        'obs:0','obs:1','obs:2',
         ...specs.map((s) => `ask:${s.id}`), ...FORAGE_KINDS.map((k) => `fd:${k.id}`),
         ...BEASTS.map((b) => `bs:${b.id}`), ...RECIPES.map((r) => `ck:${r.id}`),
         ...['parcel', 'last', 'sealed', ...specs.map((s) => s.id), ...ENDING.map((_, i) => `end${i}`)].map((k) => `ml:${k}`),

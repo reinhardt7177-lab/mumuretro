@@ -7,6 +7,7 @@ import { projectStatue, shadowBoundary, sanctumProgress } from './SanctumOptics.
 export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
   const group = new THREE.Group(); group.name = '방향과 높이의 신전'; scene.add(group);
   const cameraOccluders = [], obstacles = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);
+  const artSlots={floor:[],structure:[],track:[]};
   const lit = (color, metalness = 0) => { const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.2, roughness: 0.75, metalness });
     m.userData.outlineParameters = { visible: false }; return m; };
   const flat = color => { const m = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }); m.userData.outlineParameters = { visible: false }; return m; };
@@ -15,14 +16,14 @@ export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
   const mesh = (geo, mat, parent, x = 0, y = 0, z = 0, solid = false) => {
     const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); parent.add(m); if (solid) cameraOccluders.push(m); return m;
   };
-  const box = (w, h, d, x, y, z, mat, solid = false) => {
-    const key = `${mat.uuid}/${solid}`; if (!batches.has(key)) batches.set(key, { mat, solid, items: [] });
+  const box = (w, h, d, x, y, z, mat, solid = false,role='structure') => {
+    const key = `${mat.uuid}/${solid}/${role}`; if (!batches.has(key)) batches.set(key, { mat, solid, role, items: [] });
     batches.get(key).items.push({ w, h, d, x, y, z });
   };
   const cz = (seg.z0 + seg.z1) / 2;
-  box(D.width, 0.1, D.length, 0, -0.05, cz, rim);
-  for (let x = -10; x <= 10; x += 2) for (let z = -7; z <= 7; z += 2) box(1.98, 0.016, 1.98, x, -0.006, cz + z, (x + z + 17) % 4 ? rim : floor);
-  mesh(new THREE.CircleGeometry(D.floorRadius, 64), floor, group, 0, 0.006, cz).rotation.x = -Math.PI / 2;
+  box(D.width, 0.1, D.length, 0, -0.05, cz, rim,false,'floor');
+  for (let x = -10; x <= 10; x += 2) for (let z = -7; z <= 7; z += 2) box(1.98, 0.016, 1.98, x, -0.006, cz + z, (x + z + 17) % 4 ? rim : floor,false,'floor');
+  const floorDisc=mesh(new THREE.CircleGeometry(D.floorRadius, 64), floor, group, 0, 0.006, cz);floorDisc.rotation.x = -Math.PI / 2;artSlots.floor.push(floorDisc);
   mesh(new THREE.RingGeometry(D.floorRadius, D.floorRadius + 0.07, 64), brass, group, 0, 0.01, cz).rotation.x = -Math.PI / 2;
   for (let i = 0; i < 8; i++) {
     const a = i * Math.PI / 4, m = mesh(new THREE.BoxGeometry(0.065, 0.012, 0.38), brass, group, Math.cos(a) * 6.92, 0.009, cz + Math.sin(a) * 6.92);
@@ -35,18 +36,18 @@ export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
   for (const side of [-1, 1]) {
     box(0.5, 0.7, 16, side * 11.2, 0.35, cz, stone, true);
     for (const dz of [-5.8, -1.9, 2]) {
-      const arch = mesh(archGeo, pale, group, side * 9.5, 3.2, cz + dz, true); arch.rotation.y = Math.PI / 2;
+      const arch = mesh(archGeo, pale, group, side * 9.5, 3.2, cz + dz, true); arch.rotation.y = Math.PI / 2;artSlots.structure.push(arch);
       for (const e of [-1.8, 1.8]) {
         box(0.55, 3.2, 0.42, side * 9.5, 1.6, cz + dz + e, stone, true);
         obstacles.push({ x: side * 9.5, z: cz + dz + e, r: 0.77 });
       }
     }
-    box(0.7, D.trackY - 0.6, 0.7, side * 8, (D.trackY - 0.6) / 2, cz - 6.9, stone, true);
-    box(0.92, 0.23, 0.92, side * 8, D.trackY - 0.54, cz - 6.9, gold, true);
+    box(0.7, D.trackY - 0.6, 0.7, side * 8, (D.trackY - 0.6) / 2, cz - 6.9, stone, true,'track');
+    box(0.92, 0.23, 0.92, side * 8, D.trackY - 0.54, cz - 6.9, gold, true,'track');
     obstacles.push({ x: side * 8, z: cz - 6.9, r: 0.94 });
   }
   for (const x of [-5.7, -1.9, 1.9, 5.7]) {
-    mesh(archGeo, pale, group, x, 3.2, seg.z0 - 0.22, true);
+    artSlots.structure.push(mesh(archGeo, pale, group, x, 3.2, seg.z0 - 0.22, true));
     for (const e of [-1.8, 1.8]) box(0.42, 3.2, 0.5, x + e, 1.6, seg.z0 - 0.22, stone, true);
   }
   // 앞방에서 보이는 연결부도 같은 돌과 황동으로 잇는다. 문 판정은 그대로다.
@@ -54,8 +55,8 @@ export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
     m.material = m.geometry.parameters.height > 2 ? stone : gold; cameraOccluders.push(m);
   }
   const track = mesh(new THREE.TorusGeometry(D.orbitRadius, 0.035, 6, 64), brass, group, 0, D.trackY, cz, true); track.rotation.x = Math.PI / 2;
-  box(16, 0.09, 0.09, 0, D.trackY, cz, brass, true);
-  for (const side of [-1, 1]) box(0.09, 0.09, 6.9, side * 8, D.trackY, cz - 3.45, brass, true);
+  box(16, 0.09, 0.09, 0, D.trackY, cz, brass, true,'track');
+  for (const side of [-1, 1]) box(0.09, 0.09, 6.9, side * 8, D.trackY, cz - 3.45, brass, true,'track');
 
   // 옛 석상은 저장 검증을 위해 보존한다. 새 석상의 정점에서 새 그림자를 만든다.
   g.group.removeFromParent(); g.group = new THREE.Group(); group.add(g.group); g.gx = 0; g.gz = cz;
@@ -127,7 +128,10 @@ export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
   g.leverB.knob = mesh(new THREE.BoxGeometry(0.68, 0.14, 0.24), gold, g.leverB.grp, 0, 0.98, 0.12, true);
   const reward = mesh(new THREE.RingGeometry(0.7, 0.78, 32), flat(C.brass), group, g.prizePos.x, 0.014, g.prizePos.z); reward.rotation.x = -Math.PI / 2;
   const api = {
-    group, statue, casterMeshes, parts, bounds, obstacles, cameraOccluders, lampAt, polygonsAt, wheel, heightRail, legacyCompleted: false,
+    group, statue, casterMeshes, parts, bounds, obstacles, cameraOccluders, lampAt, polygonsAt, wheel, heightRail,artSlots, legacyCompleted: false,
+    replaceOptics(nextStatue,nextParts,nextMeshes){
+      this.statue=nextStatue;parts.splice(0,parts.length,...nextParts);casterMeshes.splice(0,casterMeshes.length,...nextMeshes);cache.clear();this.targetEdges=drawMark();this.apply();
+    },
     targetEdges: drawMark(),
     lengthAt(a, h) { const d = g._dir(a); return Math.max(...polygonsAt(a, h).flat().map(p => p.x * d.x + (p.z - cz) * d.z)); },
     apply() {
@@ -143,9 +147,9 @@ export function buildShadowSanctum(scene, seg, rects, g, legacyCodec) {
   };
   g.sanctum = api; api.apply(); g.progressCodec = sanctumProgress(g, legacyCodec);
   const dummy = new THREE.Object3D();
-  for (const { mat, solid, items } of batches.values()) {
+  for (const { mat, solid, items,role } of batches.values()) {
     const m = new THREE.InstancedMesh(cube, mat, items.length); items.forEach((v, i) => { dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.w, v.h, v.d); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
-    group.add(m); if (solid) cameraOccluders.push(m);
+    group.add(m);artSlots[role].push(m); if (solid) cameraOccluders.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders]; rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];
   rects.cameraLookHeightZones = [...(rects.cameraLookHeightZones || []), { ...seg, lookHeight: D.lookHeight }];

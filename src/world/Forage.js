@@ -15,6 +15,7 @@ import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { RULES, KINDS, WRONG, BEASTS, LEGEND } from '../data/forage.js';
 import { josa } from '../util/josa.js';
+import { batchStaticChildren } from './StaticMeshBatch.js';
 
 // ★ 씨앗 난수를 `(s * 1103515245 + 12345) % 2147483648`로 굴리고 있었다.
 //   s가 2^31까지 가면 곱이 **2.4e18** — 자바스크립트 안전 정수(9.0e15)를 넘어
@@ -177,6 +178,8 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
   // 자리 하나를 행성 표면에 세운다. frameAt이 로컬 +Y를 위로 준다(검사 J).
   const plant = (dir) => {
     const fr = planet.frameAt(planet.surfaceAt(dir), 0);
+    // Keep the authored orientation; frameAt itself reprojects analytically.
+    fr.position.copy(planet.groundSurfaceAt(dir));
     const g = new THREE.Group();
     g.position.copy(fr.position);
     g.quaternion.copy(fr.quaternion);
@@ -204,7 +207,14 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
   const groundY = (g, x, z) => {
     g.updateMatrixWorld();
     const w = g.localToWorld(_gv.set(x, 0, z));
-    return planet.R + planet.heightAt(_gn.copy(w).normalize()) - w.length();
+    let y=planet.R + planet.groundHeightAt(_gn.copy(w).normalize()) - w.length();
+    if(!planet.meshGroundActive)return y;
+    // A radial height difference is only a first guess for a local +Y offset.
+    // Solve that height on the same local vertical without changing x/z or RNG.
+    const base=w.clone(),axis=new THREE.Vector3(0,1,0).transformDirection(g.matrixWorld),probe=new THREE.Vector3(),normal=new THREE.Vector3();
+    const gap=height=>{probe.copy(base).addScaledVector(axis,height);return probe.length()-planet.R-planet.groundHeightAt(normal.copy(probe).normalize());};
+    for(let i=0;i<4;i++){const error=gap(y);if(Math.abs(error)<1e-7)break;const derivative=(gap(y+.01)-error)/.01;if(!Number.isFinite(derivative)||Math.abs(derivative)<.05)break;y-=error/derivative;}
+    return y;
   };
 
   // ★ 바닥에 까는 판은 groundY만으로는 모자란다. 그건 **중심 한 점**만 맞추는데,
@@ -232,9 +242,9 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
     _e1.crossVectors(ref, up).normalize();
     _e2.crossVectors(up, _e1).normalize();
     const d = 0.5 / planet.R;
-    planet.surfaceAt(_pa.copy(up), _pa);
-    planet.surfaceAt(_pb.copy(up).addScaledVector(_e1, d).normalize(), _pb);
-    planet.surfaceAt(_pc.copy(up).addScaledVector(_e2, d).normalize(), _pc);
+    planet.groundSurfaceAt(_pa.copy(up), _pa);
+    planet.groundSurfaceAt(_pb.copy(up).addScaledVector(_e1, d).normalize(), _pb);
+    planet.groundSurfaceAt(_pc.copy(up).addScaledVector(_e2, d).normalize(), _pc);
     _nm.crossVectors(_pb.sub(_pa), _pc.sub(_pa)).normalize();
     if (_nm.dot(up) < 0) _nm.negate();
     // 월드 법선을 자리(group)의 로컬 방향으로
@@ -659,6 +669,13 @@ export function buildForage(scene, planet, spots, legendSpots, carpet) {
   const raise = (kind, dir, seed, id, beastId) => {
     const before = blocks.length;
     const site = BUILD[kind](dir, seed, beastId);
+    // Only these parents own static child transforms. Candidates remain
+    // separate so harvesting, regrowth and imported saves hide one choice.
+    if (site.cands) {
+      batchStaticChildren(site.group);
+      for (const candidate of site.cands) batchStaticChildren(candidate.grp);
+    }
+    if (site.trap) batchStaticChildren(site.trap.crate);
     for (let k = before; k < blocks.length; k++) blocks[k].site = id;
     site.id = id; site.dir = dir; site.seed = seed; site.regrowT = -1;
     site.beastId = beastId;

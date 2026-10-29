@@ -7,6 +7,7 @@ import { traceMirrors, mirrorProgress } from './MirrorOptics.js';
 export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
   const group = new THREE.Group(); group.name = '달빛 거울 회랑'; scene.add(group);
   const cz = (seg.z0 + seg.z1) / 2, obstacles = [], cameraOccluders = [];
+  const artSlots={pedestalPositions:[],oldPedestals:[],mirrors:[],floor:[],structure:[]};let artRole='floor';
   const material = (color, emission = 0.18, metalness = 0) => {
     const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: emission,
       roughness: metalness ? 0.38 : 0.85, metalness });
@@ -23,8 +24,8 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
   glass.side = THREE.DoubleSide;
   const batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1), dummy = new THREE.Object3D();
   const batch = (geometry, mat, x, y, z, sx = 1, sy = 1, sz = 1, yaw = 0, solid = false) => {
-    const key = `${geometry.uuid}/${mat.uuid}`;
-    if (!batches.has(key)) batches.set(key, { geometry, mat, instances: [], solid: false });
+    const key = `${geometry.uuid}/${mat.uuid}/${artRole}`;
+    if (!batches.has(key)) batches.set(key, { geometry, mat, instances: [], solid: false,artRole });
     const b = batches.get(key); b.instances.push({ x, y, z, sx, sy, sz, yaw }); b.solid ||= solid;
   };
   const box = (w, h, d, x, y, z, mat, solid = false, yaw = 0) => batch(cube, mat, x, y, z, w, h, d, yaw, solid);
@@ -37,6 +38,7 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
     box(1.975, 0.06, 1.975, x, -0.03, cz + z, ((x + z + 14) / 2) % 3 ? floor : floorLite);
   }
   // 입구와 출구의 중앙 5m는 계속 열린다. 측면 창 아래 돌담은 빛의 끝이 된다.
+  artRole='structure';
   for (const side of [-1, 1]) {
     box(0.7, 1.75, 14.6, side * 9.25, 0.875, cz, stone, true);
     box(0.85, 0.15, 14.8, side * 9.25, 1.825, cz, pale, true);
@@ -77,6 +79,7 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
   }
   const crown = mesh(new THREE.TorusGeometry(7.6, 0.19, 6, 48, Math.PI * 1.5), pale, group, 0, D.crownHeight, cz);
   crown.rotation.x = Math.PI / 2; crown.scale.y = 0.79; cameraOccluders.push(crown);
+  artSlots.structure.push(crown);artRole='device';
   const moon = mesh(new THREE.SphereGeometry(2.8, 24, 16), basic(C.moon), group, -19, 26, cz - 75);
   moon.userData.sky = true;
   for (const x of [-5, 5]) {
@@ -87,6 +90,7 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
   gate.group.removeFromParent(); gate.group = new THREE.Group(); gate.group.name = '거울 광학 장치'; group.add(gate.group);
   gate.src = rotate(gate.src); gate.target = rotate(gate.target); gate.angleOffset = D.angleOffset;
   const pedestal = (x, z) => {
+    artSlots.pedestalPositions.push({x,z});
     batch(newPedestal, shade, x, 0.12, z, 1, 1, 1, 0, true);
     batch(stem, brass, x, 0.62, z, 1, 1, 1, 0, true);
     batch(cap, gold, x, 1.03, z, 1, 1, 1, 0, true);
@@ -100,14 +104,20 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
     Object.assign(m, rotate(m)); pedestal(m.x, m.z);
     const pivot = new THREE.Group(); pivot.position.set(m.x, 0, m.z); gate.group.add(pivot); m.grp = pivot;
     pivot.rotation.y = -(m.a + gate.angleOffset);
+    const frameParts=[];
     // 양면 평면의 중심과 광학 평면 z=0이 일치한다. 두꺼운 뒤판에 빛이 박히지 않는다.
     cameraOccluders.push(mesh(new THREE.PlaneGeometry(1.7, 1.08), glass, pivot, 0, D.beamHeight, 0));
     for (const side of [-1, 1]) {
-      mesh(new THREE.BoxGeometry(0.10, 1.28, 0.15), gold, pivot, side * 0.9, 1.5);
-      mesh(new THREE.BoxGeometry(1.9, 0.1, 0.15), brass, pivot, 0, 1.5 + side * 0.6);
+      frameParts.push(mesh(new THREE.BoxGeometry(0.10, 1.28, 0.15), gold, pivot, side * 0.9, 1.5));
+      frameParts.push(mesh(new THREE.BoxGeometry(1.9, 0.1, 0.15), brass, pivot, 0, 1.5 + side * 0.6));
     }
-    const handle = mesh(new THREE.TorusGeometry(0.26, 0.042, 5, 16), gold, pivot, 0, 0.89, 0.44);
+    // The optical panel rotates; its pedestal control stays within the same reach.
+    const control=new THREE.Group();control.position.set(m.x,0,m.z);gate.group.add(control);
+    const shaft=mesh(new THREE.CylinderGeometry(.055,.055,.92,10),brass,control,0,.89,.46);shaft.rotation.x=Math.PI/2;
+    const handle = mesh(new THREE.TorusGeometry(0.26, 0.042, 5, 16), gold, control, 0, 0.89, 0.92);
     handle.rotation.x = 0.55;
+    const grip=new THREE.Object3D();grip.name='Mirror wheel palm contact';grip.position.set(0,.89+.218*Math.cos(.55),.92+.218*Math.sin(.55));control.add(grip);m.controlHandle=handle;m.controlGrip=grip;
+    artSlots.mirrors.push({mirror:m,pivot,frameParts,control,handle});
     const glint = mesh(new THREE.SphereGeometry(0.08, 8, 6), core, gate.group); glint.visible = false; glints.push(glint);
   });
   // 광원 렌즈는 옆을 향한다. 경로의 시작점을 장식용 빛에서 추측할 필요가 없다.
@@ -146,14 +156,16 @@ export function buildMirrorGallery(scene, seg, rects, gate, legacyCodec) {
   gate.group.traverse(m => {
     if (m.isMesh && !m.material.transparent && m.material !== core && !cameraOccluders.includes(m)) cameraOccluders.push(m);
   });
-  for (const { geometry, mat, instances, solid } of batches.values()) {
+  for (const { geometry, mat, instances, solid,artRole } of batches.values()) {
     const m = new THREE.InstancedMesh(geometry, mat, instances.length);
     instances.forEach((v, i) => {
       dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.sx, v.sy, v.sz); dummy.rotation.set(0, v.yaw, 0); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix);
     });
     m.receiveShadow = true; group.add(m); if (solid) cameraOccluders.push(m);
+    artSlots[artRole]?.push(m);
+    if([newPedestal,stem,cap].includes(geometry))artSlots.oldPedestals.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders];
   rects.cameraLiftZone = seg;
-  return { group, obstacles, cameraOccluders, gate, dimensions: D };
+  return { group, obstacles, cameraOccluders, gate, dimensions: D, artSlots };
 }

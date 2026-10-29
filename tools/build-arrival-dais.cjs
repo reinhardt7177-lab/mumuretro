@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto'),{spawnSync}=require('node:child_process');
+const {B}=require('./arrival-dais-fixture.cjs'),root=path.resolve('.'),out=path.join(root,'dist'),hash=b=>crypto.createHash('sha256').update(b).digest('hex');assert.equal(fs.realpathSync(out).toLowerCase(),out.toLowerCase());
+const old=JSON.parse(fs.readFileSync(out+'/assets/release.json')),files=[];
+function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name);assert(!fs.lstatSync(f).isSymbolicLink(),'Refuse linked generated output');if(e.isDirectory())walk(f);else files.push(path.relative(out,f).replaceAll('\\','/'));}}walk(out);
+assert.equal(files.length,Object.keys(old.files).length+1);for(const f of files)if(f!=='assets/release.json')assert.equal(hash(fs.readFileSync(path.join(out,f))),old.files[f],'Unknown dist edit: '+f);
+assert(!fs.existsSync(B+'/build-validation.json'),'Keep completed build receipt');fs.copyFileSync(out+'/assets/release.json',B+'/before-release.json');
+const result=spawnSync(process.execPath,['tools/build-web.cjs'],{env:process.env,encoding:'utf8'});fs.writeFileSync(B+'/build.log',result.stdout+result.stderr);assert.equal(result.status,0,'Build failed');
+const release=JSON.parse(fs.readFileSync(out+'/assets/release.json'));assert.equal(Object.keys(release.files).length,466);const failures=[];
+for(const[f,h]of Object.entries(release.files)){let bytes=fs.readFileSync(f);if(!f.startsWith('vendor/')&&/\.(?:html|js|css|json|svg|txt|md)$/.test(f))bytes=Buffer.from(bytes.toString('utf8').replace(/\r\n/g,'\n'));if(hash(bytes)!==h)failures.push(f);}
+assert(!failures.length);fs.copyFileSync(out+'/assets/release.json',B+'/build-release.json');fs.writeFileSync(B+'/build-validation.json',JSON.stringify({pass:true,files:466,generatedAt:release.generatedAt,canonicalRootMatches:true,failures,oldFiles:Object.keys(old.files).length,scope:'Local build only, no public deployment'},null,2));console.log(result.stdout.trim());

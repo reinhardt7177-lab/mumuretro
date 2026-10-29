@@ -1,3 +1,4 @@
+import {installFireAtmosphere} from './FireAtmosphere.js';
 import * as T from 'three';
 import {buildFireFracture} from './FireFracture.js';
 import {buildFireFoundry} from './FireFoundry.js';
@@ -10,8 +11,11 @@ import {buildFireSanctum} from './FireSanctum.js';
 
 // Composition keeps the tested first-room mechanics available for regression checks.
 export async function buildFireTrial(){
- const [first,foundry,steam,sanctum]=await Promise.all([buildFireFracture(),buildFireFoundry(),buildFireSteam(),buildFireSanctum()]);first.scene.add(foundry.root,steam.root,sanctum.root);first.nextSign.visible=false;
+ const [first,foundry,steam,sanctum]=await Promise.all([buildFireFracture(),buildFireFoundry(),buildFireSteam(),buildFireSanctum()]);first.scene.add(foundry.root,steam.root,sanctum.root);first.nextSign.visible=false;await installFireAtmosphere(first.scene);
  const oldFloor=first.rects.floorAt,rects=[...first.rects,...foundry.rects,...steam.rects,...sanctum.rects],obstacles=[...first.obstacles,...foundry.obstacles,...steam.obstacles,...sanctum.obstacles];rects.floorAt=(x,z,y=0)=>z<-40.1&&y>2.8?3.2:Math.abs(x)<13&&z<-10.4?steam.floorAt(x,z,y):x>18?foundry.floorAt(x,z):oldFloor(x,z);rects.ceilingAt=steam.ceilingAt;rects.cameraOccluders=[...first.rects.cameraOccluders,...foundry.cameraOccluders,...steam.cameraOccluders,...sanctum.cameraOccluders];rects.cameraLiftZones=[...first.rects.cameraLiftZones,foundry.rects[1],steam.rects[1],sanctum.rects[1]];rects.cameraLookHeightZones=[{...foundry.rects[1],lookHeight:2.05},{...sanctum.rects[1],lookHeight:1.65}];
+ // Keep the traveller's legs/body visible around the existing grounded piers.
+ // The shared resolver moves only the camera, preserving requested input yaw.
+ rects.cameraSubjectZones=rects.map(r=>({...r,halfWidth:.22,pitchAssist:.24,minRetreat:3.5,yawAssist:.75,smoothOcclusion:true}));
  const active=actor=>actor.position.x>18;
  const inSteam=a=>a.position.z<-17&&Math.abs(a.position.x)<13;
  const contains=(x,z,y=0)=>sanctum.exited?Math.abs(x)<3.5&&z>22&&z<33:first.contains(x,z)||foundry.contains(x,z)&&(x<15.4||first.mechanics.state.returned&&foundry.gateOpen>.98)||steam.contains(x,z,y)&&(z>-13.9||foundry.mechanics.state.returned&&steam.gateOpen>.98)||steam.mechanics.state.upperReached&&sanctum.contains(x,z,y);

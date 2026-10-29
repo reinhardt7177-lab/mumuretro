@@ -1,0 +1,199 @@
+{
+  "touch": true,
+  "labPrepared": true,
+  "checks": [
+    {
+      "name": "native notebook pauses arrival and traveller together",
+      "pass": true,
+      "details": {
+        "open": true,
+        "unchanged": true,
+        "moved": 0
+      }
+    },
+    {
+      "name": "native jump lands while every temporary arrival effect retires",
+      "pass": true,
+      "details": {
+        "peak": 1.4605555555555725,
+        "grounded": true,
+        "h": 0,
+        "fx": [
+          {
+            "name": "Landing return beacon",
+            "visible": true,
+            "uniforms": {
+              "strength": 0.021830988226370928,
+              "presence": 0.014188845282855298
+            },
+            "positions": null
+          },
+          {
+            "name": "Landing arrival ripple",
+            "visible": false,
+            "uniforms": null,
+            "positions": null
+          },
+          {
+            "name": "Landing arrival motes",
+            "visible": false,
+            "uniforms": null,
+            "positions": [
+              0.010426419787108898,
+              1.289580225944519,
+              1.6523948907852173,
+              1.1335644721984863,
+              1.3364579677581787,
+              1.4688916206359863,
+              1.333612322807312,
+              0.668215274810791,
+              -0.10308089852333069,
+              1.4147409200668335,
+              0.7815498113632202,
+              -1.0244295597076416,
+              0.5963723063468933,
+              0.6641506552696228,
+              -1.2940195798873901,
+              -0.06231779232621193,
+              1.2675049304962158,
+              -1.9510263204574585,
+              -1.3184573650360107,
+              0.6989256143569946,
+              -1.523249864578247,
+              -1.5918034315109253,
+              1.2049541473388672,
+              -0.12418480217456818,
+              -1.1272039413452148,
+              1.117515206336975,
+              1.1924694776535034,
+              -0.4328019917011261,
+              1.455928921699524,
+              1.9325213432312012,
+              0.38686075806617737,
+              1.3495802879333496,
+              1.6065043210983276,
+              1.4385879039764404,
+              1.3964579105377197,
+              1.171783208847046,
+              1.2749933004379272,
+              0.7282152771949768,
+              -0.4044000208377838,
+              1.1439387798309326,
+              0.841549813747406,
+              -1.3199818134307861,
+              0.2856602966785431,
+              0.7241506576538086,
+              -1.3959028720855713,
+              -0.505466878414154,
+              1.3275049924850464,
+              -1.885441780090332,
+              -1.6310043334960938,
+              0.7589256167411804,
+              -1.182558536529541,
+              -1.5781968832015991,
+              1.2649540901184082,
+              0.24198085069656372,
+              -0.8256643414497375,
+              1.1775151491165161,
+              1.4180446863174438,
+              0.019166667014360428,
+              1.5159289836883545,
+              1.9803001880645752
+            ]
+          },
+          {
+            "name": "Landing floor light",
+            "visible": true,
+            "intensity": 0.08,
+            "uniforms": null,
+            "positions": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "native walking leaves the pad toward the first trail",
+      "pass": true,
+      "details": {
+        "moved": 4.753876896014892,
+        "near": false,
+        "grounded": true
+      }
+    },
+    {
+      "name": "actual controller walking returns to the unchanged ship prompt",
+      "pass": true,
+      "details": {
+        "frames": 67,
+        "near": true,
+        "prompt": "E — 범선으로 돌아가기"
+      }
+    },
+    {
+      "name": "native interaction returns to the ship",
+      "pass": true
+    },
+    {
+      "name": "isolated reload keeps the ship and personal expedition progress",
+      "pass": true,
+      "details": {
+        "saved": {
+          "mode": "lab",
+          "lab": {
+            "version": 1,
+            "dials": [
+              3,
+              5,
+              8
+            ],
+            "hasNote": true,
+            "read": true,
+            "open": true,
+            "done": false,
+            "sent": false,
+            "parcelRecovered": true
+          },
+          "expedition": {
+            "version": 1,
+            "overlook": false,
+            "glider": false,
+            "water": false,
+            "restored": false
+          },
+          "key": true
+        },
+        "restored": {
+          "mode": "lab",
+          "lab": {
+            "version": 1,
+            "dials": [
+              3,
+              5,
+              8
+            ],
+            "hasNote": true,
+            "read": true,
+            "open": true,
+            "done": false,
+            "sent": false,
+            "parcelRecovered": true
+          },
+          "expedition": {
+            "version": 1,
+            "overlook": false,
+            "glider": false,
+            "water": false,
+            "restored": false
+          }
+        }
+      }
+    },
+    {
+      "name": "no browser exceptions",
+      "pass": true,
+      "details": []
+    }
+  ],
+  "errors": [],
+  "pass": true
+}

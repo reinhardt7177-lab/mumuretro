@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "model": "assets/models/adventure/balance-mechanisms-v01.glb",
+  "parts": [
+    "OrderScale",
+    "TwinScale",
+    "LeverAssembly"
+  ],
+  "order": {
+    "axisY": 1.9,
+    "arm": 1.9,
+    "panFloorOffset": -1.02,
+    "panRadius": 0.86,
+    "maxAngle": 0.18
+  },
+  "twin": {
+    "axisY": 2.9,
+    "arm": 3,
+    "panFloorOffset": -2.1,
+    "cellX": [
+      -0.6,
+      0.6
+    ],
+    "maxAngle": 0.12
+  },
+  "lever": {
+    "axisY": 1.2,
+    "cellSpacing": 1.4,
+    "pivotPositions": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "cells": 6,
+    "railWidth": 8.9,
+    "railDepth": 1.1,
+    "maxAngle": 0.18
+  },
+  "palette": {
+    "stone": [
+      0.56,
+      0.57,
+      0.48
+    ],
+    "teal": [
+      0.04,
+      0.14,
+      0.16
+    ],
+    "brass": [
+      0.5,
+      0.3,
+      0.09
+    ],
+    "wood": [
+      0.21,
+      0.1,
+      0.04
+    ],
+    "edge": [
+      0.09,
+      0.12,
+      0.13
+    ]
+  },
+  "bodyPadding": 0.28,
+  "budgets": {
+    "sourceTrianglesMax": 60000,
+    "glbBytesMax": 4000000
+  },
+  "preserves": [
+    "balance-temple-v04 architecture, crate, doors, heritage deity",
+    "v3 fields and mumuplanet.progress.v1",
+    "3/4/5 order, 2:2 sums, 6-cell movable fulcrum torque",
+    "classroom max3 ownership"
+  ]
+}

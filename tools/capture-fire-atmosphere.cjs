@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module');
+const phase=process.argv[2]||'after',file=path.resolve('tools/capture-fire-paving.cjs');let s=fs.readFileSync(file,'utf8');
+s=s.replace("B='reports/2026-10-24/evidence/fire-paving'","B='reports/2026-10-24/evidence/fire-atmosphere'");
+const start=s.indexOf("if(phase==='before')"),end=s.indexOf('await p.goto',start);s=s.slice(0,start)+s.slice(end);
+s=s.replace("await game.engine.interiorArt?.ready;",`await game.engine.interiorArt?.ready;if(${JSON.stringify(phase)}==='goal'){await (await import('/art/fire-atmosphere/v01/preview.js')).installFireAtmosphere(game.room.world.scene);game.room.scene.background=game.room.world.scene.background.clone();game.room.scene.fog=game.room.world.scene.fog.clone();game.room.scene.userData.softMidShadows=true;game.engine.applySceneShadows();}`);
+s=s.replace('game.roomActor.syncMesh();','game.roomActor.syncMesh();game.room.world.animate(0,game.roomActor);');
+s=s.replace('render:__dbg.perf()','render:__dbg.perf(),atmosphere:game.room.world.scene.userData.fireAtmosphere||null,background:game.room.scene.background?.getHexString(),fog:game.room.scene.fog?{color:game.room.scene.fog.color.getHexString(),near:game.room.scene.fog.near,far:game.room.scene.fog.far}:null');
+s=s.replace("await p.goto('http://127.0.0.1:5512/?q=mid');",`if(phase==='before')for(const name of ['FireTrial','FireAdventure'])await p.route('**/src/shrine/'+name+'.js',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('reports/2026-10-24/evidence/fire-atmosphere/baseline-source/'+name+'.js')}));await p.goto('http://127.0.0.1:5512/?q=mid');`);
+s=s.replace('assert.equal(report.errors.length,0);',"if(phase!=='before')assert(report.shots.every(s=>s.atmosphere?.loaded&&s.atmosphere.cliffs.length===9));assert.equal(report.errors.length,0);");
+const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(s,file);

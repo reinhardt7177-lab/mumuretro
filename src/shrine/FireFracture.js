@@ -12,7 +12,7 @@ function plaque(parent,x,y,z,text,w=2.5,h=.65){const c=document.createElement('c
 
 export async function buildFireFracture(){
   const loader=new GLTFLoader(),base='assets/models/fire-temple/';
-  const results=await Promise.all(['static','bridge','brace','socket','anchor'].map(id=>loader.loadAsync(`${base}fracture-${id}-v01.glb`)));
+  const results=await Promise.all(['static','bridge','brace','socket','anchor'].map(id=>loader.loadAsync(`${base}fracture-${id}-${id === 'static' ? 'v04' : 'v01'}.glb`)));
   const response=await fetch(base+'fracture-manifest.json');if(!response.ok)throw Error('균열 회랑의 배치 파일을 불러오지 못했다');const manifest=await response.json();
   const scene=new T.Scene();scene.background=new T.Color(0x233545);scene.fog=new T.Fog(0x233545,36,94);
   scene.add(new T.HemisphereLight(0xd8e9f5,0x4b3b2e,2.3));const sun=new T.DirectionalLight(0xffdfab,3.0);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-19,right:19,top:19,bottom:-19,near:1,far:65});sun.shadow.bias=-.0004;sun.shadow.normalBias=.06;scene.add(sun,sun.target);
@@ -77,7 +77,7 @@ export async function buildFireFracture(){
     bridge.position.y=T.MathUtils.lerp(F.lowBridge,0,progress)-Math.sin(bridge.rotation.z)*pivot;
     lever.rotation.x=T.MathUtils.damp(lever.rotation.x,mechanics.testing?-.75:0,10,dt);
     struts.forEach(m=>{const top=bridge.position.y-.60;m.scale.y=Math.max(.05,(top+2.75)/2);m.position.y=(-2.75+top)/2;});
-    braces.forEach((m,i)=>{const b=s.braces[i];m.scale.setScalar(i===mechanics.held?.85:1);
+    braces.forEach((m,i)=>{const b=s.braces[i];m.scale.setScalar(1);
       if(i===mechanics.held){m.position.copy(actor.position).addScaledVector(actor.heading,.65);m.position.y=actor.position.y+.55;m.rotation.y=Math.atan2(actor.heading.x,actor.heading.z);}
       else{m.position.set(b.slot===null?b.pos[0]:F.sockets[b.slot][0],b.slot===null?0:.44,b.slot===null?b.pos[1]:F.sockets[b.slot][1]);m.rotation.y=0;}
     });

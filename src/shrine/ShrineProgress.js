@@ -28,6 +28,11 @@ export function attachShrineProgress(room) {
         if (kinds[i] === 'hexlava') cp.resetHazard = i;
       }
     });
+    // Visible doorway aprons can be wider than the old corridor. Store a
+    // nearby point inside the original walkable margin, valid with or without
+    // optional art, rather than writing a checkpoint the importer rejects.
+    const bounds=room.spec.rooms.find(r=>cp.z>=r.to&&cp.z<=r.from);
+    if(bounds){const safeHalf=bounds.w/2-.50;cp.x=Math.max(-safeHalf,Math.min(safeHalf,cp.x));}
     room.checkpoint = cp;
   };
   room.resume = actor => {
@@ -91,7 +96,7 @@ export function attachShrineProgress(room) {
     const migratedMirror = mirrorIndex >= 0 && s.devices[mirrorIndex].version !== 2 && seg.id === room.gates[mirrorIndex].room;
     room.checkpoint = migratedMirror ? { ...cp, x: 0, z: room.gates[mirrorIndex].gate.seg.z1 - 1, resetHazard: -1 } : { ...cp };
     const silhouetteIndex = kinds.indexOf('silhouette');
-    if (silhouetteIndex >= 0 && s.devices[silhouetteIndex].version !== 2 && seg.id === room.gates[silhouetteIndex].room) {
+    if (silhouetteIndex >= 0 && ![2,3].includes(s.devices[silhouetteIndex].version) && seg.id === room.gates[silhouetteIndex].room) {
       const g = room.gates[silhouetteIndex].gate;
       // 옛 중앙 장치가 왼쪽으로 옮겨졌다. 잡은 손은 새 손잡이 옆에서 같은 거리로 재개한다.
       room.checkpoint = { ...cp, x: g.held ? g.theatre.handle().x : 0,
@@ -108,7 +113,7 @@ export function attachShrineProgress(room) {
     if (room.evaporationCourt && s.devices[2].version !== 2 && seg.id === 'r3') {
       room.checkpoint = { ...cp, x: 0, z: room.gates[2].gate.seg.z1 - 1, resetHazard: -1 };
     }
-    if (room.sortCourt && s.devices[1].version !== 2 && seg.id === 'r2') {
+    if (room.sortCourt && ![2,3].includes(s.devices[1].version) && seg.id === 'r2') {
       room.checkpoint = { ...cp, x: 0, z: room.gates[1].gate.seg.z1 - 1, resetHazard: -1 };
     }
     if (room.sieveCourt && s.devices[0].version !== 2 && seg.id === 'r1') {

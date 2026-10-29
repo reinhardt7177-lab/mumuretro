@@ -1,0 +1,13 @@
+const fs=require('node:fs'),C=JSON.parse(fs.readFileSync('reports/2026-10-23/evidence/chronicle-court/before/report.json')).contract,A='art/chronicle-court/v01/';const x=v=>360+v*22,z=v=>160+(C.seg.z1-v)*22;
+let s='<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="900" viewBox="0 0 1500 900"><rect width="1500" height="900" fill="#201f2c"/><g fill="#efe6ce" font-family="sans-serif"><text x="40" y="52" font-size="28">다섯 기억의 회랑 · 제작 전 공간/높이 설계</text><text x="40" y="89" font-size="17">현재 웹 좌표 · 자체 시안에 따른 건축 / 원작 도면이나 실제 플레이 화면이 아님</text>';
+s+='<rect x="105" y="160" width="510" height="485" fill="#353340" stroke="#c5b78e"/><text x="105" y="135" font-size="22">평면 · 바닥0</text>';
+for(const a of C.altars)s+=`<circle cx="${x(a.x)}" cy="${z(a.z)}" r="23.1" fill="#a29570"/><circle cx="${x(a.x)}" cy="${z(a.z)}" r="15" fill="#353340"/>`;
+for(const o of C.orbs)s+=`<circle cx="${x(o.home[0])}" cy="${z(o.home[2])}" r="8" fill="#d9c586"/>`;
+s+=`<circle cx="${x(0)}" cy="${z(C.gz)}" r="118.8" fill="#625969" stroke="#c8b276"/><circle cx="${x(0)}" cy="${z(C.gz)}" r="132" fill="none" stroke="#e0a98f" stroke-dasharray="6 6"/><text x="${x(0)-60}" y="${z(C.gz)}" font-size="17">기존 수호자</text>`;
+for(const side of [-1,1])for(const dz of [-5.6,1.1,7.8,14.5])s+=`<rect x="${x(side*9.3)-12.32}" y="${z(C.gz+dz)-12.32}" width="24.64" height="24.64" fill="#c5b78e"/>`;
+for(const side of [-1,1])s+=`<rect x="${x(side*7.8)-12.32}" y="${z(C.gz-5.7)-12.32}" width="24.64" height="24.64" fill="#c5b78e"/>`;
+s+='<text x="115" y="688" font-size="17">헌납·표지·구슬 좌표 유지 / 중앙 귀환 길 유지</text><text x="115" y="722" font-size="17">원형 반경6m: 기존 몸 충돌 / 작은 원: 다섯 제단</text>';
+s+='<text x="760" y="135" font-size="22">뒤쪽 아치 입면 · 같은 바닥 기준</text><line x1="745" y1="640" x2="1420" y2="640" stroke="#d2c49c" stroke-width="3"/>';
+const ex=v=>1080+v*33,ey=v=>640-v*25;for(const side of [-1,1])s+=`<rect x="${ex(side*7.8)-14}" y="${ey(9.2)}" width="28" height="230" fill="#7a7480" stroke="#c5b78e"/>`;
+s+=`<path d="M ${ex(-7.23)} ${ey(9.2)} A ${7.23*33} ${7.23*25} 0 0 1 ${ex(7.23)} ${ey(9.2)}" fill="none" stroke="#c5b78e" stroke-width="12"/><rect x="${ex(-3.5)}" y="${ey(13.8)}" width="231" height="345" rx="85" fill="#4c4658"/><text x="930" y="696" font-size="17">수호자14.038m / 열린 아치 최고16.93m</text><text x="930" y="730" font-size="17">기둥 발0 / 판석0 / 바닥 기초−.2m</text>`;
+s+='<text x="40" y="818" font-size="18">정답 색/헌납 순서를 새 장식에 넣지 않는다. 원형/방사형 바닥은 장식이며 풀이 표시가 아니다.</text><text x="40" y="856" font-size="17">Blender 개별 석재 원본 → 재질별 웹 복사본 → 실제 몸·발·카메라와 운반/저장 검증</text></g></svg>';fs.writeFileSync(A+'blueprint.svg',s);console.log('PASS court blueprint from current offering/guardian coordinates');

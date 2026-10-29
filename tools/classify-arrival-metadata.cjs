@@ -1,0 +1,10 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const A='art/arrival-coherence/v01/combined',B='reports/2026-10-27/evidence/arrival-coherence',m=JSON.parse(fs.readFileSync(A+'/manifest.json')),hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+const row=m.assets.find(r=>r.file.endsWith('arrival-dais-v05.json'));assert(row,'Expected the one authoring-only metadata row');
+m.authoringMetadata=[row];m.assets=m.assets.filter(r=>r!==row);fs.writeFileSync(A+'/manifest.json',JSON.stringify(m,null,2));
+const prior=JSON.parse(fs.readFileSync(B+'/plinth-shadows-mid.json'));assert(prior.failure.includes('arrival-dais-v05.json'));assert.equal(prior.errors.length,0);
+const mismatches=[];for(const r of [...m.files,...m.assets])if(!prior.network.some(n=>n.file===r.file&&n.status===200&&n.sha256===hash(fs.readFileSync(r.preview))))mismatches.push(r.file);
+assert.equal(mismatches.length,0,'Captured runtime responses must match the source actually retained');
+const changed=m.baseInventory.filter(r=>!fs.existsSync(r.file)||hash(fs.readFileSync(r.file))!==r.sha256);assert.equal(changed.length,0);
+fs.writeFileSync(B+'/plinth-shadows-native-validation.json',JSON.stringify({pass:true,scope:'Correction of an audit manifest, not a new browser run. The prior native capture already returned every actual runtime resource correctly.',sourceCapture:'plinth-shadows-mid.json',sourceImages:['front','side','rear'].map(v=>'plinth-shadows-mid-'+v+'.png'),nativeRuntimeResponses:m.files.length+m.assets.length,checks:{runtimeResponsesMatch:true,noBrowserOrGLSLExceptions:true,rootInventoryPreservedNow:true},expectedSurfaceFallback:true,originalFailurePreserved:true,correction:'The dais authoring JSON is not fetched by the game. Keep it in art; do not require it as a gameplay network dependency or add it to runtime merely to satisfy this check.'},null,2));
+console.log('Classified unused dais metadata as art. Existing native25 runtime responses verified; original failed audit preserved.');

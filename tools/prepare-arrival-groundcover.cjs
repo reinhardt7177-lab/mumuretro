@@ -1,0 +1,7 @@
+const fs=require('node:fs'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const A='art/arrival-coherence/v01/groundcover',B='reports/2026-10-27/evidence/arrival-groundcover';assert(!fs.existsSync(B+'/baseline.json'));fs.mkdirSync(B,{recursive:true});fs.mkdirSync(A+'/exports',{recursive:true});
+const old=JSON.parse(fs.readFileSync('reports/2026-10-26/evidence/arrival-dais/installation.json'));for(const[f,h]of Object.entries(old.inventory))assert.equal(crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex'),h,'Root differs '+f);
+const files=['src/world/MeadowDetail.js','src/world/MeadowField.js','src/world/LandmarkAssets.js'];for(const file of files)fs.copyFileSync(file,B+'/before-'+file.replaceAll('/','__'));
+for(const view of ['front','side','rear'])fs.copyFileSync('reports/2026-10-26/evidence/arrival-dais/after-'+view+'.png',B+'/before-'+view+'.png');
+fs.writeFileSync(B+'/baseline.json',JSON.stringify({createdUtc:new Date().toISOString(),runtimeFiles:466,inventory:old.inventory,files,previousGoalTurn:'progress: actual Blender arrival dais installed and verified, but overall material/lighting/vegetation and terrain still differ substantially from AI targets. Root retains personal saves and originals.',constraints:'Preview only; coordinate overlapping MeadowField changes with terrain agent; other agent owns lighting files'},null,2));
+console.log('Prepared466 baseline and three actual captures; no Root mutation.');

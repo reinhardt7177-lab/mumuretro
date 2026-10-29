@@ -6,7 +6,7 @@ import { siftSanctumProgress } from './SiftSanctumProgress.js';
 
 export function buildSiftSanctum(scene, seg, rects, g, legacy) {
   g.group.removeFromParent(); const group = new THREE.Group(); group.name = '네 혼합물의 분리 신전'; scene.add(group); g.group = group;
-  const cameraOccluders = [], obstacles = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);
+  const cameraOccluders = [], obstacles = [], architectureParts = [], guardianParts = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);let layer='architecture';
   const mat = color => { const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .35, roughness: .86, side: THREE.DoubleSide });
     m.userData.outlineParameters = { visible: false }; return m; };
   const pale = mat(C.pale), stone = mat(C.stone), floor = mat(C.floor), alt = mat(C.floorAlt), wood = mat(C.wood), edge = mat(C.edge), brass = mat(C.brass);
@@ -16,7 +16,7 @@ export function buildSiftSanctum(scene, seg, rects, g, legacy) {
     if (solid) cameraOccluders.push(m); return m;
   }
   function box(w, h, d, x, y, z, material, solid = true) {
-    const key = material.uuid + solid; if (!batches.has(key)) batches.set(key, { material, solid, parts: [] });
+    const key = material.uuid + solid+layer; if (!batches.has(key)) batches.set(key, { material, solid, layer, parts: [] });
     batches.get(key).parts.push({ w, h, d, x, y, z });
   }
   function ring(parent, radius, material, x = 0, y = 0, z = 0) {
@@ -46,6 +46,7 @@ export function buildSiftSanctum(scene, seg, rects, g, legacy) {
     box(.5, .26, 16, side * 8.2, 4.85, cz, pale);
   }
   // 넓은 어깨와 얼굴, 품에 든 체로 지킴이를 읽을 수 있게 한다.
+  layer='guardian';
   const gz = g.gz - D.guardianBack;
   box(3.5, .45, 2.7, 0, .225, gz, stone);
   box(2.3, 2.55, 1.7, 0, 2.1, gz, pale);
@@ -56,6 +57,7 @@ export function buildSiftSanctum(scene, seg, rects, g, legacy) {
   box(1.85, 1.48, 1.65, 0, 4.3, gz, pale); box(2.02, .22, 1.8, 0, 5.12, gz, stone);
   g.eyes = godEyes(group, 0, D.eyeY, gz + D.faceDepth, .43, .31, .18);
   const chest = new THREE.Group(); chest.position.set(0, 2.9, gz + 1.1); chest.rotation.x = Math.PI / 2; group.add(chest); sieve(chest, 1.05);
+  guardianParts.push(chest);layer='devices';
   g.obstacles = [{ x: 0, z: gz, r: D.guardianRadius }];
   // 체험한 도구 그대로의 실루엣. 선반 순서와 혼합물 순서는 기존 씨드로 섞인다.
   g.tools.forEach(t => {
@@ -98,7 +100,7 @@ export function buildSiftSanctum(scene, seg, rects, g, legacy) {
     for (const side of [-1, 1]) box(.62, .04, .55, m.x + side * .5, 1.27, m.z + .35, paper, false);
     visuals.push({ mix: m, liquid, solids });
   });
-  const api = { group, obstacles, cameraOccluders, visuals,
+  const api = { group, obstacles, cameraOccluders, architectureParts, guardianParts, visuals,
     sync() {
       for (const t of g.tools) if (t !== g.held) {
         t.mesh.position.copy(t.used ? new THREE.Vector3(t.used.x, 1.9, t.used.z) : t.home); t.mesh.rotation.set(0, 0, 0);
@@ -119,9 +121,9 @@ export function buildSiftSanctum(scene, seg, rects, g, legacy) {
   };
   g.workshop = api; api.sync(); g.progressCodec = siftSanctumProgress(g, legacy);
   const dummy = new THREE.Object3D();
-  for (const { material, solid, parts } of batches.values()) {
+  for (const { material, solid, parts, layer } of batches.values()) {
     const m = new THREE.InstancedMesh(cube, material, parts.length); parts.forEach((v, i) => { dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.w, v.h, v.d); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
-    group.add(m); m.castShadow = solid; m.receiveShadow = true; if (solid) cameraOccluders.push(m);
+    group.add(m); m.castShadow = solid; m.receiveShadow = true; if (solid) cameraOccluders.push(m);if(layer==='architecture')architectureParts.push(m);if(layer==='guardian')guardianParts.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders]; rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];
   return api;

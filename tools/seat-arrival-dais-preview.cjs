@@ -1,0 +1,26 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const A='art/arrival-dais/v01',B='reports/2026-10-26/evidence/arrival-dais',archive=B+'/flat-preview',resume=process.argv.includes('--resume');
+if(!resume){assert(!fs.existsSync(archive));fs.mkdirSync(archive);
+for(const name of fs.readdirSync(A).filter(n=>n.startsWith('preview-')))fs.copyFileSync(A+'/'+name,archive+'/'+name);
+for(const name of ['goal.json','goal-front.png','goal-side.png','goal-rear.png','surface-bake.json'])if(fs.existsSync(B+'/'+name))fs.renameSync(B+'/'+name,archive+'/'+name);
+for(const name of ['arrival-field-v01.png','arrival-meadow-v01.json'])if(fs.existsSync(A+'/exports/'+name))fs.renameSync(A+'/exports/'+name,archive+'/'+name);
+fs.copyFileSync('assets/models/adventure/meadow-kit-v01.json',A+'/exports/arrival-meadow-v01.json');
+fs.copyFileSync('src/sphere/Planet.js',B+'/before-src__sphere__Planet.js');
+const base=JSON.parse(fs.readFileSync(B+'/baseline.json'));assert(!base.files.includes('src/sphere/Planet.js'));base.files.push('src/sphere/Planet.js');fs.writeFileSync(B+'/baseline.json',JSON.stringify(base,null,2));
+}else{assert(fs.existsSync(archive));assert(JSON.parse(fs.readFileSync(B+'/baseline.json')).files.includes('src/sphere/Planet.js'));}
+let source=fs.readFileSync(B+'/before-src__sphere__Planet.js','utf8').replace(/\r\n/g,'\n');
+const marker='    return height;\n  }\n\n  applyLandscape';assert(source.includes(marker));
+source=source.replace(marker,'    if(this.arrivalSupport)height+=this.arrivalSupport.delta(dir);\n    return height;\n  }\n\n  applyLandscape');
+source=source.replace('const h = this.heightAt(d);','// The raised walkable floor is rendered by its real Blender mesh.\n      // Keep soil underneath rather than drawing soil through the platform.\n      const h = this.heightAt(d)-(this.arrivalSupport?.delta(d)||0);');
+fs.writeFileSync(A+'/preview-src__sphere__Planet.js',source);
+source=fs.readFileSync(A+'/preview-src__boot.js','utf8');
+source=source.replace('loadLandmarkAssets, landmarkSpec','loadLandmarkAssets, landmarkSpec, arrivalReady');
+const support="const arrivalSite=planet.levelSite('arrival-dais',landingDir,3.2,5.2,false);";assert(source.includes(support));
+source=source.replace(support,support+`\nif(arrivalReady())planet.arrivalSupport={dir:landingDir.clone(),height:.16,inner:2.27,outer:2.64,delta(d){const dot=d.dot(this.dir);return dot>Math.cos(this.outer/R)?this.height*(1-THREE.MathUtils.smoothstep(Math.acos(Math.min(1,dot))*R,this.inner,this.outer)):0;}};`);
+fs.writeFileSync(A+'/preview-src__boot.js',source);
+source=fs.readFileSync(A+'/preview-src__world__LandmarkAssets.js','utf8');source+="\nexport function arrivalReady(){return models.has('arrival');}\n";
+source=source.replace("const material=o.material.clone();material.userData.outlineParameters", "const material=o.material.clone();if(o.name==='Arrival_Aged')material.metalness=Math.min(material.metalness,.30);material.userData.outlineParameters");
+fs.writeFileSync(A+'/preview-src__world__LandmarkAssets.js',source);
+source=fs.readFileSync(A+'/preview-src__world__MeadowField.js','utf8');
+source=source.replace('const data={levelSites:','const data={arrivalSupport:planet.arrivalSupport?{height:planet.arrivalSupport.height,inner:planet.arrivalSupport.inner,outer:planet.arrivalSupport.outer}:null,levelSites:');fs.writeFileSync(A+'/preview-src__world__MeadowField.js',source);
+console.log('Preserved the flat prototype. Added .16m native walking support with a gentle outer ramp; underlying soil stays below the rendered Blender floor. Root unchanged.');

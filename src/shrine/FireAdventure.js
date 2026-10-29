@@ -38,6 +38,6 @@ export function buildFireAdventure(spec,seed,buildLegacy){
   // Commit the exit and the reward atomically before the main game's save runs.
   finishReward(actor){if(!world?.sanctum.exited||prize.taken)return false;pending=world.snapshot(actor);prize.taken=true;return true;},
  };
- api.ready=buildFireTrial().then(w=>{world=w;scene.add(w.scene);dungeon.rects=w.rects;api.obstacles=w.obstacles;world.restore(pending);api.loading=false;return api;}).catch(e=>{api.loading=false;api.error=e;console.error('[fire] asset load failed',e);return api;});
+ api.ready=buildFireTrial().then(w=>{world=w;scene.add(w.scene);scene.background=w.scene.background.clone();scene.fog=w.scene.fog.clone();scene.userData.softMidShadows=w.scene.userData.softMidShadows;dungeon.rects=w.rects;api.obstacles=w.obstacles;world.restore(pending);api.loading=false;return api;}).catch(e=>{api.loading=false;api.error=e;console.error('[fire] asset load failed',e);return api;});
  return api;
 }

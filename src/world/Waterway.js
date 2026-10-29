@@ -34,7 +34,7 @@ export function buildWaterway(scene, planet, dir, opts = {}) {
   const dirAt = (x, z) => focusDir.clone().addScaledVector(east, x / planet.R)
     .addScaledVector(south, z / planet.R).normalize();
   const localToWorld = (x, z, lift = 0) => {
-    const d = dirAt(x, z); return planet.surfaceAt(d).addScaledVector(d, liftAt(d) + lift);
+    const d = dirAt(x, z); return planet.groundSurfaceAt(d).addScaledVector(d, liftAt(d) + lift);
   };
   const localOf = (position) => {
     const d = position.clone().normalize(), facing = d.dot(focusDir);

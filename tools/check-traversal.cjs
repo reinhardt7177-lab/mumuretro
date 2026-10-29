@@ -31,11 +31,16 @@ function terrainFlightTest() {
     surfaceAt(dir, out = new THREE.Vector3()) { out.copy(dir).normalize(); return out.setLength(this.R + 6 - out.z * 25); },
     projectToSurface(v) { return this.surfaceAt(v, v); },
   };
-  const p = new Player(planet); p.jumpH = 3; p.vy = -1; p.jumpsLeft = 0;
+  const p = new Player(planet);
+  // Establish real walking velocity first. A fresh actor now accelerates;
+  // the old one-frame fixture no longer descended enough terrain to exercise it.
+  for(let i=0;i<60;i++)p.update(1/60,{x:0,y:1},new THREE.Vector3(0,0,1),new THREE.Vector3(1,0,0));
+  p.jumpH = 3; p.vy = -1; p.jumpsLeft = 0;
+  const groundBefore=p.position.length();
   const before = p.getFootPosition().length();
   p.update(0.05, {x: 0, y: 1}, new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0));
   const expected = before + (-1 - 22 * 0.05) * 0.05;
-  return { error: Math.abs(p.getFootPosition().length() - expected), groundDrop: 74 - p.position.length(), height: p.jumpH };
+  return { error: Math.abs(p.getFootPosition().length() - expected), groundDrop: groundBefore - p.position.length(), height: p.jumpH };
 }
 (async () => {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));

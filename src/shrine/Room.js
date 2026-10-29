@@ -15,6 +15,32 @@
 //   interact(pos)           → bool          (손으로 만지는 것만)
 //   restart()                               (사당을 다시 도전할 때)
 import * as THREE from 'three';
+import { CHRONICLE_VIEW } from '../data/chronicleView.js';
+import { registerInteriorRoom } from '../render/InteriorDirection.js';
+import { registerActionRoom } from '../sphere/CarryPresentation.js';
+import { registerShadowArt } from './ShadowArt.js';
+import { registerSeparationArt } from './SeparationArt.js';
+import { registerSiftArchitecture } from './SiftArchitecture.js';
+import { registerBalanceArt } from './BalanceArt.js';
+import { registerBalanceOnboarding } from './BalanceOnboarding.js';
+import { registerBalanceRecords } from './BalanceRecords.js';
+import { registerBalanceCourtArt } from './BalanceCourtArt.js';
+import { registerSiftRecords } from './SiftRecords.js';
+import { registerSiftThresholds } from './SiftThresholds.js';
+import {registerWorkspaceViews} from './WorkspaceViews.js';
+import { registerMoonSanctum } from './MoonSanctum.js';
+import { registerMoonCourts } from './MoonCourts.js';
+import { registerChronicleCourt } from './ChronicleCourt.js';
+import { registerChronicleEvidence } from './ChronicleEvidence.js';
+import { registerStrataPortal } from './StrataPortal.js';
+import { registerStrataInlays } from './StrataInlays.js';
+import { registerStrataRecords, registerSanctumRecords } from './StrataRecords.js';
+import { installStrataSurround } from './StrataSurround.js';
+import { registerChronicleShaft } from './ChronicleShaft.js';
+import { registerShaftEntry, registerArchiveEntry } from './ShaftEntry.js';
+import { registerArchiveHall } from './ArchiveHall.js';
+import { registerSanctumOfferings } from './SanctumOfferings.js';
+import { registerPanelWorkshop } from './PanelWorkshop.js';
 import { buildDungeon } from './Dungeon.js';
 import { TileGate, LaserGate, PlateGate } from './Gates.js';
 import { ShadeGate, MirrorGate, SilhouetteGate, MirrorGod } from './ShadowGates.js';
@@ -116,8 +142,22 @@ function makeFinal(kind, scene, seg, theme) {
 }
 
 export function buildRoom(spec, seed = Math.floor(Math.random() * 4294967296)) {
-  if (spec.id === 'fire') return buildFireAdventure(spec,seed,()=>buildLegacyFireRoom(spec,seed));
-  return withSeed(seed, () => assembleRoom(spec, seed));
+  const room=spec.id === 'fire' ? buildFireAdventure(spec,seed,()=>buildLegacyFireRoom(spec,seed)) : withSeed(seed, () => assembleRoom(spec, seed));
+  const result=registerMoonCourts(registerMoonSanctum(registerBalanceOnboarding(registerBalanceArt(registerSiftArchitecture(registerSeparationArt(registerShadowArt(registerActionRoom(registerInteriorRoom(room)))))))));
+  const finished=registerStrataRecords(registerStrataInlays(registerStrataPortal(registerChronicleEvidence(registerChronicleCourt(registerPanelWorkshop(result))))));
+  registerChronicleShaft(finished);
+  registerShaftEntry(finished);
+  registerArchiveEntry(finished);
+  registerArchiveHall(finished);
+  registerSanctumRecords(finished);
+  registerSanctumOfferings(finished);
+  registerBalanceRecords(finished);
+  registerBalanceCourtArt(finished);
+  registerSiftRecords(finished);
+  registerSiftThresholds(finished);
+  registerWorkspaceViews(finished);
+  if(spec.id==='strata')finished.ready=Promise.resolve(finished.ready).then(()=>installStrataSurround(finished));
+  return finished;
 }
 // Retained only to validate/migrate the old save contracts; never an entry route.
 export function buildLegacyFireRoom(spec,seed){
@@ -130,7 +170,7 @@ function assembleRoom(spec, seed) {
   scene.userData.lookProfile = spec.id;
   scene.background = new THREE.Color(spec.theme.bg);
   const dungeon = spec.id === 'balance' ? buildBalanceDungeon(scene,spec.rooms,spec.theme) : buildDungeon(scene, spec.rooms, spec.theme);
-  const entranceObstacles = addEntranceMarkers(scene, spec);
+  const entranceObstacles = addEntranceMarkers(scene, spec, dungeon.rects);
   const court = null; // The water temple uses its own traversal/state implementation above.
 
   const gates = [];
@@ -153,22 +193,32 @@ function assembleRoom(spec, seed) {
   // 힌트 판은 꺼진 채로 걸린다. 헤맨 시간이 쌓여야 켜지고 더 헤매면 한 단계 더 밝아진다.
   // **답은 주지 않는다** — 어디를 봐야 하는지만 말한다. 답을 주면 그 순간
   // 이 방은 문제가 아니라 버튼이 된다.
-  const goals = {};
+  const goals = {};const balanceBoards={},siftBoards={};let silhouetteGoalBoard,recordsGoal,shaftGoal,archiveGoal,sanctumGoal;
   const hints = {};
   for (const r of spec.rooms) {
     if (!r.goal) continue;
     const seg = dungeon.rectOf(r.id);
     goals[r.id] = r.goal;
     const goalBoard = addBoard(scene, seg, -1, r.name, r.goal, spec.theme.glow);
-    if(spec.id==='balance'){goalBoard.group.scale.setScalar(.65);goalBoard.group.position.set(seg.x0+1.2,1.65,seg.z1-2);goalBoard.group.rotation.y=.45;}
+    if(spec.id==='sift')siftBoards[r.id]={goal:goalBoard};
+    if(r.gate==='strataOrder')recordsGoal=goalBoard;
+    if(r.gate==='shaft')shaftGoal=goalBoard;
+    if(r.gate==='fiveDoors')archiveGoal=goalBoard;
+    if(spec.id==='strata'&&r.id==='shrine')sanctumGoal=goalBoard;
+    // Keep the entire drill/core visible from the entry and observation side.
+    if(r.gate==='strataOrder'){goalBoard.group.scale.setScalar(.6);goalBoard.group.position.set(seg.x1-.9,1.7,seg.z1-2.8);goalBoard.group.rotation.y=-.65;}
+    if(r.gate==='silhouette')silhouetteGoalBoard=goalBoard;
+    if(spec.id==='balance'){balanceBoards[r.id]={goal:goalBoard};goalBoard.group.scale.setScalar(.65);goalBoard.group.position.set(seg.x0+1.2,1.65,seg.z1-2);goalBoard.group.rotation.y=.45;}
     if (r.gate === 'sieve') { goalBoard.group.position.set(4.3, 2.1, seg.z1 - 2); goalBoard.group.rotation.y = -Math.PI / 3; }
     if (r.gate === 'evaporate') { goalBoard.group.position.set(5.5, 2.1, seg.z1 - 1.5); goalBoard.group.rotation.y = -Math.PI / 3; goalBoard.group.scale.setScalar(.72); }
     if (!r.hints) continue;
     const board = addBoard(scene, seg, 1, '힌트', '아직 잠겨 있다', spec.theme.glow, true);
-    if(spec.id==='balance'){board.group.scale.setScalar(.65);board.group.position.set(seg.x1-1.2,1.65,seg.z1-2);board.group.rotation.y=-.45;}
+    if(r.gate==='strataOrder'){board.group.scale.setScalar(.6);board.group.position.set(seg.x1-.9,1.7,seg.z1-7.6);board.group.rotation.y=-.65;}
+    if(spec.id==='balance'){balanceBoards[r.id].hint=board;board.group.scale.setScalar(.65);board.group.position.set(seg.x1-1.2,1.65,seg.z1-2);board.group.rotation.y=-.45;}
     if (r.gate === 'sieve') { board.group.position.set(4.3, 2.1, seg.z0 + 2); board.group.rotation.y = -Math.PI / 3; }
     if (r.gate === 'evaporate') { board.group.position.set(5.5, 2.1, seg.z1 - 4.5); board.group.rotation.y = -Math.PI / 3; board.group.scale.setScalar(.72); }
     hints[r.id] = { board, texts: r.hints, level: 0, t: 0 };
+    if(spec.id==='sift')siftBoards[r.id].hint=board;
   }
 
   const shrineSeg = dungeon.rectOf('shrine');
@@ -183,6 +233,11 @@ function assembleRoom(spec, seed) {
   const silhouette = gates.find(g => g.gate instanceof SilhouetteGate)?.gate;
   const silhouetteCourt = silhouette ? buildSilhouetteCourt(scene, silhouette.seg, dungeon.rects, silhouette,
     deviceProgress(silhouette, 'silhouette', scene)) : null;
+  if(silhouetteCourt){
+    const originalHints=[...hints.r3.texts];
+    silhouetteCourt.onObjective=()=>{goals.r3=silhouetteCourt.objective();silhouetteGoalBoard.set('그림자의 조건',goals.r3);const h=hints.r3;h.texts=silhouetteCourt.mode==='legacy'?originalHints:['가림판이 등불에 가까울수록 그림자가 커진다.','두 등불의 간격을 바꾸면 두 그림자의 중심 간격도 바뀐다. 크기를 먼저 살펴라.'];if(h.level)h.board.set(`힌트 ${h.level}`,h.texts[h.level-1]);};
+    silhouetteCourt.onObjective();
+  }
   const sanctum = final instanceof MirrorGod ? buildShadowSanctum(scene, shrineSeg, dungeon.rects, final,
     deviceProgress(final, 'mirrorGod', scene)) : null;
   const sieve = gates.find(g => g.gate instanceof SieveGate)?.gate;
@@ -222,7 +277,7 @@ function assembleRoom(spec, seed) {
 
   const api = {
     fadeVeils, veils,
-    spec, seed, scene, dungeon, gates, final, prize, goals, hints, court, gallery, shadeCourt, silhouetteCourt, sanctum, sieveCourt, sortCourt, evaporationCourt, siftSanctum, runTier: 0,
+    spec, seed, scene, dungeon, gates, final, prize, goals, hints, balanceBoards:spec.id==='balance'?balanceBoards:null,siftBoards:spec.id==='sift'?siftBoards:null, court, gallery, shadeCourt, silhouetteCourt, sanctum, sieveCourt, sortCourt, evaporationCourt, siftSanctum, sanctumBoards:sanctumGoal?{goal:sanctumGoal,hint:hints.shrine.board}:null,archiveBoards:archiveGoal?{goal:archiveGoal,hint:hints.r3.board}:null,shaftBoards:shaftGoal?{goal:shaftGoal,hint:hints.r2.board}:null,recordBoards:recordsGoal?{goal:recordsGoal,hint:hints.r1.board}:null,panelBoards:silhouette?{goal:silhouetteGoalBoard,hint:hints.r3.board}:null,runTier: 0,ready:silhouetteCourt?.ready||Promise.resolve(),
     // 헤맨 시간이 쌓이면 힌트가 한 단계씩 켜진다. 실패는 시간을 크게 밀어 준다 —
     // 가만히 서 있는 것과 부딪히며 애쓰는 것은 다르게 대접해야 한다.
     // 켜졌으면 그 문구를 돌려준다(배너로 한 번 알리려고).
@@ -236,7 +291,7 @@ function assembleRoom(spec, seed) {
       h.level++;
       return h.texts[h.level - 1];
     },
-    obstacles: [...entranceObstacles, ...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
+    obstacles: [...entranceObstacles, ...(dungeon.bodyObstacles||[]), ...(final.obstacles || []), ...(court?.obstacles || []), ...(gallery?.obstacles || []), ...(shadeCourt?.obstacles || []), ...(silhouetteCourt?.obstacles || []), ...(sanctum?.obstacles || []), ...(sieveCourt?.obstacles || []), ...(sortCourt?.obstacles || []), ...(evaporationCourt?.obstacles || []), ...(siftSanctum?.obstacles || [])],
     shrineSeg,
     // 난이도 — **사당 번호가 아니라 지금까지 깬 개수**로 오른다(0~5).
     // 새 도전은 깬 개수에 맞추고, 진행 중인 도전은 첫 입장 단계를 유지한다.
@@ -275,15 +330,21 @@ function assembleRoom(spec, seed) {
   attachShrineProgress(api);
   if(spec.id==='strata'){
     const sr=dungeon.rectOf('shrine');
-    dungeon.rects.cameraLookHeightZones=[{...sr,lookHeight:7,minDistance:10,maxDistance:13,distanceScale:2}];
+    dungeon.rects.cameraLookHeightZones=[{...sr,...CHRONICLE_VIEW,
+      overview:{...CHRONICLE_VIEW.overview,focusX:0,focusZ:final.gz}}];
+    (dungeon.rects.cameraSubjectZones??=[]).push({...sr,halfWidth:.22,pitchAssist:.24,minRetreat:3.5,yawAssist:.75});
+    // Floating offerings can cover the traveller's legs in the closer work view.
+    // Their live transforms participate in the same visibility/camera surface query.
+    (dungeon.rects.cameraOccluders??=[]).push(...final.orbs.map(o=>o.mesh));
     final.heritagePromise.then(()=>{if(final.artReady)(dungeon.rects.cameraOccluders??=[]).push(...final.cameraOccluders);});
     const restore=api.importState;api.importState=s=>{const ok=restore(s);if(ok)final.syncArt?.();return ok;};
   }
   if(spec.id==='balance'){
+    const resume=api.resume.bind(api);api.resume=actor=>{const result=resume(actor),old=actor.position.clone();actor._pushOut(actor.position);if(actor.position.distanceTo(old)>1e-6){actor.syncMesh();actor._camPlaced=false;}return result;};
     api.obstacles.push(...gates.flatMap(g=>g.gate.obstacles||[]),{x:0,z:-60,r:1.7});
     const restore=api.importState;
     api.importState=s=>{
-      if(s?.id==='balance'&&s.version===1&&s.devices?.[0]?.version!==3){
+      if(s?.id==='balance'&&s.version===1&&[1,2].includes(s.devices?.[0]?.version)){
         // A changed exercise cannot reuse the old target sums. Preserve completed stages and other shrines.
         s=JSON.parse(JSON.stringify(s));
         if(!Array.isArray(s.solved)||s.solved.length!==2||!s.solved.every(v=>typeof v==='boolean'))return false;

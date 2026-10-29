@@ -1,14 +1,23 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MARKS} from '../data/marks.js';
+import {installStaticRaycastTree} from '../render/StaticRaycastTree.js';
 let source;
-function load(){return source??=(new GLTFLoader()).loadAsync('assets/models/chronicle-temple/guardian-v01.glb').catch(e=>{source=null;throw e;});}
+async function loadVersion(version){
+ const gltf=await(new GLTFLoader()).loadAsync(`assets/models/chronicle-temple/guardian-v0${version}.glb`);
+ gltf.guardianVersion=version;return gltf;
+}
+function load(){return source??=loadVersion(2).catch(()=>loadVersion(1)).catch(e=>{source=null;throw e;});}
 
 // Keep the puzzle's original live materials, so in-flight awakening/restores
 // cannot disagree with asynchronously arriving artwork.
 export async function attachChronicleArt(scene,device,legacy,centre){
- const gltf=await load(),root=gltf.scene.clone(true);root.name='Chronicle Guardian · Blender';root.position.set(centre,0,device.gz);const occluders=[];
- root.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.userData.partitionedSolid=true;o.material=o.material.clone();o.material.userData.outlineParameters={visible:false};occluders.push(o);}});
+ const gltf=await load(),root=gltf.scene.clone(true);root.name='Chronicle Guardian · Blender';root.userData.guardianVersion=gltf.guardianVersion;root.position.set(centre,0,device.gz);const occluders=[];
+ root.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.userData.partitionedSolid=true;o.material=o.material.clone();o.material.userData.outlineParameters={visible:false};
+  // This guardian changes materials, not vertices. Keep exact triangle hits
+  // while avoiding full scans for every rear-view camera candidate.
+  if(!o.isSkinnedMesh&&!o.geometry.morphAttributes.position?.length&&o.raycast===THREE.Mesh.prototype.raycast)installStaticRaycastTree(o);
+  occluders.push(o);}});
  for(let i=0;i<2;i++){const eye=root.getObjectByName('ChronicleEye'+i);if(!eye?.isMesh)throw Error('Chronicle eye binding missing');eye.material=device.eyeMats[i];}
  const seals=[];
  for(let i=0;i<5;i++){

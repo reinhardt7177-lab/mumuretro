@@ -199,11 +199,11 @@ export class FiveDoorsGate {
     if (this.solved) return null;
     const l = this._near(pos);
     if (!l) {
-      const n = this.levers.filter((x) => x.ci === x.si).length;
-      return `🔮 표지의 사당 색으로 맞춰라 (${n}/5)`;
+      const n = this.levers.filter((x) => x.ci >= 0).length;
+      return `수첩의 표지와 대조해 보자 · 설정 ${n}/5`;
     }
     const cur = l.ci < 0 ? '없음' : SHRINE_COLORS[l.ci].name;
-    return `E — 색 바꾸기 (지금 ${cur})`;
+    return `E — 손잡이 돌리기 · 현재 선택 ${cur}`;
   }
 
   interact(pos) {
@@ -412,6 +412,7 @@ export class GrandGod {
       const a = n.altar;
       // ★ 표지가 다르면 안 받는다. 구슬은 손에 그대로다 — 벌하지 않는다.
       if (a.id !== this.held.id) { this.no = 2.4; return true; }
+      this.no = 0; // A successful offering replaces the previous rejection immediately.
       a.got = this.held;
       this.held.placed = true;
       this.held.mesh.position.set(a.x, 1.7, a.z);

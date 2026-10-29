@@ -2,10 +2,13 @@ import * as T from 'three';
 import { createWaterPacket, beginWaterChange, advanceWater, stableWaterSnapshot, waterMotionPoint, TRANSFORM_TIME } from './WaterAdventureState.js';
 import { attachWaterAdventureProgress } from './WaterAdventureProgress.js';
 import { loadHeritageAsset, fitHeritageHeight, heritagePart } from '../core/HeritageAssets.js';
+import { addWaterDeityDetail } from './WaterDeityDetail.js';
 import { addBoard } from './Signboard.js';
 import { Prize } from './Prize.js';
 import { sfx } from '../core/Audio.js';
 import { buildWaterCuff } from '../render/WaterBraceletFx.js';
+import { registerWaterCourts } from './WaterCourts.js';
+import { registerWaterDevices } from './WaterDevices.js';
 
 const V=(x,y,z)=>new T.Vector3(x,y,z);
 const inside=(p,r,pad=0)=>p.x>=r.x0-pad&&p.x<=r.x1+pad&&p.z>=r.z0-pad&&p.z<=r.z1+pad;
@@ -17,17 +20,21 @@ function box(parent,w,h,d,m,x,y,z){const a=new T.Mesh(new T.BoxGeometry(w,h,d),m
 function pipe(parent,points,m=C.gold,r=.07){const curve=new T.CatmullRomCurve3(points.map(p=>V(...p)));const mesh=new T.Mesh(new T.TubeGeometry(curve,32,r,7,false),m);parent.add(mesh);return {mesh,curve};}
 function crest(parent,x,y,z,r=.38){const a=new T.Mesh(new T.TorusGeometry(r,.045,6,32),C.gold);a.position.set(x,y,z);parent.add(a);
   const drop=new T.Mesh(new T.OctahedronGeometry(r*.38,0),C.light);drop.position.set(x,y,z+.04);drop.scale.y=1.45;parent.add(drop);return a;}
-function bowl(parent,x,y,z,w=2,d=2){box(parent,w,.22,d,C.dark,x,y-.11,z);
-  for(const side of [-1,1]){box(parent,.14,.3,d+.15,C.pale,x+side*w/2,y+.12,z);box(parent,w,.3,.14,C.pale,x,y+.12,z+side*d/2);}
-  crest(parent,x,y+.13,z+d/2+.09,.16);}
+function bowl(parent,x,y,z,w=2,d=2,role='basin'){const root=new T.Group();root.position.set(x,y,z);root.name='Original water basin';root.userData.waterBasin={w,d,role};parent.add(root);box(root,w,.22,d,C.dark,0,-.11,0);
+  for(const side of [-1,1]){box(root,.14,.3,d+.15,C.pale,side*w/2,.12,0);box(root,w,.3,.14,C.pale,0,.12,side*d/2);}
+  crest(root,0,.13,d/2+.09,.16);return root;}
 
 function buildArchitecture(scene,spec){
-  const rects=[],doors={},surfaces=[],occluders=[];
+  const rects=[],doors={},surfaces=[],occluders=[],artSlots={};
   scene.background=new T.Color(0x132a3b);scene.fog=new T.Fog(0x132a3b,38,100);
   scene.add(new T.HemisphereLight(0xd9f1f0,0x233a51,2.05));
   const sun=new T.DirectionalLight(0xffe4ae,2.4);sun.position.set(-12,24,6);sun.target.position.set(0,0,-25);sun.castShadow=true;
+  // Keep stone bevels readable without self-shadow stripes. The engine reapplies
+  // these authored values across quality and scene switches; one map is retained.
+  scene.userData.softMidShadows=true;
+  sun.userData.authoredShadowBias=-.001;sun.userData.authoredShadowNormalBias=.05;
   Object.assign(sun.shadow.camera,{left:-14,right:14,top:30,bottom:-30,near:1,far:90});sun.shadow.mapSize.set(1024,1024);sun.shadow.bias=-.0005;scene.add(sun,sun.target);
-  for(const s of spec.rooms){const len=s.from-s.to,cz=(s.from+s.to)/2,hw=s.w/2;
+  for(const s of spec.rooms){const artStart=scene.children.length,len=s.from-s.to,cz=(s.from+s.to)/2,hw=s.w/2;
     const r={id:s.id,kind:s.kind,name:s.name,act:s.act,x0:-hw,x1:hw,z0:s.to,z1:s.from,h:s.h,camH:s.h,open:!s.door};rects.push(r);
     if(s.id==='r3'){
       for(const [a,b] of [[s.from,cz+3.3],[cz-3.3,s.to]])box(scene,s.w,.4,a-b,C.dark,0,-.2,(a+b)/2);
@@ -61,11 +68,12 @@ function buildArchitecture(scene,spec){
       for(const side of [-1,1])box(scene,.4,4.1,.55,C.pale,side*(s.w/2+.15),2.05,s.from);
       box(scene,s.w+.7,.35,.55,C.gold,0,4.1,s.from);
     }
+    if(s.kind==='room')artSlots[s.id]=scene.children.slice(artStart).filter(o=>o.isMesh&&o.visible);
   }
   const end=rects[rects.length-1];occluders.push(box(scene,end.x1-end.x0,end.h,.4,C.stone,0,end.h/2,end.z0-.2));
   rects.cameraOccluders=occluders;rects.cameraLiftZones=rects.filter(r=>r.kind==='room');rects.surfaces=surfaces;
   rects.floorAt=(x,z)=>{let h=0;for(const s of surfaces){if(s.enabled?.()===false)continue;if(x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1)h=Math.max(h,typeof s.height==='function'?s.height(x,z):s.height);}return h;};
-  const api={rects,doors,surfaces,occluders,rooms:spec.rooms,open:false,lights:[],
+  const api={rects,doors,surfaces,occluders,artSlots,rooms:spec.rooms,open:false,lights:[],
     rectOf:id=>rects.find(r=>r.id===id),segmentAt:z=>rects.find(r=>z<=r.z1&&z>=r.z0),
     openDoor(id){const d=doors[id];if(!d||d.opened)return false;d.opened=true;sfx('door_open');return true;},
     update(dt){for(const d of Object.values(doors)){if(d.opened)d.amount=Math.min(1,d.amount+dt/1.0);d.leaves.forEach((leaf,i)=>leaf.position.x=(i?1:-1)*(d.rect.x1/2+d.amount*d.rect.x1));if(d.amount>=.92)d.rect.open=true;}},
@@ -92,11 +100,12 @@ class WaterTrial{
   }
   addSurface(x,z,w,d,height,enabled){this.world.dungeon.surfaces.push({x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2,height,enabled});}
   platform(x,z,w,d,h,enabled){const mesh=box(this.group,w,h,d,C.stone,x,h/2,z);this.addSurface(x,z,w,d,h,enabled);if(h>1.2&&!enabled)this.world.dungeon.occluders.push(mesh);return mesh;}
-  ramp(x,z0,z1,w,h,enabled){const d=z0-z1,mesh=box(this.group,w,.18,Math.hypot(d,h),C.pale,x,h/2,(z0+z1)/2);mesh.rotation.x=Math.atan2(h,d);
-    this.addSurface(x,(z0+z1)/2,w,d,(xx,zz)=>T.MathUtils.clamp((z0-zz)/d,0,1)*h,enabled);
+  ramp(x,z0,z1,w,h,enabled){const root=new T.Group();this.group.add(root);const d=z0-z1,cosine=Math.abs(d)/Math.hypot(d,h),sine=h/Math.hypot(d,h),sign=Math.sign(d),angle=Math.atan2(h,d),mesh=box(root,w,.18,Math.hypot(d,h),C.pale,x,h/2-.09*cosine,(z0+z1)/2-.09*sign*sine);mesh.rotation.x=angle;root.userData.waterRamp={x,z0,z1,w,h};
+    this.addSurface(x,(z0+z1)/2,w,Math.abs(d),(xx,zz)=>T.MathUtils.clamp((z0-zz)/d,0,1)*h,enabled);
     // Small engraved treads, aligned with the continuous collision ramp.
-    for(let i=1;i<12;i++)box(this.group,w,.035,.075,C.gold,x,h*i/12+.10,z0-d*i/12);
-    return mesh;
+    for(let i=1;i<12;i++){const band=box(root,w,.035,.075,C.gold,x,h*i/12-.0175*cosine,z0-d*i/12-.0175*sign*sine);band.rotation.x=angle;}
+    root.traverse(o=>{if(o.isMesh)this.world.dungeon.occluders.push(o);});
+    return root;
   }
   buildCarry(){const s=this.seg;
     bowl(this.group,-4,0,s.z1-4);this.ledge=V(0,1.55,s.z0+4.8);this.platform(0,this.ledge.z,4.8,3.6,1.55);
@@ -126,13 +135,17 @@ class WaterTrial{
       box(this.group,1.03,.07,.10,C.gold,holeX,holeY+side*.48,this.wallZ+.36);}
     // The narrow drain sits in the wall. Ice and travellers must use the lift.
     for(let i=0;i<26;i++){const x=-8.7+i*.69;if(Math.abs(x-holeX)>.6)box(this.group,.07,wallH-.15,.09,C.gold,x,wallH/2,this.wallZ+.37);}
-    this.receiver=V(-4.5,0,c-4.2);bowl(this.group,...this.receiver.toArray(),1.1,.9);
-    for(const side of [-1,1])box(this.group,.06,2.8,1,C.glass,this.receiver.x+side*.61,1.4,this.receiver.z);
+    this.receiver=V(-4.5,0,c-4.2);bowl(this.group,...this.receiver.toArray(),1.1,.9,'receiver');
+    this.receiverGlass=[];for(const side of [-1,1])this.receiverGlass.push(box(this.group,.06,2.8,1,C.glass,this.receiver.x+side*.61,1.4,this.receiver.z));
     this.tank=box(this.group,1,.01,.8,C.water.clone(),this.receiver.x,.005,this.receiver.z);
     this.liftPos=V(0,0,c-.45);this.lift=box(this.group,3.3,.22,3.0,C.pale,0,.11,this.liftPos.z);
     this.addSurface(0,this.liftPos.z,3.3,3.0,()=>this.liftHeight);
-    for(const x of [-1.75,1.75])box(this.group,.12,3.1,.12,C.gold,x,1.55,this.liftPos.z);
+    this.liftGuides=[];for(const x of [-1.75,1.75])this.liftGuides.push(box(this.group,.12,3.1,.12,C.gold,x,1.55,this.liftPos.z));
     this.returnRamp=this.ramp(5.7,c+4.2,c-2,2.5,wallH,()=>this.state.completed);this.returnRamp.visible=false;
+    // A traveller who reaches the far side early can return without resetting
+    // progress. Its low end is behind the wall,so it cannot grant front entry.
+    this.rearReturnRamp=this.ramp(5.7,c-6.8,c-2.4,2.5,wallH);
+    this.rearReturnLanding=this.platform(5.7,this.wallZ-.15,2.5,.5,wallH);
     this.aqueduct=pipe(this.group,[[-4.5,1.65,c+.6],[-4.5,1.55,c-.8],[-4.5,1.2,c-2],[-4.5,.65,c-3.2],[-4.5,.25,c-4.2]],C.glass,.18);
     pipe(this.group,[[-4.5,.3,c-4.2],[-2.5,.3,c-4.2],[0,.3,c-.45]],C.gold,.085);
   }
@@ -142,12 +155,12 @@ class WaterTrial{
     this.safeBridge=box(this.group,3,.3,7.6,C.pale,-6,-.15,c);this.safeBridge.visible=false;
     this.addSurface(-6,c,3,7.6,0,()=>this.state.safety);
     this.bowlPos=V(-2.9,-1.5,c-2.4);bowl(this.group,...this.bowlPos.toArray(),2.2,2.2);
-    pipe(this.group,[[0,-.14,c],[-1.5,-.45,c-1],[-2.9,-1.35,c-2.4]],C.glass,.2);
+    this.drainPipe=pipe(this.group,[[0,-.14,c],[-1.5,-.45,c-1],[-2.9,-1.35,c-2.4]],C.glass,.2);
     this.collector=V(4,4.7,c-7.2);this.altarPos=V(4,2.5,c-9.3);
     this.ramp(5.8,c-3.9,c-7.8,3.1,2.5);this.platform(4.6,c-9.2,4.3,2.8,2.5);
     bowl(this.group,...this.altarPos.toArray(),1.6,1.4);
     this.steamPipe=pipe(this.group,[[-2.9,-1.1,c-2.4],[-2.9,2.7,c-2.4],[0,4.8,c-4],[4,4.8,c-7.2]],C.glass,.26);
-    const canopy=box(this.group,2.1,.12,1.8,C.gold,4,4.8,c-7.2);canopy.rotation.x=.12;
+    this.collectorHood=box(this.group,2.1,.12,1.8,C.gold,4,4.8,c-7.2);this.collectorHood.rotation.x=.12;
     this.condensation=pipe(this.group,[[4,4.55,c-7.2],[4,3.5,c-8.2],[4,2.7,c-9.3]],C.glass,.12);
     const oldFloor=this.world.dungeon.rects.floorAt;
     this.world.dungeon.rects.floorAt=(x,z)=>{
@@ -159,7 +172,7 @@ class WaterTrial{
     };
   }
   get liftHeight(){return this.liftLevel;}
-  get packetPoint(){return V(...this.state.pos).add(V(0,this.state.phase==='vapour'?0:.4,0));}
+  get packetPoint(){return this.renderCarryPoint?.clone()||V(...this.state.pos).add(V(0,this.state.phase==='vapour'?0:.4,0));}
   // Art hits the visible water surface; eligibility continues using packetPoint.
   braceletPoint(actor){const s=this.state,p=V(...s.pos);
     if(s.phase==='vapour'||s.motion)return this.packetPoint;
@@ -177,7 +190,8 @@ class WaterTrial{
     const flat=delta.clone().setY(0);if(flat.length()>.5&&flat.normalize().dot(actor.heading)<-.25)return false;
     const ray=new T.Raycaster(origin,delta.normalize(),.01,Math.max(.01,dist-.4));
     for(const m of this.world.dungeon.occluders)m.updateWorldMatrix(true,false);
-    return ray.intersectObjects(this.world.dungeon.occluders,false).length===0;
+    const visible=this.world.dungeon.occluders.filter(m=>{for(let p=m;p;p=p.parent)if(!p.visible)return false;return true;});
+    return ray.intersectObjects(visible,false).length===0;
   }
   change(heating,actor){
     if(!this.target(actor)){this.notify(this.world.bracelet?'가까운 물을 바라보자':'먼저 물의 팔찌를 찾아보자');return false;}
@@ -189,6 +203,7 @@ class WaterTrial{
   }
   interact(p,actor=this.actor){
     if(this.kind==='carry'&&!this.world.bracelet&&p.distanceTo(this.braceletPos)<1.8){this.world.bracelet=true;this.notify('물의 팔찌를 얻었다 · Q 데우기 / R 식히기');sfx('orb_take');return true;}
+    if(this.kind==='flow'&&this.state.zone==='receiver'&&this.state.phase==='ice'&&this.world.devices?.loaded){this.notify('수조 안의 얼음은 꺼낼 수 없다 · Q로 녹이자');return false;}
     if(!actor||this.kind==='cycle'||this.state.phase!=='ice'||this.state.transition||this.state.motion)return false;
     if(!this.state.held){if(p.distanceTo(this.packetPoint)>2)return false;this.state.held=true;this.state.zone='held';this.held='ice';return true;}
     const at=p.clone().addScaledVector(actor.heading,1.4),seg=this.seg;at.x=T.MathUtils.clamp(at.x,seg.x0+1.1,seg.x1-1.1);at.z=T.MathUtils.clamp(at.z,seg.z0+1.1,seg.z1-1.1);
@@ -200,6 +215,7 @@ class WaterTrial{
   prompt(p){
     if(this.kind==='carry'&&!this.world.bracelet)return p.distanceTo(this.braceletPos)<1.8?'E — 물의 팔찌 얻기':'반짝이는 팔찌를 찾아보자';
     if(this.state.held)return 'E — 얼음 놓기 · Q 녹이기 / R 식히기';
+    if(this.kind==='flow'&&this.state.zone==='receiver'&&this.state.phase==='ice'&&this.world.devices?.loaded)return '수조 안의 얼음 · Q로 녹이기';
     if(this.kind!=='cycle'&&this.state.phase==='ice'&&p.distanceTo(this.packetPoint)<2&&!this.state.transition&&!this.state.motion)return 'E — 얼음 들기';
     return this.messageT>0?this.message:null;
   }
@@ -209,7 +225,8 @@ class WaterTrial{
     if(this.kind==='flow'){
       const filled=this.state.zone==='receiver'&&this.state.phase==='liquid'&&!this.state.motion;
       const riding=Math.abs(actor.position.x)<1.65&&Math.abs(actor.position.z-this.liftPos.z)<1.5&&actor.position.y>=this.liftLevel-.3;
-      const target=filled&&riding?this.wallHeight:.22;this.liftLevel+=T.MathUtils.clamp(target-this.liftLevel,-dt*1.5,dt*1.5);
+      const previous=this.liftLevel,target=filled&&riding?this.wallHeight:.22;this.liftLevel+=T.MathUtils.clamp(target-this.liftLevel,-dt*1.5,dt*1.5);
+      if(riding&&actor.grounded&&Math.abs(actor.position.y-previous)<.035){actor.position.y+=this.liftLevel-previous;actor.syncMesh();}
     }
     if(this.kind==='cycle'&&inside(actor.position,this.seg)&&actor.position.z<this.cz-3.7&&!this.state.safety){this.state.safety=true;this.notify('돌다리가 펼쳐졌다 · 물을 다시 쓸 수 있다');sfx('door_open');}
     if(this.kind==='carry'&&inside(actor.position,this.seg)&&actor.position.y>=1.4&&Math.hypot(actor.position.x-this.bonusPoint.x,actor.position.z-this.bonusPoint.z)<1.3&&!this.state.bonus){this.state.bonus=true;this.notify('숨은 물결 조각을 찾았다!');sfx('orb_take');}
@@ -229,6 +246,8 @@ class WaterTrial{
   paint(){const s=this.state,p=V(...s.pos),bridge=this.kind==='cycle'&&s.zone==='bridge';
     this.ice.visible=s.phase==='ice'&&!bridge&&!s.motion;this.liquid.visible=s.phase==='liquid'&&!bridge&&!s.motion;this.cloud.visible=s.phase==='vapour'&&!s.motion;
     this.ice.position.copy(p).y+=.39;this.liquid.position.copy(p).y+=.28;this.cloud.position.copy(p);
+    this.ice.scale.set(1,1,1);
+    if(this.kind==='flow'&&s.zone==='receiver'&&this.world.devices?.loaded){this.ice.scale.set(1/1.65,2.68/.78,.8/1.65);this.ice.position.y=p.y+1.34;}
     const t=s.transition?s.transition.t/TRANSFORM_TIME:0;this.iceMat.emissive.setHex(s.transition?.to==='liquid'?0xbe792d:0x245969);this.iceMat.emissiveIntensity=s.transition?t*.3:.08;
     this.cloud.children.forEach((m,i)=>{m.rotation.y=this.time*.3+i;m.position.y=Math.cos(this.time*1.2+i)*.12;});
     this.glints.visible=!!s.motion;
@@ -251,6 +270,7 @@ class WaterAudience{
     this.heritagePromise=Promise.all(['water-deity','water-deity-halo-v03','water-deity-droplet-v03'].map(loadHeritageAsset)).then(()=>{
       const deity=fitHeritageHeight('water-deity',4.7);if(!deity)return;deity.position.set(0,0,seg.z0+4);scene.add(deity);this.deity=deity;this.fallback.visible=false;
       for(const id of ['water-deity-halo-v03','water-deity-droplet-v03']){const g=heritagePart(id);if(g){g.scale.setScalar(4.7/3.3);g.rotation.y=Math.PI;g.position.copy(deity.position);scene.add(g);}}
+      this.detail=addWaterDeityDetail(deity);return this.detail.ready;
     });
   }
   get solved(){return this.active;}
@@ -267,7 +287,7 @@ export function buildWaterAdventure(spec,seed){
   world.baseFloor=(x,z)=>{let h=0;for(const s of dungeon.surfaces){if(s.enabled?.()===false)continue;if(x>=s.x0&&x<=s.x1&&z>=s.z0&&z<=s.z1)h=Math.max(h,typeof s.height==='function'?s.height(x,z):s.height);}return h;};
   const kinds=['carry','flow','cycle'];const gates=kinds.map((kind,i)=>({room:`r${i+1}`,solved:false,gate:new WaterTrial(scene,dungeon.rectOf(`r${i+1}`),kind,world)}));world.gates=gates;
   const baseFloor=dungeon.rects.floorAt;
-  dungeon.rects.floorAt=(x,z)=>{let h=baseFloor(x,z);for(const {gate} of gates){const s=gate.state;if(gate.kind==='cycle'||s.phase!=='ice'||s.held)continue;
+  dungeon.rects.floorAt=(x,z)=>{let h=baseFloor(x,z);for(const {gate} of gates){const s=gate.state;if(gate.kind==='cycle'||s.phase!=='ice'||s.held||gate.kind==='flow'&&s.zone==='receiver'&&world.devices?.loaded)continue;
     if(Math.abs(x-s.pos[0])<.825&&Math.abs(z-s.pos[2])<.825)h=Math.max(h,s.pos[1]+.78);}return h;};
   const shrineSeg=dungeon.rectOf('shrine'),final=new WaterAudience(scene,shrineSeg,world),prize=new Prize(scene,final.prizePos),goals={},hints={};
   for(const r of spec.rooms){if(!r.goal)continue;const seg=dungeon.rectOf(r.id);goals[r.id]=r.goal;
@@ -285,5 +305,5 @@ export function buildWaterAdventure(spec,seed){
   };
   // Keep the web save/return-hub contract; none of the former WaterCourt geometry is built.
   api.court={update(){},restart(){},prompt(p){return prize.taken&&p.distanceTo(final.altar)<2?'E — 입구로 돌아가기':null;}};
-  attachWaterAdventureProgress(api);return api;
+  attachWaterAdventureProgress(api);return registerWaterDevices(registerWaterCourts(api));
 }

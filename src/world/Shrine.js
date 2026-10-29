@@ -10,6 +10,8 @@ import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { SHRINE } from '../data/lighting.js';
 import { fitHeritageFootprint } from '../core/HeritageAssets.js';
+import { portalPart, worldArtSpec } from './WorldArt.js';
+import { buildMeshGroundCollider } from './MeshGroundCollider.js';
 
 // 플레이어 키 1.5u 기준. 전체 높이 8u ≈ 5.3배 — 지형 봉우리(최대 15u)보다는 낮고
 // 나무(4.6~8u)와는 비슷하되, 형태가 완전히 달라 섞이지 않는다.
@@ -177,7 +179,7 @@ function buildStructure(theme, form) {
   const beamMat = new THREE.ShaderMaterial({
     vertexColors: true, transparent: true, depthWrite: false,
     side: THREE.DoubleSide, fog: false,
-    uniforms: { uH: { value: BEAM_H } },
+    uniforms: { uH: { value: BEAM_H },uNearOpacity:{value:1} },
     vertexShader: `
       varying float vT; varying vec3 vC;
       void main(){ vT = (position.y + ${(BEAM_H / 2).toFixed(1)}) / ${BEAM_H.toFixed(1)};
@@ -185,10 +187,10 @@ function buildStructure(theme, form) {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }
     `,
     fragmentShader: `
-      varying float vT; varying vec3 vC;
+      varying float vT; varying vec3 vC; uniform float uNearOpacity;
       void main(){
         // 아래는 진하고 위로 갈수록 사라진다. 제곱이라 밑동만 또렷하다.
-        float a = pow(1.0 - vT, 1.8) * 0.55;
+        float a = pow(1.0 - vT, 1.8) * 0.55 * uNearOpacity;
         gl_FragColor = vec4(vC, a);
       }
     `,
@@ -223,7 +225,7 @@ function buildStructure(theme, form) {
   beam.frustumCulled = false;     // 기둥이 화면 밖으로 나가도 밑동은 보여야 한다
   g.add(beam);
 
-  return { group: g, beam, beamGeo, glow, poolMat, haloMat };
+  return { group: g, beam, halo, beamGeo, glow, poolMat, haloMat };
 }
 
 // 빛기둥 색칠 — 세울 때와 깼을 때 두 번 쓴다. 아래는 진하고 위로 갈수록 옅다.
@@ -250,37 +252,53 @@ export function buildShrines(scene, planet, spots, themes) {
     const i = shrines.length;
     const theme = themes[i % themes.length];
     const form = FORMS[i % FORMS.length];
-    const { group, beamGeo, glow, poolMat, haloMat } = buildStructure(theme, form);
-    const inherited = i===0 ? fitHeritageFootprint('weight-exterior',2.95)
-      : i===3 ? fitHeritageFootprint('glacier-temple',2.95) : null;
+    const { group, beam, halo, beamGeo, glow, poolMat, haloMat } = buildStructure(theme, form);
+    const portal=worldArtSpec.loaded?portalPart(worldArtSpec.temples[i].id):null;
+    const inherited = portal || (i===0 ? fitHeritageFootprint('weight-exterior',2.95)
+      : i===3 ? fitHeritageFootprint('glacier-temple',2.95) : null);
     if(inherited){
       // Retain the pool, halo and beacon while replacing the old tower skin.
       for(const child of group.children)if(child.isMesh&&!child.material.transparent)child.visible=false;
       group.add(inherited);group.userData.heritageAsset=inherited.userData.heritageAsset;
+      if(portal)group.userData.worldArt=portal.userData.worldArt;
     }
     const fr = planet.frameAt(planet.surfaceAt(sp.dir), 0);
     group.position.copy(fr.position);
     group.quaternion.copy(fr.quaternion);
     scene.add(group);
 
+    let membrane=null,meshCollider=null;
+    if(portal){
+      const crown=worldArtSpec.temples[i].height;
+      beam.position.y=crown+.2+BEAM_H/2;halo.position.y=crown+3;
+      membrane=new THREE.Mesh(new THREE.BoxGeometry(worldArtSpec.gate.doorWidth,worldArtSpec.gate.doorHeight,.18),new THREE.MeshBasicMaterial({color:0x18333a}));
+      membrane.name='passage-membrane';membrane.position.set(0,worldArtSpec.gate.doorHeight/2,worldArtSpec.gate.portalZ);portal.add(membrane);
+      // Only the new rigid geometry, never the beacon/pool or hidden old tower.
+      meshCollider=buildMeshGroundCollider(planet,portal);
+    }
+
     // 입구가 향하는 방향(로컬 +Z)을 월드로. 나중에 "들어간다" 판정에 쓴다.
     const facing = new THREE.Vector3(0, 0, 1).applyQuaternion(group.quaternion);
     const shrine = {
       dir: sp.dir.clone(), pos: fr.position.clone(), group, facing,
       slope: sp.slope, peak: sp.peak, entered: false,
-      cleared: false, beamGeo, glow, poolMat, haloMat, theme, form,
+      cleared: false, beamGeo, beam, glow, poolMat, haloMat, theme, form, portal, membrane, meshCollider,
     };
     shrines.push(shrine);
     // 기단을 막는다. 입구 앞은 비워야 하므로 반경을 기단보다 조금 작게 잡는다 —
     // 정확히 기단 크기로 막으면 계단에 올라설 수가 없다.
-    colliders.push({ dir: sp.dir.clone(), r: BASE_R * 0.92 });
+    colliders.push({ dir: sp.dir.clone(), r: BASE_R * 0.92,meshCollider });
   }
 
   const _up = new THREE.Vector3(), _tan = new THREE.Vector3();
-  const resolve = (position, playerR = 0.32) => {
+  const collision={enabled:true};
+  const resolve = (position, playerR = 0.32,footHeight=0) => {
+    if(!collision.enabled)return 0;
     _up.copy(position).normalize();
     let hit = 0;
     for (const c of colliders) {
+      if(c.meshCollider){hit+=c.meshCollider.resolve(position,playerR,footHeight);_up.copy(position).normalize();continue;}
+      if(footHeight>=6)continue;
       const cosA = _up.dot(c.dir);
       if (cosA <= 0) continue;
       const need = (c.r + playerR) / R;
@@ -323,16 +341,25 @@ export function buildShrines(scene, planet, spots, themes) {
       const m=new THREE.MeshStandardMaterial({color:fire?0x38414a:0xb8a981,roughness:.8});
       const slab=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.2,.35),m);slab.position.set(0,1.6,1.8);seal.add(slab);
       const ring=new THREE.Mesh(new THREE.TorusGeometry(.6,.055,6,32),new THREE.MeshBasicMaterial({color:0xffd27a}));ring.position.set(0,1.8,2.01);seal.add(ring);shrine.group.add(seal);
+      if(shrine.portal){slab.scale.set(2.22/2.8,3.30/3.2,.4);slab.position.set(0,1.65,worldArtSpec.gate.portalZ+.12);ring.position.set(0,1.8,worldArtSpec.gate.portalZ+.20);}
     }
     shrine.glow.color.set(SHRINE.gold);
     shrine.poolMat.color.set(SHRINE.gold);
     shrine.haloMat.color.set(SHRINE.gold);
+    shrine.portal?.traverse(o=>{if(o.isMesh)for(const m of Array.isArray(o.material)?o.material:[o.material])if(m.emissive?.getHex()){m.color.set(SHRINE.gold);m.emissive.set(SHRINE.gold);}});
     paintBeam(shrine.beamGeo, SHRINE.gold, SHRINE.goldDim);
     return true;
   };
   const clearedCount = () => shrines.filter(s => s.cleared).length;
+  const update=position=>{
+    const direction=_up.copy(position).normalize();
+    for(const s of shrines){const distance=direction.angleTo(s.dir)*R,far=THREE.MathUtils.smoothstep(distance,8,22);
+      s.beam.material.uniforms.uNearOpacity.value=THREE.MathUtils.lerp(.12,1,far);
+      s.haloMat.opacity=THREE.MathUtils.lerp(.018,.16,far);s.poolMat.opacity=THREE.MathUtils.lerp(.10,.32,far);
+    }
+  };
 
-  return { shrines, colliders, resolve, nearest, markCleared, clearedCount,
+  return { shrines, colliders, resolve, nearest, markCleared, clearedCount, collision, update,
            BASE_R, ENTER_R: BASE_R + 2.0 };
 }
 

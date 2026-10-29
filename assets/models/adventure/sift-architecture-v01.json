@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "model": "assets/models/adventure/sift-architecture-v01.glb",
+  "palette": {
+    "stone": [
+      0.3,
+      0.37,
+      0.39
+    ],
+    "edge": [
+      0.1,
+      0.17,
+      0.2
+    ],
+    "pale": [
+      0.61,
+      0.64,
+      0.6
+    ],
+    "brass": [
+      0.54,
+      0.35,
+      0.12
+    ],
+    "cloth": [
+      0.1,
+      0.17,
+      0.15
+    ],
+    "face": [
+      0.3,
+      0.36,
+      0.34
+    ],
+    "floor": [
+      0.34,
+      0.4,
+      0.4
+    ]
+  },
+  "parts": [
+    "WorkHall",
+    "HallFloor",
+    "ThresholdArch",
+    "SiftGuardian"
+  ],
+  "hall": {
+    "width": 12,
+    "length": 12,
+    "columnX": 6.35,
+    "bayZ": [
+      -5.6,
+      0,
+      5.6
+    ],
+    "railTop": 1.1,
+    "archTop": 6.6,
+    "floorY": 0,
+    "foundationBottom": -0.2,
+    "platformWidth": 13.9,
+    "platformLength": 12.4,
+    "inlayMaxY": 0.002,
+    "sanctumScaleXZ": 1.3333333333333333
+  },
+  "portal": {
+    "clearWidth": 4.8,
+    "springY": 3.3,
+    "depth": 0.7,
+    "zOffset": -0.45,
+    "apronWidth": 6.75,
+    "apronDepth": 1.24,
+    "apronZ": 0.2,
+    "apronTop": 0.001,
+    "foundationBottom": -0.2
+  },
+  "guardian": {
+    "floorY": 0,
+    "protectedRadius": 2.2,
+    "eyeY": 4.55,
+    "eyeX": 0.43,
+    "eyeZ": 0.84,
+    "eyeWidth": 0.31,
+    "eyeHeight": 0.18
+  },
+  "textures": {
+    "size": 512,
+    "authoredProceduralImages": true,
+    "copiedFromReference": false
+  },
+  "lighting": {
+    "skyTop": "#6b93a7",
+    "horizon": "#d8c3a5",
+    "ambientSky": "#91b6c6",
+    "ambientIntensity": 0.75,
+    "sun": "#ffe3b5",
+    "sunIntensity": 1.8,
+    "keepsSunDirection": true,
+    "keepsReflectionEnvironment": true
+  },
+  "budgets": {
+    "trianglesMax": 80000,
+    "glbBytesMax": 5000000
+  },
+  "sourceBoundary": "Nintendo PDF page26 (printed47-48) visually observed, no original runtime/binary/internal parameter extraction"
+}

@@ -1,0 +1,25 @@
+{
+  "pass": true,
+  "runtimeFiles": 476,
+  "unchangedRuntime": 473,
+  "modified": [
+    {
+      "file": "src/core/Engine.js",
+      "before": "f43a3a57cff73bc61aebaf663c3c4622d16ab90beb97e3fb704e118cdeff3d72",
+      "after": "950d30b2b4ab1b9e4054738c546c9d64dc02a31fa574c80dcb2a4d2b8bab8f4b"
+    },
+    {
+      "file": "src/world/PlanetCameraOcclusion.js",
+      "before": "55d8d1ff21641b64ef101f7f2e25a4d4fe13e231fca787f52024cf3bc382fc42",
+      "after": "fcc7177cbdf933e722a1f56c6aa10912859dc05a005dcff41685b7d75230cd3d"
+    },
+    {
+      "file": "src/render/Post.js",
+      "before": "da8ebd3434ebe4960d0653844300df867f915e968bf6d845ecf48805be7215c1",
+      "after": "f0ee3edbbd4cec8ee8c3c1617cf5e5a9f976dcbbdd1d7368046e08b7fdaf4198"
+    }
+  ],
+  "unexpectedChanges": [],
+  "distExists": false,
+  "postMatchesTestedCandidate": true
+}

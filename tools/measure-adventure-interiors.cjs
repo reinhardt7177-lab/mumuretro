@@ -1,0 +1,19 @@
+// Single owned browser, no concurrent Blender/test workload during the benchmark.
+const fs=require('node:fs'),path=require('node:path');
+const{chromium}=require(path.join(process.env.AUDIT_NODE_MODULES||'.','playwright'));
+const OUT=path.resolve(__dirname,'../reports/2026-10-22/evidence/adventure-interiors');
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true}),report={scope:'This PC, 1280x800 DPR1, idle at each actual entry, game.step plus production render per RAF. Not walking, all rooms within temples, or physical student devices.',studentDevicesVerified:false,scenes:[],errors:[]};
+try{const p=await b.newPage({viewport:{width:1280,height:800}}),start=Date.now();p.on('pageerror',e=>report.errors.push(e.message));await p.goto('http://127.0.0.1:5512/');await p.waitForFunction(()=>window.game,null,{timeout:90000});await p.locator('#title .go').click();await p.evaluate(()=>{game.loop.stop();game.dialogue.close();game.brief.hide();});
+report.initialLocalReadyMs=Date.now()-start;report.renderer=await p.evaluate(()=>{const gl=game.engine.renderer.getContext(),e=gl.getExtension('WEBGL_debug_renderer_info');return e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):'unknown';});
+for(const id of ['ship','balance','shadow','sift','water','fire','strata']){
+await p.evaluate(async id=>{if(game.mode==='room')game.exitShrine();if(id!=='ship'){if(id==='strata')for(const s of game.shrines.shrines.slice(0,5))game.shrines.markCleared(s);const s=game.shrines.shrines[game.SHRINES.findIndex(s=>s.id===id)],r=game.roomFor(s);await r.ready;game.enterShrine(s);}game.dialogue.close();game.brief.hide();await game.engine.interiorArt?.ready;await game.room?.interiorArt?.ready;game.roomActor.camYaw=0;game.input.camPitch=.35;game.roomActor._camPlaced=false;game.roomActor.updateCamera(game.engine.camera,game.input,0);},id);
+for(const tier of ['mid','min']){
+const row=await p.evaluate(async tier=>{const{quality}=await import('./src/render/Quality.js');quality.pin(tier);const renderer=game.engine.renderer;renderer.info.autoReset=false;let last=performance.now();const samples=[];
+await new Promise(resolve=>{let n=0;function frame(now){const elapsed=now-last;last=now;const start=performance.now();game.dialogue.close();game.brief.hide();game.input.setTestIntent({});game.step(Math.min(.05,elapsed/1000));const stepped=performance.now();renderer.info.reset();game.engine.render();const end=performance.now();if(n>=30)samples.push({frame:elapsed,step:stepped-start,render:end-stepped,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles});if(++n>=150)resolve();else requestAnimationFrame(frame);}requestAnimationFrame(frame);});
+const median=k=>{const a=samples.map(s=>s[k]).sort((a,b)=>a-b);return a[Math.floor(a.length/2)];};return{tier,canvas:[renderer.domElement.width,renderer.domElement.height],medianFrameMs:median('frame'),approxFPS:1000/median('frame'),cpuStepMs:median('step'),cpuRenderSubmissionMs:median('render'),drawCalls:median('calls'),triangles:median('triangles'),position:game.roomActor.position.toArray(),camera:game.engine.camera.position.toArray(),memoryCounts:{...renderer.info.memory},heapBytes:performance.memory?.usedJSHeapSize??null,gpuBytes:null,environment:game.engine.scene.userData.interiorDirection};},tier);
+report.scenes.push({id,...row});console.log('PERF '+id+' '+tier+' '+row.approxFPS.toFixed(1)+' FPS '+row.drawCalls+' draws');
+}}
+report.resourceTiming=await p.evaluate(()=>performance.getEntriesByType('resource').filter(r=>/interior-(art|witness)/.test(r.name)).map(r=>({url:new URL(r.name).pathname,duration:r.duration,transferSize:r.transferSize,decodedBodySize:r.decodedBodySize})));
+report.pass=!report.errors.length;
+}catch(e){report.failure=e.stack;report.pass=false;process.exitCode=1;console.error(e);}finally{fs.writeFileSync(path.join(OUT,'performance.json'),JSON.stringify(report,null,2));await b.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

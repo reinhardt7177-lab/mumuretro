@@ -1,0 +1,4 @@
+const fs=require('node:fs'),path=require('node:path'),Module=require('node:module'),phase=process.argv[2]||'after',{B}=require('./field-meadow-fixture.cjs'),file=path.resolve('tools/check-adventure-landmarks.cjs'),dest=B+'/expedition-'+phase;
+fs.mkdirSync(dest,{recursive:true});let source=fs.readFileSync(file,'utf8').replaceAll('reports/2026-10-22/evidence/adventure-landmarks',dest);
+for(const marker of["await p.goto('http://127.0.0.1:5512/?q=high');","await rp.goto('http://127.0.0.1:5512/?q=high');"]){if(!source.includes(marker))throw Error('Expedition routing marker changed');const page=marker.includes('rp.goto')?'rp':'p';source=source.replace(marker,'await require(\'./field-meadow-fixture.cjs\').route('+page+','+JSON.stringify(phase)+');'+marker);}
+process.argv=[process.execPath,file];fs.writeFileSync(dest+'/executed.cjs',source);const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(source,file);

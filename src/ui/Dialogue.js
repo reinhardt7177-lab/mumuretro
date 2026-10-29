@@ -101,6 +101,13 @@ export function buildDialogue(input) {
       return true;
     },
     next,
+    // Repeatable inspection uses the same safe reading controls without adding
+    // notebook/story seen flags or hiding an unfinished story from a save.
+    read(who_, text) {
+      if(lines.length)return false;
+      activeId=null;who=who_||'';lines=Array.isArray(text)?text.slice(0,4):[text];
+      i=0;onDone=null;onPage=null;render();el.classList.add('show');return true;
+    },
     get active() { return lines.length > 0; },
     // 이미 본 대사인가 — 수첩에서 다시 읽히려고
     hasSeen(id) { return seen.has(id); },

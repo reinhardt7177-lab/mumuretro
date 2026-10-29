@@ -1,0 +1,19 @@
+const fs=require('node:fs'),crypto=require('node:crypto');
+const A='art/arrival-dais/v04',file=A+'/exports/arrival-dais-v04.glb',b=fs.readFileSync(file),jsonLength=b.readUInt32LE(12),g=JSON.parse(b.subarray(20,20+jsonLength).toString());
+const binStart=20+jsonLength,bin=b.subarray(binStart),data=bin.subarray(8);const stats=[];
+for(const mesh of g.meshes)for(const primitive of mesh.primitives){const a=primitive.attributes;if(!('COLOR_0'in a))continue;
+ // Blender emits its white active colour as slot0 and the material's colour
+ // node as slot1. Resolve that exporter ambiguity in the actual GLB, rather
+ // than relying on warnings or making a special runtime shader.
+ const useful=a.COLOR_1??a.COLOR_0;a.COLOR_0=useful;delete a.COLOR_1;
+ const ac=g.accessors[useful],v=g.bufferViews[ac.bufferView],size=ac.componentType===5126?4:ac.componentType===5123?2:1,stride=v.byteStride||size*4,offset=(v.byteOffset||0)+(ac.byteOffset||0),tones=new Set();let lo=Infinity,hi=-Infinity;
+ if(![5121,5123,5126].includes(ac.componentType)||ac.type!=='VEC4')throw Error('Unexpected stone colour format');
+ for(let i=0;i<ac.count;i++){const o=offset+i*stride,value=ac.componentType===5126?data.readFloatLE(o):ac.componentType===5123?data.readUInt16LE(o)/65535:data.readUInt8(o)/255;lo=Math.min(lo,value);hi=Math.max(hi,value);tones.add(value.toFixed(5));}
+ if(tones.size<12||lo<.5||hi>1.001)throw Error('Stone colour slot is not the authored varied colour');stats.push({mesh:mesh.name,accessor:useful,count:ac.count,redRange:[lo,hi],distinctStoneTones:tones.size});
+}
+if(stats.length!==1)throw Error('Expected one actual stone COLOR_0 primitive');
+const raw=Buffer.from(JSON.stringify(g)),pad=Buffer.alloc((4-raw.length%4)%4,32),j=Buffer.concat([raw,pad]),head=Buffer.alloc(20);head.write('glTF');head.writeUInt32LE(2,4);head.writeUInt32LE(20+j.length+bin.length,8);head.writeUInt32LE(j.length,12);head.writeUInt32LE(0x4e4f534a,16);fs.writeFileSync(file,Buffer.concat([head,j,bin]));
+const source=fs.readFileSync('src/world/LandmarkAssets.js','utf8').replaceAll('arrival-dais-v03','arrival-dais-v04');fs.writeFileSync(A+'/preview-src__world__LandmarkAssets.js',source);
+const meta=JSON.parse(fs.readFileSync(A+'/exports/arrival-dais-v04.json'));meta.colourExport={actualSemantic:'COLOR_0',primitives:stats,postExportResolution:'authored material colour copied to the standard COLOR_0 semantic; redundant COLOR_1 semantic removed'};meta.modelBytes=fs.statSync(file).size;fs.writeFileSync(A+'/exports/arrival-dais-v04.json',JSON.stringify(meta,null,2));
+const files=[file,A+'/exports/arrival-dais-v04.json',A+'/preview-src__world__LandmarkAssets.js','tools/build-arrival-dais-v04.py','tools/finalize-arrival-dais-v04.cjs'];
+const manifest={previewOnly:true,base:'Root466',rootModified:false,preserved:{source:'art/arrival-dais/v01/arrival-dais-v03.blend',sourceSha256:crypto.createHash('sha256').update(fs.readFileSync('art/arrival-dais/v01/arrival-dais-v03.blend')).digest('hex'),model:'assets/models/adventure/arrival-dais-v03.glb',modelSha256:crypto.createHash('sha256').update(fs.readFileSync('assets/models/adventure/arrival-dais-v03.glb')).digest('hex')},apply:[{from:file,to:'assets/models/adventure/arrival-dais-v04.glb'},{from:A+'/exports/arrival-dais-v04.json',to:'assets/models/adventure/arrival-dais-v04.json'},{from:A+'/preview-src__world__LandmarkAssets.js',to:'src/world/LandmarkAssets.js',merge:'change only model URL and group.userData asset id v03→v04; preserve all other current changes'}],supportUnchanged:{height:.16,inner:2.27,outer:2.64},files:Object.fromEntries(files.map(f=>[f,{bytes:fs.statSync(f).size,sha256:crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex')}]))};fs.writeFileSync(A+'/manifest.json',JSON.stringify(manifest,null,2));console.log(JSON.stringify({colour:stats,triangles:meta.triangles,modelBytes:meta.modelBytes}));

@@ -1,0 +1,18 @@
+const fs=require('node:fs'),path=require('node:path');const{chromium}=require(path.join(process.env.AUDIT_NODE_MODULES||'.','playwright'));
+const report={scope:'One local PC,three prepared third-room views,two tiers,1280x800 DPR1;30 warm+120 RAF with actual step/render. No original-game,school-device or A/B claim.',rows:[],errors:[]};
+(async()=>{const b=await chromium.launch({channel:'msedge',headless:true});try{
+ const p=await b.newPage({viewport:{width:1280,height:800}});p.on('pageerror',e=>report.errors.push(e.message));await p.goto('http://127.0.0.1:5512/?q=mid');await p.waitForFunction(()=>window.game&&document.getElementById('load').style.display==='none',null,{timeout:120000});await p.evaluate(()=>game.loop.stop());await p.locator('#title .go').click({force:true});await p.evaluate(async()=>{game.loop.stop();game.enterShrine(game.shrines.shrines[1]);await game.room.ready;});
+ report.renderer=await p.evaluate(()=>{const gl=game.engine.renderer.getContext(),e=gl.getExtension('WEBGL_debug_renderer_info');return e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):null;});
+ for(const tier of['mid','min'])for(const view of['single-entry','dual-panel','dual-wheel']){
+  const row=await p.evaluate(async({tier,view})=>{
+   const T=await import('three'),{quality}=await import('/src/render/Quality.js');quality.pin(tier);const r=game.room,g=r.gates[2].gate,a=game.roomActor,renderer=game.engine.renderer;
+   g.round=view==='single-entry'?0:1;g.held=g.solved=false;g.objZ=view==='single-entry'?g.lampZ-5.2:g.theatre.target().position;g.theatre.resize(false);g.theatre.onObjective();
+   if(view==='single-entry')a.setAt(.6,g.seg.z1-1);else if(view==='dual-panel')a.setAt(g.theatre.handle().x,g.objZ+.7);else a.setAt(g.theatre.wheel.position.x,g.theatre.wheel.position.z+.55);
+   a.camYaw=0;game.input.camPitch=.28;game.input.camDist=6.5;a._camPlaced=false;renderer.info.autoReset=false;const update=a.updateCamera.bind(a);let cameraMs=0;a.updateCamera=(...args)=>{const t=performance.now(),result=update(...args);cameraMs+=performance.now()-t;return result;};
+   const rows=[];let n=0,last=performance.now();try{await new Promise(resolve=>{function frame(now){game.dialogue.close();game.brief.hide();game.input.setTestIntent({});cameraMs=0;const t=performance.now();game.step(1/60);const step=performance.now();renderer.info.reset();game.engine.render();const end=performance.now();if(n>=30)rows.push({frame:now-last,step:step-t,camera:cameraMs,submit:end-step,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles});last=now;if(++n===150)resolve();else requestAnimationFrame(frame);}requestAnimationFrame(frame);});}finally{a.updateCamera=update;}
+   const med=k=>rows.map(v=>v[k]).sort((a,b)=>a-b)[60],mean=rows.reduce((s,v)=>s+v.frame,0)/120;
+   return{tier,view,round:g.round,held:g.held,averageFps:1000/mean,medianFrameMs:med('frame'),meanFrameMs:mean,p95FrameMs:rows.map(v=>v.frame).sort((a,b)=>a-b)[114],stepMs:med('step'),cameraMs:med('camera'),submitMs:med('submit'),calls:med('calls'),triangles:med('triangles'),buffer:renderer.getDrawingBufferSize(new T.Vector2()).toArray(),heapBytes:performance.memory?.usedJSHeapSize,gpuBytes:null,native:g.theatre.native.loaded,courts:r.moonCourts.loaded,position:a.position.toArray()};
+  },{tier,view});report.rows.push(row);console.log('PERF '+JSON.stringify(row));
+ }
+ report.pass=report.rows.length===6&&!report.errors.length&&report.rows.every(r=>r.native&&r.courts&&r.averageFps>0&&!r.held);if(!report.pass)process.exitCode=1;
+}catch(e){report.pass=false;report.failure=e.stack;process.exitCode=1;}finally{fs.writeFileSync('reports/2026-10-22/evidence/twin-shadow/performance.json',JSON.stringify(report,null,2));await b.close();}})();

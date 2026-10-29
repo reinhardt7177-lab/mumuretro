@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "routeSignature": "f352fa1d",
+  "surface": {
+    "width": 1024,
+    "height": 512,
+    "channels": "sRGB albedo and linear path mask alpha",
+    "coordinates": "planet-centred equirectangular, longitude repeat, latitude clamp",
+    "routeSignatureRequired": true,
+    "geometryChanged": false,
+    "colourCover": "continuous slope18..34deg,height6.5..8; shared rock transitions30..40deg/44..52deg",
+    "groundWind": false
+  },
+  "variants": [
+    {
+      "name": "MeadowTuft_0",
+      "vertices": 72,
+      "triangles": 54,
+      "blades": 9,
+      "minimumY": 0,
+      "height": 0.2800000011920929,
+      "radius": 0.30638303391899974
+    },
+    {
+      "name": "MeadowTuft_1",
+      "vertices": 72,
+      "triangles": 54,
+      "blades": 9,
+      "minimumY": 0,
+      "height": 0.3199999928474426,
+      "radius": 0.3338715223852634
+    },
+    {
+      "name": "MeadowTuft_2",
+      "vertices": 72,
+      "triangles": 54,
+      "blades": 9,
+      "minimumY": 0,
+      "height": 0.3700000047683716,
+      "radius": 0.3091602081765374
+    },
+    {
+      "name": "MeadowTuft_3",
+      "vertices": 72,
+      "triangles": 54,
+      "blades": 9,
+      "minimumY": 0,
+      "height": 0.41999998688697815,
+      "radius": 0.30397536843567835
+    }
+  ],
+  "placement": {
+    "cellStepMetres": 3.5,
+    "samplesPerCell": 50,
+    "maximumPerVariantMid": 600,
+    "maximumPerVariantHigh": 600,
+    "radiusMetres": 17,
+    "cacheCellLimit": 256,
+    "rootsFollowActualCarpet": true,
+    "reuseExistingExclusionFunctions": true
+  },
+  "tufts": {
+    "variants": 4,
+    "bladesPerVariant": 9,
+    "segmentsPerBlade": 3,
+    "maximumTrianglesPerVariant": 54,
+    "maximumMeshes": 4,
+    "maximumMaterials": 1,
+    "localBottom": 0,
+    "heights": [
+      0.28,
+      0.32,
+      0.37,
+      0.42
+    ],
+    "bladeWidthRange": [
+      0.024,
+      0.046
+    ],
+    "maximumRadius": 0.43,
+    "windAmplitude": 0.075,
+    "bodyBend": 0.14,
+    "rootDistribution": "3x3 patch with deterministic jitter"
+  },
+  "palette": {
+    "meadow": [
+      "#6c9557",
+      "#789e60",
+      "#83a669",
+      "#91ae73"
+    ],
+    "soil": "#bc975c",
+    "stone": "#858b94",
+    "air": "#c2dce6"
+  },
+  "source": "art/field-meadow/v01/meadow-clusters-v01.blend"
+}

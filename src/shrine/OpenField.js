@@ -1,8 +1,8 @@
-// 열린 사당 — 하늘에 뜬 섬.
+// 열린 과학 사당 — 하늘에 뜬 섬은 무무 행성의 자체 공간 설계다.
 //
 // ★ 사당 여섯이 전부 **동굴**이었다. 천장 5.5u, 옆벽, 통로 — 색만 다른 같은 굴.
-//   젤다(티어스 오브 더 킹덤)의 신전을 옆에 놓으면 차이가 한눈에 온다. 그쪽은
-//   하늘에 뜬 섬이고, 목적지가 입구에서부터 보이고, 기믹이 열린 들판에 펼쳐진다.
+//   목적지와 기믹이 열린 공간에서 보이도록 바꿨다. 원작 신전 실내의 실제 관찰이나
+//   역공학 결과로 이 구조를 입증한 것은 아니다.
 //
 // 그래서 굴을 걷어 낸다. 다만 **관문의 좌표계는 한 줄도 안 바꾼다.**
 //   · 구간은 여전히 −Z 한 줄기다. 관문은 seg.x0~x1, z0~z1 안에서 그대로 돈다.
@@ -37,6 +37,8 @@ const SKY_FRAG = `
 
 export function buildOpenField(scene, rooms, theme) {
   const O = theme.open;
+  scene.userData.softMidShadows = !!O.softMidShadows;
+  const surroundings = { rocks: [], clouds: [], rails: [] };
   const stone = toon(theme.stone);
   const dark = toon(theme.stoneDark);
   const lite = toon(theme.stoneLite);
@@ -104,9 +106,21 @@ export function buildOpenField(scene, rooms, theme) {
   sc.left = -22; sc.right = 22; sc.top = zLen / 2 + 8; sc.bottom = -zLen / 2 - 8;
   sc.near = 1; sc.far = 220;
   sun.shadow.bias = -0.0008;
+  // Optional authored bias survives quality/scene switches. Other rooms retain
+  // Engine's shared default; this does not add a light or a shadow map.
+  if(O.shadowBias!==undefined)sun.userData.authoredShadowBias=O.shadowBias;
+  if(O.shadowNormalBias!==undefined)sun.userData.authoredShadowNormalBias=O.shadowNormalBias;
   scene.add(sun); scene.add(sun.target);
-  const hemi = new THREE.HemisphereLight(O.top, O.ground, O.stars ? 0.35 : 0.85);
+  // Stars can be visible at dusk too. Their count must not turn twilight into midnight.
+  const hemi = new THREE.HemisphereLight(O.ambientSky??O.top, O.ground, O.ambientIntensity??(O.stars ? 0.35 : 0.85));
   scene.add(hemi);
+  // Optional broad sky bounce; no additional shadow map or puzzle light source.
+  if(O.fill){
+    const fill=new THREE.DirectionalLight(O.fill.color,O.fill.intensity);
+    fill.name='Open field sky fill';fill.userData.skyFill=true;
+    fill.position.fromArray(O.fill.position);fill.target.position.fromArray(O.fill.target);
+    scene.add(fill,fill.target);
+  }
 
   // ── 섬의 몸통 — 바닥돌 아래로 절벽이 내려간다 ────────────────────────────
   // 판만 띄우면 종이다. 아래로 두꺼운 바위가 내려가야 "섬"으로 읽힌다.
@@ -132,11 +146,12 @@ export function buildOpenField(scene, rooms, theme) {
     const slabH = isBridge ? 0.9 : SLAB;
     const floor = box(s.w + (isBridge ? 0 : 1.2), slabH, len + (isBridge ? 0 : 0.6),
       isBridge ? stone : ground, 0, -slabH / 2, cz);
+    floor.userData.openFieldFloor = s.id;
     floor.castShadow = false;
     if (s.architecture) floor.position.y -= 0.12;
     // 가장자리 띠 — 바닥돌 옆면이 다른 색이어야 두께가 읽힌다
     if (!isBridge) {
-      for (const sd of [-1, 1]) box(0.5, slabH + 0.2, len + 0.6, rim, sd * (hw + 0.85), -slabH / 2 + 0.1, cz);
+      for (const sd of [-1, 1]) {const m=box(0.5, slabH + 0.2, len + 0.6, rim, sd * (hw + 0.85), -slabH / 2 + 0.1, cz);m.userData.slabRim=s.id;}
     }
 
     if (isBridge) {
@@ -147,13 +162,13 @@ export function buildOpenField(scene, rooms, theme) {
           const z = s.from - (len * k) / posts;
           box(0.16, RAIL + 0.1, 0.16, dark, sd * (hw - 0.1), (RAIL + 0.1) / 2, z);
         }
-        box(0.10, 0.10, len, gm, sd * (hw - 0.1), RAIL + 0.05, cz);
+        surroundings.rails.push(box(0.10, 0.10, len, gm, sd * (hw - 0.1), RAIL + 0.05, cz));
       }
     } else if (!s.architecture) {
       // 난간 — 낮은 돌담. 위에 발광 줄. 천장이 없으니 이것이 방의 테두리다.
       for (const sd of [-1, 1]) {
         box(0.5, RAIL, len + 0.6, stone, sd * (hw + 0.25), RAIL / 2, cz);
-        box(0.12, 0.08, len + 0.2, gm, sd * (hw + 0.25), RAIL + 0.04, cz);
+        surroundings.rails.push(box(0.12, 0.08, len + 0.2, gm, sd * (hw + 0.25), RAIL + 0.04, cz));
       }
       // 모퉁이 기둥 — 난간 끝이 허공에서 뚝 끊기면 미완성으로 보인다
       for (const sd of [-1, 1]) {
@@ -165,15 +180,17 @@ export function buildOpenField(scene, rooms, theme) {
       // 바닥 눈금 — 통짜 판이면 넓이가 안 읽힌다(굴과 같은 이유)
       const marks = Math.max(1, Math.round(len / 2.6));
       for (let k = 1; k < marks; k++) {
-        box(s.w - 1.2, 0.04, 0.08, lite, 0, 0.01, s.from - (len * k) / marks);
+        const mark=box(s.w - 1.2, 0.04, 0.08, lite, 0, 0.01, s.from - (len * k) / marks);
+        mark.userData.openFieldFloorMark=s.id;
       }
     }
 
     // 막다른 끝 — 신전 뒤. 벽 대신 **봉화**. 입구에서부터 보여야 한다.
     if (isEnd && !['shadowSanctum', 'siftSanctum'].includes(s.architecture)) {
+      const remember=o=>{o.userData.openFieldSanctum=s.id;return o;};
       const bz = s.to + 1.6;
       for (let k = 0; k < 3; k++) {
-        box(4.2 - k * 0.9, 0.5, 4.2 - k * 0.9, k % 2 ? lite : stone, 0, 0.25 + k * 0.5, bz);
+        remember(box(4.2 - k * 0.9, 0.5, 4.2 - k * 0.9, k % 2 ? lite : stone, 0, 0.25 + k * 0.5, bz));
       }
       const bm = new THREE.MeshBasicMaterial({ color: gcol, transparent: true, opacity: 0.32,
         depthWrite: false, side: THREE.DoubleSide });
@@ -183,13 +200,15 @@ export function buildOpenField(scene, rooms, theme) {
       const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 1.2, beamHeight, 8, 1, true), bm);
       beam.position.set(0, 1.5 + beamHeight / 2, bz);
       scene.add(beam);
+      remember(beam);
       const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0), gm);
       core.position.set(0, 2.3, bz);
       scene.add(core);
+      remember(core);
       // 뒤쪽 병풍 — 봉화 뒤에 무엇이 있어야 앞이 있다
       for (const [x, h, d] of [[-5.2, 6.5, 1.1], [0, 8.5, 1.4], [5.2, 6.5, 1.1]]) {
-        box(2.4, h, d, stone, x, h / 2, s.to - 0.6);
-        box(2.8, 0.4, d + 0.3, dark, x, h + 0.2, s.to - 0.6);
+        remember(box(2.4, h, d, stone, x, h / 2, s.to - 0.6));
+        remember(box(2.8, 0.4, d + 0.3, dark, x, h + 0.2, s.to - 0.6));
       }
     }
 
@@ -224,10 +243,10 @@ export function buildOpenField(scene, rooms, theme) {
     const y = -30 + ((k * 37) % 50), sz = 4 + (k * 13) % 9;
     const r = new THREE.Mesh(new THREE.DodecahedronGeometry(sz, 0), rim);
     r.position.set(x, y, z); r.rotation.set(k, k * 0.7, k * 1.3);
-    scene.add(r);
+    scene.add(r); surroundings.rocks.push(r);
     const cap = new THREE.Mesh(new THREE.DodecahedronGeometry(sz * 0.7, 0), ground);
     cap.position.set(x, y + sz * 0.55, z); cap.scale.y = 0.35;
-    scene.add(cap);
+    scene.add(cap); surroundings.rocks.push(cap);
   }
   const cm = new THREE.MeshBasicMaterial({ color: O.cloud, transparent: true, opacity: O.stars ? 0.35 : 0.85 });
   cm.userData.outlineParameters = { visible: false };
@@ -240,7 +259,7 @@ export function buildOpenField(scene, rooms, theme) {
       g.add(puff);
     }
     g.position.set(Math.cos(a) * dist, 8 + (k * 11) % 24, zMid + Math.sin(a) * dist * 1.3);
-    scene.add(g);
+    scene.add(g); surroundings.clouds.push(g);
   }
 
   // ── 진행 — 굴과 똑같은 계약 ──────────────────────────────────────────────
@@ -265,5 +284,5 @@ export function buildOpenField(scene, rooms, theme) {
   };
   const rectOf = (id) => rects.find((r) => r.id === id);
 
-  return { rects, doors, openDoor, resetDoors, segmentAt, rectOf, lights: [], rooms, theme, open: true };
+  return { surroundings, rects, doors, openDoor, resetDoors, segmentAt, rectOf, lights: [], rooms, theme, open: true };
 }

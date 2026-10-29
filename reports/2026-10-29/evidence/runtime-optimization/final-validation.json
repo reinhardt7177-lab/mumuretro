@@ -1,0 +1,72 @@
+{
+  "pass": true,
+  "date": "2026-10-29",
+  "scope": "Local camera and postprocessing optimization only; no resumption of the paused full visual overhaul; no whole-game or school-device FPS claim.",
+  "runtimeFiles": 476,
+  "unchangedRuntime": 473,
+  "modified": [
+    {
+      "file": "src/core/Engine.js",
+      "before": "f43a3a57cff73bc61aebaf663c3c4622d16ab90beb97e3fb704e118cdeff3d72",
+      "after": "950d30b2b4ab1b9e4054738c546c9d64dc02a31fa574c80dcb2a4d2b8bab8f4b"
+    },
+    {
+      "file": "src/world/PlanetCameraOcclusion.js",
+      "before": "55d8d1ff21641b64ef101f7f2e25a4d4fe13e231fca787f52024cf3bc382fc42",
+      "after": "fcc7177cbdf933e722a1f56c6aa10912859dc05a005dcff41685b7d75230cd3d"
+    },
+    {
+      "file": "src/render/Post.js",
+      "before": "da8ebd3434ebe4960d0653844300df867f915e968bf6d845ecf48805be7215c1",
+      "after": "f0ee3edbbd4cec8ee8c3c1617cf5e5a9f976dcbbdd1d7368046e08b7fdaf4198"
+    }
+  ],
+  "postCandidateSha256": "f0ee3edbbd4cec8ee8c3c1617cf5e5a9f976dcbbdd1d7368046e08b7fdaf4198",
+  "postNormal": {
+    "report": "post-normal-2026-10-29T04-23-52-520Z/report.json",
+    "conditions": 21,
+    "maxChannelDifference": 1,
+    "drawReduction": 1
+  },
+  "postFault": {
+    "report": "post-fault-2026-10-29T04-24-36-114Z/report.json",
+    "detected": true
+  },
+  "cameraQuery": {
+    "checks": 7,
+    "queries": 65,
+    "rays": 513
+  },
+  "cameraMatrix": {
+    "report": "camera-matrix-reuse-normal-1793248244997-6416.json",
+    "updates": 77,
+    "beforeMatrixUpdates": 186,
+    "afterMatrixUpdates": 93,
+    "faultReport": "camera-matrix-reuse-fault-1793248249833-24304.json"
+  },
+  "input": {
+    "pc": 7,
+    "touch": 7,
+    "isolatedSaveReload": true
+  },
+  "performance": {
+    "report": "performance.json",
+    "runs": 4,
+    "rAFSamples": 480,
+    "beforeMeanMs": 27.987083333333324,
+    "afterMeanMs": 25.901666666666657,
+    "beforeP95": 33.5,
+    "afterP95": 33.5,
+    "afterWorstMs": 66.70000000000073
+  },
+  "basicChecks": {
+    "modules": 217,
+    "localImports": 629,
+    "vendorHashes": 19,
+    "save": "pass; isolated memory",
+    "audio": "pass"
+  },
+  "distExists": false,
+  "newDeployment": false,
+  "finishedUtc": "2026-10-29T04:32:40.403Z"
+}

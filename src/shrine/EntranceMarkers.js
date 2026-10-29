@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import { templePart } from './BalanceTemple.js';
+import { installStaticRaycastTree } from '../render/StaticRaycastTree.js';
 
 // Authored Blender buttresses, tucked against the entry rail. Decoration has
 // no light source, so it cannot change the shadow puzzle's visual rules.
-export function addEntranceMarkers(scene, spec) {
+export function addEntranceMarkers(scene, spec, rects) {
   if (spec.id === 'balance') return [];
   const entry = spec.rooms.find(r => r.id === 'entry');
   const asset = templePart(`waymark_${spec.id}`);
@@ -30,6 +31,12 @@ export function addEntranceMarkers(scene, spec) {
     marker.name = `Entrance marker ${spec.id} ${side}`;
     marker.position.set(side * (entry.w / 2 - .28), 0, entry.to + 2);
     scene.add(marker);
+    marker.updateWorldMatrix(true,true);
+    marker.traverse(mesh=>{
+      if(!mesh.isMesh)return;
+      installStaticRaycastTree(mesh);
+      (rects.cameraOccluders??=[]).push(mesh);
+    });
     obstacles.push({ x: marker.position.x, z: marker.position.z, r: .48 });
   }
   return obstacles;

@@ -118,7 +118,10 @@ export function buildTouchControls(input, mapPage, notebook) {
   tap(bJump, () => { input.requestJump(); input.setHoldJump(true); },
     () => input.setHoldJump(false));
   // ★ 지도는 수첩의 한 면이 됐다. 버튼은 그 면을 연다 — 화면을 둘로 안 나눈다.
-  tap(bMap, () => { const n = notebook(); if (n) { if (n.isOpen && n.tab === 'star') n.setOpen(false);
+  // Open overlays after pointer-up. Opening on pointer-down lets the trailing
+  // synthesized click hit the newly inserted backdrop and immediately close it.
+  bMap.addEventListener('pointerdown', (e) => e.stopPropagation());
+  bMap.addEventListener('click', (e) => { e.stopPropagation(); const n = notebook(); if (n) { if (n.isOpen && n.tab === 'star') n.setOpen(false);
     else { n.go('star'); n.setOpen(true); } } });
   // 기본 click을 써서 마우스·터치·키보드 Enter/Space로 같은 버튼을 연다.
   bNote.addEventListener('pointerdown', (e) => e.stopPropagation());
@@ -169,6 +172,7 @@ export function buildTouchControls(input, mapPage, notebook) {
     if (on) return;
     on = true;
     el.classList.add('on');
+    document.body.classList.add('touch-mode');
     bNote.title = '탐사 수첩 열기';
     if (onShow) onShow();
   };

@@ -1,0 +1,118 @@
+{
+  "model": "assets/models/adventure/sift-thresholds-v01.glb",
+  "parts": [
+    "SiftDoorLeaf",
+    "SiftDoorHousing",
+    "SiftDoorVent"
+  ],
+  "leaf": {
+    "width": 2.4,
+    "height": 3.3,
+    "depth": 0.46,
+    "closedCentre": 1.2,
+    "travel": 2.55,
+    "duration": 0.85,
+    "behindArch": 0.6,
+    "coreDepth": 0.28,
+    "runnerDepth": 0.32
+  },
+  "housing": {
+    "width": 10.1,
+    "depth": 0.88,
+    "foundationBottom": -0.2,
+    "wingStarts": 3.375,
+    "apronZ": 0.2,
+    "apronDepth": 1.24,
+    "pocketCentreZ": -0.6,
+    "rearSupportMinZ": -1.12,
+    "walkHalfWidth": 5.12
+  },
+  "records": {
+    "model": "assets/models/adventure/panel-workshop-v01.glb",
+    "part": "ObservationPlaque",
+    "scale": 0.65,
+    "placements": [
+      {
+        "room": "r1",
+        "kind": "goal",
+        "position": [
+          4.35,
+          0,
+          4.7
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "r1",
+        "kind": "hint",
+        "position": [
+          4.35,
+          0,
+          -4.5
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "r2",
+        "kind": "goal",
+        "position": [
+          -4.7,
+          0,
+          -10.3
+        ],
+        "yaw": 1.5707963267948966
+      },
+      {
+        "room": "r2",
+        "kind": "hint",
+        "position": [
+          4.35,
+          0,
+          -20.6
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "r3",
+        "kind": "goal",
+        "position": [
+          4.35,
+          0,
+          -27.3
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "r3",
+        "kind": "hint",
+        "position": [
+          4.35,
+          0,
+          -37
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "shrine",
+        "kind": "goal",
+        "position": [
+          -6.3,
+          0,
+          -43.3
+        ],
+        "yaw": 0
+      },
+      {
+        "room": "shrine",
+        "kind": "hint",
+        "position": [
+          -6.3,
+          0,
+          -45.8
+        ],
+        "yaw": 0
+      }
+    ]
+  },
+  "sourceBoundary": "Own workshop/stone construction design; official Locations0:23 used only for hierarchy and natural material observation; no original game values extracted"
+}

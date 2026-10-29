@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "status": "implemented-local",
+  "model": "assets/characters/sky-navigator/actions-v01.glb",
+  "referenceCamera": {
+    "width": 1200,
+    "height": 900,
+    "verticalFovDegrees": 62,
+    "distance": 4.5,
+    "pitchRadians": 0.25,
+    "lookHeight": 1.25
+  },
+  "source": "assets/characters/sky-navigator/navigator-v01.glb",
+  "profiles": {
+    "overhead": {
+      "clip": "carryOverhead",
+      "palmHeight": 1.54,
+      "palmX": 0.18,
+      "palmZ": 0.1,
+      "propCentreZ": 0.27,
+      "palmNormal": "up",
+      "fingerDirection": "forward"
+    },
+    "cradle": {
+      "clip": "carryCradle",
+      "palmHeight": 0.96,
+      "palmX": 0.18,
+      "palmZ": 0.36,
+      "propCentreZ": 0.62,
+      "palmNormal": "up",
+      "fingerDirection": "forward"
+    }
+  },
+  "timing": {
+    "pickupSeconds": 0.3,
+    "releaseSeconds": 0.24,
+    "useSeconds": 0.65,
+    "blendSeconds": 0.2
+  },
+  "contracts": {
+    "keepsLocomotionClips": 3,
+    "newSaveFields": 0,
+    "resizesHeldObjects": false,
+    "measuresActualUnderside": true,
+    "readonlyAnimation": true,
+    "doesNotDelayPuzzleAcceptance": true
+  },
+  "materialPalette": {
+    "wood": [
+      0.36,
+      0.23,
+      0.12
+    ],
+    "brass": [
+      0.62,
+      0.42,
+      0.18
+    ],
+    "stone": [
+      0.38,
+      0.43,
+      0.45
+    ]
+  },
+  "budget": {
+    "glbBytesMax": 250000,
+    "surfaceGripErrorMetres": 0.035,
+    "noStretchTolerance": 0.001
+  },
+  "presentationProfilesByKind": {
+    "crate": "overhead",
+    "ice": "overhead",
+    "sieve": "overhead",
+    "pot": "overhead",
+    "fossil": "overhead",
+    "offering": "overhead",
+    "tool": "cradle",
+    "brace": "overhead"
+  }
+}

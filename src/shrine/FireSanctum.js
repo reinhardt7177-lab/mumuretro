@@ -3,7 +3,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {SanctumState,FIRE_AUDIENCE} from './SanctumState.js';
 import {sfx} from '../core/Audio.js';
 export async function buildFireSanctum(){
- const root=new T.Group(),loader=new GLTFLoader(),base='assets/models/fire-temple/',ids=['static','guardian','eyes','orb'];const [models,response]=await Promise.all([Promise.all(ids.map(k=>loader.loadAsync(`${base}sanctum-${k}-v01.glb`))),fetch(base+'sanctum-manifest.json')]);if(!response.ok)throw Error('전당 실측을 불러오지 못했다');const manifest=await response.json(),parts=Object.fromEntries(ids.map((k,i)=>[k,models[i].scene]));
+ const root=new T.Group(),loader=new GLTFLoader(),base='assets/models/fire-temple/',ids=['static','guardian','eyes','orb'];const [models,response]=await Promise.all([Promise.all(ids.map(k=>loader.loadAsync(`${base}sanctum-${k}-${k === 'static' ? 'v03' : 'v01'}.glb`))),fetch(base+'sanctum-manifest.json')]);if(!response.ok)throw Error('전당 실측을 불러오지 못했다');const manifest=await response.json(),parts=Object.fromEntries(ids.map((k,i)=>[k,models[i].scene]));
  for(const p of Object.values(parts))p.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;for(const m of Array.isArray(o.material)?o.material:[o.material])m.userData.outlineParameters={visible:false};}});
  root.add(parts.static);const deity=new T.Group();deity.position.set(0,3.2,-53);deity.add(parts.guardian,parts.eyes,parts.orb);root.add(deity);const orb=parts.orb,mechanics=new SanctumState();
  const light=new T.PointLight(0xffc272,12,12,2);light.position.set(0,7,-49);root.add(light);const fill=new T.PointLight(0x9bbad4,6,9,2);fill.position.set(2,7.3,-51);root.add(fill);

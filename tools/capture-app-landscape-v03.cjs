@@ -1,0 +1,8 @@
+// Same18 prepared views as v02; fresh authoritative web sources, not a play-through.
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),Module=require('node:module');
+const file=path.resolve('tools/capture-app-landscape.cjs'),B='reports/2026-10-25/evidence/app-landscape-v03/';fs.mkdirSync(B,{recursive:true});
+const release=JSON.parse(fs.readFileSync('dist/assets/release.json')),sourceHashes={};
+for(const f of Object.keys(release.files))sourceHashes[f]=crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
+fs.writeFileSync(B+'source-snapshot.json',JSON.stringify({preparedViews:true,releaseFiles:Object.keys(release.files).length,sourceHashes},null,2));
+let source=fs.readFileSync(file,'utf8').replaceAll('reports/2026-10-23/evidence/app-landscape/',B).replaceAll('art/app-landscape/v01/','art/app-landscape/v03/').replaceAll('Current395','Current447').replaceAll('395소스','447런타임').replaceAll('reports/2026-10-23/APP_LANDSCAPE.md','reports/2026-10-25/APP_LANDSCAPE_V03.md').replaceAll('{timeout:120000}','{timeout:120000,polling:100}').replace("await p.locator('#title .go').click();","await p.locator('#title .go').click({force:true});").replace("await p.screenshot({path:B+id+'.png'});","await p.screenshot({path:B+id+'.png',timeout:120000});").replace('fov:game.engine.camera.fov,ready:','fov:game.engine.camera.fov,aspect:game.engine.camera.aspect,up:game.engine.camera.up.toArray(),quaternion:game.engine.camera.quaternion.toArray(),ready:');
+const m=new Module(file,module);m.filename=file;m.paths=Module._nodeModulePaths(path.dirname(file));m._compile(source,file);

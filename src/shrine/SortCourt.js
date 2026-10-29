@@ -7,13 +7,13 @@ export function buildSortCourt(scene, seg, rects, g, legacy) {
   const crits = [...g.crits], oldMagnet = g.magnet;
   g.group.removeFromParent(); const group = new THREE.Group(); group.name = '자석과 관찰 수조의 작업장';
   g.group = group; scene.add(group); group.add(oldMagnet);
-  const cameraOccluders = [], obstacles = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);
+  const cameraOccluders = [], obstacles = [], architectureParts = [], batches = new Map(), cube = new THREE.BoxGeometry(1, 1, 1);let layer='architecture';
   const mat = color => { const m = new THREE.MeshStandardMaterial({ color, roughness: .86, emissive: color, emissiveIntensity: .35 });
     m.userData.outlineParameters = { visible: false }; return m; };
   const stone = mat(C.stone), floor = mat(C.floor), alt = mat(C.floorAlt), pale = mat(C.pale), wood = mat(C.wood), edge = mat(C.edge), brass = mat(C.brass);
   function box(w, h, d, x, y, z, material, solid = true) {
-    const key = material.uuid + solid;
-    if (!batches.has(key)) batches.set(key, { material, solid, parts: [] });
+    const key = material.uuid + solid+layer;
+    if (!batches.has(key)) batches.set(key, { material, solid, layer, parts: [] });
     batches.get(key).parts.push({ w, h, d, x, y, z });
   }
   function mesh(geometry, material, x, y, z, solid = false) {
@@ -39,6 +39,7 @@ export function buildSortCourt(scene, seg, rects, g, legacy) {
     cameraOccluders.push(m);
   }
   // 같은 받침과 시료를 쓴다. 자리에 재질의 정답을 표시하지 않는다.
+  layer='devices';
   const sampleMat = mat(P.sample), sampleGeo = new THREE.BoxGeometry(D.sampleSize, D.sampleSize, D.sampleSize);
   g.items.forEach((it, i) => {
     it.x = D.stockX; it.z = seg.z1 - D.stockOffsets[i]; it.home.set(it.x, D.stockY, it.z);
@@ -56,7 +57,7 @@ export function buildSortCourt(scene, seg, rects, g, legacy) {
     texture.colorSpace = THREE.SRGBColorSpace;
     const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
     material.userData.outlineParameters = { visible: false };
-    mesh(new THREE.PlaneGeometry(width, height), material, x, y, z);
+    mesh(new THREE.PlaneGeometry(width, height), material, x, y, z, true);
     let previous;
     return text => { if (text === previous) return; previous = text;
       ctx.fillStyle = '#' + P.paper.toString(16); ctx.fillRect(0, 0, 768, 192);
@@ -102,7 +103,7 @@ export function buildSortCourt(scene, seg, rects, g, legacy) {
   box(.12, 2.12, .12, bx, 1.06, bz - 1.07, wood);
   g.pips = [0, 1, 2].map(i => mesh(new THREE.SphereGeometry(.08, 10, 6), mat(P.idle), -.32 + i * .32, 2.8, seg.z0 + .4));
   let paintRound = -1;
-  const api = { group, cameraOccluders, obstacles, water,
+  const api = { group, cameraOccluders, obstacles, architectureParts, water,
     sync(reset = false) {
       g.magnet.visible = !g.solved;
       for (const it of g.items) {
@@ -123,10 +124,10 @@ export function buildSortCourt(scene, seg, rects, g, legacy) {
   };
   g.workshop = api; api.sync(true); g.progressCodec = sortProgress(g, legacy, crits);
   const dummy = new THREE.Object3D();
-  for (const { material, solid, parts } of batches.values()) {
+  for (const { material, solid, parts, layer } of batches.values()) {
     const m = new THREE.InstancedMesh(cube, material, parts.length);
     parts.forEach((p, i) => { dummy.position.set(p.x, p.y, p.z); dummy.scale.set(p.w, p.h, p.d); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
-    m.castShadow = solid; m.receiveShadow = true; group.add(m); if (solid) cameraOccluders.push(m);
+    m.castShadow = solid; m.receiveShadow = true; group.add(m); if (solid) cameraOccluders.push(m);if(layer==='architecture')architectureParts.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders];
   rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];

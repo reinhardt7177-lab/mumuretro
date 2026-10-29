@@ -1,0 +1,11 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const A='art/arrival-coherence/v01/groundcover-v02';assert(!fs.existsSync(A),'Preserve existing revision');fs.mkdirSync(A,{recursive:true});
+const spec=JSON.parse(fs.readFileSync('art/arrival-coherence/v01/groundcover/design-spec.json'));
+spec.version=2;spec.reason='Native three-camera v01 review showed sparse low weeds. Taller arching blades and a bounded redistribution of the existing total 2400 instances restore layered cover.';
+spec.variants.forEach((v,i)=>{v.height=[.16,.34,.36,.38][i];v.triangles=i<2?90:70;});
+spec.placement.maximumPerVariant=[900,900,300,300];spec.placement.samplesPerCell=70;spec.placement.maximumTotal=2400;spec.render.geometryTrianglesPerVariant=[90,90,70,70];
+spec.constraints=spec.constraints.filter(s=>!s.startsWith('No extra grass count'));spec.constraints.push('Source geometry grows from216 to320 triangles; instance total remains2400. Measure actual submitted triangles and frame cost separately.');
+fs.writeFileSync(A+'/design-spec.json',JSON.stringify(spec,null,2));
+let source=fs.readFileSync('tools/build-arrival-groundcover.py','utf8').replaceAll('arrival-coherence/v01/groundcover','arrival-coherence/v01/groundcover-v02').replaceAll('arrival-groundcover-v01','arrival-groundcover-v02');
+source=source.replace('range(4):\n            t=level/3','range(6):\n            t=level/5').replace('[.16,.93,1,.12][level]','[.12,.72,1,.86,.48,.025][level]').replace('for level in range(3):','for level in range(5):').replace("assert len(faces)==54 and","assert len(faces)==(90 if variant<2 else 70) and").replace("'totalSourceTriangles':216","'totalSourceTriangles':320");
+fs.writeFileSync('tools/build-arrival-groundcover-v02.py',source);console.log('Prepared curved-blade v02 design and Blender build.');

@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { toon } from '../render/Toon.js';
 import { LAB } from '../data/lighting.js';
 import { naturePart } from './NatureAssets.js';
+import {arrivalPart} from './LandmarkAssets.js';
 
 const PAD_R = 2.4;
 
@@ -30,6 +31,10 @@ export function buildLanding(scene, planet, dir) {
     return m;
   };
 
+  const authored=arrivalPart(planet,fr);
+  const ringMat=basic(LAB.glow,.55);
+  if(authored)group.add(authored);
+  else {
   // 낮은 돌판 — 밟고 올라서는 게 아니라 **딛고 서는 자리**다. 높으면 걸린다.
   const base = new THREE.Mesh(new THREE.CylinderGeometry(PAD_R, PAD_R + 0.24, 0.22, 8),
     toon(0x6f6a60));
@@ -40,7 +45,6 @@ export function buildLanding(scene, planet, dir) {
   if (detail) group.add(detail);
 
   // 연구실 분필 원과 같은 눈금. 같은 장치라는 걸 모양으로 말한다.
-  const ringMat = basic(LAB.glow, 0.55);
   const ring = new THREE.Mesh(new THREE.RingGeometry(PAD_R * 0.72, PAD_R * 0.78, 32), ringMat);
   ring.rotation.x = -Math.PI / 2; ring.position.y = 0.2; group.add(ring);
   for (let k = 0; k < 12; k++) {
@@ -58,12 +62,41 @@ export function buildLanding(scene, planet, dir) {
     group.add(leg);
   }
 
+  }
+
   // 기둥 — 사당 빛기둥보다 낮고 가늘다. 여긴 목표가 아니라 돌아가는 문이다.
-  const colMat = basic(LAB.glow, 0.035);
-  colMat.side = THREE.FrontSide;
-  colMat.depthWrite = false;
+  const colMat = new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,fog:true,
+    uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{
+      color:{value:new THREE.Color(LAB.glow)},strength:{value:.018},presence:{value:0},
+    }]),
+    vertexShader:`
+      varying vec2 vUv; varying vec3 vNormal; varying vec3 vEye;
+      #include <fog_pars_vertex>
+      void main(){
+        vUv=uv; vNormal=normalize(normalMatrix*normal);
+        vec4 mvPosition=modelViewMatrix*vec4(position,1.0);vEye=-mvPosition.xyz;
+        gl_Position=projectionMatrix*mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader:`
+      uniform vec3 color;uniform float strength;uniform float presence;
+      varying vec2 vUv;varying vec3 vNormal;varying vec3 vEye;
+      #include <fog_pars_fragment>
+      void main(){
+        float edge=pow(clamp(1.0-abs(dot(normalize(vNormal),normalize(vEye))),0.0,1.0),2.2);
+        float ends=smoothstep(0.0,.10,vUv.y)*(1.0-smoothstep(.72,1.0,vUv.y));
+        float surface=mix(.08+.92*edge,.72+.28*edge,presence);
+        gl_FragColor=vec4(color,strength*surface*ends);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        #include <fog_fragment>
+      }`,
+  });
+  colMat.userData.outlineParameters={visible:false};
   const col = new THREE.Mesh(new THREE.CylinderGeometry(PAD_R * 0.7, PAD_R * 0.55, 9, 14, 1, true),
     colMat);
+  col.name='Landing return beacon';
   col.position.y = 4.6; group.add(col);
 
   // ── 착지 이펙트 ────────────────────────────────────────────────────────────
@@ -73,22 +106,30 @@ export function buildLanding(scene, planet, dir) {
   const burstMat = basic(LAB.glow, 0);
   burstMat.depthWrite = false;
   const burst = new THREE.Mesh(new THREE.RingGeometry(0.82, 1.0, 28), burstMat);
-  burst.rotation.x = -Math.PI / 2; burst.position.y = 0.14;
+  burst.name='Landing arrival ripple';
+  burst.rotation.x = -Math.PI / 2; burst.position.y = authored ? .028 : .218;
   burst.visible = false; group.add(burst);
   // 튀어 오르는 불티 — 원 하나만 퍼지면 그건 파문이지 착지가 아니다
-  const sparks = [];
+  const sparks = [], positions=new Float32Array(60),colors=new Float32Array(60);
   for (let k = 0; k < 10; k++) {
-    const m = basic(LAB.glow, 0);
-    m.depthWrite = false;
-    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.34, 0.1), m);
-    sp.visible = false; group.add(sp);
     const a = (k / 10) * Math.PI * 2 + Math.random() * 0.5;
-    sparks.push({ mesh: sp, mat: m, a, r: 0.5 + Math.random() * 1.1,
+    sparks.push({ a, r: 0.5 + Math.random() * 1.1,
       up: 2.4 + Math.random() * 2.2 });
   }
+  const dotCanvas=document.createElement('canvas');dotCanvas.width=dotCanvas.height=32;
+  const dotContext=dotCanvas.getContext('2d'),dotGradient=dotContext.createRadialGradient(16,16,0,16,16,16);
+  dotGradient.addColorStop(0,'rgba(255,255,255,1)');dotGradient.addColorStop(.2,'rgba(255,255,255,.65)');dotGradient.addColorStop(1,'rgba(255,255,255,0)');
+  dotContext.fillStyle=dotGradient;dotContext.fillRect(0,0,32,32);
+  const dotTexture=new THREE.CanvasTexture(dotCanvas),sparkGeometry=new THREE.BufferGeometry();
+  sparkGeometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  sparkGeometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+  const sparkMat=new THREE.PointsMaterial({color:LAB.glow,map:dotTexture,size:.12,vertexColors:true,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending});
+  sparkMat.userData.outlineParameters={visible:false};
+  const motes=new THREE.Points(sparkGeometry,sparkMat);motes.name='Landing arrival motes';motes.visible=false;group.add(motes);
 
   // 빛은 바닥 눈금에 머문다. 평상시 주인공의 옷을 청록으로 칠하지 않는다.
-  const light = new THREE.PointLight(LAB.glow, 0.7, 5, 1.7);
+  const light = new THREE.PointLight(LAB.glow, 0.08, 3, 2);
+  light.name='Landing floor light';
   light.position.y = 0.45; group.add(light);
 
   let t = 0, bt = -1;                       // bt >= 0이면 착지 연출 진행 중
@@ -100,14 +141,22 @@ export function buildLanding(scene, planet, dir) {
     // 별에 내려섰다 — 1.6초짜리 한 번.
     arrive() { bt = 0; },
 
-    update(dt) {
+    update(dt, traveller, viewer) {
       t += dt;
       ringMat.opacity = 0.45 + Math.sin(t * 1.8) * 0.16;
+      if(authored)for(const mesh of authored.children)if(mesh.name==='Arrival_Seated')mesh.material.emissiveIntensity=mesh.material.userData.mumuSurfaceVersion===1?.8+Math.sin(t*1.8)*.08:.14+Math.sin(t*1.8)*.025;
       col.rotation.y += dt * 0.22;
+      // A nearby traveller needs a clear central view. From a distance the same
+      // rim remains a return landmark, including the opening title camera.
+      const walking=traveller?THREE.MathUtils.smoothstep(_up.copy(traveller).normalize().angleTo(this.dir)*planet.R,3.5,8.5):0;
+      const looking=viewer?THREE.MathUtils.smoothstep(viewer.distanceTo(fr.position),9,18):0;
+      const presence=Math.max(walking,looking),restStrength=.018+presence*.27;
+      colMat.uniforms.presence.value=presence;
+      const width=1-presence*.48;col.scale.set(width,1,width);
 
       if (bt < 0) {
-        colMat.opacity = 0.035 + Math.sin(t * 1.8) * 0.01;
-        light.intensity = 0.7;
+        colMat.uniforms.strength.value=restStrength;
+        light.intensity = 0.08;
         return;
       }
       bt += dt;
@@ -115,24 +164,27 @@ export function buildLanding(scene, planet, dir) {
       const fade = 1 - k;
       // 바닥 파문 — 빠르게 퍼지고 옅어진다
       burst.visible = true;
-      const s = 0.5 + k * 3.4;
+      const s = 0.65 + k * 1.5;
       burst.scale.set(s, s, 1);
-      burstMat.opacity = 0.8 * fade * fade;
+      burstMat.opacity = 0.22 * fade * fade;
       // 기둥이 확 밝아졌다 가라앉는다
-      colMat.opacity = 0.035 + fade * fade * 0.38;
-      light.intensity = 0.7 + fade * fade * 15;
+      colMat.uniforms.strength.value=restStrength+fade*fade*.025;
+      light.intensity = 0.08 + fade * fade * 0.15;
       // 불티는 위로 솟았다 떨어진다
-      for (const sp of sparks) {
-        sp.mesh.visible = true;
-        const y = sp.up * k - 3.4 * k * k;
-        sp.mesh.position.set(Math.sin(sp.a) * sp.r * (0.4 + k * 1.6), Math.max(0.1, y + 0.4),
-          Math.cos(sp.a) * sp.r * (0.4 + k * 1.6));
-        sp.mat.opacity = 0.85 * fade;
+      for (let i=0;i<20;i++) {
+        const sp=sparks[i%10],life=THREE.MathUtils.clamp((k-(i%5)*.035)/.86,0,1);
+        const a=sp.a+(i>=10?.23:0),r=.55+sp.r*.8+life*.35;
+        const y=.24+sp.up*.6*life-1.4*life*life+(i>=10?.06:0);
+        positions.set([Math.sin(a)*r,Math.max(.24,y),Math.cos(a)*r],i*3);
+        const gleam=THREE.MathUtils.smoothstep(life,0,.07)*Math.pow(1-life,1.1)*(.55+(i%3)*.15);
+        colors.set([gleam,gleam,gleam],i*3);
       }
+      sparkGeometry.attributes.position.needsUpdate=true;sparkGeometry.attributes.color.needsUpdate=true;sparkGeometry.computeBoundingSphere();
+      motes.visible=true;sparkMat.opacity=.7*Math.pow(fade,1.3);
       if (k >= 1) {
         bt = -1;
         burst.visible = false; burstMat.opacity = 0;
-        for (const sp of sparks) { sp.mesh.visible = false; sp.mat.opacity = 0; }
+        motes.visible=false;sparkMat.opacity=0;
       }
     },
 

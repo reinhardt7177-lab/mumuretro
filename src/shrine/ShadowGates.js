@@ -1,4 +1,5 @@
 // 사당 02 「그림자의 사당」 — 과학 4-2 「그림자와 거울」
+// 새 세 번째 방은 TwinTheatre의 두 단계다. 아래 세 크기 반복은 옛 저장용이다.
 //
 // 이 사당의 전제는 **조명을 끄는 것**이다. 벽이 안 보이고 빛이 닿는 바닥만 보인다.
 // 1번 사당과 정반대라 문 하나 지나는 순간 "다른 사당에 왔다"가 전달된다 —
@@ -320,7 +321,8 @@ export class MirrorGate {
     return true;
   }
 
-  update() { return {}; }
+  handTarget(pos){const m=this._near(pos);if(!m?.controlGrip)return null;m.controlGrip.updateWorldMatrix(true,false);return m.controlGrip.getWorldPosition(new THREE.Vector3());}
+  update(dt=0) { for(const m of this.mirrors)if(m.controlHandle)m.controlHandle.rotation.z=THREE.MathUtils.damp(m.controlHandle.rotation.z,m.a,10,dt);return {}; }
 
   prompt(pos) {
     if (this.hit) return null;
@@ -466,6 +468,7 @@ export class SilhouetteGate {
 
   prompt(pos) {
     if (this.solved || this.theatre?.completed) return null;
+    if (this.theatre?.mode === 'twin') return this.theatre.prompt(pos);
     const n = `${this.round + 1}/3`;
     const gap = this._size() > this.holeW
       ? '그림자가 크다 — 등불에서 멀리' : '그림자가 작다 — 등불 가까이';

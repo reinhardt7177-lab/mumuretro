@@ -14,6 +14,12 @@ export function projectStatue(parts, lamp, bounds) {
 }
 export const shadowContains = (polygons, x, z) => polygons.some(p => insideShade(x, z, p));
 const cross = (x, z, X, Z) => x * Z - z * X;
+// Boundary probes need a distance tolerance. A fixed cross-product tolerance
+// becomes millimetres wide when an ornamental edge is very short.
+export const preciseShadowContains = (polygons,x,z,tolerance=1e-8) => polygons.some(p=>p.length>=3&&p.every((a,i)=>{
+  const b=p[(i+1)%p.length],dx=b.x-a.x,dz=b.z-a.z;
+  return cross(dx,dz,x-a.x,z-a.z)>=-tolerance*Math.hypot(dx,dz);
+}));
 
 // 겹친 부품의 안쪽 선을 버려, 바닥 표적에는 석상 그림자의 바깥 윤곽만 남긴다.
 export function shadowBoundary(polygons) {
@@ -35,12 +41,16 @@ export function shadowBoundary(polygons) {
       const t0 = cuts[i - 1], t1 = cuts[i]; if (t1 - t0 < 1e-7) continue;
       const mid = (t0 + t1) / 2;
       // 반시계 방향 다각형의 오른쪽이 바깥이다. 그곳까지 다른 부품이 덮으면 내부 선이다.
-      if (shadowContains(polygons, a.x + dx * mid + dz / length * 1e-4, a.z + dz * mid - dx / length * 1e-4)) continue;
+      if (preciseShadowContains(polygons, a.x + dx * mid + dz / length * 1e-7, a.z + dz * mid - dx / length * 1e-7)) continue;
       const p = { x: a.x + dx * t0, z: a.z + dz * t0 }, q = { x: a.x + dx * t1, z: a.z + dz * t1 };
       const key = [p, q].map(v => `${v.x.toFixed(5)},${v.z.toFixed(5)}`).sort().join('/');
       if (!seen.has(key)) { seen.add(key); out.push([p, q]); }
     }
-  } return out;
+  }
+  // The final stroke is 55mm wide and its positions are Float32. Do not
+  // emit sub0.1mm intersection slivers as separate strokes; retain every
+  // original polygon for the actual shadow and its physical comparison.
+  return out.filter(([a,b])=>Math.hypot(b.x-a.x,b.z-a.z)>=1e-4);
 }
 
 export function sanctumProgress(g, legacy) {

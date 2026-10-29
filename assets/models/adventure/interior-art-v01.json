@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "status": "local-integrated-verified",
+  "model": "assets/models/adventure/interior-witness-v01.glb",
+  "scope": [
+    "ship",
+    "balance",
+    "shadow",
+    "sift",
+    "water",
+    "fire",
+    "strata"
+  ],
+  "witness": {
+    "width": 0.64,
+    "bodyDepth": 0.22,
+    "depthMax": 0.28,
+    "height": 2.35,
+    "floorY": 0,
+    "gapOutsidePassage": 0.1,
+    "doorFrontOffset": 0.5,
+    "pulseSeconds": 1.15,
+    "solvedColour": "#91e4cf"
+  },
+  "environment": {
+    "width": 256,
+    "height": 128,
+    "type": "linear-float-generated-equirectangular-PMREM",
+    "addsPointLights": false,
+    "shadow": "does-not-change-puzzle-light-positions-or-danger-regions"
+  },
+  "profiles": {
+    "ship": {
+      "sky": "#7f9eb4",
+      "floor": "#685140",
+      "key": "#ffe4b0",
+      "gain": 0.58,
+      "glyph": "ship"
+    },
+    "balance": {
+      "sky": "#bad2d8",
+      "floor": "#70664d",
+      "key": "#fff0cd",
+      "gain": 0.55,
+      "glyph": "balance"
+    },
+    "shadow": {
+      "sky": "#526a95",
+      "floor": "#191d31",
+      "key": "#baccec",
+      "gain": 0.22,
+      "glyph": "shadow"
+    },
+    "sift": {
+      "sky": "#d6cab0",
+      "floor": "#715c3c",
+      "key": "#ffe4af",
+      "gain": 0.48,
+      "glyph": "sift"
+    },
+    "water": {
+      "sky": "#b5d6dc",
+      "floor": "#305664",
+      "key": "#ecf5e8",
+      "gain": 0.52,
+      "glyph": "water"
+    },
+    "fire": {
+      "sky": "#8d9aa6",
+      "floor": "#35272a",
+      "key": "#ffca92",
+      "gain": 0.4,
+      "glyph": "fire"
+    },
+    "strata": {
+      "sky": "#bdced7",
+      "floor": "#555b5a",
+      "key": "#fff0d4",
+      "gain": 0.54,
+      "glyph": "strata"
+    }
+  },
+  "fireWitnesses": [
+    {
+      "id": "fracture",
+      "position": [
+        16,
+        0,
+        8
+      ],
+      "yaw": -1.5707963267948966,
+      "halfWidth": 2.0,
+      "state": "fracture.returned"
+    },
+    {
+      "id": "foundry",
+      "position": [
+        0,
+        0,
+        -14.5
+      ],
+      "yaw": 0,
+      "halfWidth": 2.4,
+      "state": "foundry.returned"
+    },
+    {
+      "id": "steam",
+      "position": [
+        0,
+        3.2,
+        -40.8
+      ],
+      "yaw": 0,
+      "halfWidth": 3.0,
+      "state": "steam.upperReached"
+    }
+  ],
+  "budget": {
+    "glbBytesMax": 350000,
+    "trianglesPerGlyphMax": 4000,
+    "witnessDrawsPerSceneMax": 3,
+    "runtimeDoesNotWriteProgress": true
+  },
+  "views": {
+    "width": 1280,
+    "height": 800,
+    "pitch": 0.35,
+    "yaw": 0,
+    "kinds": [
+      "entry",
+      "device",
+      "sanctum"
+    ],
+    "captureIsStaged": true
+  }
+}

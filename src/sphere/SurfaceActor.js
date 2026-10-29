@@ -46,6 +46,7 @@ export class SurfaceActor {
     // 기본은 Infinity(제한 없음) — NPC가 절벽에 끼어 멈추면 그게 더 이상하다.
     // Player만 실제 값을 걸어서 "못 가는 곳"을 만든다. 이게 있어야 벽 오르기 해금이 의미를 갖는다.
     this.maxClimbTan = Infinity;
+    this.maxStepHeight = .22;      // Low stone lips are steps; high ledges still need a jump.
     this.canClimb = false;         // 벽 오르기 해금 시 true → 제한 무시
     this.canGlide = false;         // 활공 해금
     this.gliding = false;
@@ -100,15 +101,30 @@ export class SurfaceActor {
     return (_try.length() - this.position.length()) / dist;
   }
 
+  // Test the whole landing footprint, not merely this frame's rise. Otherwise
+  // small time steps could turn every steep cliff into a sequence of low steps.
+  _canStepUp(moveDir) {
+    if (!(this.maxStepHeight > 0)) return false;
+    const start=this.position.length(),heights=[];
+    for(const distance of [.10,.20,.30,.40]) {
+      _try.copy(this.position);_tryH.copy(this.heading);
+      moveOnSphere(_try,_tryH,moveDir,distance,this.planet,_scratch);
+      const rise=_try.length()-start;
+      if(rise>this.maxStepHeight+1e-6||rise<-.08)return false;
+      heights.push(rise);
+    }
+    return heights[3]>0&&Math.abs(heights[3]-heights[2])<.055;
+  }
+
   // moveDir: 접선 단위벡터(월드). 이동 후 heading을 moveDir로 회전.
-  move(moveDir, dt) {
-    const dist = (this.gliding ? this.glideSpeed : this.running ? this.speed * this.runMul : this.speed) * dt;
+  move(moveDir, dt, speedOverride) {
+    const dist = (speedOverride ?? (this.gliding ? this.glideSpeed : this.running ? this.speed * this.runMul : this.speed)) * dt;
     const airborne = this.airborne, footRadius = this.position.length() + this.jumpH;
     this.up.copy(this.position).normalize();
 
     let dir = moveDir;
     if (!this.canClimb && Number.isFinite(this.maxClimbTan) && this.grounded) {
-      if (this._climbOf(moveDir, dist) > this.maxClimbTan) {
+      if (this._climbOf(moveDir, dist) > this.maxClimbTan && !this._canStepUp(moveDir)) {
         // 정면이 너무 가파르다 → 등고선(좌/우 90°) 쪽으로 미끄러뜨린다.
         // 그냥 막으면 벽에 붙어 얼어붙어서 고장난 것처럼 느껴진다.
         _sideA.copy(moveDir).applyAxisAngle(this.up, Math.PI / 2);

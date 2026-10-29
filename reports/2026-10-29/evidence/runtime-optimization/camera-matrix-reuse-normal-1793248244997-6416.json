@@ -1,0 +1,35 @@
+{
+  "scope": "Offline real Engine.updateCamera, pinned Three r160 triangle raycasts; constructor/rendering/PMREM/storage excluded. Deterministic call counts, no timing or FPS claim.",
+  "fault": null,
+  "checks": [
+    {
+      "name": "thin-wall",
+      "frames": 1,
+      "pass": true
+    },
+    {
+      "name": "empty",
+      "frames": 8,
+      "pass": true
+    },
+    {
+      "name": "wall",
+      "frames": 12,
+      "pass": true
+    },
+    {
+      "name": "moving-parent",
+      "frames": 24,
+      "pass": true
+    },
+    {
+      "name": "terrain",
+      "frames": 32,
+      "pass": true
+    }
+  ],
+  "updates": 77,
+  "beforeMatrixUpdates": 186,
+  "afterMatrixUpdates": 93,
+  "pass": true
+}

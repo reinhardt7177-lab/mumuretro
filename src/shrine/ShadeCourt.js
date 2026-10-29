@@ -6,6 +6,7 @@ import { projectShade, insideShade, shadeProgress } from './ShadeProjection.js';
 export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
   const group = new THREE.Group(); group.name = '움직이는 그림자 회랑'; scene.add(group);
   const cz = (seg.z0 + seg.z1) / 2, cameraOccluders = [], obstacles = [];
+  const artSlots={floor:[],structure:[],track:[]};let artRole='floor';
   const lit = color => {
     const m = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.24, roughness: 0.85 });
     m.userData.outlineParameters = { visible: false }; return m;
@@ -18,8 +19,8 @@ export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
   const floor = flat(C.floor), floorAlt = flat(C.floorAlt), shade = flat(C.shade), lampMat = flat(C.lamp);
   const cube = new THREE.BoxGeometry(1, 1, 1), batches = new Map(), dummy = new THREE.Object3D();
   const batch = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1, yaw = 0, solid = false) => {
-    const key = `${geo.uuid}/${mat.uuid}`;
-    if (!batches.has(key)) batches.set(key, { geo, mat, items: [], solid: false });
+    const key = `${geo.uuid}/${mat.uuid}/${artRole}`;
+    if (!batches.has(key)) batches.set(key, { geo, mat, items: [], solid: false,artRole });
     const b = batches.get(key); b.items.push({ x, y, z, sx, sy, sz, yaw }); b.solid ||= solid;
   };
   const box = (w, h, d, x, y, z, mat, solid = false, yaw = 0) => batch(cube, mat, x, y, z, w, h, d, yaw, solid);
@@ -31,18 +32,21 @@ export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
   for (let x = -6; x <= 6; x += 2) for (let dz = -7; dz <= 7; dz += 2) {
     box(1.985, 0.02, 1.985, x, -0.009, cz + dz, (x + dz + 15) % 4 ? floor : floorAlt);
   }
+  artRole='signals';
   gate.safeIn = seg.z1 - D.safeDepth; gate.safeOut = seg.z0 + D.safeDepth;
   for (const end of [-1, 1]) {
     box(D.width, 0.018, D.safeDepth, 0, 0.007, cz + end * (D.length - D.safeDepth) / 2, shade);
     // 대기 공간은 바닥 재질로 읽힌다. 진행 방향·정답 경로를 그리지 않는다.
     for (const side of [-1, 1]) box(0.11, 0.016, 1.4, side * 5.8, 0.02, cz + end * 6.85, brass);
   }
+  artRole='structure';
   const archShape = new THREE.Shape();
   archShape.absarc(0, 0, 1.82, 0, Math.PI, false); archShape.lineTo(-1.53, 0);
   archShape.absarc(0, 0, 1.53, Math.PI, 0, true); archShape.closePath();
   const arch = new THREE.ExtrudeGeometry(archShape, { depth: 0.55, bevelEnabled: false, curveSegments: 12 });
   arch.translate(0, 3, -0.275);
   for (const side of [-1, 1]) {
+    artRole='structure';
     const x = side * 7.27;
     box(0.55, 1.05, 16.4, x, 0.525, cz, stone, true);
     box(0.7, 0.16, 16.6, x, 1.12, cz, pale, true);
@@ -53,13 +57,15 @@ export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
         box(0.78, 0.22, 0.7, x, 2.94, cz + dz + offset, pale, true);
       }
     }
+    artRole='track';
     for (const end of [-1, 1]) {
       box(0.65, 6.8, 0.65, side * 6.1, 3.4, cz + end * 7.7, stone, true);
       box(0.95, 0.25, 0.95, side * 6.1, 6.65, cz + end * 7.7, gold, true);
     }
   }
   // 방 위 타원 레일과 이동하는 등불. 어느 물체가 그림자를 움직이는지 보이게 한다.
-  const track = mesh(new THREE.TorusGeometry(1, 0.022, 6, 64), brass, group, 0, D.trackY, cz, true);
+  artRole='track';
+  const track = mesh(new THREE.TorusGeometry(1, 0.022, 6, 64), brass, group, 0, D.trackY, cz, true);artSlots.track.push(track);
   track.rotation.x = Math.PI / 2; track.scale.set(D.orbitX, D.orbitZ, 1);
   for (const side of [-1, 1]) box(0.18, 0.18, 15.4, side * 6.1, D.trackY, cz, brass, true);
 
@@ -109,7 +115,7 @@ export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
     gate.pillars.forEach(p => { p.polygon = projectShade(p, L, bounds); });
   };
   const api = {
-    group, obstacles, cameraOccluders, bounds, footWarning: foot,
+    group, obstacles, cameraOccluders, bounds, footWarning: foot,artSlots,
     completed: false,
     setCompleted(value) { this.completed = value; if (value) { footMat.opacity = 0; gate.eyeMat.opacity = 0; } },
     lampAt(a) { return { x: gate.cx + Math.cos(a) * D.orbitX, y: D.lampY, z: cz + Math.sin(a) * D.orbitZ }; },
@@ -131,10 +137,11 @@ export function buildShadeCourt(scene, seg, rects, gate, legacyCodec) {
     const materials = Array.isArray(m.material) ? m.material : [m.material];
     if (m.isMesh && materials.some(mat => mat?.isMeshStandardMaterial) && !cameraOccluders.includes(m)) cameraOccluders.push(m);
   });
-  for (const { geo, mat, items, solid } of batches.values()) {
+  for (const { geo, mat, items, solid,artRole } of batches.values()) {
     const m = new THREE.InstancedMesh(geo, mat, items.length);
     items.forEach((v, i) => { dummy.position.set(v.x, v.y, v.z); dummy.scale.set(v.sx, v.sy, v.sz); dummy.rotation.set(0, v.yaw, 0); dummy.updateMatrix(); m.setMatrixAt(i, dummy.matrix); });
     group.add(m); if (solid) cameraOccluders.push(m);
+    artSlots[artRole]?.push(m);
   }
   rects.cameraOccluders = [...(rects.cameraOccluders || []), ...cameraOccluders];
   rects.cameraLiftZones = [...(rects.cameraLiftZones || []), seg];

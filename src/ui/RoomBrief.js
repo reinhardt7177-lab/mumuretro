@@ -36,6 +36,11 @@ const kid = (x, y, s = 1) => `
   </g>`;
 
 const ACTS = {
+  push: {
+    key:'E · 이동',keyTouch:'E 버튼 · 이동',
+    how:'밀대에 다가가 E로 잡는다. 움직여 밀거나 당기고, 다시 E로 놓는다.',
+    svg:`<rect x="12" y="69" width="106" height="4" rx="2" fill="${I}" opacity=".18"/>${kid(30,68,.9)}<rect x="71" y="23" width="23" height="23" rx="2" fill="${I}"/><path d="M82 46v18M49 53h33" stroke="${W}" stroke-width="4"/><circle cx="76" cy="66" r="4" fill="${T}"/><circle cx="89" cy="66" r="4" fill="${T}"/><path d="M60 79h39m-6-4 6 4-6 4m-27-8-6 4 6 4" stroke="${T}" stroke-width="2.5" fill="none"/>`,
+  },
   waterAudience: {
     key: 'E', keyTouch: 'E 버튼',
     how: '신 앞의 물그릇으로 다가가 말을 건다. 이야기가 끝나면 밖으로 돌아간다.',

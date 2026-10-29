@@ -109,6 +109,8 @@ export class MagnetGate {
       g.add(m);
       return { ...it, mesh: m, home: m.position.clone(), x, z, bin: null, jig: 0 };
     });
+    this.observations=this.items.map(()=>[null,null]);
+    this.scanTimes=this.items.map(()=>0);
 
     // 자석 — 늘 손에 들고 있다. 붙는 것만 흔들린다.
     const mag = new THREE.Group();
@@ -135,7 +137,7 @@ export class MagnetGate {
     let best = null, bd = REACH;
     let ib = this.held ? 0 : ITEM_REACH;
     for (const it of this.items) {
-      if (it.bin || it === this.held || it === this.testItem) continue;
+      if (it.bin || it === this.held || it === this.testItem) {this.scanTimes[this.items.indexOf(it)]=0;continue;}
       const d = Math.hypot(pos.x - it.x, pos.z - it.z);
       if (d < ib) { ib = d; bd = d; best = { kind: 'item', item: it }; }
     }
@@ -164,6 +166,9 @@ export class MagnetGate {
 
   update(dt, actor) {
     const p = actor.position;
+    const active=p.x>=this.seg.x0&&p.x<=this.seg.x1&&p.z>=this.seg.z0&&p.z<=this.seg.z1;
+    let nearest=null,distance=PULL_R;
+    if(active&&!this.held&&!this.solved)for(const it of this.items){if(it.bin||it===this.testItem)continue;const d=Math.hypot(p.x-it.x,p.z-it.z);if(d<distance){nearest=it;distance=d;}}
     this.magnet.position.set(p.x + actor.heading.x * 0.6, 1.0, p.z + actor.heading.z * 0.6);
     // 저장된 quaternion의 Euler 분해가 x/z에 반 회전을 남길 수 있다.
     // 손에 따라오는 도구는 매번 세 축을 같은 기준으로 설정한다.
@@ -173,7 +178,10 @@ export class MagnetGate {
     for (const it of this.items) {
       if (it.bin || it === this.held || it === this.testItem) continue;
       const d = Math.hypot(p.x - it.x, p.z - it.z);
-      const pull = it.iron && d < PULL_R ? (1 - d / PULL_R) : 0;
+      const pull = it===nearest&&it.iron ? (1 - d / PULL_R) : 0;
+      const index=this.items.indexOf(it);
+      this.scanTimes[index]=it===nearest?this.scanTimes[index]+Math.max(0,dt):0;
+      if(dt>0&&this.scanTimes[index]>=.3)this.observations[index][0]=it.iron;
       it.jig += dt * 22;
       it.mesh.position.x = it.x + Math.sin(it.jig) * 0.06 * pull;
       it.mesh.position.y = it.home.y + Math.abs(Math.sin(it.jig * 0.7)) * 0.14 * pull;
@@ -188,6 +196,7 @@ export class MagnetGate {
       const y = this.testItem.floats
         ? 1.05 + Math.sin(this.testT * 6) * 0.05 : 1.05 - this.testT * 0.8;
       this.testMesh.position.set(this.basin.x, y, this.basin.z);
+      if(active&&dt>0&&this.testT>=1)this.observations[this.items.indexOf(this.testItem)][1]=this.testItem.floats;
     }
     this.workshop?.sync();
     return {};
@@ -204,7 +213,8 @@ export class MagnetGate {
       return 'E — 시료를 제자리에 돌려놓기';
     }
     if (n && n.kind === 'item') {
-      return `E — 들기 · ${n.item.iron ? '자석이 당긴다' : '자석이 반응 안 한다'}`;
+      const index=this.items.indexOf(n.item),seen=this.observations[index][0];
+      return `E — 시료 ${index+1} 들기 · ${seen===null?'자석의 반응을 살펴라':seen?'자석이 당긴다':'자석이 반응 안 한다'}`;
     }
     if (n && n.kind === 'basin') {
       if (this.testItem) return this.testT < 1 ? 'E — 꺼내기 · 물속 움직임을 관찰하라'
@@ -274,6 +284,7 @@ export class MagnetGate {
 
   solvedBy() { return this.solved; }
   restart() {
+    this.observations=this.items.map(()=>[null,null]);this.scanTimes.fill(0);
     this.held = null;
     this.round = 0;
     this.solved = false;

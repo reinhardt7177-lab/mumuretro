@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "model": "assets/models/adventure/moon-optics-v01.glb",
+  "status": "implemented-local",
+  "camera": {
+    "width": 1000,
+    "height": 800,
+    "fov": 45,
+    "distance": 5.4,
+    "lookHeight": 1.35,
+    "pitch": 0.25
+  },
+  "palette": {
+    "stone": [
+      0.17,
+      0.23,
+      0.28
+    ],
+    "stoneLight": [
+      0.32,
+      0.39,
+      0.43
+    ],
+    "brass": [
+      0.43,
+      0.28,
+      0.1
+    ],
+    "gold": [
+      0.72,
+      0.52,
+      0.22
+    ],
+    "glow": [
+      1,
+      0.69,
+      0.25
+    ]
+  },
+  "parts": {
+    "MirrorPedestal": {
+      "floor": 0,
+      "height": 0.8,
+      "radius": 0.7
+    },
+    "MirrorFrame": {
+      "opticalCentreY": 1.5,
+      "opticalPlaneZ": 0,
+      "sourceOffsetY": 0.8
+    },
+    "MirrorWheel": {
+      "radius": 0.302,
+      "tubeRadius": 0.042
+    },
+    "ShadeLantern": {
+      "origin": "light centre",
+      "heightAboveOrigin": 2.075
+    },
+    "PanelBase": {
+      "floor": 0,
+      "maximumHeight": 0.5
+    }
+  },
+  "physics": {
+    "changesAnswers": false,
+    "changesRandomConsumption": false,
+    "newSaveFields": 0,
+    "keepsOpticalSurface": true,
+    "keepsFloorY": 0
+  },
+  "cameraAssist": {
+    "zones": [
+      "r1",
+      "r2",
+      "r3"
+    ],
+    "subjectHeights": [
+      0.25,
+      0.8,
+      1.35
+    ],
+    "yawCandidates": [
+      0,
+      0.25,
+      -0.25,
+      0.5,
+      -0.5
+    ],
+    "maxAutomaticYaw": 0.5,
+    "prefersRequestedElevation": true,
+    "liftedFallback": true,
+    "fullSearchInterval": 0.2,
+    "rechecksCachedCandidate": true
+  },
+  "budgets": {
+    "trianglesMax": 16000,
+    "glbBytesMax": 1800000
+  }
+}
